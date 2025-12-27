@@ -1,6 +1,7 @@
 # PDF Extraction MCP Server
 
 Docker-based MCP (Model Context Protocol) server for extracting text and images from PDF files.
+Includes ChatGPT API integration for intelligent document analysis.
 
 ## Quick Start
 
@@ -36,6 +37,23 @@ cp /path/to/your/papers/*.pdf ./pdf/
 
 The MCP server is configured in `.claude/mcp.json`. When using Claude Code, the PDF extraction tools will be available automatically.
 
+**Option C: Using ChatGPT API**
+
+```bash
+# Install Python dependencies
+pip install -r requirements.txt
+
+# Set up your API key
+cp .env.example .env
+# Edit .env and add your OPENAI_API_KEY
+
+# Run interactive chat
+python chatgpt_client.py
+
+# Or run a single command
+python chatgpt_client.py "Process all PDFs and summarize the content"
+```
+
 ## Directory Structure
 
 ```
@@ -57,6 +75,9 @@ The MCP server is configured in `.claude/mcp.json`. When using Claude Code, the 
 │   ├── build.sh           # Build Docker image
 │   ├── run-mcp.sh         # Run MCP server
 │   └── process-all.sh     # Process all PDFs
+├── chatgpt_client.py       # ChatGPT API client
+├── requirements.txt        # Python dependencies
+├── .env.example            # Environment template
 ├── docker-compose.yml
 └── .claude/
     └── mcp.json           # Claude Code MCP configuration
@@ -149,9 +170,63 @@ Images are saved as `page{N}_img{M}.{ext}` in the `images/` subdirectory.
 }
 ```
 
+## Using ChatGPT API Client
+
+The ChatGPT client uses OpenAI's function calling to interact with PDF tools.
+
+### Setup
+
+1. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. Configure API key:
+   ```bash
+   cp .env.example .env
+   # Edit .env file:
+   # OPENAI_API_KEY=your-key-here
+   # OPENAI_MODEL=gpt-4o  (optional, default: gpt-4o)
+   ```
+
+### Interactive Mode
+
+```bash
+python chatgpt_client.py
+```
+
+Commands in interactive mode:
+- `/quit` - Exit the program
+- `/reset` - Reset conversation history
+- `/pdfs` - List PDF files
+
+### Single Command Mode
+
+```bash
+# Process and analyze
+python chatgpt_client.py "List all PDFs and show their info"
+python chatgpt_client.py "Extract text from paper.pdf and summarize it"
+python chatgpt_client.py "Process all PDFs and create a summary of each"
+```
+
+### Example Session
+
+```
+You: What PDFs do I have?
+  [Calling list_pdfs...]
+Assistant: You have 3 PDF files: paper1.pdf, paper2.pdf, paper3.pdf
+
+You: Extract and summarize paper1.pdf
+  [Calling extract_all...]
+  [Calling read_extracted_text...]
+Assistant: Here's a summary of paper1.pdf...
+```
+
 ## Requirements
 
 - Docker
+- Python 3.8+ (for ChatGPT client)
+- OpenAI API key (for ChatGPT client)
 - (Optional) Claude Code for MCP integration
 
 ## License
