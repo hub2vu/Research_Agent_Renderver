@@ -14,6 +14,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy server code
 COPY server.py .
+COPY api_server.py .
 
 # Create directories for PDF input and output
 RUN mkdir -p /data/pdf /data/output
@@ -23,5 +24,8 @@ ENV PYTHONUNBUFFERED=1
 ENV PDF_DIR=/data/pdf
 ENV OUTPUT_DIR=/data/output
 
-# Run MCP server
-CMD ["python", "server.py"]
+# Expose HTTP API port
+EXPOSE 8000
+
+# Run HTTP API server by default
+CMD ["uvicorn", "api_server:app", "--host", "0.0.0.0", "--port", "8000"]

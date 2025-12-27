@@ -2,21 +2,12 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies for PDF processing
-RUN apt-get update && apt-get install -y \
-    libmupdf-dev \
-    mupdf-tools \
-    && rm -rf /var/lib/apt/lists/*
-
 # Copy requirements and install Python dependencies
 COPY requirements.txt .
-COPY mcp-pdf-server/requirements.txt ./mcp-requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir pymupdf Pillow
+RUN pip install --no-cache-dir -r requirements.txt requests
 
-# Copy client and server code
+# Copy client code
 COPY chatgpt_client.py .
-COPY mcp-pdf-server/server.py ./pdf_extractor.py
 
 # Create directories
 RUN mkdir -p /data/pdf /data/output
