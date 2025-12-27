@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "pdf-extraction": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-v", "${PWD}/pdf:/data/pdf:ro",
+        "-v", "${PWD}/output:/data/output",
+        "pdf-extraction-mcp"
+      ]
+    }
+  }
+}

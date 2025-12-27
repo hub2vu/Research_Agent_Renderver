@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  pdf-extraction-mcp:
+    build:
+      context: ./mcp-pdf-server
+      dockerfile: Dockerfile
+    container_name: pdf-extraction-mcp
+    volumes:
+      # Mount local pdf folder to container's /data/pdf
+      - ./pdf:/data/pdf:ro
+      # Mount output folder for extracted content
+      - ./output:/data/output
+    environment:
+      - PDF_DIR=/data/pdf
+      - OUTPUT_DIR=/data/output
+      - PYTHONUNBUFFERED=1
+    # MCP servers communicate via stdio
+    stdin_open: true
+    tty: true
+    restart: unless-stopped

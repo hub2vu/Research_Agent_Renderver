@@ -1,0 +1,28 @@
+# PDF files (user should add their own)
+# pdf/*.pdf
+
+# Output directory (generated content)
+output/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+*.so
+.env
+venv/
+ENV/
+
+# Docker
+.docker/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
