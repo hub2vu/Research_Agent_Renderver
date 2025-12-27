@@ -5,43 +5,29 @@ Includes ChatGPT API integration for intelligent document analysis.
 
 ## Quick Start
 
-### 1. Build the Docker Image
+### 1. 의존성 설치
 
 ```bash
-./scripts/build.sh
+docker compose up --build
 ```
 
-Or manually:
-
-```bash
-docker build -t pdf-extraction-mcp ./mcp-pdf-server
-```
 
 ### 2. Add PDF Files
 
 Place your PDF files in the `./pdf` folder:
 
+
+### 3. 백그라운드에 MCP 서버 키기
+
 ```bash
-cp /path/to/your/papers/*.pdf ./pdf/
+docker compose up -d pdf-server
 ```
 
-### 3. Process All PDFs
-
-**Option A: Direct Processing (without MCP)**
+### 4. 클라이언트 실행
 
 ```bash
-./scripts/process-all.sh
+docker compose run --rm -it chatgpt-client
 ```
-
-**Option B: Using Claude Code with MCP**
-
-The MCP server is configured in `.claude/mcp.json`. When using Claude Code, the PDF extraction tools will be available automatically.
-
-**Option C: Using ChatGPT API**
-
-```bash
-# Install Python dependencies
-pip install -r requirements.txt
 
 # Set up your API key
 cp .env.example .env
