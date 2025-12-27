@@ -1,21 +1,39 @@
 version: '3.8'
 
 services:
+  # MCP PDF Extraction Server (standalone)
   pdf-extraction-mcp:
     build:
       context: ./mcp-pdf-server
       dockerfile: Dockerfile
     container_name: pdf-extraction-mcp
     volumes:
-      # Mount local pdf folder to container's /data/pdf
       - ./pdf:/data/pdf:ro
-      # Mount output folder for extracted content
       - ./output:/data/output
     environment:
       - PDF_DIR=/data/pdf
       - OUTPUT_DIR=/data/output
       - PYTHONUNBUFFERED=1
-    # MCP servers communicate via stdio
     stdin_open: true
     tty: true
     restart: unless-stopped
+
+  # ChatGPT Client with PDF Extraction
+  chatgpt-client:
+    build:
+      context: .
+      dockerfile: Dockerfile.client
+    container_name: chatgpt-client
+    volumes:
+      - ./pdf:/data/pdf:ro
+      - ./output:/data/output
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o}
+      - PDF_DIR=/data/pdf
+      - OUTPUT_DIR=/data/output
+      - PYTHONUNBUFFERED=1
+    env_file:
+      - .env
+    stdin_open: true
+    tty: true
