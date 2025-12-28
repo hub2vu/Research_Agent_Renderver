@@ -1,50 +1,55 @@
 version: '3.8'
 
 services:
-  # PDF Extraction API Server
-  pdf-server:
+  # MCP Server - Tool execution layer
+  mcp-server:
     build:
-      context: ./mcp-pdf-server
-      dockerfile: Dockerfile
-    container_name: pdf-server
+      context: .
+      dockerfile: docker/Dockerfile.mcp
+    container_name: mcp-server
     volumes:
       - ./pdf:/data/pdf
       - ./output:/data/output
     environment:
       - PDF_DIR=/data/pdf
       - OUTPUT_DIR=/data/output
+      - TAVILY_API_KEY=${TAVILY_API_KEY}
       - PYTHONUNBUFFERED=1
     ports:
       - "8000:8000"
     networks:
-      - pdf-network
+      - research-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
-  # ChatGPT Client
-  chatgpt-client:
+  # Agent Client - Reasoning layer
+  agent:
     build:
       context: .
-      dockerfile: Dockerfile.client
-    container_name: chatgpt-client
+      dockerfile: docker/Dockerfile.agent
+    container_name: research-agent
     volumes:
-      - ./pdf:/data/pdf
-      - ./output:/data/output
+      - ./pdf:/data/pdf:ro
+      - ./output:/data/output:ro
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o}
-      - PDF_SERVER_URL=http://pdf-server:8000
-      - PDF_DIR=/data/pdf
-      - OUTPUT_DIR=/data/output
+      - MCP_SERVER_URL=http://mcp-server:8000
       - PYTHONUNBUFFERED=1
     env_file:
       - .env
     networks:
-      - pdf-network
+      - research-network
     depends_on:
-      - pdf-server
+      mcp-server:
+        condition: service_healthy
     stdin_open: true
     tty: true
 
 networks:
-  pdf-network:
+  research-network:
     driver: bridge

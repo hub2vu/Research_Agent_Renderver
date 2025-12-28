@@ -1,0 +1,24 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Copy requirements and install
+COPY requirements/base.txt requirements/base.txt
+COPY requirements/agent.txt requirements/agent.txt
+RUN pip install --no-cache-dir -r requirements/agent.txt
+
+# Copy Agent source code
+COPY agent/ /app/agent/
+
+# Create data directories (for local file access if needed)
+RUN mkdir -p /data/pdf /data/output
+
+# Environment
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app
+ENV PDF_DIR=/data/pdf
+ENV OUTPUT_DIR=/data/output
+ENV MCP_SERVER_URL=http://mcp-server:8000
+
+# Run Agent client
+ENTRYPOINT ["python", "-m", "agent.client"]

@@ -1,0 +1,8 @@
+# Agent dependencies
+-r base.txt
+
+# OpenAI API
+openai>=1.0.0
+
+# HTTP Client
+requests>=2.31.0

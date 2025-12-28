@@ -1,219 +1,207 @@
-# PDF Extraction MCP Server
+# Research Agent
 
-Docker-based MCP (Model Context Protocol) server for extracting text and images from PDF files.
-Includes ChatGPT API integration for intelligent document analysis.
+A Docker-based research assistant with MCP (Model Context Protocol) architecture.
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        Agent Layer                          │
+│  ┌─────────┐  ┌──────────┐  ┌──────────┐  ┌─────────────┐  │
+│  │ client  │──│ planner  │──│ executor │──│   memory    │  │
+│  │ (entry) │  │          │  │          │  │             │  │
+│  └────┬────┘  └──────────┘  └─────┬────┘  └─────────────┘  │
+│       │         Planning          │         State           │
+│       │         (no side-effects) │         Storage         │
+└───────┼───────────────────────────┼─────────────────────────┘
+        │                           │
+        │      HTTP API             │
+        ▼                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                         MCP Layer                           │
+│  ┌─────────┐  ┌──────────┐  ┌──────────────────────────┐   │
+│  │ server  │──│ registry │──│         tools/           │   │
+│  │ (entry) │  │ (SSOT)   │  │  pdf | arxiv | web_search│   │
+│  └─────────┘  └──────────┘  └──────────────────────────┘   │
+│                               Side-effects allowed          │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Key Principles
+
+1. **Separation of Concerns**
+   - Agent Layer: Thinking, planning, decision-making (NO side-effects)
+   - MCP Layer: Tool execution, file I/O, API calls (side-effects allowed)
+
+2. **Single Source of Truth (SSOT)**
+   - `registry.py` is the ONLY place where tools are discovered and collected
+   - Tools are auto-discovered from `mcp/tools/` directory
+
+3. **Single Entry Points**
+   - `mcp/server.py` - MCP server entry point
+   - `agent/client.py` - Agent entry point
+   - Other modules (planner, executor, memory) are NEVER executed directly
+
+## Project Structure
+
+```
+Research_agent/
+├─ mcp/                          # MCP Layer (side-effects allowed)
+│  ├─ __init__.py
+│  ├─ server.py                  # MCP server entrypoint
+│  ├─ registry.py                # Tool auto-discovery (SSOT)
+│  ├─ base.py                    # Tool base classes
+│  └─ tools/
+│     ├─ pdf.py                  # PDF extraction tools
+│     ├─ arxiv.py                # arXiv API tools
+│     └─ web_search.py           # Web search tools (Tavily)
+│
+├─ agent/                        # Agent Layer (no side-effects)
+│  ├─ __init__.py
+│  ├─ client.py                  # Agent entrypoint (orchestration)
+│  ├─ planner.py                 # Goal → plan creation
+│  ├─ executor.py                # Plan → MCP calls
+│  └─ memory.py                  # State storage
+│
+├─ requirements/
+│  ├─ base.txt                   # Common dependencies
+│  ├─ mcp.txt                    # MCP server dependencies
+│  └─ agent.txt                  # Agent dependencies
+│
+├─ docker/
+│  ├─ Dockerfile.mcp             # MCP server image
+│  └─ Dockerfile.agent           # Agent image
+│
+├─ scripts/
+│  ├─ run-mcp.sh                 # Start MCP server
+│  └─ process-all.sh             # Process all PDFs
+│
+├─ pdf/                          # Input PDF files
+├─ output/                       # Extracted content
+├─ .env.example                  # Environment template
+├─ docker-compose.yml            # Service orchestration
+└─ README.md
+```
 
 ## Quick Start
 
-### 1. 의존성 설치
+### 1. Setup Environment
 
 ```bash
-docker compose up --build
-```
+# Clone the repository
+git clone <repo-url>
+cd Research_agent
 
-
-### 2. Add PDF Files
-
-Place your PDF files in the `./pdf` folder:
-
-
-### 3. 백그라운드에 MCP 서버 키기
-
-```bash
-docker compose up -d pdf-server
-```
-
-### 4. 클라이언트 실행
-
-```bash
-docker compose run --rm -it chatgpt-client
-```
-
-# Set up your API key
+# Create .env file
 cp .env.example .env
-# Edit .env and add your OPENAI_API_KEY
-
-# Run interactive chat
-python chatgpt_client.py
-
-# Or run a single command
-python chatgpt_client.py "Process all PDFs and summarize the content"
+# Edit .env and add your API keys:
+# - OPENAI_API_KEY (required)
+# - TAVILY_API_KEY (optional, for web search)
 ```
 
-## Directory Structure
+### 2. Build Docker Images
 
-```
-.
-├── pdf/                    # Put your PDF files here
-├── output/                 # Extracted content will be saved here
-│   └── <pdf-name>/
-│       ├── extracted_text.txt
-│       ├── extracted_text.json
-│       ├── image_metadata.json
-│       └── images/
-│           ├── page1_img1.png
-│           └── ...
-├── mcp-pdf-server/         # MCP server source code
-│   ├── Dockerfile
-│   ├── requirements.txt
-│   └── server.py
-├── scripts/
-│   ├── build.sh           # Build Docker image
-│   ├── run-mcp.sh         # Run MCP server
-│   └── process-all.sh     # Process all PDFs
-├── chatgpt_client.py       # ChatGPT API client
-├── requirements.txt        # Python dependencies
-├── .env.example            # Environment template
-├── docker-compose.yml
-└── .claude/
-    └── mcp.json           # Claude Code MCP configuration
+```bash
+docker compose build
 ```
 
-## MCP Tools Available
+### 3. Add PDF Files
 
+```bash
+cp /path/to/your/papers/*.pdf ./pdf/
+```
+
+### 4. Run
+
+**Interactive Mode:**
+```bash
+# Start MCP server (background)
+docker compose up -d mcp-server
+
+# Run Agent interactively
+docker compose run --rm -it agent
+```
+
+**Single Command:**
+```bash
+docker compose run --rm agent "List all PDFs and extract text from each"
+```
+
+**Process All PDFs:**
+```bash
+./scripts/process-all.sh
+```
+
+## Available Tools
+
+### PDF Tools
 | Tool | Description |
 |------|-------------|
-| `list_pdfs` | List all PDF files in the /data/pdf directory |
-| `extract_text` | Extract text from a specific PDF file |
-| `extract_images` | Extract all images from a specific PDF file |
-| `extract_all` | Extract both text and images from a specific PDF |
-| `process_all_pdfs` | Process all PDFs in the directory |
-| `get_pdf_info` | Get metadata and info about a specific PDF |
+| `list_pdfs` | List all PDF files in the directory |
+| `extract_text` | Extract text from a PDF |
+| `extract_images` | Extract images from a PDF |
+| `extract_all` | Extract text and images |
+| `process_all_pdfs` | Process all PDFs |
+| `get_pdf_info` | Get PDF metadata |
+| `read_extracted_text` | Read previously extracted text |
 
-## Using with Claude Code
+### arXiv Tools
+| Tool | Description |
+|------|-------------|
+| `arxiv_search` | Search arXiv for papers |
+| `arxiv_get_paper` | Get paper details by ID |
+| `arxiv_download` | Download paper PDF |
 
-1. Build the Docker image first:
-   ```bash
-   ./scripts/build.sh
-   ```
+### Web Search Tools
+| Tool | Description |
+|------|-------------|
+| `web_search` | Search the web (Tavily) |
+| `web_get_content` | Fetch URL content |
+| `web_research` | In-depth topic research |
 
-2. The MCP server is auto-configured via `.claude/mcp.json`
+## API Endpoints
 
-3. In Claude Code, you can use commands like:
-   - "List all PDFs in the folder"
-   - "Extract text from paper.pdf"
-   - "Process all PDF papers and extract images"
-
-## Manual MCP Server Usage
-
-Run the MCP server directly:
-
-```bash
-./scripts/run-mcp.sh
-```
-
-Or with docker-compose:
+The MCP server exposes a REST API at `http://localhost:8000`:
 
 ```bash
-docker-compose up pdf-extraction-mcp
+# List all tools
+curl http://localhost:8000/tools
+
+# Get tools in OpenAI format
+curl http://localhost:8000/tools/schema
+
+# Execute a tool
+curl -X POST http://localhost:8000/tools/list_pdfs/execute \
+  -H "Content-Type: application/json" \
+  -d '{"arguments": {}}'
+
+# Convenience endpoints
+curl http://localhost:8000/pdf/list
+curl "http://localhost:8000/arxiv/search?query=transformer"
 ```
 
-## Output Format
-
-### Text Extraction
-
-`extracted_text.txt`:
-```
-=== Page 1 ===
-[Text content from page 1]
-
-=== Page 2 ===
-[Text content from page 2]
-...
-```
-
-`extracted_text.json`:
-```json
-{
-  "filename": "paper.pdf",
-  "total_pages": 10,
-  "pages": [
-    {"page_number": 1, "text": "..."},
-    {"page_number": 2, "text": "..."}
-  ]
-}
-```
-
-### Image Extraction
-
-Images are saved as `page{N}_img{M}.{ext}` in the `images/` subdirectory.
-
-`image_metadata.json`:
-```json
-{
-  "filename": "paper.pdf",
-  "total_pages": 10,
-  "total_images_extracted": 15,
-  "images": [
-    {
-      "page_number": 1,
-      "image_index": 1,
-      "filename": "page1_img1.png",
-      "format": "png",
-      "size_bytes": 12345
-    }
-  ]
-}
-```
-
-## Using ChatGPT API Client
-
-The ChatGPT client uses OpenAI's function calling to interact with PDF tools.
-
-### Setup
-
-1. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-2. Configure API key:
-   ```bash
-   cp .env.example .env
-   # Edit .env file:
-   # OPENAI_API_KEY=your-key-here
-   # OPENAI_MODEL=gpt-4o  (optional, default: gpt-4o)
-   ```
-
-### Interactive Mode
-
-```bash
-python chatgpt_client.py
-```
-
-Commands in interactive mode:
-- `/quit` - Exit the program
-- `/reset` - Reset conversation history
-- `/pdfs` - List PDF files
-
-### Single Command Mode
-
-```bash
-# Process and analyze
-python chatgpt_client.py "List all PDFs and show their info"
-python chatgpt_client.py "Extract text from paper.pdf and summarize it"
-python chatgpt_client.py "Process all PDFs and create a summary of each"
-```
-
-### Example Session
+## Example Usage
 
 ```
 You: What PDFs do I have?
   [Calling list_pdfs...]
 Assistant: You have 3 PDF files: paper1.pdf, paper2.pdf, paper3.pdf
 
-You: Extract and summarize paper1.pdf
+You: Search arXiv for papers about attention mechanisms
+  [Calling arxiv_search...]
+Assistant: Found 10 papers about attention mechanisms...
+
+You: Download the first one and extract its content
+  [Calling arxiv_download...]
   [Calling extract_all...]
-  [Calling read_extracted_text...]
-Assistant: Here's a summary of paper1.pdf...
+Assistant: Downloaded and extracted the paper. Here's a summary...
 ```
 
 ## Requirements
 
-- Docker
-- Python 3.8+ (for ChatGPT client)
-- OpenAI API key (for ChatGPT client)
-- (Optional) Claude Code for MCP integration
+- Docker & Docker Compose
+- OpenAI API key
+- (Optional) Tavily API key for web search
 
 ## License
 

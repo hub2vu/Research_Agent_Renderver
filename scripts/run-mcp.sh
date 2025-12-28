@@ -1,15 +1,15 @@
 #!/bin/bash
-# Run the PDF Extraction MCP server interactively
+# Run MCP server standalone
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 
-echo "Starting PDF Extraction MCP server..."
 cd "$PROJECT_DIR"
 
-docker run -i --rm \
-    -v "$PROJECT_DIR/pdf:/data/pdf:ro" \
-    -v "$PROJECT_DIR/output:/data/output" \
-    pdf-extraction-mcp
+echo "Starting MCP server..."
+docker compose up -d mcp-server
+
+echo "MCP server is running at http://localhost:8000"
+echo "Use 'docker compose logs -f mcp-server' to view logs"
