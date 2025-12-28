@@ -58,6 +58,7 @@ class WebSearchTool(MCPTool):
             ToolParameter(
                 name="include_domains",
                 type="array",
+                items_type="string",
                 description="List of domains to include in search",
                 required=False,
                 default=None
@@ -65,6 +66,7 @@ class WebSearchTool(MCPTool):
             ToolParameter(
                 name="exclude_domains",
                 type="array",
+                items_type="string",
                 description="List of domains to exclude from search",
                 required=False,
                 default=None

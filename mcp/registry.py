@@ -121,29 +121,49 @@ def get_openai_tools_schema() -> List[Dict]:
     schemas = []
 
     for name, definition in _tool_registry.items():
-        properties = {}
-        required = []
+        properties: Dict[str, Dict] = {}
+        required: List[str] = []
 
         for param in definition.parameters:
-            properties[param.name] = {
-                "type": param.type,
+            prop: Dict[str, Dict] = {
                 "description": param.description
             }
+
+            # 🔥 핵심: array 타입 처리
+            if param.type == "array":
+                prop["type"] = "array"
+                prop["items"] = {
+                    "type": getattr(param, "items_type", "string")
+                }
+            else:
+                prop["type"] = param.type
+
+            # default 값이 있으면 포함 (OpenAI schema 허용)
+            if getattr(param, "default", None) is not None:
+                prop["default"] = param.default
+
+            properties[param.name] = prop
+
             if param.required:
                 required.append(param.name)
 
-        schemas.append({
+        schema = {
             "type": "function",
             "function": {
                 "name": name,
                 "description": definition.description,
                 "parameters": {
                     "type": "object",
-                    "properties": properties,
-                    "required": required
+                    "properties": properties
                 }
             }
-        })
+        }
+
+        # required가 있을 때만 포함 (빈 리스트는 넣지 않는 게 안전)
+        if required:
+            schema["function"]["parameters"]["required"] = required
+
+        schemas.append(schema)
 
     return schemas
 
