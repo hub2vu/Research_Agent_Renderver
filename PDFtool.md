@@ -1,10 +1,10 @@
-1️⃣ list_pdfs
+##1️⃣ list_pdfs
 
-기능
+#기능
 
 설정된 PDF 디렉터리(PDF_DIR) 내의 모든 PDF 파일을 나열
 
-세부 동작
+#세부 동작
 
 *.pdf 파일 스캔
 
@@ -26,7 +26,7 @@ PDF 디렉터리 경로
 
 PDF 파일 목록 + 크기 정보
 
-2️⃣ extract_text
+##2️⃣ extract_text
 
 기능
 
@@ -54,7 +54,7 @@ PDF 파일 열기
 
 페이지별 텍스트 리스트
 
-3️⃣ extract_images
+##3️⃣ extract_images
 
 기능
 
@@ -88,7 +88,7 @@ output/{pdf_name}/images/에 저장
 
 전체 추출된 이미지 개수
 
-4️⃣ extract_all
+##4️⃣ extract_all
 
 기능
 
@@ -121,7 +121,7 @@ extract_images 실행
 
 이미지 추출 결과 및 이미지 저장 경로
 
-5️⃣ process_all_pdfs
+##5️⃣ process_all_pdfs
 
 기능
 
@@ -145,7 +145,7 @@ list_pdfs로 전체 PDF 목록 획득
 
 PDF별 처리 결과 목록
 
-6️⃣ get_pdf_info
+##6️⃣ get_pdf_info
 
 기능
 
@@ -179,7 +179,7 @@ PDF 메타데이터 읽기
 
 전체 이미지 수
 
-7️⃣ read_extracted_text
+##7️⃣ read_extracted_text
 
 기능
 
