@@ -53,6 +53,7 @@ Research_agent/
 │  ├─ base.py                    # Tool base classes
 │  └─ tools/
 │     ├─ pdf.py                  # PDF extraction tools
+│     ├─ refer.py                # reference extraction tools
 │     ├─ arxiv.py                # arXiv API tools
 │     └─ web_search.py           # Web search tools (Tavily)
 │
