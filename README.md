@@ -119,7 +119,7 @@ cp /path/to/your/papers/*.pdf ./pdf/
 docker compose up -d mcp-server
 
 # Run Agent interactively
-docker compose run --rm -it agent
+docker compose run --rm agent
 ```
 
 **Single Command:**
