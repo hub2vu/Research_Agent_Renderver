@@ -1,6 +1,7 @@
 {
   "name": "research-agent-web",
   "version": "1.0.0",
+  "type": "module",
   "description": "Web UI for Research Agent paper graph visualization",
   "private": true,
   "scripts": {
