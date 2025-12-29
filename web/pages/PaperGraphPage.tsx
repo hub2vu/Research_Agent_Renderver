@@ -15,7 +15,7 @@ import {
   fetchPaperIfMissing,
   GraphNode,
   GraphEdge
-} from '../api/mcp';
+} from '../lib/mcp';
 
 interface PaperGraphState {
   nodes: GraphNode[];

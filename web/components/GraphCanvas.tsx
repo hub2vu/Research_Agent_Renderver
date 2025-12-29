@@ -10,7 +10,7 @@
 
 import React, { useEffect, useRef, useCallback, useState } from 'react';
 import * as d3 from 'd3';
-import { GraphNode, GraphEdge } from '../api/mcp';
+import { GraphNode, GraphEdge } from '../lib/mcp';
 
 interface GraphCanvasProps {
   nodes: GraphNode[];

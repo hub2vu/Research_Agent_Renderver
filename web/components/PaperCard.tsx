@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { GraphNode } from '../api/mcp';
+import { GraphNode } from '../lib/mcp';
 
 interface PaperCardProps {
   node: GraphNode;

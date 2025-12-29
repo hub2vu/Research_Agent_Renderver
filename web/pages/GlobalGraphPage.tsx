@@ -8,7 +8,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import GraphCanvas from '../components/GraphCanvas';
 import SidePanel from '../components/SidePanel';
-import { getGlobalGraph, GraphNode, GraphEdge } from '../api/mcp';
+import { getGlobalGraph, GraphNode, GraphEdge } from '../lib/mcp';
 
 interface GlobalGraphState {
   nodes: GraphNode[];
