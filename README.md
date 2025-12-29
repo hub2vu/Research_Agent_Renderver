@@ -1,30 +1,41 @@
 # Research Agent
 
-A Docker-based research assistant with MCP (Model Context Protocol) architecture.
+A Docker-based research assistant with MCP (Model Context Protocol) architecture and paper graph visualization.
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                        Agent Layer                          │
-│  ┌─────────┐  ┌──────────┐  ┌──────────┐  ┌─────────────┐  │
-│  │ client  │──│ planner  │──│ executor │──│   memory    │  │
-│  │ (entry) │  │          │  │          │  │             │  │
-│  └────┬────┘  └──────────┘  └─────┬────┘  └─────────────┘  │
-│       │         Planning          │         State           │
-│       │         (no side-effects) │         Storage         │
-└───────┼───────────────────────────┼─────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│                           Web UI (React)                             │
+│  ┌──────────────────────────┐  ┌──────────────────────────────────┐ │
+│  │   GlobalGraphPage (B)    │  │      PaperGraphPage (A)          │ │
+│  │   - All papers overview  │  │   - Reference exploration        │ │
+│  │   - Embedding similarity │  │   - Incremental expansion        │ │
+│  └────────────┬─────────────┘  └───────────────┬──────────────────┘ │
+│               └────────────────┬───────────────┘                    │
+│                                │ HTTP :3000                         │
+└────────────────────────────────┼────────────────────────────────────┘
+                                 │
+┌────────────────────────────────┼────────────────────────────────────┐
+│                        Agent Layer                                   │
+│  ┌─────────┐  ┌──────────┐  ┌──────────┐  ┌─────────────┐          │
+│  │ client  │──│ planner  │──│ executor │──│   memory    │          │
+│  │ (entry) │  │          │  │          │  │             │          │
+│  └────┬────┘  └──────────┘  └─────┬────┘  └─────────────┘          │
+│       │         Planning          │         State                   │
+│       │         (no side-effects) │         Storage                 │
+└───────┼───────────────────────────┼─────────────────────────────────┘
         │                           │
-        │      HTTP API             │
+        │      HTTP API :8000       │
         ▼                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│                         MCP Layer                           │
-│  ┌─────────┐  ┌──────────┐  ┌──────────────────────────┐   │
-│  │ server  │──│ registry │──│         tools/           │   │
-│  │ (entry) │  │ (SSOT)   │  │  pdf | arxiv | web_search│   │
-│  └─────────┘  └──────────┘  └──────────────────────────┘   │
-│                               Side-effects allowed          │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│                          MCP Layer                                   │
+│  ┌─────────┐  ┌──────────┐  ┌─────────────────────────────────────┐ │
+│  │ server  │──│ registry │──│              tools/                 │ │
+│  │ (entry) │  │ (SSOT)   │  │  pdf | arxiv | web_search | graph   │ │
+│  └─────────┘  └──────────┘  └─────────────────────────────────────┘ │
+│                               Side-effects allowed                   │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Key Principles
@@ -32,6 +43,7 @@ A Docker-based research assistant with MCP (Model Context Protocol) architecture
 1. **Separation of Concerns**
    - Agent Layer: Thinking, planning, decision-making (NO side-effects)
    - MCP Layer: Tool execution, file I/O, API calls (side-effects allowed)
+   - Web UI: Visualization and interaction
 
 2. **Single Source of Truth (SSOT)**
    - `registry.py` is the ONLY place where tools are discovered and collected
@@ -53,9 +65,10 @@ Research_agent/
 │  ├─ base.py                    # Tool base classes
 │  └─ tools/
 │     ├─ pdf.py                  # PDF extraction tools
-│     ├─ refer.py                # reference extraction tools
+│     ├─ refer.py                # Reference extraction tools
 │     ├─ arxiv.py                # arXiv API tools
-│     └─ web_search.py           # Web search tools (Tavily)
+│     ├─ web_search.py           # Web search tools (Tavily)
+│     └─ paper_graph.py          # Paper graph tools (Graph A/B)
 │
 ├─ agent/                        # Agent Layer (no side-effects)
 │  ├─ __init__.py
@@ -64,6 +77,19 @@ Research_agent/
 │  ├─ executor.py                # Plan → MCP calls
 │  └─ memory.py                  # State storage
 │
+├─ web/                          # Web UI (React/TypeScript)
+│  ├─ api/mcp.ts                 # MCP REST client
+│  ├─ components/
+│  │  ├─ GraphCanvas.tsx         # D3.js force-directed graph
+│  │  ├─ SidePanel.tsx           # Paper details panel
+│  │  └─ PaperCard.tsx           # Paper metadata card
+│  ├─ pages/
+│  │  ├─ GlobalGraphPage.tsx     # Graph B - All papers overview
+│  │  └─ PaperGraphPage.tsx      # Graph A - Reference exploration
+│  ├─ App.tsx                    # Router setup
+│  ├─ main.tsx                   # Entry point
+│  └─ package.json
+│
 ├─ requirements/
 │  ├─ base.txt                   # Common dependencies
 │  ├─ mcp.txt                    # MCP server dependencies
@@ -71,7 +97,8 @@ Research_agent/
 │
 ├─ docker/
 │  ├─ Dockerfile.mcp             # MCP server image
-│  └─ Dockerfile.agent           # Agent image
+│  ├─ Dockerfile.agent           # Agent image
+│  └─ Dockerfile.web             # Web UI image
 │
 ├─ scripts/
 │  ├─ run-mcp.sh                 # Start MCP server
@@ -79,10 +106,31 @@ Research_agent/
 │
 ├─ pdf/                          # Input PDF files
 ├─ output/                       # Extracted content
+│  ├─ images/                    # Extracted images
+│  ├─ text/                      # Extracted text
+│  └─ graph/                     # Graph cache
+│     ├─ global_graph.json       # Global graph (Graph B)
+│     └─ paper/                  # Per-paper graphs (Graph A)
+│        └─ <paper_id>.json
+│
 ├─ .env.example                  # Environment template
 ├─ docker-compose.yml            # Service orchestration
 └─ README.md
 ```
+
+## Paper Graph System
+
+### Graph A: Paper Mode (Reference Exploration)
+- **Purpose**: Explore references of a specific paper
+- **Behavior**: On-demand, incremental expansion
+- **Usage**: Double-click nodes to expand their references
+- **Center**: Selected paper is fixed at center
+
+### Graph B: Global Mode (All Papers Overview)
+- **Purpose**: Visualize relationships across all papers
+- **Behavior**: Batch processing with embedding-based similarity
+- **Clustering**: Louvain community detection
+- **Similarity**: SentenceTransformer embeddings
 
 ## Quick Start
 
@@ -114,11 +162,17 @@ cp /path/to/your/papers/*.pdf ./pdf/
 
 ### 4. Run
 
-**Interactive Mode:**
+**Start All Services:**
 ```bash
-# Start MCP server (background)
-docker compose up -d mcp-server
+# Start MCP server and Web UI
+docker compose up -d mcp-server web
 
+# Open Web UI
+open http://localhost:3000
+```
+
+**Interactive Agent:**
+```bash
 # Run Agent interactively
 docker compose run --rm agent
 ```
@@ -160,6 +214,16 @@ docker compose run --rm agent "List all PDFs and extract text from each"
 | `web_get_content` | Fetch URL content |
 | `web_research` | In-depth topic research |
 
+### Paper Graph Tools
+| Tool | Description |
+|------|-------------|
+| `has_pdf` | Check if PDF exists for a paper ID |
+| `fetch_paper_if_missing` | Download from arXiv if not present |
+| `extract_references` | Extract references from a PDF |
+| `get_references` | Get cached references for a paper |
+| `build_reference_subgraph` | Build Graph A (paper-centered) |
+| `build_global_graph` | Build Graph B (all papers) |
+
 ## API Endpoints
 
 The MCP server exposes a REST API at `http://localhost:8000`:
@@ -176,10 +240,30 @@ curl -X POST http://localhost:8000/tools/list_pdfs/execute \
   -H "Content-Type: application/json" \
   -d '{"arguments": {}}'
 
+# Graph endpoints
+curl http://localhost:8000/tools/build_global_graph/execute \
+  -H "Content-Type: application/json" \
+  -d '{"arguments": {"similarity_threshold": 0.7}}'
+
 # Convenience endpoints
 curl http://localhost:8000/pdf/list
 curl "http://localhost:8000/arxiv/search?query=transformer"
 ```
+
+## Web UI
+
+Access the web interface at `http://localhost:3000`:
+
+| Page | URL | Description |
+|------|-----|-------------|
+| Global Graph | `/` | Overview of all papers (Graph B) |
+| Paper Graph | `/paper/:id` | Reference exploration for a paper (Graph A) |
+
+### Graph Interactions
+- **Click**: Select a node to view details
+- **Double-click**: Expand references (Graph A only)
+- **Drag**: Reposition nodes
+- **Controls**: Adjust similarity threshold, rebuild graph
 
 ## Example Usage
 
@@ -196,6 +280,10 @@ You: Download the first one and extract its content
   [Calling arxiv_download...]
   [Calling extract_all...]
 Assistant: Downloaded and extracted the paper. Here's a summary...
+
+You: Build a reference graph for paper 2106.09685
+  [Calling build_reference_subgraph...]
+Assistant: Built reference graph with 15 papers and 23 edges.
 ```
 
 ## Requirements
