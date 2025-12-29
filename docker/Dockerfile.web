@@ -1,0 +1,15 @@
+# Web UI Dockerfile
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install dependencies
+COPY web/package*.json ./
+RUN npm install
+
+# Copy source
+COPY web/ ./src/
+
+# Development server
+EXPOSE 3000
+CMD ["npm", "run", "dev"]

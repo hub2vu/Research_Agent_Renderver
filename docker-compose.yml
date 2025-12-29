@@ -50,6 +50,24 @@ services:
     stdin_open: true
     tty: true
 
+  # Web UI - Graph visualization
+  web:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.web
+    container_name: research-web
+    volumes:
+      - ./web:/app/src:ro
+    environment:
+      - MCP_SERVER_URL=http://mcp-server:8000
+      - NODE_ENV=development
+    ports:
+      - "3000:3000"
+    networks:
+      - research-network
+    depends_on:
+      - mcp-server
+
 networks:
   research-network:
     driver: bridge

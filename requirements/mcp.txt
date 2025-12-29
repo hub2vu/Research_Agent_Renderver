@@ -14,3 +14,10 @@ arxiv>=2.0.0
 
 # Web Search (Tavily)
 tavily-python>=0.3.0
+
+# Graph Analysis
+networkx>=3.0
+
+# Embeddings & Similarity
+sentence-transformers>=2.2.0
+scikit-learn>=1.3.0
