@@ -5,7 +5,8 @@
  * Web UI should NEVER perform side-effects directly.
  */
 
-const MCP_BASE_URL = process.env.NEXT_PUBLIC_MCP_URL || 'http://localhost:8000';
+// Use /api prefix for Vite proxy to forward requests to MCP server
+const MCP_BASE_URL = '/api';
 
 // Types
 export interface GraphNode {
@@ -87,10 +88,13 @@ export async function executeTool(
 /**
  * Get global graph data (Graph B)
  */
-export async function getGlobalGraph(): Promise<GraphData> {
+export async function getGlobalGraph(
+  similarityThreshold: number = 0.7,
+  useEmbeddings: boolean = true
+): Promise<GraphData> {
   const result = await executeTool('build_global_graph', {
-    similarity_threshold: 0.7,
-    use_embeddings: true
+    similarity_threshold: similarityThreshold,
+    use_embeddings: useEmbeddings
   });
 
   if (!result.success) {
@@ -123,10 +127,10 @@ export async function rebuildGlobalGraph(
 /**
  * Get paper reference subgraph (Graph A) - Initial load
  */
-export async function getPaperGraph(paperId: string): Promise<GraphData> {
+export async function getPaperGraph(paperId: string, depth: number = 1): Promise<GraphData> {
   const result = await executeTool('build_reference_subgraph', {
     paper_id: paperId,
-    depth: 1,
+    depth: depth,
     existing_nodes: []
   });
 
@@ -168,9 +172,9 @@ export async function expandPaperGraph(
 /**
  * Check if paper PDF exists
  */
-export async function hasPdf(paperId: string): Promise<boolean> {
+export async function hasPdf(paperId: string): Promise<{ exists: boolean }> {
   const result = await executeTool('has_pdf', { paper_id: paperId });
-  return result.success && result.result.exists;
+  return { exists: result.success && result.result?.exists };
 }
 
 /**

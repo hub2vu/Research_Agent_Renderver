@@ -6,7 +6,7 @@ WORKDIR /app
 COPY web/package*.json ./
 RUN npm install
 
-# 🔥 핵심 수정: src 없이 바로 복사
+# Copy all source files to /app (not /app/src)
 COPY web/ ./
 
 EXPOSE 3000

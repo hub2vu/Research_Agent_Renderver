@@ -57,7 +57,8 @@ services:
       dockerfile: docker/Dockerfile.web
     container_name: research-web
     volumes:
-      - ./web:/app/src:ro
+      - ./web:/app
+      - /app/node_modules
     environment:
       - MCP_SERVER_URL=http://mcp-server:8000
       - NODE_ENV=development
