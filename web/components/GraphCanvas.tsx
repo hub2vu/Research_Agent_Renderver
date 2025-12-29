@@ -8,7 +8,7 @@
  * All data fetching goes through MCP API.
  */
 
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback, useState } from 'react';
 import * as d3 from 'd3';
 import { GraphNode, GraphEdge } from '../api/mcp';
 
@@ -17,10 +17,9 @@ interface GraphCanvasProps {
   edges: GraphEdge[];
   mode: 'global' | 'paper';
   centerId?: string;
+  selectedNodeId?: string;
   onNodeClick?: (node: GraphNode) => void;
   onNodeDoubleClick?: (node: GraphNode) => void;
-  width?: number;
-  height?: number;
 }
 
 // Color palette for clusters
@@ -34,13 +33,29 @@ export default function GraphCanvas({
   edges,
   mode,
   centerId,
+  selectedNodeId,
   onNodeClick,
-  onNodeDoubleClick,
-  width = 800,
-  height = 600
+  onNodeDoubleClick
 }: GraphCanvasProps) {
   const svgRef = useRef<SVGSVGElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const simulationRef = useRef<d3.Simulation<any, any> | null>(null);
+  const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
+
+  // Responsive sizing
+  useEffect(() => {
+    const updateDimensions = () => {
+      if (containerRef.current) {
+        const { clientWidth, clientHeight } = containerRef.current;
+        setDimensions({ width: clientWidth || 800, height: clientHeight || 600 });
+      }
+    };
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+    return () => window.removeEventListener('resize', updateDimensions);
+  }, []);
+
+  const { width, height } = dimensions;
 
   // Get force parameters based on mode
   const getForceParams = useCallback(() => {
@@ -217,15 +232,22 @@ export default function GraphCanvas({
   }, []);
 
   return (
-    <svg
-      ref={svgRef}
-      width={width}
-      height={height}
+    <div
+      ref={containerRef}
       style={{
+        width: '100%',
+        height: '100%',
         border: '1px solid #e2e8f0',
         borderRadius: '8px',
-        backgroundColor: '#f7fafc'
+        backgroundColor: '#f7fafc',
+        overflow: 'hidden'
       }}
-    />
+    >
+      <svg
+        ref={svgRef}
+        width={width}
+        height={height}
+      />
+    </div>
   );
 }
