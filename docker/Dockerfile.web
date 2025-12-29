@@ -1,4 +1,3 @@
-# Web UI Dockerfile
 FROM node:20-alpine
 
 WORKDIR /app
@@ -7,8 +6,8 @@ WORKDIR /app
 COPY web/package*.json ./
 RUN npm install
 
-# Copy source (❗ src가 아니라 root로)
-COPY web/ .
+# 🔥 핵심 수정: src 없이 바로 복사
+COPY web/ ./
 
 EXPOSE 3000
 CMD ["npm", "run", "dev"]
