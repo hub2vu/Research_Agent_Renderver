@@ -7,9 +7,8 @@ WORKDIR /app
 COPY web/package*.json ./
 RUN npm install
 
-# Copy source
-COPY web/ ./src/
+# Copy source (❗ src가 아니라 root로)
+COPY web/ .
 
-# Development server
 EXPOSE 3000
 CMD ["npm", "run", "dev"]
