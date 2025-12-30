@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 
 import GraphCanvas from '../components/GraphCanvas';
 import SidePanel from '../components/SidePanel';
-import { getGlobalGraph, GraphNode, GraphEdge } from '../lib/mcp';
+import { getGlobalGraph, rebuildGlobalGraph, GraphNode, GraphEdge } from '../lib/mcp';
 
 interface GlobalGraphState {
   nodes: GraphNode[];
@@ -43,34 +43,46 @@ export default function GlobalGraphPage() {
   // [NEW] Polling Ref
   const lastTimestampRef = useRef<number>(0);
 
-  // Load global graph
+  // Load global graph from global_graph.json (on mount)
   const loadGraph = useCallback(async () => {
     setState(prev => ({ ...prev, loading: true, error: null }));
 
     try {
-      const data = await getGlobalGraph({
-        similarityThreshold,
-        useEmbeddings
-      });
-
-      const meta = {
-        total_papers: data.meta?.total_papers ?? data.nodes.length,
-        total_edges: data.meta?.total_edges ?? data.edges.length,
-        similarity_threshold: data.meta?.similarity_threshold ?? similarityThreshold,
-        used_embeddings: data.meta?.used_embeddings ?? useEmbeddings,
-      };
+      const data = await getGlobalGraph();
       setState({
-        nodes: data.nodes,
-        edges: data.edges,
+        nodes: data.nodes || [],
+        edges: data.edges || [],
         loading: false,
-        error: null,
-        meta
+        error: data.meta?.error || null,
+        meta: data.meta
       });
     } catch (err) {
       setState(prev => ({
         ...prev,
         loading: false,
         error: err instanceof Error ? err.message : 'Failed to load graph'
+      }));
+    }
+  }, []);
+
+  // Rebuild global graph with new parameters
+  const handleRebuild = useCallback(async () => {
+    setState(prev => ({ ...prev, loading: true, error: null }));
+
+    try {
+      const data = await rebuildGlobalGraph(similarityThreshold, useEmbeddings);
+      setState({
+        nodes: data.nodes || [],
+        edges: data.edges || [],
+        loading: false,
+        error: null,
+        meta: data.meta
+      });
+    } catch (err) {
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: err instanceof Error ? err.message : 'Failed to rebuild graph'
       }));
     }
   }, [similarityThreshold, useEmbeddings]);
@@ -86,9 +98,9 @@ export default function GlobalGraphPage() {
       try {
         const res = await fetch('/output/graph/ui_state.json', { cache: 'no-store' });
         if (!res.ok) return;
-        
+
         const data = await res.json();
-        
+
         if (data.timestamp > lastTimestampRef.current) {
           lastTimestampRef.current = data.timestamp;
 
@@ -128,10 +140,6 @@ export default function GlobalGraphPage() {
   const handleViewPaperGraph = useCallback((paperId: string) => {
     navigate(`/paper/${encodeURIComponent(paperId)}`);
   }, [navigate]);
-
-  const handleRebuild = useCallback(() => {
-    loadGraph();
-  }, [loadGraph]);
 
   return (
     <div style={{ display: 'flex', height: '100vh', backgroundColor: '#f5f5f5' }}>

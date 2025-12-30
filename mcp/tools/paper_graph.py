@@ -6,6 +6,7 @@ Provides Graph A (Paper Mode) and Graph B (Global Mode) functionality.
 
 import json
 import os
+import re
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -27,6 +28,7 @@ OUTPUT_DIR = Path(os.getenv("OUTPUT_DIR", "/data/output"))
 GRAPH_DIR = OUTPUT_DIR / "graph"
 PAPER_GRAPH_DIR = GRAPH_DIR / "paper"
 UI_STATE_FILE = GRAPH_DIR / "ui_state.json"
+GLOBAL_GRAPH_PATH = GRAPH_DIR / "global_graph.json"
 
 GRAPH_DIR.mkdir(parents=True, exist_ok=True)
 PAPER_GRAPH_DIR.mkdir(parents=True, exist_ok=True)
@@ -37,8 +39,51 @@ try:
 except ImportError:
     HAS_SENTENCE_TRANSFORMERS = False
 
-# ... (HasPDFTool, FetchPaperIfMissingTool, ExtractReferencesTool, GetReferencesTool, FetchPaperMetadataTool, UpdateGraphViewTool 등은 기존과 동일) ...
-# (편의를 위해 위 툴들은 생략하지 않고 아래 전체 코드에 포함합니다)
+
+def extract_paper_title_from_text(text_file_path: Path) -> Optional[str]:
+    """
+    Extract paper title from extracted_text.txt.
+
+    Logic: Look at lines 1-5, find a line with ":",
+    the title is that line + the next line.
+    """
+    if not text_file_path.exists():
+        return None
+
+    try:
+        with open(text_file_path, "r", encoding="utf-8", errors="ignore") as f:
+            lines = []
+            for i, line in enumerate(f):
+                if i >= 5:
+                    break
+                lines.append(line.strip())
+
+        # Find line with ":"
+        for i, line in enumerate(lines):
+            if ":" in line:
+                # Title is this line + next line (if exists)
+                title_parts = [line]
+                if i + 1 < len(lines):
+                    title_parts.append(lines[i + 1])
+
+                title = " ".join(title_parts).strip()
+                # Clean up the title
+                title = re.sub(r"\s+", " ", title)
+                # Remove common prefixes like "Title:" or "Paper:"
+                title = re.sub(r"^(Title|Paper|Article)\s*:\s*", "", title, flags=re.IGNORECASE)
+
+                if len(title) > 5:  # Minimum length check
+                    return title[:200]  # Limit title length
+
+        # Fallback: use first non-empty line as title
+        for line in lines:
+            if line and len(line) > 5:
+                return line[:200]
+
+        return None
+    except Exception:
+        return None
+
 
 class HasPDFTool(MCPTool):
     @property
@@ -103,7 +148,7 @@ class ExtractReferencesTool(MCPTool):
                     if folder.is_dir() and safe_id in folder.name and (folder / "reference_titles.json").exists():
                         titles_path = folder / "reference_titles.json"
                         break
-        
+
         if titles_path:
             try:
                 with open(titles_path, "r") as f: data = json.load(f)
@@ -112,7 +157,7 @@ class ExtractReferencesTool(MCPTool):
                 with open(cache, "w") as f: json.dump({"paper_id": paper_id, "references": refs}, f, indent=2)
                 return {"paper_id": paper_id, "references_count": len(refs), "cache_path": str(cache)}
             except: pass
-        
+
         # PDF Fallback (Simplified)
         return {"paper_id": paper_id, "references_count": 0, "cache_path": None}
 
@@ -136,7 +181,7 @@ class GetReferencesTool(MCPTool):
         for p in paths:
             if p.exists():
                 with open(p, "r") as f: return json.load(f)
-        
+
         return {"paper_id": paper_id, "references": []}
 
 class FetchPaperMetadataTool(MCPTool):
@@ -170,9 +215,7 @@ class UpdateGraphViewTool(MCPTool):
             json.dump({"timestamp": time.time(), "mode": mode, "focus_id": focus_id}, f)
         return {"success": True}
 
-# ==========================================
-# [핵심 수정] BuildReferenceSubgraphTool
-# ==========================================
+
 class BuildReferenceSubgraphTool(MCPTool):
     """Build a reference subgraph for Graph A (Paper Mode) and update UI."""
 
@@ -192,7 +235,7 @@ class BuildReferenceSubgraphTool(MCPTool):
 
     async def execute(self, paper_id: str, depth: int = 1, existing_nodes: List[str] = None) -> Dict[str, Any]:
         safe_id = paper_id.replace("/", "_")
-        
+
         # 1. _refs.json 파일 찾기 (JSON 파일만 있으면 무조건 그림)
         refs_file_path = None
         if PAPER_GRAPH_DIR.exists():
@@ -201,14 +244,14 @@ class BuildReferenceSubgraphTool(MCPTool):
                 if f.name.endswith("refs.json") and safe_id in f.name:
                     refs_file_path = f
                     break
-        
+
         nodes = []
         edges = []
 
         if refs_file_path:
             try:
                 with open(refs_file_path, "r") as f: data = json.load(f)
-                
+
                 # Center Node
                 nodes.append({
                     "id": paper_id,
@@ -224,7 +267,7 @@ class BuildReferenceSubgraphTool(MCPTool):
                     title = ref.get("title", "Unknown")
                     ref_id = ref.get("arxiv_id")
                     target_id = ref_id if ref_id else title
-                    
+
                     nodes.append({
                         "id": target_id,
                         "title": title,
@@ -253,7 +296,7 @@ class BuildReferenceSubgraphTool(MCPTool):
             "new_edges": edges,
             "meta": {"depth": depth}
         }
-        
+
         cache_path = PAPER_GRAPH_DIR / f"{safe_id}.json"
         with open(cache_path, "w") as f: json.dump(graph_data, f, indent=2)
 
@@ -270,11 +313,14 @@ class BuildReferenceSubgraphTool(MCPTool):
 
         return graph_data
 
+
 class BuildGlobalGraphTool(MCPTool):
+    """Build a global graph of all papers (Graph B)."""
+
     @property
     def name(self) -> str: return "build_global_graph"
     @property
-    def description(self) -> str: return "Build global graph"
+    def description(self) -> str: return "Build global graph with paper titles from extracted_text.txt"
     @property
     def parameters(self) -> List[ToolParameter]:
         return [
@@ -315,11 +361,20 @@ class BuildGlobalGraphTool(MCPTool):
         if OUTPUT_DIR.exists():
             for output_folder in OUTPUT_DIR.iterdir():
                 if output_folder.is_dir() and output_folder.name != "graph":
-                    txt_file = output_folder / "extracted_text.json"
+                    # Check for extracted_text.txt first (preferred), then .json
+                    txt_file_txt = output_folder / "extracted_text.txt"
+                    txt_file_json = output_folder / "extracted_text.json"
+
                     text = ""
-                    if txt_file.exists():
+                    if txt_file_txt.exists():
                         try:
-                            with open(txt_file) as f:
+                            with open(txt_file_txt, "r", encoding="utf-8", errors="ignore") as f:
+                                text = f.read()[:2000]  # First 2000 chars for similarity
+                        except:
+                            pass
+                    elif txt_file_json.exists():
+                        try:
+                            with open(txt_file_json) as f:
                                 text = " ".join(
                                     p.get("text", "")[:500]
                                     for p in json.load(f).get("pages", [])[:3]
@@ -327,17 +382,31 @@ class BuildGlobalGraphTool(MCPTool):
                         except Exception:
                             pass
 
-                    meta = self._load_paper_metadata(output_folder)
-                    authors = meta.get("authors") or []
-                    if isinstance(authors, str):
-                        authors = [authors]
-                    papers.append({
-                        "id": output_folder.name,
-                        "text": text,
-                        "title": meta.get("title") or output_folder.name,
-                        "authors": authors,
-                        "year": meta.get("year"),
-                    })
+                    if txt_file_txt.exists() or txt_file_json.exists():
+                        # Try to extract title from extracted_text.txt first
+                        paper_title = extract_paper_title_from_text(txt_file_txt)
+
+                        # Fallback to metadata if title not found
+                        if not paper_title:
+                            meta = self._load_paper_metadata(output_folder)
+                            paper_title = meta.get("title")
+
+                        # Final fallback to folder name
+                        if not paper_title:
+                            paper_title = output_folder.name
+
+                        meta = self._load_paper_metadata(output_folder)
+                        authors = meta.get("authors") or []
+                        if isinstance(authors, str):
+                            authors = [authors]
+
+                        papers.append({
+                            "id": output_folder.name,
+                            "text": text,
+                            "title": paper_title,
+                            "authors": authors,
+                            "year": meta.get("year"),
+                        })
 
         nodes = [
             {
@@ -406,7 +475,9 @@ class BuildGlobalGraphTool(MCPTool):
         }
 
         graph_data = {"nodes": nodes, "edges": edges, "meta": meta}
-        with open(GRAPH_DIR / "global_graph.json", "w") as f:
+
+        # Save to global_graph.json
+        with open(GLOBAL_GRAPH_PATH, "w", encoding="utf-8") as f:
             json.dump(graph_data, f, ensure_ascii=False, indent=2)
 
         try:
@@ -416,3 +487,42 @@ class BuildGlobalGraphTool(MCPTool):
             pass
 
         return graph_data
+
+
+class GetGlobalGraphTool(MCPTool):
+    """Load global graph from global_graph.json (Graph B)."""
+
+    @property
+    def name(self) -> str:
+        return "get_global_graph"
+
+    @property
+    def description(self) -> str:
+        return "Load the global graph from global_graph.json. Returns cached data, use build_global_graph to refresh."
+
+    @property
+    def parameters(self) -> List[ToolParameter]:
+        return []
+
+    @property
+    def category(self) -> str:
+        return "paper_graph"
+
+    async def execute(self) -> Dict[str, Any]:
+        if not GLOBAL_GRAPH_PATH.exists():
+            return {
+                "nodes": [],
+                "edges": [],
+                "meta": {"error": "Global graph not found. Run build_global_graph first."}
+            }
+
+        try:
+            with open(GLOBAL_GRAPH_PATH, "r", encoding="utf-8") as f:
+                graph_data = json.load(f)
+            return graph_data
+        except Exception as e:
+            return {
+                "nodes": [],
+                "edges": [],
+                "meta": {"error": f"Failed to load global graph: {str(e)}"}
+            }

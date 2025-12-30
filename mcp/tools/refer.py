@@ -86,7 +86,7 @@ class ExtractReferenceTitlesTool(MCPTool):
         for idx, (no, entry) in enumerate(ref_items):
             display_no = no if no > 0 else (idx + 1)
             title = self._extract_title_logic(entry)
-            
+
             if title:
                 titles_found.append((display_no, title))
 
@@ -97,7 +97,7 @@ class ExtractReferenceTitlesTool(MCPTool):
             })
 
         titles_list = [t for _, t in titles_found]
-        
+
         result: Dict[str, Any] = {
             "filename": paper_id,  # 정규화된 ID 사용 (그래프 생성 핵심)
             "original_filename": original_id,
@@ -119,25 +119,25 @@ class ExtractReferenceTitlesTool(MCPTool):
 
     def _normalize_paper_id(self, paper_id: str) -> str:
         """
-        arXiv ID(예: 2201.07207)를 감지하여 
+        arXiv ID(예: 2201.07207)를 감지하여
         시스템이 그래프를 생성할 수 있는 DOI 포맷(10.48550_arxiv.2201.07207)으로 변환합니다.
         """
         # 이미 변환된 경우 패스
         if paper_id.startswith("10.48550_arxiv."):
             return paper_id
-            
+
         # arXiv ID 패턴 매칭 (YYMM.NNNNN)
         # 예: 2201.07207, 1706.03762v5
         arxiv_pattern = r'^\d{4}\.\d{4,5}(v\d+)?$'
         if re.match(arxiv_pattern, paper_id):
             return f"10.48550_arxiv.{paper_id}"
-            
+
         return paper_id
 
     def _save_outputs(self, paper_id: str, result: Dict[str, Any], items: List[Dict[str, Any]]):
         out_dir = OUTPUT_DIR / paper_id
         out_dir.mkdir(parents=True, exist_ok=True)
-        
+
         (out_dir / "reference_titles.json").write_text(
             json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8"
         )
@@ -148,14 +148,11 @@ class ExtractReferenceTitlesTool(MCPTool):
             json.dumps(items, ensure_ascii=False, indent=2), encoding="utf-8"
         )
 
-    # ... (이하 _global_preprocess, _isolate_references_block, _parse_reference_items, 
-    #      _extract_title_logic 등 기존 로직 유지) ...
-    
     def _global_preprocess(self, text: str) -> str:
         lines = text.splitlines()
         cleaned_lines = []
         line_counts = Counter(L.strip() for L in lines if len(L.strip()) > 5)
-        
+
         for line in lines:
             s = line.strip()
             line = re.sub(r"\", "", line) # 소스 태그 제거
@@ -175,7 +172,7 @@ class ExtractReferenceTitlesTool(MCPTool):
             if matches:
                 start_idx = matches[-1].end()
                 break
-        
+
         if start_idx == -1: start_idx = int(len(text) * 0.8)
         block = text[start_idx:]
 
@@ -184,7 +181,7 @@ class ExtractReferenceTitlesTool(MCPTool):
         for marker in end_markers:
             m = re.search(marker, block)
             if m and m.start() < end_idx: end_idx = m.start()
-        
+
         return block[:end_idx].strip()
 
     def _parse_reference_items(self, block: str) -> List[Tuple[int, str]]:
@@ -196,7 +193,7 @@ class ExtractReferenceTitlesTool(MCPTool):
         items = []
         matches = list(re.finditer(r"(?m)^\s*\[(\d+)\]\s+", text))
         if not matches: matches = list(re.finditer(r"(?m)^\s*(\d+)\.\s+", text))
-        
+
         for i, m in enumerate(matches):
             no = int(m.group(1))
             start = m.end()
@@ -222,9 +219,9 @@ class ExtractReferenceTitlesTool(MCPTool):
 
     def _extract_title_logic(self, entry: str) -> str:
         clean = re.sub(r"\s+", " ", entry).strip()
-        m_quote = re.search(r"[\"“](.+?)[\"”]", clean)
+        m_quote = re.search(r"[\""](.+?)[\""]", clean)
         if m_quote and len(m_quote.group(1)) > 10: return m_quote.group(1)
-        
+
         parts = clean.split(". ")
         if len(parts) >= 2:
             candidate = parts[1]
@@ -232,7 +229,7 @@ class ExtractReferenceTitlesTool(MCPTool):
             while idx < len(parts) and len(parts[idx]) <= 2 and parts[idx].isupper(): idx += 1
             if idx < len(parts): candidate = parts[idx]
             return self._clean_title_string(candidate)
-            
+
         m_year = re.search(r"\b(19|20)\d{2}\b", clean)
         if m_year:
             pre_year = clean[:m_year.start()]
@@ -246,3 +243,110 @@ class ExtractReferenceTitlesTool(MCPTool):
         text = text.strip(" .,[]()")
         text = re.sub(r"^In\s+.*", "", text, flags=re.IGNORECASE)
         return text.strip()
+
+
+class ExtractAllReferencesTool(MCPTool):
+    """Extract references from all papers in /output/ directory."""
+
+    @property
+    def name(self) -> str:
+        return "extract_all_references"
+
+    @property
+    def description(self) -> str:
+        return (
+            "Extract references from all papers in /output/ directory. "
+            "Processes each paper folder that has extracted_text.txt."
+        )
+
+    @property
+    def category(self) -> str:
+        return "pdf"
+
+    @property
+    def parameters(self) -> List[ToolParameter]:
+        return [
+            ToolParameter(
+                name="save_files",
+                type="boolean",
+                description="Save outputs to reference_titles.json/txt files",
+                required=False,
+                default=True,
+            ),
+            ToolParameter(
+                name="skip_existing",
+                type="boolean",
+                description="Skip papers that already have reference_titles.json",
+                required=False,
+                default=True,
+            ),
+        ]
+
+    async def execute(
+        self,
+        save_files: bool = True,
+        skip_existing: bool = True,
+    ) -> Dict[str, Any]:
+        results = []
+        processed = 0
+        skipped = 0
+        failed = 0
+
+        # Get the extract tool instance
+        extract_tool = ExtractReferenceTitlesTool()
+
+        # Iterate through all folders in OUTPUT_DIR
+        for folder in OUTPUT_DIR.iterdir():
+            if not folder.is_dir():
+                continue
+
+            # Skip the graph folder
+            if folder.name == "graph":
+                continue
+
+            text_file = folder / "extracted_text.txt"
+            refs_file = folder / "reference_titles.json"
+
+            # Skip if no extracted text
+            if not text_file.exists():
+                continue
+
+            # Skip if already processed and skip_existing is True
+            if skip_existing and refs_file.exists():
+                skipped += 1
+                results.append({
+                    "paper": folder.name,
+                    "status": "skipped",
+                    "reason": "reference_titles.json already exists"
+                })
+                continue
+
+            # Extract references for this paper
+            try:
+                result = await extract_tool.execute(
+                    filename=folder.name,
+                    save_files=save_files,
+                    include_raw_entries=False
+                )
+                processed += 1
+                results.append({
+                    "paper": folder.name,
+                    "status": "success",
+                    "references_detected": result.get("references_detected", 0),
+                    "titles_extracted": result.get("titles_extracted", 0)
+                })
+            except Exception as e:
+                failed += 1
+                results.append({
+                    "paper": folder.name,
+                    "status": "failed",
+                    "error": str(e)
+                })
+
+        return {
+            "total_folders": processed + skipped + failed,
+            "processed": processed,
+            "skipped": skipped,
+            "failed": failed,
+            "results": results
+        }

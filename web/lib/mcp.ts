@@ -87,25 +87,32 @@ export async function executeTool(
 // ==================== Graph B (Global) API ====================
 
 /**
- * Get global graph data (Graph B)
+ * Get global graph data (Graph B) - loads from global_graph.json
  */
-export interface GlobalGraphOptions {
-  similarityThreshold?: number;
-  useEmbeddings?: boolean;
+export async function getGlobalGraph(): Promise<GraphData> {
+  const result = await executeTool('get_global_graph', {});
+
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to get global graph');
+  }
+
+  return result.result;
 }
 
-export async function getGlobalGraph(
-  options: GlobalGraphOptions = {}
+/**
+ * Rebuild global graph with new parameters
+ */
+export async function rebuildGlobalGraph(
+  similarityThreshold: number = 0.7,
+  useEmbeddings: boolean = true
 ): Promise<GraphData> {
-  const { similarityThreshold = 0.7, useEmbeddings = true } = options;
-
   const result = await executeTool('build_global_graph', {
     similarity_threshold: similarityThreshold,
     use_embeddings: useEmbeddings
   });
 
   if (!result.success) {
-    throw new Error(result.error || 'Failed to build global graph');
+    throw new Error(result.error || 'Failed to rebuild global graph');
   }
 
   return result.result;
