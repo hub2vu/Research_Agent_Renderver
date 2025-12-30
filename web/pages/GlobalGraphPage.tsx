@@ -1,11 +1,13 @@
 /**
  * GlobalGraphPage (Graph B)
  *
- * Displays the global paper relationship overview with embedding-based
- * similarity clustering. All papers are shown at once.
+ * Displays the global paper relationship overview.
+ * [UPDATED] Adds polling to detect if Agent wants to switch to Paper View.
  */
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+
 import GraphCanvas from '../components/GraphCanvas';
 import SidePanel from '../components/SidePanel';
 import { getGlobalGraph, GraphNode, GraphEdge } from '../lib/mcp';
@@ -24,6 +26,8 @@ interface GlobalGraphState {
 }
 
 export default function GlobalGraphPage() {
+  const navigate = useNavigate();
+
   const [state, setState] = useState<GlobalGraphState>({
     nodes: [],
     edges: [],
@@ -36,7 +40,10 @@ export default function GlobalGraphPage() {
   const [similarityThreshold, setSimilarityThreshold] = useState(0.7);
   const [useEmbeddings, setUseEmbeddings] = useState(true);
 
-  // Load global graph on mount or when parameters change
+  // [NEW] Polling Ref
+  const lastTimestampRef = useRef<number>(0);
+
+  // Load global graph
   const loadGraph = useCallback(async () => {
     setState(prev => ({ ...prev, loading: true, error: null }));
 
@@ -62,18 +69,56 @@ export default function GlobalGraphPage() {
     loadGraph();
   }, [loadGraph]);
 
-  // Handle node selection
+
+  /* ----------------------- [NEW] Agent Polling Logic ----------------------- */
+  useEffect(() => {
+    const checkUiState = async () => {
+      try {
+        const res = await fetch('/output/graph/ui_state.json', { cache: 'no-store' });
+        if (!res.ok) return;
+        
+        const data = await res.json();
+        
+        if (data.timestamp > lastTimestampRef.current) {
+          lastTimestampRef.current = data.timestamp;
+
+          // Agent가 특정 논문을 상세히 보라고 명령한 경우
+          if (data.mode === 'paper' && data.focus_id) {
+            console.log("Agent Navigation Triggered (Global -> Paper):", data.focus_id);
+            navigate(`/paper/${encodeURIComponent(data.focus_id)}`);
+          }
+          // Global 그래프를 갱신하라고 명령한 경우
+          else if (data.mode === 'global') {
+            console.log("Agent Refresh Triggered (Global)");
+            loadGraph();
+          }
+        }
+      } catch (e) {
+        // Ignore polling errors
+      }
+    };
+
+    const interval = setInterval(checkUiState, 1000);
+    return () => clearInterval(interval);
+  }, [navigate, loadGraph]);
+
+
+  // Single click → select node (SidePanel)
   const handleNodeClick = useCallback((node: GraphNode) => {
     setSelectedNode(node);
   }, []);
 
-  // Handle navigation to paper graph (Graph A)
-  const handleViewPaperGraph = useCallback((paperId: string) => {
-    // Navigate to paper graph page
-    window.location.href = `/paper/${encodeURIComponent(paperId)}`;
-  }, []);
+  // Double click → move to Paper Reference Graph
+  const handleNodeDoubleClick = useCallback((node: GraphNode) => {
+    if (!node?.id) return;
+    navigate(`/paper/${encodeURIComponent(node.id)}`);
+  }, [navigate]);
 
-  // Rebuild graph with new parameters
+  // SidePanel button action
+  const handleViewPaperGraph = useCallback((paperId: string) => {
+    navigate(`/paper/${encodeURIComponent(paperId)}`);
+  }, [navigate]);
+
   const handleRebuild = useCallback(() => {
     loadGraph();
   }, [loadGraph]);
@@ -98,16 +143,14 @@ export default function GlobalGraphPage() {
               Global Paper Graph
             </h1>
             <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#718096' }}>
-              Overview of all papers with similarity-based connections
+              Overview of all papers
             </p>
           </div>
 
           {/* Controls */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <label style={{ fontSize: '13px', color: '#4a5568' }}>
-                Similarity Threshold:
-              </label>
+              <label style={{ fontSize: '13px', color: '#4a5568' }}>Similarity:</label>
               <input
                 type="range"
                 min="0.3"
@@ -115,20 +158,18 @@ export default function GlobalGraphPage() {
                 step="0.05"
                 value={similarityThreshold}
                 onChange={(e) => setSimilarityThreshold(parseFloat(e.target.value))}
-                style={{ width: '100px' }}
+                style={{ width: '80px' }}
               />
-              <span style={{ fontSize: '13px', color: '#718096', minWidth: '40px' }}>
-                {similarityThreshold.toFixed(2)}
-              </span>
+              <span style={{ fontSize: '13px', width: '30px' }}>{similarityThreshold.toFixed(2)}</span>
             </div>
 
-            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#4a5568' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
               <input
                 type="checkbox"
                 checked={useEmbeddings}
                 onChange={(e) => setUseEmbeddings(e.target.checked)}
               />
-              Use Embeddings
+              Embeddings
             </label>
 
             <button
@@ -140,82 +181,24 @@ export default function GlobalGraphPage() {
                 color: '#fff',
                 border: 'none',
                 borderRadius: '6px',
-                fontSize: '13px',
                 cursor: state.loading ? 'not-allowed' : 'pointer'
               }}
             >
-              {state.loading ? 'Loading...' : 'Rebuild Graph'}
+              {state.loading ? 'Loading...' : 'Refresh'}
             </button>
           </div>
         </header>
 
         {/* Graph Canvas */}
         <div style={{ flex: 1, position: 'relative' }}>
-          {state.loading && (
-            <div
-              style={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                textAlign: 'center',
-                zIndex: 10
-              }}
-            >
-              <div
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  border: '3px solid #e2e8f0',
-                  borderTopColor: '#4299e1',
-                  borderRadius: '50%',
-                  animation: 'spin 1s linear infinite',
-                  margin: '0 auto 12px'
-                }}
-              />
-              <p style={{ color: '#718096', fontSize: '14px' }}>
-                Building global graph...
-              </p>
-            </div>
-          )}
-
-          {state.error && (
-            <div
-              style={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                textAlign: 'center',
-                color: '#e53e3e'
-              }}
-            >
-              <p style={{ fontSize: '16px', marginBottom: '8px' }}>Error</p>
-              <p style={{ fontSize: '14px' }}>{state.error}</p>
-              <button
-                onClick={handleRebuild}
-                style={{
-                  marginTop: '12px',
-                  padding: '8px 16px',
-                  backgroundColor: '#e53e3e',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer'
-                }}
-              >
-                Retry
-              </button>
-            </div>
-          )}
-
           {!state.loading && !state.error && (
             <GraphCanvas
               nodes={state.nodes}
               edges={state.edges}
               mode="global"
-              onNodeClick={handleNodeClick}
               selectedNodeId={selectedNode?.id}
+              onNodeClick={handleNodeClick}
+              onNodeDoubleClick={handleNodeDoubleClick}
             />
           )}
         </div>
@@ -234,10 +217,7 @@ export default function GlobalGraphPage() {
             }}
           >
             <span>Papers: {state.meta.total_papers}</span>
-            <span>Connections: {state.meta.total_edges}</span>
-            <span>
-              Method: {state.meta.used_embeddings ? 'Embedding Similarity' : 'Reference-based'}
-            </span>
+            <span>Edges: {state.meta.total_edges}</span>
           </div>
         )}
       </div>
@@ -249,13 +229,6 @@ export default function GlobalGraphPage() {
         onAction={handleViewPaperGraph}
         onClose={() => setSelectedNode(null)}
       />
-
-      {/* CSS for spinner animation */}
-      <style>{`
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
     </div>
   );
 }

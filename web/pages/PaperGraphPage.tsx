@@ -1,21 +1,23 @@
 /**
  * PaperGraphPage (Graph A)
  *
- * Displays a paper-centered reference graph that can be incrementally
- * expanded by double-clicking on nodes.
+ * Center paper → reference titles expansion (local JSON)
+ * Reference node → arXiv fetch on demand
  */
 
 import React, { useEffect, useState, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import GraphCanvas from '../components/GraphCanvas';
 import SidePanel from '../components/SidePanel';
 import {
   getPaperGraph,
-  expandPaperGraph,
   hasPdf,
   fetchPaperIfMissing,
   GraphNode,
   GraphEdge
 } from '../lib/mcp';
+
+/* ----------------------------- Types ----------------------------- */
 
 interface PaperGraphState {
   nodes: GraphNode[];
@@ -26,42 +28,76 @@ interface PaperGraphState {
   centerId: string;
 }
 
-interface PaperGraphPageProps {
-  paperId: string;
+/* ----------------------- Helper: Load titles ---------------------- */
+
+async function loadReferenceTitles(paperId: string): Promise<string[]> {
+  try {
+    const res = await fetch(`/output/${paperId}/reference_titles.json`);
+    if (!res.ok) return [];
+    const json = await res.json();
+    return json.titles || [];
+  } catch (e) {
+    return [];
+  }
 }
 
-export default function PaperGraphPage({ paperId }: PaperGraphPageProps) {
+/* ----------------------------- Page ------------------------------- */
+
+export default function PaperGraphPage() {
+  // [FIX 1] Decode the ID from URL to handle special characters correctly
+  const { paperId: rawId } = useParams();
+  const paperId = rawId ? decodeURIComponent(rawId) : "";
+  
+  const navigate = useNavigate();
+
   const [state, setState] = useState<PaperGraphState>({
     nodes: [],
     edges: [],
-    loading: true,
+    loading: true, // Start in loading state
     expanding: false,
     error: null,
     centerId: paperId
   });
 
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
-  const [depth, setDepth] = useState(1);
 
-  // Load initial graph
+  /* ----------------------- Initial Load ----------------------- */
+
   const loadGraph = useCallback(async () => {
-    setState(prev => ({ ...prev, loading: true, error: null }));
+    if (!paperId) return;
+
+    setState(prev => ({ ...prev, loading: true, error: null, centerId: paperId }));
 
     try {
-      // First check if PDF exists, if not try to fetch it
-      const pdfCheck = await hasPdf(paperId);
-      if (!pdfCheck.exists) {
-        // Try to fetch from arXiv
-        await fetchPaperIfMissing(paperId);
+      console.log(`Loading graph for ID: ${paperId}`);
+      
+      // [FIX 2] Call API immediately without waiting for PDF check
+      const data = await getPaperGraph(paperId, 0);
+
+      // Handle empty data case
+      if (!data || !data.nodes || data.nodes.length === 0) {
+        throw new Error("No graph data returned from agent.");
       }
 
-      // Build the reference subgraph
-      const data = await getPaperGraph(paperId, depth);
+      console.log(`Graph loaded. Nodes: ${data.nodes.length}, Edges: ${data.edges.length}`);
 
-      // Mark center node
-      const nodes = data.nodes.map(node => ({
-        ...node,
-        isCenter: node.id === paperId
+      // [FIX 3] Robust Center Logic: Try to find center by exact ID, then by inclusion
+      let effectiveCenterId = paperId;
+      const exactCenter = data.nodes.find(n => n.id === paperId);
+      
+      if (!exactCenter) {
+        // If exact ID not found, find a node that *contains* the ID (handling prefix differences)
+        const fuzzyCenter = data.nodes.find(n => n.id.includes(paperId) || paperId.includes(n.id));
+        if (fuzzyCenter) {
+          console.log(`Center ID adjusted: ${paperId} -> ${fuzzyCenter.id}`);
+          effectiveCenterId = fuzzyCenter.id;
+        }
+      }
+
+      const nodes = data.nodes.map(n => ({
+        ...n,
+        isCenter: n.id === effectiveCenterId,
+        hasDetails: n.id === effectiveCenterId
       }));
 
       setState({
@@ -70,259 +106,119 @@ export default function PaperGraphPage({ paperId }: PaperGraphPageProps) {
         loading: false,
         expanding: false,
         error: null,
-        centerId: paperId
+        centerId: effectiveCenterId
       });
 
-      // Auto-select center node
-      const centerNode = nodes.find(n => n.isCenter);
-      if (centerNode) {
-        setSelectedNode(centerNode);
-      }
+      setSelectedNode(nodes.find(n => n.id === effectiveCenterId) || null);
+
+      // [OPTIONAL] Background PDF check (Non-blocking)
+      hasPdf(paperId).then(check => {
+        if (!check.exists) {
+          fetchPaperIfMissing(paperId).catch(e => console.warn("Background fetch warning:", e));
+        }
+      });
+
     } catch (err) {
+      console.error("Graph load failed:", err);
       setState(prev => ({
         ...prev,
         loading: false,
         error: err instanceof Error ? err.message : 'Failed to load graph'
       }));
     }
-  }, [paperId, depth]);
+  }, [paperId]);
 
   useEffect(() => {
     loadGraph();
   }, [loadGraph]);
 
-  // Handle node click (selection)
+  /* ------------------------ Click Handlers ------------------------ */
+
   const handleNodeClick = useCallback((node: GraphNode) => {
     setSelectedNode(node);
   }, []);
 
-  // Handle node double-click (expansion)
-  const handleNodeDoubleClick = useCallback(async (node: GraphNode) => {
-    if (state.expanding) return;
+  const handleNodeDoubleClick = useCallback(
+    async (node: GraphNode) => {
+      if (state.expanding) return;
 
-    setState(prev => ({ ...prev, expanding: true }));
+      setState(prev => ({ ...prev, expanding: true }));
 
-    try {
-      const existingNodeIds = state.nodes.map(n => n.id);
-      const diff = await expandPaperGraph(node.id, existingNodeIds);
+      try {
+        // Center Node Expansion
+        if (node.id === state.centerId) {
+          const titles = await loadReferenceTitles(state.centerId);
+          const existingIds = new Set(state.nodes.map(n => n.id));
+          const newNodes: GraphNode[] = [];
+          const newEdges: GraphEdge[] = [];
 
-      if (diff.new_nodes.length === 0) {
-        // No new nodes to add
+          titles.forEach(title => {
+            if (existingIds.has(title)) return;
+            newNodes.push({
+              id: title, title, authors: [], abstract: '', year: undefined,
+              isCenter: false, hasDetails: false
+            });
+            newEdges.push({
+              source: state.centerId, target: title, type: 'references'
+            });
+          });
+
+          setState(prev => ({
+            ...prev,
+            nodes: [...prev.nodes, ...newNodes],
+            edges: [...prev.edges, ...newEdges],
+            expanding: false
+          }));
+          return;
+        }
+
+        // Navigation
+        navigate(`/paper/${encodeURIComponent(node.id)}`);
+      } catch (err) {
+        console.error(err);
+      } finally {
         setState(prev => ({ ...prev, expanding: false }));
-        return;
       }
+    },
+    [state.nodes, state.centerId, state.expanding, navigate]
+  );
 
-      // Merge new nodes and edges
-      setState(prev => ({
-        ...prev,
-        nodes: [...prev.nodes, ...diff.new_nodes],
-        edges: [...prev.edges, ...diff.new_edges],
-        expanding: false
-      }));
-    } catch (err) {
-      console.error('Failed to expand node:', err);
-      setState(prev => ({ ...prev, expanding: false }));
-    }
-  }, [state.nodes, state.expanding]);
+  /* ------------------------ Navigation ------------------------ */
 
-  // Handle expand action from side panel
-  const handleExpandFromPanel = useCallback((nodeId: string) => {
-    const node = state.nodes.find(n => n.id === nodeId);
-    if (node) {
-      handleNodeDoubleClick(node);
-    }
-  }, [state.nodes, handleNodeDoubleClick]);
-
-  // Reset graph to initial state
-  const handleReset = useCallback(() => {
-    loadGraph();
-  }, [loadGraph]);
-
-  // Navigate back to global graph
   const handleBackToGlobal = useCallback(() => {
-    window.location.href = '/';
-  }, []);
+    navigate('/');
+  }, [navigate]);
+
+  /* ----------------------------- UI ----------------------------- */
 
   return (
     <div style={{ display: 'flex', height: '100vh', backgroundColor: '#f5f5f5' }}>
-      {/* Main Graph Area */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        {/* Header */}
-        <header
-          style={{
-            padding: '16px 24px',
-            backgroundColor: '#fff',
-            borderBottom: '1px solid #e2e8f0',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between'
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <button
-              onClick={handleBackToGlobal}
-              style={{
-                padding: '8px 12px',
-                backgroundColor: '#edf2f7',
-                color: '#4a5568',
-                border: 'none',
-                borderRadius: '6px',
-                fontSize: '13px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}
-            >
-              ← Back to Global
-            </button>
-            <div>
-              <h1 style={{ margin: 0, fontSize: '20px', color: '#1a202c' }}>
-                Paper Reference Graph
-              </h1>
-              <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#718096' }}>
-                {paperId} • Double-click nodes to expand
-              </p>
-            </div>
+        <header style={{
+          padding: '16px 24px', backgroundColor: '#fff', borderBottom: '1px solid #e2e8f0',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+        }}>
+          <div>
+            <button onClick={handleBackToGlobal} style={{
+              padding: '6px 12px', borderRadius: '6px', backgroundColor: '#edf2f7',
+              border: 'none', cursor: 'pointer', marginRight: '12px'
+            }}>← Back</button>
+            <span style={{ fontWeight: 600 }}>Paper Graph</span>
           </div>
-
-          {/* Controls */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <label style={{ fontSize: '13px', color: '#4a5568' }}>
-                Initial Depth:
-              </label>
-              <select
-                value={depth}
-                onChange={(e) => setDepth(parseInt(e.target.value))}
-                style={{
-                  padding: '6px 10px',
-                  borderRadius: '4px',
-                  border: '1px solid #e2e8f0',
-                  fontSize: '13px'
-                }}
-              >
-                <option value={1}>1 level</option>
-                <option value={2}>2 levels</option>
-                <option value={3}>3 levels</option>
-              </select>
-            </div>
-
-            <button
-              onClick={handleReset}
-              disabled={state.loading}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: state.loading ? '#cbd5e0' : '#4299e1',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '6px',
-                fontSize: '13px',
-                cursor: state.loading ? 'not-allowed' : 'pointer'
-              }}
-            >
-              {state.loading ? 'Loading...' : 'Reset Graph'}
-            </button>
-          </div>
+          <div style={{ fontSize: '12px', color: '#718096' }}>ID: {paperId}</div>
         </header>
 
-        {/* Graph Canvas */}
         <div style={{ flex: 1, position: 'relative' }}>
-          {/* Loading overlay */}
-          {state.loading && (
-            <div
-              style={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                textAlign: 'center',
-                zIndex: 10
-              }}
-            >
-              <div
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  border: '3px solid #e2e8f0',
-                  borderTopColor: '#4299e1',
-                  borderRadius: '50%',
-                  animation: 'spin 1s linear infinite',
-                  margin: '0 auto 12px'
-                }}
-              />
-              <p style={{ color: '#718096', fontSize: '14px' }}>
-                Building reference graph...
-              </p>
-            </div>
+          {state.loading && <CenteredText text="Loading graph..." />}
+          {state.expanding && <CenteredText text="Expanding references..." />}
+          {state.error && <CenteredText text={state.error} error />}
+          
+          {/* Show "No Data" if loading done but no nodes */}
+          {!state.loading && !state.error && state.nodes.length === 0 && (
+            <CenteredText text="No graph data available for this paper." />
           )}
 
-          {/* Expanding indicator */}
-          {state.expanding && (
-            <div
-              style={{
-                position: 'absolute',
-                top: '16px',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                padding: '8px 16px',
-                backgroundColor: 'rgba(66, 153, 225, 0.9)',
-                color: '#fff',
-                borderRadius: '6px',
-                fontSize: '13px',
-                zIndex: 10,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}
-            >
-              <div
-                style={{
-                  width: '14px',
-                  height: '14px',
-                  border: '2px solid rgba(255,255,255,0.3)',
-                  borderTopColor: '#fff',
-                  borderRadius: '50%',
-                  animation: 'spin 1s linear infinite'
-                }}
-              />
-              Expanding references...
-            </div>
-          )}
-
-          {/* Error display */}
-          {state.error && (
-            <div
-              style={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                textAlign: 'center',
-                color: '#e53e3e'
-              }}
-            >
-              <p style={{ fontSize: '16px', marginBottom: '8px' }}>Error</p>
-              <p style={{ fontSize: '14px' }}>{state.error}</p>
-              <button
-                onClick={handleReset}
-                style={{
-                  marginTop: '12px',
-                  padding: '8px 16px',
-                  backgroundColor: '#e53e3e',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer'
-                }}
-              >
-                Retry
-              </button>
-            </div>
-          )}
-
-          {/* Graph */}
-          {!state.loading && !state.error && (
+          {!state.loading && !state.error && state.nodes.length > 0 && (
             <GraphCanvas
               nodes={state.nodes}
               edges={state.edges}
@@ -334,39 +230,25 @@ export default function PaperGraphPage({ paperId }: PaperGraphPageProps) {
             />
           )}
         </div>
-
-        {/* Stats Bar */}
-        <div
-          style={{
-            padding: '8px 24px',
-            backgroundColor: '#fff',
-            borderTop: '1px solid #e2e8f0',
-            display: 'flex',
-            gap: '24px',
-            fontSize: '12px',
-            color: '#718096'
-          }}
-        >
-          <span>Papers: {state.nodes.length}</span>
-          <span>References: {state.edges.length}</span>
-          <span>Center: {state.centerId}</span>
-        </div>
       </div>
 
-      {/* Side Panel */}
       <SidePanel
         selectedNode={selectedNode}
         mode="paper"
-        onAction={handleExpandFromPanel}
+        onAction={() => {}}
         onClose={() => setSelectedNode(null)}
       />
+    </div>
+  );
+}
 
-      {/* CSS for spinner animation */}
-      <style>{`
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
+function CenteredText({ text, error }: { text: string; error?: boolean }) {
+  return (
+    <div style={{
+      position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+      color: error ? '#e53e3e' : '#718096', fontSize: '14px', fontWeight: 500
+    }}>
+      {text}
     </div>
   );
 }

@@ -2,6 +2,7 @@
 PDF Processing Tools
 
 Provides tools for PDF text and image extraction using PyMuPDF.
+Updated to avoid LLM Rate Limits by saving full text to disk and returning previews.
 """
 
 import json
@@ -39,14 +40,15 @@ class ListPDFsTool(MCPTool):
 
     async def execute(self, **kwargs) -> Dict[str, Any]:
         pdfs = []
-        for pdf_file in PDF_DIR.glob("*.pdf"):
-            stat = pdf_file.stat()
-            pdfs.append({
-                "filename": pdf_file.name,
-                "path": str(pdf_file),
-                "size_bytes": stat.st_size,
-                "size_mb": round(stat.st_size / (1024 * 1024), 2)
-            })
+        if PDF_DIR.exists():
+            for pdf_file in PDF_DIR.glob("*.pdf"):
+                stat = pdf_file.stat()
+                pdfs.append({
+                    "filename": pdf_file.name,
+                    "path": str(pdf_file),
+                    "size_bytes": stat.st_size,
+                    "size_mb": round(stat.st_size / (1024 * 1024), 2)
+                })
 
         return {
             "pdf_directory": str(PDF_DIR),
@@ -64,7 +66,7 @@ class ExtractTextTool(MCPTool):
 
     @property
     def description(self) -> str:
-        return "Extract all text content from a specific PDF file"
+        return "Extract text from a PDF. Saves full text to file and returns a preview to avoid Rate Limits."
 
     @property
     def parameters(self) -> List[ToolParameter]:
@@ -74,6 +76,13 @@ class ExtractTextTool(MCPTool):
                 type="string",
                 description="Name of the PDF file (e.g., 'paper.pdf')",
                 required=True
+            ),
+            ToolParameter(
+                name="return_full_text",
+                type="boolean",
+                description="Internal use only: Return full text object instead of preview",
+                required=False,
+                default=False
             )
         ]
 
@@ -81,29 +90,62 @@ class ExtractTextTool(MCPTool):
     def category(self) -> str:
         return "pdf"
 
-    async def execute(self, filename: str) -> Dict[str, Any]:
+    async def execute(self, filename: str, return_full_text: bool = False) -> Dict[str, Any]:
         pdf_path = PDF_DIR / filename
 
         if not pdf_path.exists():
             raise ExecutionError(f"File not found: {filename}", tool_name=self.name)
 
-        doc = fitz.open(pdf_path)
-        result = {
-            "filename": pdf_path.name,
-            "total_pages": len(doc),
-            "pages": []
-        }
+        # Output Setup
+        pdf_name = pdf_path.stem
+        pdf_output_dir = OUTPUT_DIR / pdf_name
+        pdf_output_dir.mkdir(parents=True, exist_ok=True)
+        text_output_path = pdf_output_dir / "extracted_text.json"
 
-        for page_num in range(len(doc)):
-            page = doc[page_num]
-            text = page.get_text()
-            result["pages"].append({
-                "page_number": page_num + 1,
-                "text": text
-            })
+        # Extraction
+        try:
+            doc = fitz.open(pdf_path)
+            result = {
+                "filename": pdf_path.name,
+                "total_pages": len(doc),
+                "full_text": "",
+                "pages": []
+            }
 
-        doc.close()
-        return result
+            for page_num in range(len(doc)):
+                page = doc[page_num]
+                text = page.get_text()
+                result["full_text"] += text
+                result["pages"].append({
+                    "page_number": page_num + 1,
+                    "text": text
+                })
+
+            doc.close()
+
+            # Save to file
+            with open(text_output_path, "w", encoding="utf-8") as f:
+                json.dump(result, f, ensure_ascii=False, indent=2)
+
+            # Return Logic
+            if return_full_text:
+                return result
+            
+            # Default: Return Preview
+            preview_length = 500
+            preview_text = result["full_text"][:preview_length].replace("\n", " ")
+            return {
+                "status": "success",
+                "filename": filename,
+                "saved_to": str(text_output_path),
+                "total_pages": result["total_pages"],
+                "total_characters": len(result["full_text"]),
+                "preview": f"{preview_text}...",
+                "note": "Full text saved to file. Use 'read_extracted_text' to read specific parts if needed."
+            }
+
+        except Exception as e:
+            raise ExecutionError(f"Failed to extract text: {str(e)}", tool_name=self.name)
 
 
 class ExtractImagesTool(MCPTool):
@@ -185,6 +227,12 @@ class ExtractImagesTool(MCPTool):
 
         doc.close()
         result["total_images_extracted"] = image_count
+        
+        # Save metadata
+        meta_path = OUTPUT_DIR / pdf_name / "image_metadata.json"
+        with open(meta_path, "w", encoding="utf-8") as f:
+            json.dump(result, f, indent=2)
+
         return result
 
 
@@ -215,24 +263,15 @@ class ExtractAllTool(MCPTool):
         return "pdf"
 
     async def execute(self, filename: str) -> Dict[str, Any]:
+        # 1. Extract Text (Get full data internally)
+        extract_text_tool = ExtractTextTool()
+        text_result = await extract_text_tool.execute(filename=filename, return_full_text=True)
+
         pdf_path = PDF_DIR / filename
-
-        if not pdf_path.exists():
-            raise ExecutionError(f"File not found: {filename}", tool_name=self.name)
-
         pdf_name = pdf_path.stem
         pdf_output_dir = OUTPUT_DIR / pdf_name
-        pdf_output_dir.mkdir(parents=True, exist_ok=True)
-
-        # Extract text
-        extract_text_tool = ExtractTextTool()
-        text_result = await extract_text_tool.execute(filename=filename)
-
-        # Save text to files
-        text_output_path = pdf_output_dir / "extracted_text.json"
-        with open(text_output_path, "w", encoding="utf-8") as f:
-            json.dump(text_result, f, ensure_ascii=False, indent=2)
-
+        
+        # Save readable text file
         plain_text_path = pdf_output_dir / "extracted_text.txt"
         with open(plain_text_path, "w", encoding="utf-8") as f:
             for page in text_result["pages"]:
@@ -240,26 +279,20 @@ class ExtractAllTool(MCPTool):
                 f.write(page["text"])
                 f.write("\n\n")
 
-        # Extract images
+        # 2. Extract Images
         extract_images_tool = ExtractImagesTool()
         image_result = await extract_images_tool.execute(filename=filename)
 
-        # Save image metadata
-        image_meta_path = pdf_output_dir / "image_metadata.json"
-        with open(image_meta_path, "w", encoding="utf-8") as f:
-            json.dump(image_result, f, ensure_ascii=False, indent=2)
-
         return {
-            "filename": pdf_path.name,
+            "filename": filename,
             "output_directory": str(pdf_output_dir),
             "text_extraction": {
                 "total_pages": text_result["total_pages"],
                 "text_file": str(plain_text_path),
-                "json_file": str(text_output_path)
+                "json_file": str(pdf_output_dir / "extracted_text.json")
             },
             "image_extraction": {
                 "total_images": image_result["total_images_extracted"],
-                "metadata_file": str(image_meta_path),
                 "images_directory": str(pdf_output_dir / "images")
             }
         }
@@ -351,7 +384,6 @@ class GetPDFInfoTool(MCPTool):
             "file_size_mb": round(pdf_path.stat().st_size / (1024 * 1024), 2)
         }
 
-        # Count images per page
         image_counts = []
         total_images = 0
         for page_num in range(len(doc)):
@@ -399,8 +431,19 @@ class ReadExtractedTextTool(MCPTool):
         text_file = OUTPUT_DIR / pdf_name / "extracted_text.txt"
 
         if not text_file.exists():
+            # Try JSON if TXT not found
+            json_file = OUTPUT_DIR / pdf_name / "extracted_text.json"
+            if json_file.exists():
+                 with open(json_file, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    return {
+                        "filename": pdf_name,
+                        "content": data.get("full_text", "")[:50000] + "\n...[Truncated]",
+                        "truncated": True
+                    }
+
             raise ExecutionError(
-                f"No extracted text found for '{pdf_name}'. Run extract_all first.",
+                f"No extracted text found for '{pdf_name}'. Run extract_all or extract_text first.",
                 tool_name=self.name
             )
 
