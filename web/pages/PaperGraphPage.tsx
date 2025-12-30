@@ -2,23 +2,14 @@
  * PaperGraphPage (Graph A)
  *
  * Center paper → reference titles expansion (local JSON)
- * Reference node → arXiv fetch on demand
- *
- * Fixes:
- * - Robustly load /output/<id>/reference_titles.json with ID fallbacks
+ * Loads directly from /output/{paper_id}/reference_titles.json
  */
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import GraphCanvas from '../components/GraphCanvas';
 import SidePanel from '../components/SidePanel';
-import {
-  getPaperGraph,
-  hasPdf,
-  fetchPaperIfMissing,
-  GraphNode,
-  GraphEdge
-} from '../lib/mcp';
+import { GraphNode, GraphEdge } from '../lib/mcp';
 
 /* ----------------------------- Types ----------------------------- */
 
@@ -26,12 +17,19 @@ interface PaperGraphState {
   nodes: GraphNode[];
   edges: GraphEdge[];
   loading: boolean;
-  expanding: boolean;
   error: string | null;
   centerId: string;
 }
 
-/* ----------------------- Helpers: ID + Fetch ---------------------- */
+interface ReferenceTitlesJson {
+  filename: string;
+  original_filename?: string;
+  references_detected: number;
+  titles_extracted: number;
+  titles: string[];
+}
+
+/* ----------------------- Helpers: ID Normalization ---------------------- */
 
 function normalizeArxivToDoiLike(id: string): string {
   if (id.startsWith('10.48550_arxiv.')) return id;
@@ -40,127 +38,112 @@ function normalizeArxivToDoiLike(id: string): string {
   return id;
 }
 
-async function fetchJsonTitles(url: string): Promise<string[] | null> {
-  try {
-    const res = await fetch(url);
-    if (!res.ok) return null;
-    const json = await res.json();
-    const titlesRaw: unknown = json?.titles;
-    if (!Array.isArray(titlesRaw)) return [];
-    const seen = new Set<string>();
-    const out: string[] = [];
-    for (const t of titlesRaw) {
-      const s = String(t ?? '').trim();
-      if (!s) continue;
-      if (seen.has(s)) continue;
-      seen.add(s);
-      out.push(s);
-    }
-    return out;
-  } catch {
-    return null;
-  }
-}
-
-async function loadReferenceTitles(centerId: string, urlPaperId: string): Promise<string[]> {
+async function fetchReferenceTitles(paperId: string): Promise<ReferenceTitlesJson | null> {
+  // Try multiple ID formats
   const candidates = [
-    centerId,
-    urlPaperId,
-    normalizeArxivToDoiLike(centerId),
-    normalizeArxivToDoiLike(urlPaperId)
-  ]
-    .map(s => s.trim())
-    .filter(Boolean);
+    paperId,
+    normalizeArxivToDoiLike(paperId)
+  ].filter((v, i, a) => a.indexOf(v) === i);  // unique
 
-  const seen = new Set<string>();
-  const uniq: string[] = [];
-  for (const c of candidates) {
-    if (seen.has(c)) continue;
-    seen.add(c);
-    uniq.push(c);
+  for (const id of candidates) {
+    try {
+      const res = await fetch(`/output/${id}/reference_titles.json`);
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch {
+      continue;
+    }
   }
-
-  for (const id of uniq) {
-    const titles = await fetchJsonTitles(`/output/${id}/reference_titles.json`);
-    if (titles !== null) return titles;
-  }
-
-  return [];
+  return null;
 }
 
 /* ----------------------------- Page ------------------------------- */
 
 export default function PaperGraphPage() {
   const { paperId: rawId } = useParams();
-  const urlPaperId = rawId ? decodeURIComponent(rawId) : '';
+  const paperId = rawId ? decodeURIComponent(rawId) : "";
+
   const navigate = useNavigate();
 
   const [state, setState] = useState<PaperGraphState>({
     nodes: [],
     edges: [],
     loading: true,
-    expanding: false,
     error: null,
-    centerId: urlPaperId
+    centerId: paperId
   });
 
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
 
-  /* ----------------------- Initial Load ----------------------- */
+  /* ----------------------- Load from reference_titles.json ----------------------- */
 
   const loadGraph = useCallback(async () => {
-    if (!urlPaperId) return;
+    if (!paperId) return;
 
-    setState(prev => ({ ...prev, loading: true, error: null, centerId: urlPaperId }));
+    setState(prev => ({ ...prev, loading: true, error: null, centerId: paperId }));
 
     try {
-      const data = await getPaperGraph(urlPaperId, 0);
+      console.log(`Loading reference graph for: ${paperId}`);
 
-      if (!data || !data.nodes || data.nodes.length === 0) {
-        throw new Error('No graph data returned from agent.');
+      // Load reference_titles.json directly (with ID fallback)
+      const json = await fetchReferenceTitles(paperId);
+
+      if (!json) {
+        throw new Error(`reference_titles.json not found for ${paperId}`);
       }
 
-      // robust center match
-      let effectiveCenterId = urlPaperId;
-      const exactCenter = data.nodes.find((n: GraphNode) => n.id === urlPaperId);
-      if (!exactCenter) {
-        const fuzzyCenter = data.nodes.find(
-          (n: GraphNode) => n.id.includes(urlPaperId) || urlPaperId.includes(n.id)
-        );
-        if (fuzzyCenter) effectiveCenterId = fuzzyCenter.id;
-      }
+      const titles = json.titles || [];
+      console.log(`Found ${titles.length} reference titles`);
 
-      const nodes = data.nodes.map((n: GraphNode) => ({
-        ...n,
-        isCenter: n.id === effectiveCenterId,
-        hasDetails: n.id === effectiveCenterId
+      // Create center node
+      const centerNode: GraphNode = {
+        id: paperId,
+        title: paperId,
+        isCenter: true,
+        hasDetails: true,
+        cluster: 0,
+        depth: 0
+      };
+
+      // Create reference nodes from titles
+      const refNodes: GraphNode[] = titles.map((title, idx) => ({
+        id: `ref_${idx}_${title.substring(0, 30).replace(/[^a-zA-Z0-9]/g, '_')}`,
+        title: title,
+        isCenter: false,
+        hasDetails: false,
+        cluster: 1,
+        depth: 1
       }));
 
+      // Create edges from center to each reference
+      const edges: GraphEdge[] = refNodes.map(refNode => ({
+        source: paperId,
+        target: refNode.id,
+        type: 'references' as const
+      }));
+
+      const allNodes = [centerNode, ...refNodes];
+
       setState({
-        nodes,
-        edges: data.edges,
+        nodes: allNodes,
+        edges: edges,
         loading: false,
-        expanding: false,
         error: null,
-        centerId: effectiveCenterId
+        centerId: paperId
       });
 
-      setSelectedNode(nodes.find((n: GraphNode) => n.id === effectiveCenterId) || null);
+      setSelectedNode(centerNode);
 
-      // background pdf check
-      hasPdf(urlPaperId).then(check => {
-        if (!check.exists) {
-          fetchPaperIfMissing(urlPaperId).catch(() => {});
-        }
-      });
     } catch (err) {
+      console.error("Graph load failed:", err);
       setState(prev => ({
         ...prev,
         loading: false,
-        error: err instanceof Error ? err.message : 'Failed to load graph'
+        error: err instanceof Error ? err.message : 'Failed to load reference graph'
       }));
     }
-  }, [urlPaperId]);
+  }, [paperId]);
 
   useEffect(() => {
     loadGraph();
@@ -173,56 +156,23 @@ export default function PaperGraphPage() {
   }, []);
 
   const handleNodeDoubleClick = useCallback(
-    async (node: GraphNode) => {
-      if (state.expanding) return;
-
-      setState(prev => ({ ...prev, expanding: true }));
-
-      try {
-        // Center Node Expansion
-        if (node.id === state.centerId) {
-          const titles = await loadReferenceTitles(state.centerId, urlPaperId);
-
-          const existingIds = new Set(state.nodes.map(n => n.id));
-          const newNodes: GraphNode[] = [];
-          const newEdges: GraphEdge[] = [];
-
-          for (const refTitle of titles) {
-            if (existingIds.has(refTitle)) continue;
-
-            newNodes.push({
-              id: refTitle,
-              title: refTitle,
-              authors: [],
-              abstract: '',
-              year: undefined,
-              isCenter: false,
-              hasDetails: false
-            });
-
-            newEdges.push({
-              source: state.centerId,
-              target: refTitle,
-              type: 'references'
-            });
-          }
-
-          setState(prev => ({
-            ...prev,
-            nodes: [...prev.nodes, ...newNodes],
-            edges: [...prev.edges, ...newEdges],
-            expanding: false
-          }));
+    (node: GraphNode) => {
+      // If it's a reference node, try to navigate if title looks like a paper ID
+      if (!node.isCenter) {
+        const title = node.title;
+        const arxivMatch = title.match(/(\d{4}\.\d{4,5})/);
+        if (arxivMatch) {
+          navigate(`/paper/${encodeURIComponent(`10.48550_arxiv.${arxivMatch[1]}`)}`);
           return;
         }
+      }
 
-        // Navigation
-        navigate(`/paper/${encodeURIComponent(node.id)}`);
-      } finally {
-        setState(prev => ({ ...prev, expanding: false }));
+      // For center node, just refresh
+      if (node.isCenter) {
+        loadGraph();
       }
     },
-    [state.nodes, state.centerId, state.expanding, navigate, urlPaperId]
+    [navigate, loadGraph]
   );
 
   /* ------------------------ Navigation ------------------------ */
@@ -260,18 +210,19 @@ export default function PaperGraphPage() {
             >
               ← Back
             </button>
-            <span style={{ fontWeight: 600 }}>Paper Graph</span>
+            <span style={{ fontWeight: 600 }}>Paper Reference Graph</span>
           </div>
-          <div style={{ fontSize: '12px', color: '#718096' }}>ID: {urlPaperId}</div>
+          <div style={{ fontSize: '12px', color: '#718096' }}>
+            ID: {paperId} | Refs: {state.nodes.length - 1}
+          </div>
         </header>
 
         <div style={{ flex: 1, position: 'relative' }}>
-          {state.loading && <CenteredText text="Loading graph..." />}
-          {state.expanding && <CenteredText text="Expanding references..." />}
+          {state.loading && <CenteredText text="Loading references..." />}
           {state.error && <CenteredText text={state.error} error />}
 
           {!state.loading && !state.error && state.nodes.length === 0 && (
-            <CenteredText text="No graph data available for this paper." />
+            <CenteredText text="No reference data available for this paper." />
           )}
 
           {!state.loading && !state.error && state.nodes.length > 0 && (
@@ -286,6 +237,24 @@ export default function PaperGraphPage() {
             />
           )}
         </div>
+
+        {/* Stats Bar */}
+        {!state.loading && !state.error && state.nodes.length > 0 && (
+          <div
+            style={{
+              padding: '8px 24px',
+              backgroundColor: '#fff',
+              borderTop: '1px solid #e2e8f0',
+              display: 'flex',
+              gap: '24px',
+              fontSize: '12px',
+              color: '#718096'
+            }}
+          >
+            <span>Center: {paperId}</span>
+            <span>References: {state.nodes.length - 1}</span>
+          </div>
+        )}
       </div>
 
       <SidePanel
