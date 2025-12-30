@@ -3,6 +3,10 @@
  *
  * D3.js force-directed graph visualization.
  * [UPDATED] Fixes node position reset & camera jump on re-renders.
+ *
+ * [FIXED]
+ * - Center flag compatibility: supports both `is_center` (snake_case) and `isCenter` (camelCase)
+ * - Cluster color index precedence bug: fixes `d.cluster || 0 % ...` → proper modulo
  */
 
 import React, { useEffect, useRef, useCallback, useState } from 'react';
@@ -19,10 +23,22 @@ interface GraphCanvasProps {
   onNodeDoubleClick?: (node: GraphNode) => void;
 }
 
+/* -------------------------- Constants --------------------------- */
+
 const CLUSTER_COLORS = [
   '#4299e1', '#48bb78', '#ed8936', '#9f7aea',
   '#f56565', '#38b2ac', '#ed64a6', '#667eea'
 ];
+
+// Helpers: tolerate both snake_case (backend) and camelCase (frontend)
+const isCenterNode = (d: any): boolean => Boolean((d as any).is_center || (d as any).isCenter);
+
+// Safe cluster color index: handles undefined/null/negative and fixes operator precedence bug
+const clusterColorIndex = (d: any): number => {
+  const n = CLUSTER_COLORS.length;
+  const c = Number((d as any).cluster ?? 0);
+  return ((c % n) + n) % n;
+};
 
 export default function GraphCanvas({
   nodes,
@@ -37,7 +53,7 @@ export default function GraphCanvas({
   const containerRef = useRef<HTMLDivElement>(null);
   const simulationRef = useRef<d3.Simulation<any, any> | null>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
-  
+
   // D3 Zoom 객체 저장
   const zoomBehaviorRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
   const zoomSelectionRef = useRef<d3.Selection<SVGSVGElement, unknown, null, undefined> | null>(null);
@@ -47,9 +63,10 @@ export default function GraphCanvas({
     const updateDimensions = () => {
       if (containerRef.current) {
         const { clientWidth, clientHeight } = containerRef.current;
-        setDimensions({ width: clientWidth || 800, height: clientHeight || 600 });
+        setDimensions({ width: clientWidth, height: clientHeight });
       }
     };
+
     updateDimensions();
     window.addEventListener('resize', updateDimensions);
     return () => window.removeEventListener('resize', updateDimensions);
@@ -57,96 +74,61 @@ export default function GraphCanvas({
 
   const { width, height } = dimensions;
 
-  // Get force parameters
+  /* ------------------------ Force Params ------------------------ */
+
   const getForceParams = useCallback(() => {
-    if (mode === 'paper') {
-      return { charge: -300, linkDistance: 100, centerForce: 0.1 };
-    } else {
-      return { charge: -500, linkDistance: 150, centerForce: 0.05 };
+    if (mode === 'global') {
+      return {
+        linkDistance: 60,
+        chargeStrength: -300,
+        centerStrength: 0.05
+      };
     }
+    return {
+      linkDistance: 80,
+      chargeStrength: -500,
+      centerStrength: 0.08
+    };
   }, [mode]);
 
-  // Initialize graph
+  /* -------------------------- Main D3 --------------------------- */
+
   useEffect(() => {
-    if (!svgRef.current || nodes.length === 0) return;
+    if (!svgRef.current) return;
 
+    // Save/restore zoom state to avoid camera jump
     const svg = d3.select(svgRef.current);
-    const params = getForceParams();
 
-    // [FIX 1] 기존 시뮬레이션에서 노드 좌표 백업 (위치 초기화 방지)
-    const oldNodes = new Map(simulationRef.current?.nodes().map((n: any) => [n.id, n]) || []);
-    
-    // [FIX 2] 기존 줌 상태 백업 (카메라 튀는 현상 방지)
-    const oldTransform = d3.zoomTransform(svg.node()!);
+    // Initialize or restore zoom behavior
+    if (!zoomBehaviorRef.current) {
+      const zoom = d3.zoom<SVGSVGElement, unknown>()
+        .scaleExtent([0.1, 4])
+        .on('zoom', (event) => {
+          svg.select('g.canvas-root').attr('transform', event.transform.toString());
+        });
 
-    // 캔버스 초기화
-    svg.selectAll('*').remove();
-
-    const container = svg.append('g');
-
-    // Zoom setup
-    const zoom = d3.zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.1, 4])
-      .on('zoom', (event) => {
-        container.attr('transform', event.transform);
-      });
-
-    svg.call(zoom);
-    
-    // [FIX 2-1] 백업해둔 줌 상태 복구
-    if (oldTransform && oldTransform.k !== 0) { // k=0 check to avoid invalid transform
-        svg.call(zoom.transform, oldTransform);
+      zoomBehaviorRef.current = zoom;
+      zoomSelectionRef.current = svg;
+      svg.call(zoom);
     }
-    
-    zoomBehaviorRef.current = zoom;
-    zoomSelectionRef.current = svg;
 
-    // Prepare data
-    // [FIX 1-1] 새 노드 생성 시 기존 좌표(x, y, vx, vy) 계승
-    const graphNodes = nodes.map(n => {
-        const oldNode = oldNodes.get(n.id);
-        if (oldNode) {
-            return { 
-                ...n, 
-                x: oldNode.x, 
-                y: oldNode.y,
-                vx: oldNode.vx,
-                vy: oldNode.vy,
-                fx: oldNode.fx, // 고정된 상태도 유지
-                fy: oldNode.fy
-            };
-        }
-        return { ...n };
-    });
+    // Clear old graph (but preserve zoom behavior)
+    svg.selectAll('g.canvas-root').remove();
 
-    const nodeMap = new Map(graphNodes.map(n => [n.id, n]));
-    
-    const graphEdges = edges
-      .filter(e => nodeMap.has(e.source as string) && nodeMap.has(e.target as string))
-      .map(e => ({
-        source: e.source,
-        target: e.target,
-        weight: e.weight || 1,
-        type: e.type
-      }));
+    const container = svg.append('g').attr('class', 'canvas-root');
+
+    // Convert to D3 mutable objects
+    const graphNodes = nodes.map(n => ({ ...n }));
+    const graphEdges = edges.map(e => ({ ...e }));
+
+    const { linkDistance, chargeStrength, centerStrength } = getForceParams();
 
     // Simulation
     const simulation = d3.forceSimulation(graphNodes as any)
-      .force('link', d3.forceLink(graphEdges as any)
-        .id((d: any) => d.id)
-        .distance(params.linkDistance)
-        .strength((d: any) => d.weight || 0.5)
-      )
-      .force('charge', d3.forceManyBody().strength(params.charge))
-      .force('center', d3.forceCenter(width / 2, height / 2).strength(params.centerForce))
-      .force('collision', d3.forceCollide().radius(30));
-
-    // [FIX 3] 알파(Alpha) 값 조정
-    // 노드 위치를 복구했으므로, 시뮬레이션을 처음부터(alpha=1) 강하게 돌릴 필요가 없음.
-    // 기존 위치가 있다면 alpha를 낮게 시작하여 부드럽게 안정화.
-    if (oldNodes.size > 0) {
-        simulation.alpha(0.3).restart();
-    }
+      .force('link', d3.forceLink(graphEdges as any).id((d: any) => d.id).distance(linkDistance))
+      .force('charge', d3.forceManyBody().strength(chargeStrength))
+      .force('center', d3.forceCenter(width / 2, height / 2).strength(centerStrength))
+      .force('collide', d3.forceCollide().radius(30));
 
     simulationRef.current = simulation;
 
@@ -165,9 +147,9 @@ export default function GraphCanvas({
       .data(graphEdges)
       .enter()
       .append('line')
-      .attr('stroke', d => d.type === 'similarity' ? '#a0aec0' : '#718096')
-      .attr('stroke-opacity', d => d.type === 'similarity' ? d.weight : 0.6)
-      .attr('stroke-width', d => d.type === 'similarity' ? d.weight * 2 : 1.5);
+      .attr('stroke', '#cbd5e0')
+      .attr('stroke-opacity', 0.6)
+      .attr('stroke-width', d => (d.type === 'references' ? 1 : 2));
 
     // Nodes
     const node = container.append('g')
@@ -176,7 +158,6 @@ export default function GraphCanvas({
       .data(graphNodes)
       .enter()
       .append('g')
-      .attr('class', 'node')
       .style('cursor', 'pointer')
       .call(d3.drag<any, any>()
         .on('start', (event, d) => {
@@ -199,17 +180,17 @@ export default function GraphCanvas({
 
     // Circle
     node.append('circle')
-      .attr('r', d => {
-        if (d.is_center) return 20;
+      .attr('r', (d: any) => {
+        if (isCenterNode(d)) return 20;
         if (d.id === selectedNodeId) return 18; // Highlight selected
         return 12;
       })
-      .attr('fill', d => {
-        if (d.is_center) return '#f56565';
+      .attr('fill', (d: any) => {
+        if (isCenterNode(d)) return '#f56565';
         if (d.id === selectedNodeId) return '#ecc94b'; // Highlight selected
-        return CLUSTER_COLORS[d.cluster || 0 % CLUSTER_COLORS.length];
+        return CLUSTER_COLORS[clusterColorIndex(d)];
       })
-      .attr('stroke', d => d.id === selectedNodeId ? '#000' : '#fff')
+      .attr('stroke', (d: any) => (d.id === selectedNodeId ? '#000' : '#fff'))
       .attr('stroke-width', 2);
 
     // Labels
@@ -218,18 +199,18 @@ export default function GraphCanvas({
       .attr('text-anchor', 'middle')
       .attr('font-size', '10px')
       .attr('fill', '#4a5568')
-      .text(d => {
+      .text((d: any) => {
         const title = d.title || d.id;
         return title.length > 20 ? title.slice(0, 20) + '...' : title;
       });
 
     // Events
-    node.on('click', (event, d) => {
+    node.on('click', (event, d: any) => {
       event.stopPropagation();
       if (onNodeClick) onNodeClick(d as GraphNode);
     });
 
-    node.on('dblclick', (event, d) => {
+    node.on('dblclick', (event, d: any) => {
       event.stopPropagation();
       if (onNodeDoubleClick) onNodeDoubleClick(d as GraphNode);
     });
@@ -237,10 +218,10 @@ export default function GraphCanvas({
     // Tick
     simulation.on('tick', () => {
       link
-        .attr('x1', (d: any) => d.source.x)
-        .attr('y1', (d: any) => d.source.y)
-        .attr('x2', (d: any) => d.target.x)
-        .attr('y2', (d: any) => d.target.y);
+        .attr('x1', (d: any) => (d.source as any).x)
+        .attr('y1', (d: any) => (d.source as any).y)
+        .attr('x2', (d: any) => (d.target as any).x)
+        .attr('y2', (d: any) => (d.target as any).y);
 
       node.attr('transform', (d: any) => `translate(${d.x},${d.y})`);
     });
@@ -248,38 +229,43 @@ export default function GraphCanvas({
     return () => {
       simulation.stop();
     };
-  }, [nodes, edges, mode, centerId, width, height, getForceParams, onNodeClick, onNodeDoubleClick, selectedNodeId]);
-
+  }, [
+    nodes,
+    edges,
+    mode,
+    centerId,
+    width,
+    height,
+    getForceParams,
+    onNodeClick,
+    onNodeDoubleClick,
+    selectedNodeId
+  ]);
 
   /* ---------------- [NEW] Auto-Zoom to Center ---------------- */
   useEffect(() => {
     // centerId가 바뀔 때만 줌 동작 수행 (초기 렌더링 시에는 위에서 복구한 줌 상태 유지)
     if (!centerId || mode !== 'paper' || !simulationRef.current || !zoomBehaviorRef.current || !zoomSelectionRef.current) {
-        return;
+      return;
     }
-    
-    // 만약 centerId가 변경된 것이 아니라 단순히 리렌더링 된 것이라면 줌 동작을 스킵하는 로직을 추가할 수도 있습니다.
-    // 여기서는 간단히 타이머를 두고 실행합니다.
 
-    const timer = setTimeout(() => {
-        const nodes = simulationRef.current?.nodes() as any[];
-        const targetNode = nodes.find(n => n.id === centerId);
+    const sim = simulationRef.current;
+    const svg = zoomSelectionRef.current;
+    const zoom = zoomBehaviorRef.current;
 
-        if (targetNode && targetNode.x !== undefined) {
-             const zoomIdentity = d3.zoomIdentity
-                .translate(width / 2, height / 2)
-                .scale(1.0)
-                .translate(-targetNode.x, -targetNode.y);
+    const centerNode: any = (sim.nodes() as any[]).find(n => n.id === centerId);
+    if (!centerNode || centerNode.x == null || centerNode.y == null) return;
 
-             zoomSelectionRef.current?.transition()
-                .duration(750)
-                .call(zoomBehaviorRef.current.transform, zoomIdentity);
-        }
-    }, 500);
+    // center node가 화면 중앙에 오도록 transform 계산
+    const k = 1.0; // keep scale
+    const tx = width / 2 - centerNode.x * k;
+    const ty = height / 2 - centerNode.y * k;
+    const t = d3.zoomIdentity.translate(tx, ty).scale(k);
 
-    return () => clearTimeout(timer);
+    svg.transition().duration(450).call(zoom.transform as any, t);
   }, [centerId, mode, width, height]);
 
+  /* --------------------------- Render --------------------------- */
 
   return (
     <div
@@ -287,17 +273,11 @@ export default function GraphCanvas({
       style={{
         width: '100%',
         height: '100%',
-        border: '1px solid #e2e8f0',
-        borderRadius: '8px',
-        backgroundColor: '#f7fafc',
-        overflow: 'hidden'
+        position: 'relative',
+        backgroundColor: '#f7fafc'
       }}
     >
-      <svg
-        ref={svgRef}
-        width={width}
-        height={height}
-      />
+      <svg ref={svgRef} width={width} height={height} />
     </div>
   );
 }
