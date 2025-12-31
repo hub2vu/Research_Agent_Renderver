@@ -2,6 +2,14 @@
 
 A Docker-based research assistant with MCP (Model Context Protocol) architecture and paper graph visualization.
 
+# Reference Graph
+
+<img width="1979" height="1444" alt="스크린샷 2025-12-29 210026" src="https://github.com/user-attachments/assets/65912fb0-2f24-4ea9-a065-4dab52e39179" />
+
+
+
+
+
 ## Architecture
 
 ```
