@@ -2,20 +2,24 @@
  * GlobalGraphPage (Graph B)
  *
  * - ui_state.json 폴링(에이전트 네비게이션/리프레시)
- * - [NEW] global_graph.json 변경(Last-Modified/ETag) 폴링 → 즉시 UI 반영
+ * - global_graph.json 변경(Last-Modified/ETag) 폴링 → 즉시 UI 반영
+ *
+ * [UPDATED]
+ * - nodeColorMap (custom node colors) + persist to localStorage
+ * - pass nodeColorMap to GraphCanvas
+ * - pass color controls to SidePanel
  */
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-// ✅ pages/ 아래라면 ../ 가 맞음 (루트면 ./ 유지)
 import GraphCanvas from '../components/GraphCanvas';
 import SidePanel from '../components/SidePanel';
-import { getGlobalGraph, rebuildGlobalGraph, GraphNode, GraphEdge } from '../lib/mcp';
+import { getGlobalGraph, rebuildGlobalGraph, GraphNode } from '../lib/mcp';
 
 interface GlobalGraphState {
   nodes: GraphNode[];
-  edges: GraphEdge[];
+  edges: any[];
   loading: boolean;
   error: string | null;
   meta: {
@@ -44,10 +48,41 @@ export default function GlobalGraphPage() {
   // ui_state.json 폴링용
   const lastTimestampRef = useRef<number>(0);
 
-  // ✅ [NEW] global_graph.json 변경 감지용
+  // global_graph.json 변경 감지용
   const lastGraphSigRef = useRef<string | null>(null);
 
-  // Load global graph
+  /* ------------------- Node color map (custom colors) ------------------- */
+
+  const [nodeColorMap, setNodeColorMap] = useState<Record<string, string>>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('nodeColorMap') || '{}');
+    } catch {
+      return {};
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('nodeColorMap', JSON.stringify(nodeColorMap));
+    } catch {
+      // ignore
+    }
+  }, [nodeColorMap]);
+
+  const handleNodeColorChange = useCallback((nodeId: string, color: string) => {
+    setNodeColorMap(prev => ({ ...prev, [nodeId]: color }));
+  }, []);
+
+  const handleNodeColorReset = useCallback((nodeId: string) => {
+    setNodeColorMap(prev => {
+      const next = { ...prev };
+      delete next[nodeId];
+      return next;
+    });
+  }, []);
+
+  /* ----------------------- Load global graph ----------------------- */
+
   const loadGraph = useCallback(async () => {
     setState(prev => ({ ...prev, loading: true, error: null }));
 
@@ -122,13 +157,13 @@ export default function GlobalGraphPage() {
     return () => window.clearInterval(interval);
   }, [navigate, loadGraph]);
 
-  /* ----------------------- [NEW] global_graph.json Polling ----------------------- */
+  /* ----------------------- global_graph.json Polling ----------------------- */
   useEffect(() => {
     const url = '/output/graph/global_graph.json';
 
     const checkGlobalGraph = async () => {
       try {
-        // 1) HEAD로 ETag/Last-Modified 기반 변경 감지 (mtime 폴링)
+        // 1) HEAD로 ETag/Last-Modified 기반 변경 감지
         const head = await fetch(url, { method: 'HEAD', cache: 'no-store' });
         const sig = head.headers.get('etag') ?? head.headers.get('last-modified');
 
@@ -140,7 +175,7 @@ export default function GlobalGraphPage() {
           return;
         }
 
-        // 2) 서버가 헤더를 안 주면 GET으로 fallback (cache bust)
+        // 2) 서버가 헤더를 안 주면 GET fallback
         const res = await fetch(`${url}?t=${Date.now()}`, { cache: 'no-store' });
         if (!res.ok) return;
 
@@ -158,18 +193,17 @@ export default function GlobalGraphPage() {
       }
     };
 
-    // 처음 1번 바로 체크 + 이후 폴링
     checkGlobalGraph();
-    const interval = window.setInterval(checkGlobalGraph, 1000); // 필요하면 300~500ms로 줄여도 됨
+    const interval = window.setInterval(checkGlobalGraph, 1000);
     return () => window.clearInterval(interval);
   }, [loadGraph]);
 
-  // Click → select node
+  /* ------------------------ Click Handlers ------------------------ */
+
   const handleNodeClick = useCallback((node: GraphNode) => {
     setSelectedNode(node);
   }, []);
 
-  // Double click → Paper view
   const handleNodeDoubleClick = useCallback(
     (node: GraphNode) => {
       if (!node?.id) return;
@@ -182,6 +216,8 @@ export default function GlobalGraphPage() {
     (paperId: string) => navigate(`/paper/${encodeURIComponent(paperId)}`),
     [navigate]
   );
+
+  /* ----------------------------- UI ----------------------------- */
 
   return (
     <div style={{ display: 'flex', height: '100vh', backgroundColor: '#f5f5f5' }}>
@@ -248,11 +284,12 @@ export default function GlobalGraphPage() {
           {!state.loading && !state.error && (
             <GraphCanvas
               nodes={state.nodes}
-              edges={state.edges}
+              edges={state.edges as any}
               mode="global"
               selectedNodeId={selectedNode?.id}
               onNodeClick={handleNodeClick}
               onNodeDoubleClick={handleNodeDoubleClick}
+              nodeColorMap={nodeColorMap} // ✅ custom node colors
             />
           )}
         </div>
@@ -278,8 +315,18 @@ export default function GlobalGraphPage() {
       <SidePanel
         selectedNode={selectedNode}
         mode="global"
-        onAction={handleViewPaperGraph}
+        // 기존 onAction 유지(혹시 너 코드에서 쓰고 있을 수 있어서)
+        onAction={() => {
+          if (selectedNode?.id) handleViewPaperGraph(selectedNode.id);
+        }}
+        // ✅ SidePanel이 실제로 쓰는 건 onNavigate 버튼(“View Reference Graph”)
+        onNavigate={(node) => handleViewPaperGraph(node.id)}
         onClose={() => setSelectedNode(null)}
+        // ✅ color controls
+        nodeColorMap={nodeColorMap}
+        nodeColor={selectedNode ? nodeColorMap[selectedNode.id] : undefined}
+        onNodeColorChange={handleNodeColorChange}
+        onNodeColorReset={handleNodeColorReset}
       />
     </div>
   );

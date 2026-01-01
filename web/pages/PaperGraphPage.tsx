@@ -3,6 +3,7 @@
  *
  * Center paper → reference titles expansion (local JSON)
  * Loads directly from /output/{paper_id}/reference_titles.json
+ *
  */
 
 import React, { useEffect, useState, useCallback } from 'react';
@@ -29,6 +30,11 @@ interface ReferenceTitlesJson {
   titles: string[];
 }
 
+type FetchRefResult = {
+  usedId: string;
+  json: ReferenceTitlesJson;
+};
+
 /* ----------------------- Helpers: ID Normalization ---------------------- */
 
 function normalizeArxivToDoiLike(id: string): string {
@@ -38,21 +44,21 @@ function normalizeArxivToDoiLike(id: string): string {
   return id;
 }
 
-async function fetchReferenceTitles(paperId: string): Promise<ReferenceTitlesJson | null> {
+async function fetchReferenceTitlesResolved(paperId: string): Promise<FetchRefResult | null> {
   // Try multiple ID formats
-  const candidates = [
-    paperId,
-    normalizeArxivToDoiLike(paperId)
-  ].filter((v, i, a) => a.indexOf(v) === i);  // unique
+  const candidates = [paperId, normalizeArxivToDoiLike(paperId)].filter(
+    (v, i, a) => a.indexOf(v) === i
+  ); // unique
 
   for (const id of candidates) {
     try {
-      const res = await fetch(`/output/${id}/reference_titles.json`);
+      const res = await fetch(`/output/${id}/reference_titles.json`, { cache: 'no-store' });
       if (res.ok) {
-        return await res.json();
+        const json = (await res.json()) as ReferenceTitlesJson;
+        return { usedId: id, json };
       }
     } catch {
-      continue;
+      // continue
     }
   }
   return null;
@@ -62,7 +68,7 @@ async function fetchReferenceTitles(paperId: string): Promise<ReferenceTitlesJso
 
 export default function PaperGraphPage() {
   const { paperId: rawId } = useParams();
-  const paperId = rawId ? decodeURIComponent(rawId) : "";
+  const paperId = rawId ? decodeURIComponent(rawId) : '';
 
   const navigate = useNavigate();
 
@@ -76,6 +82,36 @@ export default function PaperGraphPage() {
 
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
 
+  /* ------------------- Node color map (custom colors) ------------------- */
+
+  const [nodeColorMap, setNodeColorMap] = useState<Record<string, string>>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('nodeColorMap') || '{}');
+    } catch {
+      return {};
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('nodeColorMap', JSON.stringify(nodeColorMap));
+    } catch {
+      // ignore
+    }
+  }, [nodeColorMap]);
+
+  const handleNodeColorChange = useCallback((nodeId: string, color: string) => {
+    setNodeColorMap(prev => ({ ...prev, [nodeId]: color }));
+  }, []);
+
+  const handleNodeColorReset = useCallback((nodeId: string) => {
+    setNodeColorMap(prev => {
+      const next = { ...prev };
+      delete next[nodeId];
+      return next;
+    });
+  }, []);
+
   /* ----------------------- Load from reference_titles.json ----------------------- */
 
   const loadGraph = useCallback(async () => {
@@ -87,38 +123,58 @@ export default function PaperGraphPage() {
       console.log(`Loading reference graph for: ${paperId}`);
 
       // Load reference_titles.json directly (with ID fallback)
-      const json = await fetchReferenceTitles(paperId);
+      const resolved = await fetchReferenceTitlesResolved(paperId);
 
-      if (!json) {
+      if (!resolved) {
         throw new Error(`reference_titles.json not found for ${paperId}`);
       }
 
+      const { usedId, json } = resolved;
       const titles = json.titles || [];
-      console.log(`Found ${titles.length} reference titles`);
 
-      // Create center node
+      console.log(`Found ${titles.length} reference titles (folder used: ${usedId})`);
+
+      // ✅ Use the resolved folder id as the canonical center id
+      const centerCanonicalId = usedId;
+
+      // Create center node (add safe defaults for PaperCard)
       const centerNode: GraphNode = {
-        id: paperId,
-        title: paperId,
+        id: centerCanonicalId,
+        title: centerCanonicalId,
+        authors: [],
+        abstract: '',
+        year: undefined,
         isCenter: true,
         hasDetails: true,
         cluster: 0,
         depth: 0
-      };
+      } as any;
 
       // Create reference nodes from titles
-      const refNodes: GraphNode[] = titles.map((title, idx) => ({
-        id: `ref_${idx}_${title.substring(0, 30).replace(/[^a-zA-Z0-9]/g, '_')}`,
-        title: title,
-        isCenter: false,
-        hasDetails: false,
-        cluster: 1,
-        depth: 1
-      }));
+      // - Stable-ish id based on index + sanitized title (good enough for color mapping)
+      const refNodes: GraphNode[] = titles.map((title, idx) => {
+        const safe = String(title)
+          .slice(0, 60)
+          .replace(/\s+/g, ' ')
+          .trim()
+          .replace(/[^a-zA-Z0-9]/g, '_');
+
+        return {
+          id: `ref_${idx}_${safe}`,
+          title: title,
+          authors: [],
+          abstract: '',
+          year: undefined,
+          isCenter: false,
+          hasDetails: false,
+          cluster: 1,
+          depth: 1
+        } as any;
+      });
 
       // Create edges from center to each reference
       const edges: GraphEdge[] = refNodes.map(refNode => ({
-        source: paperId,
+        source: centerCanonicalId,
         target: refNode.id,
         type: 'references' as const
       }));
@@ -127,16 +183,15 @@ export default function PaperGraphPage() {
 
       setState({
         nodes: allNodes,
-        edges: edges,
+        edges,
         loading: false,
         error: null,
-        centerId: paperId
+        centerId: centerCanonicalId
       });
 
       setSelectedNode(centerNode);
-
     } catch (err) {
-      console.error("Graph load failed:", err);
+      console.error('Graph load failed:', err);
       setState(prev => ({
         ...prev,
         loading: false,
@@ -157,9 +212,9 @@ export default function PaperGraphPage() {
 
   const handleNodeDoubleClick = useCallback(
     (node: GraphNode) => {
-      // If it's a reference node, try to navigate if title looks like a paper ID
-      if (!node.isCenter) {
-        const title = node.title;
+      // If it's a reference node, try to navigate if title looks like an arXiv ID
+      if (!(node as any).isCenter) {
+        const title = String((node as any).title || '');
         const arxivMatch = title.match(/(\d{4}\.\d{4,5})/);
         if (arxivMatch) {
           navigate(`/paper/${encodeURIComponent(`10.48550_arxiv.${arxivMatch[1]}`)}`);
@@ -168,7 +223,7 @@ export default function PaperGraphPage() {
       }
 
       // For center node, just refresh
-      if (node.isCenter) {
+      if ((node as any).isCenter) {
         loadGraph();
       }
     },
@@ -213,7 +268,7 @@ export default function PaperGraphPage() {
             <span style={{ fontWeight: 600 }}>Paper Reference Graph</span>
           </div>
           <div style={{ fontSize: '12px', color: '#718096' }}>
-            ID: {paperId} | Refs: {state.nodes.length - 1}
+            ID: {paperId} | Refs: {Math.max(0, state.nodes.length - 1)}
           </div>
         </header>
 
@@ -234,6 +289,7 @@ export default function PaperGraphPage() {
               onNodeClick={handleNodeClick}
               onNodeDoubleClick={handleNodeDoubleClick}
               selectedNodeId={selectedNode?.id}
+              nodeColorMap={nodeColorMap} // ✅ custom colors applied here
             />
           )}
         </div>
@@ -251,8 +307,8 @@ export default function PaperGraphPage() {
               color: '#718096'
             }}
           >
-            <span>Center: {paperId}</span>
-            <span>References: {state.nodes.length - 1}</span>
+            <span>Center: {state.centerId}</span>
+            <span>References: {Math.max(0, state.nodes.length - 1)}</span>
           </div>
         )}
       </div>
@@ -262,6 +318,11 @@ export default function PaperGraphPage() {
         mode="paper"
         onAction={() => {}}
         onClose={() => setSelectedNode(null)}
+        // ✅ Node color controls
+        nodeColorMap={nodeColorMap}
+        nodeColor={selectedNode ? nodeColorMap[selectedNode.id] : undefined}
+        onNodeColorChange={handleNodeColorChange}
+        onNodeColorReset={handleNodeColorReset}
       />
     </div>
   );

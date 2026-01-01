@@ -8,6 +8,10 @@
  * - Rebuild graph only when nodes/edges/layout params change.
  * - Update highlight styles in a separate effect.
  *
+ * [UPDATED - custom node color]
+ * - Supports nodeColorMap override (set from SidePanel)
+ * - Keeps selected highlight via stroke/radius (does NOT overwrite fill)
+ *
  * [FIXED]
  * - Center flag compatibility: supports both `is_center` and `isCenter`
  * - Cluster color index precedence bug
@@ -23,6 +27,10 @@ interface GraphCanvasProps {
   mode: 'global' | 'paper';
   centerId?: string;
   selectedNodeId?: string;
+
+  // ✅ NEW: node color override map (nodeId -> hex color)
+  nodeColorMap?: Record<string, string>;
+
   onNodeClick?: (node: GraphNode) => void;
   onNodeDoubleClick?: (node: GraphNode) => void;
 }
@@ -46,12 +54,17 @@ const clusterColorIndex = (d: any): number => {
   return ((c % n) + n) % n;
 };
 
+// Basic color validation (#RRGGBB)
+const isHexColor = (v: unknown): v is string =>
+  typeof v === 'string' && /^#[0-9a-fA-F]{6}$/.test(v);
+
 export default function GraphCanvas({
   nodes,
   edges,
   mode,
   centerId,
   selectedNodeId,
+  nodeColorMap,
   onNodeClick,
   onNodeDoubleClick
 }: GraphCanvasProps) {
@@ -64,7 +77,7 @@ export default function GraphCanvas({
   const zoomBehaviorRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
   const zoomSelectionRef = useRef<d3.Selection<SVGSVGElement, unknown, null, undefined> | null>(null);
 
-  // ✅ 노드 selection을 저장해두고, selectedNodeId 변경 때 하이라이트만 업데이트
+  // ✅ 노드 selection을 저장해두고, selectedNodeId/nodeColorMap 변경 때 스타일만 업데이트
   const nodeSelectionRef = useRef<d3.Selection<SVGGElement, any, SVGGElement, unknown> | null>(null);
 
   // Responsive sizing
@@ -103,6 +116,22 @@ export default function GraphCanvas({
     };
   }, [mode]);
 
+  /* ----------------------- Color resolver ----------------------- */
+
+  const getNodeFill = useCallback((d: any) => {
+    const isCenterNode = makeIsCenterNode(centerId);
+
+    // Center color stays fixed (원하면 이것도 override 허용 가능)
+    if (isCenterNode(d)) return '#f56565';
+
+    // ✅ User override color first
+    const override = nodeColorMap?.[d.id];
+    if (isHexColor(override)) return override;
+
+    // Default: cluster color
+    return CLUSTER_COLORS[clusterColorIndex(d)];
+  }, [centerId, nodeColorMap]);
+
   /* ---------------------- Highlight updater ---------------------- */
 
   const updateHighlight = useCallback(() => {
@@ -118,13 +147,12 @@ export default function GraphCanvas({
         return 12;
       })
       .attr('fill', (d: any) => {
-        if (isCenterNode(d)) return '#f56565';
-        if (d.id === selectedNodeId) return '#ecc94b';
-        return CLUSTER_COLORS[clusterColorIndex(d)];
+        // ✅ Do NOT paint selected as yellow; keep real fill color (override/cluster)
+        return getNodeFill(d);
       })
       .attr('stroke', (d: any) => (d.id === selectedNodeId ? '#000' : '#fff'))
       .attr('stroke-width', 2);
-  }, [selectedNodeId, centerId]);
+  }, [selectedNodeId, centerId, getNodeFill]);
 
   /* -------------------------- Main D3 --------------------------- */
 
@@ -147,7 +175,7 @@ export default function GraphCanvas({
     }
 
     // Clear old graph (but preserve zoom behavior)
-    // ✅ NOTE: this effect no longer runs on `selectedNodeId` change, so click won't rebuild.
+    // ✅ NOTE: this effect no longer runs on `selectedNodeId` / `nodeColorMap` change, so click/color won't rebuild.
     svg.selectAll('g.canvas-root').remove();
 
     const container = svg.append('g').attr('class', 'canvas-root');
@@ -165,8 +193,11 @@ export default function GraphCanvas({
       .force('link', d3.forceLink(graphEdges as any).id((d: any) => d.id).distance(linkDistance))
       .force('charge', d3.forceManyBody().strength(chargeStrength))
       // ⚠️ forceCenter는 d3 버전에 따라 strength()가 없을 수 있음.
-      // 기존 코드 유지 (지금 동작 중이면 그대로 두는 게 안전)
-      .force('center', (d3.forceCenter(width / 2, height / 2) as any).strength?.(centerStrength) ?? d3.forceCenter(width / 2, height / 2))
+      .force(
+        'center',
+        (d3.forceCenter(width / 2, height / 2) as any).strength?.(centerStrength) ??
+          d3.forceCenter(width / 2, height / 2)
+      )
       .force('collide', d3.forceCollide().radius(30));
 
     simulationRef.current = simulation;
@@ -224,14 +255,10 @@ export default function GraphCanvas({
     node.append('circle')
       .attr('r', (d: any) => {
         if (isCenterNode(d)) return 20;
-        if (d.id === selectedNodeId) return 18; // Highlight selected
+        if (d.id === selectedNodeId) return 18;
         return 12;
       })
-      .attr('fill', (d: any) => {
-        if (isCenterNode(d)) return '#f56565';
-        if (d.id === selectedNodeId) return '#ecc94b'; // Highlight selected
-        return CLUSTER_COLORS[clusterColorIndex(d)];
-      })
+      .attr('fill', (d: any) => getNodeFill(d))
       .attr('stroke', (d: any) => (d.id === selectedNodeId ? '#000' : '#fff'))
       .attr('stroke-width', 2);
 
@@ -280,8 +307,9 @@ export default function GraphCanvas({
     height,
     getForceParams,
     onNodeClick,
-    onNodeDoubleClick
-    // ✅ selectedNodeId 제거: 클릭/선택 변경으로 그래프 재생성 금지
+    onNodeDoubleClick,
+    getNodeFill
+    // ✅ selectedNodeId/nodeColorMap 제거: 클릭/색 변경으로 그래프 재생성 금지
   ]);
 
   /* ------------------- Highlight-only effect ------------------- */

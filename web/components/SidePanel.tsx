@@ -3,9 +3,14 @@
  *
  * Displays detailed information about a selected paper.
  * Used in both GlobalGraphPage and PaperGraphPage.
+ *
+ * [UPDATED]
+ * - Add node color override UI (color picker / presets / reset)
+ * - arXiv link robust for DOI-like ids (10.48550_arxiv.<id>)
+ * - Keep backward compatibility with existing props
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { GraphNode } from '../lib/mcp';
 import PaperCard from './PaperCard';
 
@@ -47,6 +52,18 @@ function getArxivAbsUrl(nodeId: string): string | null {
   return arxivId ? `https://arxiv.org/abs/${arxivId}` : null;
 }
 
+/* ---------------------- Helper: color ---------------------- */
+
+const PRESET_COLORS = [
+  '#4299e1', '#48bb78', '#ed8936', '#9f7aea',
+  '#f56565', '#38b2ac', '#ed64a6', '#667eea',
+  '#1a202c', '#718096'
+];
+
+function isHexColor(v: unknown): v is string {
+  return typeof v === 'string' && /^#[0-9a-fA-F]{6}$/.test(v);
+}
+
 /* ----------------------------- Props ----------------------------- */
 
 interface SidePanelProps {
@@ -62,6 +79,12 @@ interface SidePanelProps {
 
   mode: 'global' | 'paper';
   isLoading?: boolean;
+
+  // ✅ NEW: node color override controls (optional)
+  nodeColorMap?: Record<string, string>; // (nodeId -> color) optional convenience
+  nodeColor?: string;                    // current selected node color (optional)
+  onNodeColorChange?: (nodeId: string, color: string) => void;
+  onNodeColorReset?: (nodeId: string) => void;
 }
 
 export default function SidePanel({
@@ -70,17 +93,33 @@ export default function SidePanel({
   onExpand,
   onNavigate,
   mode,
-  isLoading = false
+  isLoading = false,
+  nodeColorMap,
+  nodeColor,
+  onNodeColorChange,
+  onNodeColorReset
 }: SidePanelProps) {
   if (!selectedNode) return null;
 
   const selectedIsCenter = Boolean((selectedNode as any).is_center || (selectedNode as any).isCenter);
   const arxivUrl = getArxivAbsUrl(selectedNode.id);
 
+  const currentColor = useMemo(() => {
+    const direct = nodeColor;
+    if (isHexColor(direct)) return direct;
+
+    const mapped = nodeColorMap?.[selectedNode.id];
+    if (isHexColor(mapped)) return mapped;
+
+    return '#4299e1';
+  }, [nodeColor, nodeColorMap, selectedNode.id]);
+
+  const canEditColor = Boolean(onNodeColorChange || onNodeColorReset);
+
   return (
     <div
       style={{
-        position: 'fixed',        // ✅ 항상 화면 오른쪽에 고정
+        position: 'fixed',
         top: 0,
         right: 0,
         width: '320px',
@@ -122,9 +161,114 @@ export default function SidePanel({
 
       {/* Content */}
       <div style={{ padding: '16px', overflowY: 'auto', flex: 1 }}>
-        {/* ✅ FIX: PaperCard는 prop 이름이 node */}
         <PaperCard node={selectedNode} />
 
+        {/* -------- Node Color Controls -------- */}
+        <div
+          style={{
+            marginTop: '14px',
+            paddingTop: '14px',
+            borderTop: '1px solid #edf2f7'
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <div style={{ fontSize: '12px', color: '#718096', fontWeight: 600 }}>
+              Node color
+            </div>
+            {!canEditColor && (
+              <div style={{ fontSize: '11px', color: '#a0aec0' }}>
+                (connect callbacks)
+              </div>
+            )}
+          </div>
+
+          <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <input
+              type="color"
+              value={currentColor}
+              disabled={!onNodeColorChange}
+              onChange={(e) => {
+                const c = e.target.value;
+                if (isHexColor(c)) onNodeColorChange?.(selectedNode.id, c);
+              }}
+              style={{
+                width: 42,
+                height: 34,
+                padding: 0,
+                border: 'none',
+                background: 'transparent',
+                cursor: onNodeColorChange ? 'pointer' : 'not-allowed'
+              }}
+              aria-label="Pick node color"
+            />
+
+            <input
+              type="text"
+              value={currentColor}
+              disabled={!onNodeColorChange}
+              onChange={(e) => {
+                const v = e.target.value.trim();
+                // 타이핑 중엔 반영 안 하고, 유효한 hex일 때만 반영
+                if (isHexColor(v)) onNodeColorChange?.(selectedNode.id, v);
+              }}
+              style={{
+                flex: 1,
+                padding: '8px 10px',
+                border: '1px solid #e2e8f0',
+                borderRadius: 6,
+                fontSize: 12,
+                color: '#2d3748'
+              }}
+              placeholder="#RRGGBB"
+            />
+
+            <button
+              disabled={!onNodeColorReset}
+              onClick={() => onNodeColorReset?.(selectedNode.id)}
+              style={{
+                padding: '8px 10px',
+                borderRadius: 6,
+                border: '1px solid #e2e8f0',
+                background: '#f7fafc',
+                cursor: onNodeColorReset ? 'pointer' : 'not-allowed',
+                fontSize: 12,
+                color: '#4a5568',
+                opacity: onNodeColorReset ? 1 : 0.6
+              }}
+            >
+              Reset
+            </button>
+          </div>
+
+          <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
+            {PRESET_COLORS.map((c) => (
+              <button
+                key={c}
+                disabled={!onNodeColorChange}
+                onClick={() => onNodeColorChange?.(selectedNode.id, c)}
+                style={{
+                  width: 22,
+                  height: 22,
+                  borderRadius: 999,
+                  border: c.toLowerCase() === currentColor.toLowerCase()
+                    ? '2px solid #2d3748'
+                    : '1px solid #e2e8f0',
+                  background: c,
+                  cursor: onNodeColorChange ? 'pointer' : 'not-allowed',
+                  opacity: onNodeColorChange ? 1 : 0.6
+                }}
+                aria-label={`Set color ${c}`}
+                title={c}
+              />
+            ))}
+          </div>
+
+          <div style={{ marginTop: 8, fontSize: 11, color: '#a0aec0' }}>
+            Tip: 선택 하이라이트는 테두리로 표시돼서, 사용자 지정 색은 그대로 유지돼.
+          </div>
+        </div>
+
+        {/* -------- Actions -------- */}
         <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {mode === 'global' && onNavigate && (
             <button
@@ -162,7 +306,6 @@ export default function SidePanel({
             </button>
           )}
 
-          {/* ✅ arXiv ID가 나올 때만 표시 */}
           {arxivUrl && (
             <a
               href={arxivUrl}
@@ -201,4 +344,3 @@ export default function SidePanel({
     </div>
   );
 }
-
