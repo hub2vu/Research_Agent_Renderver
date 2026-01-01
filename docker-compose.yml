@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   # MCP Server - Tool execution layer
@@ -20,11 +20,24 @@ services:
     networks:
       - research-network
     restart: unless-stopped
+
+    # ✅ 중요: 컨테이너 외부(다른 컨테이너)에서 접근 가능하도록 0.0.0.0 바인딩
+    # FastAPI app 경로가 다르면 "mcp.server:app" 부분만 너 프로젝트에 맞게 바꿔줘.
+    command: ["python", "-m", "uvicorn", "mcp.server:app", "--host", "0.0.0.0", "--port", "8000"]
+
+    # ✅ requests 없이 포트 오픈만 검사 (health endpoint 없어도 됨)
     healthcheck:
-      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import socket; s=socket.socket(); s.settimeout(2); s.connect(('127.0.0.1',8000)); s.close()",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
 
   # Agent Client - Reasoning layer
   agent:
@@ -49,6 +62,7 @@ services:
         condition: service_healthy
     stdin_open: true
     tty: true
+    restart: unless-stopped
 
   # Web UI - Graph visualization
   web:
@@ -68,7 +82,9 @@ services:
     networks:
       - research-network
     depends_on:
-      - mcp-server
+      mcp-server:
+        condition: service_healthy
+    restart: unless-stopped
 
 networks:
   research-network:

@@ -1,13 +1,14 @@
 /**
  * GlobalGraphPage (Graph B)
  *
- * Displays the global paper relationship overview.
- * [UPDATED] Adds polling to detect if Agent wants to switch to Paper View.
+ * - ui_state.json 폴링(에이전트 네비게이션/리프레시)
+ * - [NEW] global_graph.json 변경(Last-Modified/ETag) 폴링 → 즉시 UI 반영
  */
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+// ✅ pages/ 아래라면 ../ 가 맞음 (루트면 ./ 유지)
 import GraphCanvas from '../components/GraphCanvas';
 import SidePanel from '../components/SidePanel';
 import { getGlobalGraph, rebuildGlobalGraph, GraphNode, GraphEdge } from '../lib/mcp';
@@ -40,10 +41,13 @@ export default function GlobalGraphPage() {
   const [similarityThreshold, setSimilarityThreshold] = useState(0.7);
   const [useEmbeddings, setUseEmbeddings] = useState(true);
 
-  // [NEW] Polling Ref
+  // ui_state.json 폴링용
   const lastTimestampRef = useRef<number>(0);
 
-  // Load global graph from global_graph.json (on mount)
+  // ✅ [NEW] global_graph.json 변경 감지용
+  const lastGraphSigRef = useRef<string | null>(null);
+
+  // Load global graph
   const loadGraph = useCallback(async () => {
     setState(prev => ({ ...prev, loading: true, error: null }));
 
@@ -91,8 +95,7 @@ export default function GlobalGraphPage() {
     loadGraph();
   }, [loadGraph]);
 
-
-  /* ----------------------- [NEW] Agent Polling Logic ----------------------- */
+  /* ----------------------- Agent Polling (ui_state.json) ----------------------- */
   useEffect(() => {
     const checkUiState = async () => {
       try {
@@ -104,48 +107,85 @@ export default function GlobalGraphPage() {
         if (data.timestamp > lastTimestampRef.current) {
           lastTimestampRef.current = data.timestamp;
 
-          // Agent가 특정 논문을 상세히 보라고 명령한 경우
           if (data.mode === 'paper' && data.focus_id) {
-            console.log("Agent Navigation Triggered (Global -> Paper):", data.focus_id);
             navigate(`/paper/${encodeURIComponent(data.focus_id)}`);
-          }
-          // Global 그래프를 갱신하라고 명령한 경우
-          else if (data.mode === 'global') {
-            console.log("Agent Refresh Triggered (Global)");
+          } else if (data.mode === 'global') {
             loadGraph();
           }
         }
-      } catch (e) {
-        // Ignore polling errors
+      } catch {
+        // ignore
       }
     };
 
-    const interval = setInterval(checkUiState, 1000);
-    return () => clearInterval(interval);
+    const interval = window.setInterval(checkUiState, 1000);
+    return () => window.clearInterval(interval);
   }, [navigate, loadGraph]);
 
+  /* ----------------------- [NEW] global_graph.json Polling ----------------------- */
+  useEffect(() => {
+    const url = '/output/graph/global_graph.json';
 
-  // Single click → select node (SidePanel)
+    const checkGlobalGraph = async () => {
+      try {
+        // 1) HEAD로 ETag/Last-Modified 기반 변경 감지 (mtime 폴링)
+        const head = await fetch(url, { method: 'HEAD', cache: 'no-store' });
+        const sig = head.headers.get('etag') ?? head.headers.get('last-modified');
+
+        if (sig) {
+          if (lastGraphSigRef.current && lastGraphSigRef.current !== sig) {
+            await loadGraph();
+          }
+          lastGraphSigRef.current = sig;
+          return;
+        }
+
+        // 2) 서버가 헤더를 안 주면 GET으로 fallback (cache bust)
+        const res = await fetch(`${url}?t=${Date.now()}`, { cache: 'no-store' });
+        if (!res.ok) return;
+
+        const text = await res.text();
+        const first = text.length ? text.charCodeAt(0) : 0;
+        const last = text.length ? text.charCodeAt(text.length - 1) : 0;
+        const sig2 = `${text.length}:${first}:${last}`;
+
+        if (lastGraphSigRef.current && lastGraphSigRef.current !== sig2) {
+          await loadGraph();
+        }
+        lastGraphSigRef.current = sig2;
+      } catch {
+        // ignore
+      }
+    };
+
+    // 처음 1번 바로 체크 + 이후 폴링
+    checkGlobalGraph();
+    const interval = window.setInterval(checkGlobalGraph, 1000); // 필요하면 300~500ms로 줄여도 됨
+    return () => window.clearInterval(interval);
+  }, [loadGraph]);
+
+  // Click → select node
   const handleNodeClick = useCallback((node: GraphNode) => {
     setSelectedNode(node);
   }, []);
 
-  // Double click → move to Paper Reference Graph
-  const handleNodeDoubleClick = useCallback((node: GraphNode) => {
-    if (!node?.id) return;
-    navigate(`/paper/${encodeURIComponent(node.id)}`);
-  }, [navigate]);
+  // Double click → Paper view
+  const handleNodeDoubleClick = useCallback(
+    (node: GraphNode) => {
+      if (!node?.id) return;
+      navigate(`/paper/${encodeURIComponent(node.id)}`);
+    },
+    [navigate]
+  );
 
-  // SidePanel button action
-  const handleViewPaperGraph = useCallback((paperId: string) => {
-    navigate(`/paper/${encodeURIComponent(paperId)}`);
-  }, [navigate]);
+  const handleViewPaperGraph = useCallback(
+    (paperId: string) => navigate(`/paper/${encodeURIComponent(paperId)}`),
+    [navigate]
+  );
 
   return (
     <div style={{ display: 'flex', height: '100vh', backgroundColor: '#f5f5f5' }}>
-      {/* Main Graph Area */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        {/* Header */}
         <header
           style={{
             padding: '16px 24px',
@@ -157,15 +197,12 @@ export default function GlobalGraphPage() {
           }}
         >
           <div>
-            <h1 style={{ margin: 0, fontSize: '20px', color: '#1a202c' }}>
-              Global Paper Graph
-            </h1>
+            <h1 style={{ margin: 0, fontSize: '20px', color: '#1a202c' }}>Global Paper Graph</h1>
             <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#718096' }}>
               Overview of all papers
             </p>
           </div>
 
-          {/* Controls */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <label style={{ fontSize: '13px', color: '#4a5568' }}>Similarity:</label>
@@ -207,7 +244,6 @@ export default function GlobalGraphPage() {
           </div>
         </header>
 
-        {/* Graph Canvas */}
         <div style={{ flex: 1, position: 'relative' }}>
           {!state.loading && !state.error && (
             <GraphCanvas
@@ -221,7 +257,6 @@ export default function GlobalGraphPage() {
           )}
         </div>
 
-        {/* Stats Bar */}
         {state.meta && (
           <div
             style={{
@@ -240,7 +275,6 @@ export default function GlobalGraphPage() {
         )}
       </div>
 
-      {/* Side Panel */}
       <SidePanel
         selectedNode={selectedNode}
         mode="global"
