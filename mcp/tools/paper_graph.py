@@ -40,47 +40,157 @@ except ImportError:
     HAS_SENTENCE_TRANSFORMERS = False
 
 
+
 def extract_paper_title_from_text(text_file_path: Path) -> Optional[str]:
     """
-    Extract paper title from extracted_text.txt.
+    Robust title extraction from extracted_text.txt (first page area).
 
-    Logic: Look at lines 1-5, find a line with ":",
-    the title is that line + the next line.
+    Handles:
+    - "Title: Subtitle" on 2 lines
+    - arXiv metadata lines (ignores the ':' in 'arXiv:')
+    - UPPERCASE conference style titles (often split across lines)
+    - stops before author/affiliation lines
     """
     if not text_file_path.exists():
         return None
 
+    def clean_line(s: str) -> str:
+        # remove page markers even if stuck in same line
+        s = re.sub(r"===\s*Page\s*\d+\s*===", "", s, flags=re.IGNORECASE)
+        s = s.strip()
+        # normalize weird separators like "Abstract ;"
+        s = re.sub(r"\s*;\s*$", "", s)
+        return s.strip()
+
+    def is_noise_line(s: str) -> bool:
+        if not s:
+            return True
+        if re.match(r"^(abstract)\b", s, flags=re.IGNORECASE):
+            return True
+        if re.match(r"^(published as|preprint|proceedings)\b", s, flags=re.IGNORECASE):
+            return True
+        # pure arXiv meta line
+        if re.match(r"(?i)^\s*arxiv\s*:\s*\S+", s):
+            return True
+        return False
+
+    def is_author_or_affil_line(s: str) -> bool:
+        if not s:
+            return False
+
+        # emails / urls
+        if "@" in s or re.search(r"https?://", s):
+            return True
+
+        # affiliation keywords (strong boundary)
+        if re.search(r"\b(University|Department|Institute|Laboratory|Research|School|College)\b", s):
+            return True
+
+        # starts with affiliation index like "1Carnegie Mellon University"
+        if re.match(r"^\s*\d{1,2}\s*[A-Za-z]", s):
+            return True
+
+        # obvious author list patterns
+        if re.search(r"\bet\s+al\.?\b", s, flags=re.IGNORECASE):
+            return True
+
+        # comma-separated many names
+        if "," in s and len(s) < 220:
+            words = re.findall(r"[A-Za-z][A-Za-z\-\*0-9]*", s)
+            caps = sum(1 for w in words if w and w[0].isupper())
+            if caps >= 4:
+                return True
+
+        # ✅ 매우 보수적인 "단일 저자 이름" 판별:
+        # - 하이픈이 있으면 제목(예: Test-Time)일 가능성이 커서 저자로 보지 않음
+        # - 2~3단어 정도의 짧은 이름만 잡음
+        if "-" not in s and ":" not in s and len(s) <= 40:
+            if re.match(
+                r"^[A-Z][a-z]+(?:[\'][A-Za-z]+)?\*?(?:\s+[A-Z][a-z]+(?:[\'][A-Za-z]+)?\*?){1,2}$",
+                s
+            ):
+                return True
+
+        return False
+
     try:
+        # read more than 5 lines (titles often span lines)
+        raw_lines = []
         with open(text_file_path, "r", encoding="utf-8", errors="ignore") as f:
-            lines = []
             for i, line in enumerate(f):
-                if i >= 5:
+                if i >= 30:
                     break
-                lines.append(line.strip())
+                s = clean_line(line.strip())
+                if s and not is_noise_line(s):
+                    raw_lines.append(s)
 
-        # Find line with ":"
-        for i, line in enumerate(lines):
-            if ":" in line:
-                # Title is this line + next line (if exists)
-                title_parts = [line]
-                if i + 1 < len(lines):
-                    title_parts.append(lines[i + 1])
+        if not raw_lines:
+            return None
 
-                title = " ".join(title_parts).strip()
-                # Clean up the title
-                title = re.sub(r"\s+", " ", title)
-                # Remove common prefixes like "Title:" or "Paper:"
-                title = re.sub(r"^(Title|Paper|Article)\s*:\s*", "", title, flags=re.IGNORECASE)
+        # find a good "start line" for title
+        start_idx = None
+        for i, s in enumerate(raw_lines):
+            # ignore ':' in arXiv:
+            check = re.sub(r"(?i)\barxiv\s*:", "arXiv", s)
+            has_colon = (":" in check)
 
-                if len(title) > 5:  # Minimum length check
-                    return title[:200]  # Limit title length
+            letters = re.findall(r"[A-Za-z]", s)
+            upper_ratio = (sum(ch.isupper() for ch in letters) / len(letters)) if letters else 0.0
 
-        # Fallback: use first non-empty line as title
-        for line in lines:
-            if line and len(line) > 5:
-                return line[:200]
+            # candidate if:
+            # - has a meaningful colon, OR
+            # - looks like title in uppercase / long enough
+            if has_colon or (upper_ratio > 0.65 and len(s.split()) >= 3) or (len(s) >= 20 and len(s.split()) >= 4):
+                # but skip obvious non-title boundaries
+                if re.match(r"^(published as)\b", s, flags=re.IGNORECASE):
+                    continue
+                # skip pure arXiv meta
+                if re.match(r"(?i)^\s*arxiv\s*:\s*\S+", s):
+                    continue
+                start_idx = i
+                break
 
-        return None
+        if start_idx is None:
+            # fallback: first decent line
+            for s in raw_lines:
+                if len(s) > 8:
+                    return s[:200]
+            return None
+
+        # build title lines (1~3 lines)
+        title_lines = [raw_lines[start_idx]]
+
+        # if the start line contains arXiv metadata + title, strip metadata
+        if re.search(r"(?i)\barxiv\s*:\s*\S+", title_lines[0]):
+            tmp = re.sub(r"(?i)\barxiv\s*:\s*", "arXiv ", title_lines[0])
+            m_year = re.search(r"\b(19|20)\d{2}\b", tmp)
+            if m_year:
+                tail = tmp[m_year.end():].strip()
+                if len(tail) >= 8:
+                    title_lines[0] = tail
+                else:
+                    title_lines[0] = tmp
+            else:
+                title_lines[0] = tmp
+
+        # append continuation lines until author/affiliation/noise
+        for j in range(start_idx + 1, min(start_idx + 3, len(raw_lines))):
+            nxt = raw_lines[j]
+            if is_noise_line(nxt):
+                break
+            if is_author_or_affil_line(nxt):
+                break
+
+            # allow short ALL-CAPS continuation like "LANGUAGE MODELS"
+            title_lines.append(nxt)
+
+        title = " ".join(title_lines).strip()
+        title = re.sub(r"\s+", " ", title)
+        title = re.sub(r"^(Title|Paper|Article)\s*:\s*", "", title, flags=re.IGNORECASE)
+
+        # last sanity trim
+        return title[:200] if len(title) > 5 else None
+
     except Exception:
         return None
 
