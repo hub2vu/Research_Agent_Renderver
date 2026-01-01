@@ -5,9 +5,9 @@
  * - global_graph.json 변경(Last-Modified/ETag) 폴링 → 즉시 UI 반영
  *
  * [UPDATED]
- * - nodeColorMap (custom node colors) + persist to localStorage
- * - pass nodeColorMap to GraphCanvas
- * - pass color controls to SidePanel
+ * - nodeColorMap 저장 키를 stableKey 우선으로 사용
+ * - loadGraph 시 nodes에 stableKey를 주입(없으면 생성)
+ * - SidePanel에 nodeColor(현재색)도 stableKey 기반으로 전달
  */
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
@@ -28,6 +28,26 @@ interface GlobalGraphState {
     similarity_threshold: number;
     used_embeddings: boolean;
   } | null;
+}
+
+/* ----------------------- Helpers: stableKey ---------------------- */
+
+function normalizeArxivToDoiLike(id: string): string {
+  if (!id) return id;
+  if (id.startsWith('10.48550_arxiv.')) return id;
+  const m = id.match(/^(\d{4}\.\d{4,5})(v\d+)?$/);
+  if (m) return `10.48550_arxiv.${m[1]}`;
+  return id;
+}
+
+function getStableKey(node: any): string {
+  // backend가 stableKey를 주면 최우선
+  if (node?.stableKey) return String(node.stableKey);
+
+  // global graph는 대부분 paper 노드이므로 paper prefix로 충돌 방지
+  const id = String(node?.id ?? '');
+  const normalized = normalizeArxivToDoiLike(id);
+  return `paper:${normalized || id}`;
 }
 
 export default function GlobalGraphPage() {
@@ -69,14 +89,15 @@ export default function GlobalGraphPage() {
     }
   }, [nodeColorMap]);
 
-  const handleNodeColorChange = useCallback((nodeId: string, color: string) => {
-    setNodeColorMap(prev => ({ ...prev, [nodeId]: color }));
+  // ✅ 이제 "nodeId"가 아니라 "nodeKey(stableKey)"를 받는다고 생각하면 됨
+  const handleNodeColorChange = useCallback((nodeKey: string, color: string) => {
+    setNodeColorMap(prev => ({ ...prev, [nodeKey]: color }));
   }, []);
 
-  const handleNodeColorReset = useCallback((nodeId: string) => {
+  const handleNodeColorReset = useCallback((nodeKey: string) => {
     setNodeColorMap(prev => {
       const next = { ...prev };
-      delete next[nodeId];
+      delete next[nodeKey];
       return next;
     });
   }, []);
@@ -88,12 +109,27 @@ export default function GlobalGraphPage() {
 
     try {
       const data = await getGlobalGraph();
+
+      // ✅ stableKey 주입 (GraphCanvas가 stableKey 우선으로 색/좌표 캐시를 씀)
+      const nodesWithKey = (data.nodes || []).map((n: any) => ({
+        ...n,
+        stableKey: getStableKey(n)
+      })) as any as GraphNode[];
+
       setState({
-        nodes: data.nodes || [],
+        nodes: nodesWithKey,
         edges: data.edges || [],
         loading: false,
         error: data.meta?.error || null,
         meta: data.meta
+      });
+
+      // 선택 노드가 있고, 새 nodes에도 있다면 stableKey 기준으로 다시 매칭
+      setSelectedNode(prev => {
+        if (!prev) return prev;
+        const prevKey = getStableKey(prev as any);
+        const found = (nodesWithKey as any[]).find(nn => getStableKey(nn) === prevKey);
+        return (found as any) || prev;
       });
     } catch (err) {
       setState(prev => ({
@@ -110,8 +146,14 @@ export default function GlobalGraphPage() {
 
     try {
       const data = await rebuildGlobalGraph(similarityThreshold, useEmbeddings);
+
+      const nodesWithKey = (data.nodes || []).map((n: any) => ({
+        ...n,
+        stableKey: getStableKey(n)
+      })) as any as GraphNode[];
+
       setState({
-        nodes: data.nodes || [],
+        nodes: nodesWithKey,
         edges: data.edges || [],
         loading: false,
         error: null,
@@ -163,7 +205,6 @@ export default function GlobalGraphPage() {
 
     const checkGlobalGraph = async () => {
       try {
-        // 1) HEAD로 ETag/Last-Modified 기반 변경 감지
         const head = await fetch(url, { method: 'HEAD', cache: 'no-store' });
         const sig = head.headers.get('etag') ?? head.headers.get('last-modified');
 
@@ -175,7 +216,6 @@ export default function GlobalGraphPage() {
           return;
         }
 
-        // 2) 서버가 헤더를 안 주면 GET fallback
         const res = await fetch(`${url}?t=${Date.now()}`, { cache: 'no-store' });
         if (!res.ok) return;
 
@@ -207,6 +247,7 @@ export default function GlobalGraphPage() {
   const handleNodeDoubleClick = useCallback(
     (node: GraphNode) => {
       if (!node?.id) return;
+      // ✅ 라우팅은 stableKey 말고 실제 id로
       navigate(`/paper/${encodeURIComponent(node.id)}`);
     },
     [navigate]
@@ -218,6 +259,8 @@ export default function GlobalGraphPage() {
   );
 
   /* ----------------------------- UI ----------------------------- */
+
+  const selectedKey = selectedNode ? getStableKey(selectedNode as any) : '';
 
   return (
     <div style={{ display: 'flex', height: '100vh', backgroundColor: '#f5f5f5' }}>
@@ -289,7 +332,7 @@ export default function GlobalGraphPage() {
               selectedNodeId={selectedNode?.id}
               onNodeClick={handleNodeClick}
               onNodeDoubleClick={handleNodeDoubleClick}
-              nodeColorMap={nodeColorMap} // ✅ custom node colors
+              nodeColorMap={nodeColorMap} // ✅ GraphCanvas는 stableKey 우선 조회
             />
           )}
         </div>
@@ -315,18 +358,28 @@ export default function GlobalGraphPage() {
       <SidePanel
         selectedNode={selectedNode}
         mode="global"
-        // 기존 onAction 유지(혹시 너 코드에서 쓰고 있을 수 있어서)
         onAction={() => {
           if (selectedNode?.id) handleViewPaperGraph(selectedNode.id);
         }}
-        // ✅ SidePanel이 실제로 쓰는 건 onNavigate 버튼(“View Reference Graph”)
         onNavigate={(node) => handleViewPaperGraph(node.id)}
         onClose={() => setSelectedNode(null)}
-        // ✅ color controls
+        // ✅ color controls (stableKey 기반)
         nodeColorMap={nodeColorMap}
-        nodeColor={selectedNode ? nodeColorMap[selectedNode.id] : undefined}
-        onNodeColorChange={handleNodeColorChange}
-        onNodeColorReset={handleNodeColorReset}
+        nodeColor={
+          selectedNode
+            ? (nodeColorMap[selectedKey] ?? nodeColorMap[selectedNode.id])
+            : undefined
+        }
+        onNodeColorChange={(keyOrId, color) => {
+          // SidePanel이 id를 줄 수도 있어서 안정적으로 처리
+          // - stableKey가 있는 경우 stableKey로 저장되도록 강제
+          const k = selectedNode ? getStableKey(selectedNode as any) : keyOrId;
+          handleNodeColorChange(k, color);
+        }}
+        onNodeColorReset={(keyOrId) => {
+          const k = selectedNode ? getStableKey(selectedNode as any) : keyOrId;
+          handleNodeColorReset(k);
+        }}
       />
     </div>
   );

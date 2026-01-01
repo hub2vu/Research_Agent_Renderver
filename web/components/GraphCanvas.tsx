@@ -2,19 +2,6 @@
  * GraphCanvas Component
  *
  * D3.js force-directed graph visualization.
- *
- * [FIXED - click jump]
- * - Do NOT rebuild the whole graph when `selectedNodeId` changes.
- * - Rebuild graph only when nodes/edges/layout params change.
- * - Update highlight styles in a separate effect.
- *
- * [UPDATED - custom node color]
- * - Supports nodeColorMap override (set from SidePanel)
- * - Keeps selected highlight via stroke/radius (does NOT overwrite fill)
- *
- * [FIXED]
- * - Center flag compatibility: supports both `is_center` and `isCenter`
- * - Cluster color index precedence bug
  */
 
 import React, { useEffect, useRef, useCallback, useState } from 'react';
@@ -28,7 +15,7 @@ interface GraphCanvasProps {
   centerId?: string;
   selectedNodeId?: string;
 
-  // ✅ NEW: node color override map (nodeId -> hex color)
+  // nodeKey(stableKey 우선) -> hex color
   nodeColorMap?: Record<string, string>;
 
   onNodeClick?: (node: GraphNode) => void;
@@ -42,19 +29,12 @@ const CLUSTER_COLORS = [
   '#f56565', '#38b2ac', '#ed64a6', '#667eea'
 ];
 
-// Helpers: tolerate both snake_case (backend) and camelCase (frontend)
-// + fallback to centerId match (안에 플래그가 없을 수도 있으니)
-const makeIsCenterNode = (centerId?: string) => (d: any): boolean =>
-  Boolean((d as any).is_center || (d as any).isCenter) || (centerId ? d?.id === centerId : false);
-
-// Safe cluster color index: handles undefined/null/negative and fixes operator precedence bug
 const clusterColorIndex = (d: any): number => {
   const n = CLUSTER_COLORS.length;
   const c = Number((d as any).cluster ?? 0);
   return ((c % n) + n) % n;
 };
 
-// Basic color validation (#RRGGBB)
 const isHexColor = (v: unknown): v is string =>
   typeof v === 'string' && /^#[0-9a-fA-F]{6}$/.test(v);
 
@@ -70,26 +50,49 @@ export default function GraphCanvas({
 }: GraphCanvasProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const simulationRef = useRef<d3.Simulation<any, any> | null>(null);
-  const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
 
-  // D3 Zoom 객체 저장
+  const simulationRef = useRef<d3.Simulation<any, any> | null>(null);
+
+  // zoom behavior + last transform
   const zoomBehaviorRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
   const zoomSelectionRef = useRef<d3.Selection<SVGSVGElement, unknown, null, undefined> | null>(null);
+  const zoomTransformRef = useRef<d3.ZoomTransform>(d3.zoomIdentity);
 
-  // ✅ 노드 selection을 저장해두고, selectedNodeId/nodeColorMap 변경 때 스타일만 업데이트
+  // node selection (for highlight-only updates)
   const nodeSelectionRef = useRef<d3.Selection<SVGGElement, any, SVGGElement, unknown> | null>(null);
 
-  // Responsive sizing
+  // cache node positions across rebuilds (keyed by stableKey first)
+  const posCacheRef = useRef<Map<string, { x?: number; y?: number; vx?: number; vy?: number }>>(
+    new Map()
+  );
+
+  // refs for stable resolvers (so nodeColorMap change doesn't recreate main effect)
+  const nodeColorMapRef = useRef<Record<string, string>>(nodeColorMap ?? {});
+  const centerIdRef = useRef<string | undefined>(centerId);
+
+  const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
+  const { width, height } = dimensions;
+
+  /* --------------------- keep refs in sync --------------------- */
+
+  useEffect(() => {
+    nodeColorMapRef.current = nodeColorMap ?? {};
+  }, [nodeColorMap]);
+
+  useEffect(() => {
+    centerIdRef.current = centerId;
+  }, [centerId]);
+
+  /* --------------------- Responsive sizing --------------------- */
+
   useEffect(() => {
     const updateDimensions = () => {
-      if (containerRef.current) {
-        const { clientWidth, clientHeight } = containerRef.current;
-        setDimensions({
-          width: clientWidth || 800,
-          height: clientHeight || 600
-        });
-      }
+      if (!containerRef.current) return;
+      const { clientWidth, clientHeight } = containerRef.current;
+      setDimensions({
+        width: clientWidth || 800,
+        height: clientHeight || 600
+      });
     };
 
     updateDimensions();
@@ -97,48 +100,61 @@ export default function GraphCanvas({
     return () => window.removeEventListener('resize', updateDimensions);
   }, []);
 
-  const { width, height } = dimensions;
-
   /* ------------------------ Force Params ------------------------ */
 
   const getForceParams = useCallback(() => {
     if (mode === 'global') {
-      return {
-        linkDistance: 60,
-        chargeStrength: -300,
-        centerStrength: 0.05
-      };
+      return { linkDistance: 60, chargeStrength: -300, centerStrength: 0.05 };
     }
-    return {
-      linkDistance: 80,
-      chargeStrength: -500,
-      centerStrength: 0.08
-    };
+    return { linkDistance: 80, chargeStrength: -500, centerStrength: 0.08 };
   }, [mode]);
 
-  /* ----------------------- Color resolver ----------------------- */
+  /* --------------------- Helpers (stable) --------------------- */
+
+  // stable key (for color/pos cache): prefer stableKey -> fallback id
+  const nodeKey = useCallback((d: any): string => {
+    return String((d as any).stableKey ?? d?.id ?? '');
+  }, []);
+
+  const isCenterNode = useCallback((d: any) => {
+    const cid = centerIdRef.current;
+    return Boolean((d as any).is_center || (d as any).isCenter) || (cid ? d?.id === cid : false);
+  }, []);
 
   const getNodeFill = useCallback((d: any) => {
-    const isCenterNode = makeIsCenterNode(centerId);
-
-    // Center color stays fixed (원하면 이것도 override 허용 가능)
+    // center stays fixed red (원하면 override 허용하도록 바꿀 수 있음)
     if (isCenterNode(d)) return '#f56565';
 
-    // ✅ User override color first
-    const override = nodeColorMap?.[d.id];
-    if (isHexColor(override)) return override;
+    const key = nodeKey(d);
 
-    // Default: cluster color
+    // ✅ stableKey 기반 매핑 우선
+    const map = nodeColorMapRef.current || {};
+    const byKey = map[key];
+    if (isHexColor(byKey)) return byKey;
+
+    // ✅ backward-compat: 예전에는 id로 저장했을 수도 있으니 fallback
+    const byId = map[d?.id];
+    if (isHexColor(byId)) return byId;
+
     return CLUSTER_COLORS[clusterColorIndex(d)];
-  }, [centerId, nodeColorMap]);
+  }, [isCenterNode, nodeKey]);
 
-  /* ---------------------- Highlight updater ---------------------- */
+  const cachePositions = useCallback(() => {
+    const sim = simulationRef.current;
+    if (!sim) return;
 
-  const updateHighlight = useCallback(() => {
+    const m = new Map<string, { x?: number; y?: number; vx?: number; vy?: number }>();
+    (sim.nodes() as any[]).forEach((n) => {
+      const key = nodeKey(n);
+      if (!key) return;
+      m.set(key, { x: n.x, y: n.y, vx: n.vx, vy: n.vy });
+    });
+    posCacheRef.current = m;
+  }, [nodeKey]);
+
+  const updateNodeStyles = useCallback(() => {
     const sel = nodeSelectionRef.current;
     if (!sel) return;
-
-    const isCenterNode = makeIsCenterNode(centerId);
 
     sel.select('circle')
       .attr('r', (d: any) => {
@@ -146,26 +162,27 @@ export default function GraphCanvas({
         if (d.id === selectedNodeId) return 18;
         return 12;
       })
-      .attr('fill', (d: any) => {
-        // ✅ Do NOT paint selected as yellow; keep real fill color (override/cluster)
-        return getNodeFill(d);
-      })
+      .attr('fill', (d: any) => getNodeFill(d))
       .attr('stroke', (d: any) => (d.id === selectedNodeId ? '#000' : '#fff'))
       .attr('stroke-width', 2);
-  }, [selectedNodeId, centerId, getNodeFill]);
+  }, [selectedNodeId, isCenterNode, getNodeFill]);
 
   /* -------------------------- Main D3 --------------------------- */
-
+  // ✅ Rebuild only when topology/layout changes (NOT on select/color changes)
   useEffect(() => {
     if (!svgRef.current) return;
 
+    // cache current positions before rebuild
+    cachePositions();
+
     const svg = d3.select(svgRef.current);
 
-    // Initialize or restore zoom behavior
+    // init zoom once
     if (!zoomBehaviorRef.current) {
       const zoom = d3.zoom<SVGSVGElement, unknown>()
         .scaleExtent([0.1, 4])
         .on('zoom', (event) => {
+          zoomTransformRef.current = event.transform;
           svg.select('g.canvas-root').attr('transform', event.transform.toString());
         });
 
@@ -174,25 +191,28 @@ export default function GraphCanvas({
       svg.call(zoom);
     }
 
-    // Clear old graph (but preserve zoom behavior)
-    // ✅ NOTE: this effect no longer runs on `selectedNodeId` / `nodeColorMap` change, so click/color won't rebuild.
+    // clear old graph but keep zoom behavior
     svg.selectAll('g.canvas-root').remove();
 
-    const container = svg.append('g').attr('class', 'canvas-root');
+    // new root, restore last camera transform
+    const container = svg.append('g')
+      .attr('class', 'canvas-root')
+      .attr('transform', zoomTransformRef.current.toString());
 
-    // Convert to D3 mutable objects
-    const graphNodes = nodes.map(n => ({ ...n }));
-    const graphEdges = edges.map(e => ({ ...e }));
+    // restore positions by stableKey first (fallback id)
+    const graphNodes = nodes.map((n) => {
+      const key = nodeKey(n);
+      const cached = posCacheRef.current.get(key) ?? posCacheRef.current.get((n as any).id);
+      return cached ? ({ ...n, ...cached } as any) : ({ ...n } as any);
+    });
+
+    const graphEdges = edges.map((e) => ({ ...e }));
 
     const { linkDistance, chargeStrength, centerStrength } = getForceParams();
 
-    const isCenterNode = makeIsCenterNode(centerId);
-
-    // Simulation
     const simulation = d3.forceSimulation(graphNodes as any)
       .force('link', d3.forceLink(graphEdges as any).id((d: any) => d.id).distance(linkDistance))
       .force('charge', d3.forceManyBody().strength(chargeStrength))
-      // ⚠️ forceCenter는 d3 버전에 따라 strength()가 없을 수 있음.
       .force(
         'center',
         (d3.forceCenter(width / 2, height / 2) as any).strength?.(centerStrength) ??
@@ -202,15 +222,16 @@ export default function GraphCanvas({
 
     simulationRef.current = simulation;
 
+    // pin center in paper mode
     if (mode === 'paper' && centerId) {
-      const centerNode = graphNodes.find(n => n.id === centerId);
+      const centerNode = graphNodes.find((nn: any) => nn.id === centerId);
       if (centerNode) {
-        (centerNode as any).fx = width / 2;
-        (centerNode as any).fy = height / 2;
+        centerNode.fx = width / 2;
+        centerNode.fy = height / 2;
       }
     }
 
-    // Edges
+    // edges
     const link = container.append('g')
       .attr('class', 'links')
       .selectAll('line')
@@ -221,7 +242,7 @@ export default function GraphCanvas({
       .attr('stroke-opacity', 0.6)
       .attr('stroke-width', (d: any) => (d.type === 'references' ? 1 : 2));
 
-    // Nodes
+    // nodes
     const node = container.append('g')
       .attr('class', 'nodes')
       .selectAll('g')
@@ -229,29 +250,28 @@ export default function GraphCanvas({
       .enter()
       .append('g')
       .style('cursor', 'pointer')
-      .call(d3.drag<any, any>()
-        .on('start', (event, d) => {
-          if (!event.active) simulation.alphaTarget(0.3).restart();
-          d.fx = d.x;
-          d.fy = d.y;
-        })
-        .on('drag', (event, d) => {
-          d.fx = event.x;
-          d.fy = event.y;
-        })
-        .on('end', (event, d) => {
-          if (!event.active) simulation.alphaTarget(0);
-          if (mode !== 'paper' || d.id !== centerId) {
-            d.fx = null;
-            d.fy = null;
-          }
-        })
+      .call(
+        d3.drag<any, any>()
+          .on('start', (event, d) => {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+          })
+          .on('drag', (event, d) => {
+            d.fx = event.x;
+            d.fy = event.y;
+          })
+          .on('end', (event, d) => {
+            if (!event.active) simulation.alphaTarget(0);
+            if (mode !== 'paper' || d.id !== centerId) {
+              d.fx = null;
+              d.fy = null;
+            }
+          })
       );
 
-    // ✅ store node selection for highlight-only updates
     nodeSelectionRef.current = node as any;
 
-    // Circle
     node.append('circle')
       .attr('r', (d: any) => {
         if (isCenterNode(d)) return 20;
@@ -262,7 +282,6 @@ export default function GraphCanvas({
       .attr('stroke', (d: any) => (d.id === selectedNodeId ? '#000' : '#fff'))
       .attr('stroke-width', 2);
 
-    // Labels
     node.append('text')
       .attr('dy', 25)
       .attr('text-anchor', 'middle')
@@ -273,7 +292,6 @@ export default function GraphCanvas({
         return title.length > 20 ? title.slice(0, 20) + '...' : title;
       });
 
-    // Events
     node.on('click', (event, d: any) => {
       event.stopPropagation();
       onNodeClick?.(d as GraphNode);
@@ -284,7 +302,6 @@ export default function GraphCanvas({
       onNodeDoubleClick?.(d as GraphNode);
     });
 
-    // Tick
     simulation.on('tick', () => {
       link
         .attr('x1', (d: any) => (d.source as any).x)
@@ -308,18 +325,34 @@ export default function GraphCanvas({
     getForceParams,
     onNodeClick,
     onNodeDoubleClick,
-    getNodeFill
-    // ✅ selectedNodeId/nodeColorMap 제거: 클릭/색 변경으로 그래프 재생성 금지
+    cachePositions,
+    isCenterNode,
+    getNodeFill,
+    nodeKey
+    // ❌ selectedNodeId/nodeColorMap 제외: 튐 방지 핵심
   ]);
 
-  /* ------------------- Highlight-only effect ------------------- */
-  useEffect(() => {
-    updateHighlight();
-  }, [updateHighlight]);
+  /* ------------------- Style-only updates ------------------- */
 
-  /* ---------------- [Auto-Zoom to Center] ---------------- */
+  // selected 변경 → 스타일만
   useEffect(() => {
-    if (!centerId || mode !== 'paper' || !simulationRef.current || !zoomBehaviorRef.current || !zoomSelectionRef.current) {
+    updateNodeStyles();
+  }, [updateNodeStyles]);
+
+  // 색 변경 → 스타일만 (simulation 재시작 X)
+  useEffect(() => {
+    updateNodeStyles();
+  }, [nodeColorMap, updateNodeStyles]);
+
+  /* ---------------- Auto-Zoom to Center (paper) ---------------- */
+  useEffect(() => {
+    if (
+      !centerId ||
+      mode !== 'paper' ||
+      !simulationRef.current ||
+      !zoomBehaviorRef.current ||
+      !zoomSelectionRef.current
+    ) {
       return;
     }
 
@@ -327,14 +360,15 @@ export default function GraphCanvas({
     const svg = zoomSelectionRef.current;
     const zoom = zoomBehaviorRef.current;
 
-    const centerNode: any = (sim.nodes() as any[]).find(n => n.id === centerId);
+    const centerNode: any = (sim.nodes() as any[]).find((n) => n.id === centerId);
     if (!centerNode || centerNode.x == null || centerNode.y == null) return;
 
-    const k = 1.0; // keep scale
+    const k = 1.0;
     const tx = width / 2 - centerNode.x * k;
     const ty = height / 2 - centerNode.y * k;
     const t = d3.zoomIdentity.translate(tx, ty).scale(k);
 
+    zoomTransformRef.current = t; // keep in sync
     svg.transition().duration(450).call((zoom as any).transform, t);
   }, [centerId, mode, width, height]);
 

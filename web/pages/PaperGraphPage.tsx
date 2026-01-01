@@ -1,9 +1,13 @@
 /**
  * PaperGraphPage (Graph A)
  *
- * Center paper → reference titles expansion (local JSON)
+ * Center paper → reference titles graph (local JSON)
  * Loads directly from /output/{paper_id}/reference_titles.json
  *
+ * [UPDATED]
+ * - Color persistence: use stableKey-based mapping (stableKey 우선)
+ * - Reference nodes get stableKey derived from normalized title hash
+ * - Reference node id also set to stable stableKey (ref:<hash>)
  */
 
 import React, { useEffect, useState, useCallback } from 'react';
@@ -45,10 +49,9 @@ function normalizeArxivToDoiLike(id: string): string {
 }
 
 async function fetchReferenceTitlesResolved(paperId: string): Promise<FetchRefResult | null> {
-  // Try multiple ID formats
   const candidates = [paperId, normalizeArxivToDoiLike(paperId)].filter(
     (v, i, a) => a.indexOf(v) === i
-  ); // unique
+  );
 
   for (const id of candidates) {
     try {
@@ -62,6 +65,39 @@ async function fetchReferenceTitlesResolved(paperId: string): Promise<FetchRefRe
     }
   }
   return null;
+}
+
+/* ----------------------- Helpers: Stable Key ---------------------- */
+
+// title 정규화(같은 제목이면 웬만하면 같은 키가 나오도록)
+function normalizeTitleKey(title: string): string {
+  return String(title ?? '')
+    .replace(/\u00A0/g, ' ')        // nbsp
+    .replace(/\s+/g, ' ')          // collapse whitespace
+    .trim()
+    .replace(/[.]+$/g, '')         // trailing dots
+    .toLowerCase();
+}
+
+// FNV-1a 32-bit hash (deterministic)
+function fnv1a32(str: string): number {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return h >>> 0;
+}
+
+// stable reference key from title
+function refStableKeyFromTitle(title: string): string {
+  const norm = normalizeTitleKey(title);
+  const hash = fnv1a32(norm).toString(36);
+  return `ref:${hash}`;
+}
+
+function nodeKeyOf(node: any): string {
+  return String(node?.stableKey ?? node?.id ?? '');
 }
 
 /* ----------------------------- Page ------------------------------- */
@@ -100,14 +136,17 @@ export default function PaperGraphPage() {
     }
   }, [nodeColorMap]);
 
-  const handleNodeColorChange = useCallback((nodeId: string, color: string) => {
-    setNodeColorMap(prev => ({ ...prev, [nodeId]: color }));
+  // 이제 “nodeId”가 아니라 “nodeKey(stableKey 우선)”를 저장하는 게 정석
+  const handleNodeColorChange = useCallback((nodeKey: string, color: string) => {
+    if (!nodeKey) return;
+    setNodeColorMap(prev => ({ ...prev, [nodeKey]: color }));
   }, []);
 
-  const handleNodeColorReset = useCallback((nodeId: string) => {
+  const handleNodeColorReset = useCallback((nodeKey: string) => {
+    if (!nodeKey) return;
     setNodeColorMap(prev => {
       const next = { ...prev };
-      delete next[nodeId];
+      delete next[nodeKey];
       return next;
     });
   }, []);
@@ -122,24 +161,21 @@ export default function PaperGraphPage() {
     try {
       console.log(`Loading reference graph for: ${paperId}`);
 
-      // Load reference_titles.json directly (with ID fallback)
       const resolved = await fetchReferenceTitlesResolved(paperId);
-
-      if (!resolved) {
-        throw new Error(`reference_titles.json not found for ${paperId}`);
-      }
+      if (!resolved) throw new Error(`reference_titles.json not found for ${paperId}`);
 
       const { usedId, json } = resolved;
       const titles = json.titles || [];
 
       console.log(`Found ${titles.length} reference titles (folder used: ${usedId})`);
 
-      // ✅ Use the resolved folder id as the canonical center id
+      // canonical center folder id
       const centerCanonicalId = usedId;
 
-      // Create center node (add safe defaults for PaperCard)
+      // ✅ Center node: stableKey는 paper prefix로 고정
       const centerNode: GraphNode = {
         id: centerCanonicalId,
+        stableKey: `paper:${centerCanonicalId}` as any,
         title: centerCanonicalId,
         authors: [],
         abstract: '',
@@ -150,17 +186,13 @@ export default function PaperGraphPage() {
         depth: 0
       } as any;
 
-      // Create reference nodes from titles
-      // - Stable-ish id based on index + sanitized title (good enough for color mapping)
-      const refNodes: GraphNode[] = titles.map((title, idx) => {
-        const safe = String(title)
-          .slice(0, 60)
-          .replace(/\s+/g, ' ')
-          .trim()
-          .replace(/[^a-zA-Z0-9]/g, '_');
+      // ✅ Reference nodes: stableKey = ref:<hash(title)>
+      const refNodes: GraphNode[] = titles.map((title) => {
+        const stableKey = refStableKeyFromTitle(title);
 
         return {
-          id: `ref_${idx}_${safe}`,
+          id: stableKey,                 // id도 고정(순서 idx 변화에 영향 없음)
+          stableKey: stableKey as any,   // GraphCanvas가 stableKey 우선으로 색/좌표 캐시 사용
           title: title,
           authors: [],
           abstract: '',
@@ -172,7 +204,6 @@ export default function PaperGraphPage() {
         } as any;
       });
 
-      // Create edges from center to each reference
       const edges: GraphEdge[] = refNodes.map(refNode => ({
         source: centerCanonicalId,
         target: refNode.id,
@@ -212,7 +243,7 @@ export default function PaperGraphPage() {
 
   const handleNodeDoubleClick = useCallback(
     (node: GraphNode) => {
-      // If it's a reference node, try to navigate if title looks like an arXiv ID
+      // Reference node: navigate only if its TITLE contains arXiv id
       if (!(node as any).isCenter) {
         const title = String((node as any).title || '');
         const arxivMatch = title.match(/(\d{4}\.\d{4,5})/);
@@ -222,7 +253,7 @@ export default function PaperGraphPage() {
         }
       }
 
-      // For center node, just refresh
+      // Center node: refresh
       if ((node as any).isCenter) {
         loadGraph();
       }
@@ -237,6 +268,8 @@ export default function PaperGraphPage() {
   }, [navigate]);
 
   /* ----------------------------- UI ----------------------------- */
+
+  const selectedKey = selectedNode ? nodeKeyOf(selectedNode as any) : '';
 
   return (
     <div style={{ display: 'flex', height: '100vh', backgroundColor: '#f5f5f5' }}>
@@ -289,7 +322,7 @@ export default function PaperGraphPage() {
               onNodeClick={handleNodeClick}
               onNodeDoubleClick={handleNodeDoubleClick}
               selectedNodeId={selectedNode?.id}
-              nodeColorMap={nodeColorMap} // ✅ custom colors applied here
+              nodeColorMap={nodeColorMap} // ✅ GraphCanvas가 stableKey 우선 조회
             />
           )}
         </div>
@@ -318,11 +351,22 @@ export default function PaperGraphPage() {
         mode="paper"
         onAction={() => {}}
         onClose={() => setSelectedNode(null)}
-        // ✅ Node color controls
+        // ✅ Node color controls (stableKey 우선)
         nodeColorMap={nodeColorMap}
-        nodeColor={selectedNode ? nodeColorMap[selectedNode.id] : undefined}
-        onNodeColorChange={handleNodeColorChange}
-        onNodeColorReset={handleNodeColorReset}
+        nodeColor={
+          selectedNode
+            ? (nodeColorMap[selectedKey] ?? nodeColorMap[(selectedNode as any).id])
+            : undefined
+        }
+        onNodeColorChange={(keyOrId, color) => {
+          // SidePanel이 id를 주더라도, selectedNode가 있으면 stableKey로 저장되게 강제
+          const key = selectedNode ? nodeKeyOf(selectedNode as any) : keyOrId;
+          handleNodeColorChange(key, color);
+        }}
+        onNodeColorReset={(keyOrId) => {
+          const key = selectedNode ? nodeKeyOf(selectedNode as any) : keyOrId;
+          handleNodeColorReset(key);
+        }}
       />
     </div>
   );

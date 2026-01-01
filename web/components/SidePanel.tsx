@@ -5,8 +5,8 @@
  * Used in both GlobalGraphPage and PaperGraphPage.
  *
  * [UPDATED]
- * - Add node color override UI (color picker / presets / reset)
- * - arXiv link robust for DOI-like ids (10.48550_arxiv.<id>)
+ * - Node color override uses stableKey (if exists) for persistence
+ * - arXiv link robust: tries node.id first, then node.title
  * - Keep backward compatibility with existing props
  */
 
@@ -14,11 +14,17 @@ import React, { useMemo } from 'react';
 import { GraphNode } from '../lib/mcp';
 import PaperCard from './PaperCard';
 
+/* ----------------------- Helper: stable key ---------------------- */
+
+function nodeKeyOf(node: any): string {
+  return String(node?.stableKey ?? node?.id ?? '');
+}
+
 /* ----------------------- Helper: arXiv link ---------------------- */
 
-function extractArxivId(rawId: string): string | null {
-  if (!rawId) return null;
-  let s = String(rawId).trim();
+function extractArxivId(raw: string): string | null {
+  if (!raw) return null;
+  let s = String(raw).trim();
 
   // URL 형태면 ID만 추출
   const urlMatch = s.match(/arxiv\.org\/(?:abs|pdf)\/([^?#]+?)(?:\.pdf)?/i);
@@ -47,9 +53,16 @@ function extractArxivId(rawId: string): string | null {
   return null;
 }
 
-function getArxivAbsUrl(nodeId: string): string | null {
-  const arxivId = extractArxivId(nodeId);
-  return arxivId ? `https://arxiv.org/abs/${arxivId}` : null;
+function getArxivAbsUrlFromNode(node: any): string | null {
+  // 1) id에서 먼저 찾고
+  const byId = extractArxivId(String(node?.id ?? ''));
+  if (byId) return `https://arxiv.org/abs/${byId}`;
+
+  // 2) title에서도 찾는다 (ref:* 노드 대비)
+  const byTitle = extractArxivId(String(node?.title ?? ''));
+  if (byTitle) return `https://arxiv.org/abs/${byTitle}`;
+
+  return null;
 }
 
 /* ---------------------- Helper: color ---------------------- */
@@ -80,11 +93,11 @@ interface SidePanelProps {
   mode: 'global' | 'paper';
   isLoading?: boolean;
 
-  // ✅ NEW: node color override controls (optional)
-  nodeColorMap?: Record<string, string>; // (nodeId -> color) optional convenience
-  nodeColor?: string;                    // current selected node color (optional)
-  onNodeColorChange?: (nodeId: string, color: string) => void;
-  onNodeColorReset?: (nodeId: string) => void;
+  // nodeKey(stableKey 우선) -> color
+  nodeColorMap?: Record<string, string>;
+  nodeColor?: string;
+  onNodeColorChange?: (nodeKey: string, color: string) => void;
+  onNodeColorReset?: (nodeKey: string) => void;
 }
 
 export default function SidePanel({
@@ -102,19 +115,39 @@ export default function SidePanel({
   if (!selectedNode) return null;
 
   const selectedIsCenter = Boolean((selectedNode as any).is_center || (selectedNode as any).isCenter);
-  const arxivUrl = getArxivAbsUrl(selectedNode.id);
+  const arxivUrl = getArxivAbsUrlFromNode(selectedNode);
+
+  // ✅ stableKey 우선 키
+  const selectedKey = useMemo(() => nodeKeyOf(selectedNode as any), [selectedNode]);
 
   const currentColor = useMemo(() => {
-    const direct = nodeColor;
-    if (isHexColor(direct)) return direct;
+    // 1) 상위에서 직접 주는 값이 있으면 그거 우선
+    if (isHexColor(nodeColor)) return nodeColor;
 
-    const mapped = nodeColorMap?.[selectedNode.id];
-    if (isHexColor(mapped)) return mapped;
+    // 2) stableKey 기반 조회
+    const byKey = nodeColorMap?.[selectedKey];
+    if (isHexColor(byKey)) return byKey;
 
+    // 3) backward compat: 예전엔 id로 저장했을 수 있음
+    const byId = nodeColorMap?.[selectedNode.id];
+    if (isHexColor(byId)) return byId;
+
+    // 4) default
     return '#4299e1';
-  }, [nodeColor, nodeColorMap, selectedNode.id]);
+  }, [nodeColor, nodeColorMap, selectedKey, selectedNode.id]);
 
   const canEditColor = Boolean(onNodeColorChange || onNodeColorReset);
+
+  const emitColorChange = (color: string) => {
+    if (!onNodeColorChange) return;
+    if (!isHexColor(color)) return;
+    onNodeColorChange(selectedKey, color);
+  };
+
+  const emitColorReset = () => {
+    if (!onNodeColorReset) return;
+    onNodeColorReset(selectedKey);
+  };
 
   return (
     <div
@@ -187,10 +220,7 @@ export default function SidePanel({
               type="color"
               value={currentColor}
               disabled={!onNodeColorChange}
-              onChange={(e) => {
-                const c = e.target.value;
-                if (isHexColor(c)) onNodeColorChange?.(selectedNode.id, c);
-              }}
+              onChange={(e) => emitColorChange(e.target.value)}
               style={{
                 width: 42,
                 height: 34,
@@ -208,8 +238,8 @@ export default function SidePanel({
               disabled={!onNodeColorChange}
               onChange={(e) => {
                 const v = e.target.value.trim();
-                // 타이핑 중엔 반영 안 하고, 유효한 hex일 때만 반영
-                if (isHexColor(v)) onNodeColorChange?.(selectedNode.id, v);
+                // 타이핑 중엔 무시, 유효한 hex일 때만 반영
+                if (isHexColor(v)) emitColorChange(v);
               }}
               style={{
                 flex: 1,
@@ -224,7 +254,7 @@ export default function SidePanel({
 
             <button
               disabled={!onNodeColorReset}
-              onClick={() => onNodeColorReset?.(selectedNode.id)}
+              onClick={emitColorReset}
               style={{
                 padding: '8px 10px',
                 borderRadius: 6,
@@ -245,14 +275,15 @@ export default function SidePanel({
               <button
                 key={c}
                 disabled={!onNodeColorChange}
-                onClick={() => onNodeColorChange?.(selectedNode.id, c)}
+                onClick={() => emitColorChange(c)}
                 style={{
                   width: 22,
                   height: 22,
                   borderRadius: 999,
-                  border: c.toLowerCase() === currentColor.toLowerCase()
-                    ? '2px solid #2d3748'
-                    : '1px solid #e2e8f0',
+                  border:
+                    c.toLowerCase() === currentColor.toLowerCase()
+                      ? '2px solid #2d3748'
+                      : '1px solid #e2e8f0',
                   background: c,
                   cursor: onNodeColorChange ? 'pointer' : 'not-allowed',
                   opacity: onNodeColorChange ? 1 : 0.6
@@ -265,6 +296,10 @@ export default function SidePanel({
 
           <div style={{ marginTop: 8, fontSize: 11, color: '#a0aec0' }}>
             Tip: 선택 하이라이트는 테두리로 표시돼서, 사용자 지정 색은 그대로 유지돼.
+          </div>
+
+          <div style={{ marginTop: 6, fontSize: 11, color: '#a0aec0' }}>
+            Key: <code>{selectedKey}</code>
           </div>
         </div>
 
