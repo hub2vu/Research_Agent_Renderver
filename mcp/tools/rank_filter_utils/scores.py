@@ -692,3 +692,148 @@ def _calculate_final_score(
     
     return final_score
 
+
+def _rank_and_select(
+    papers: List[PaperInput],
+    scores: Dict[str, Dict],  # paper_id -> {final_score, breakdown, ...}
+    top_k: int,
+    ranking_mode: str,
+    include_contrastive: bool
+) -> List[PaperInput]:
+    """
+    Rank papers by final_score and select top_k papers.
+    
+    For "diversity" ranking_mode, applies penalty for papers too similar to
+    already selected papers using embedding similarity.
+    
+    Args:
+        papers: List of papers to rank
+        scores: Dictionary mapping paper_id to score information
+                 (must contain "final_score" key)
+        top_k: Number of papers to select
+        ranking_mode: Ranking mode ("balanced", "novelty", "practicality", "diversity")
+        include_contrastive: If True, select top_k - 1 papers (last slot reserved for contrastive)
+        
+    Returns:
+        List of selected papers in ranked order
+    """
+    # Determine how many papers to select
+    num_to_select = top_k - 1 if include_contrastive else top_k
+    
+    if num_to_select <= 0:
+        return []
+    
+    if ranking_mode != "diversity":
+        # Simple ranking: sort by final_score descending
+        papers_with_scores = []
+        for paper in papers:
+            paper_id = paper.get("paper_id", "")
+            score_info = scores.get(paper_id, {})
+            final_score = score_info.get("final_score", 0.0)
+            papers_with_scores.append((final_score, paper))
+        
+        # Sort by final_score descending
+        papers_with_scores.sort(key=lambda x: x[0], reverse=True)
+        
+        # Select top_k
+        selected = [paper for _, paper in papers_with_scores[:num_to_select]]
+        return selected
+    
+    # Diversity mode: sequential selection with similarity penalty
+    selected: List[PaperInput] = []
+    remaining_papers = list(papers)
+    
+    # Create a dictionary for quick score lookup
+    score_lookup: Dict[str, float] = {}
+    for paper in papers:
+        paper_id = paper.get("paper_id", "")
+        score_info = scores.get(paper_id, {})
+        score_lookup[paper_id] = score_info.get("final_score", 0.0)
+    
+    # Try to use embedding model for similarity calculation
+    model = None
+    if HAS_SENTENCE_TRANSFORMERS:
+        try:
+            model = SentenceTransformer('all-MiniLM-L6-v2')
+        except Exception:
+            model = None
+    
+    # Select papers sequentially
+    for _ in range(num_to_select):
+        if not remaining_papers:
+            break
+        
+        if len(selected) == 0:
+            # First paper: select the one with highest score
+            remaining_papers.sort(key=lambda p: score_lookup.get(p.get("paper_id", ""), 0.0), reverse=True)
+            selected.append(remaining_papers.pop(0))
+            continue
+        
+        # Calculate similarity penalties for remaining papers
+        papers_with_adjusted_scores = []
+        
+        # Get embeddings for already selected papers (if model available)
+        selected_embeddings = None
+        if model:
+            try:
+                selected_texts = [
+                    f"{p.get('title', '')} {p.get('abstract', '')}"
+                    for p in selected
+                ]
+                selected_embeddings = model.encode(selected_texts)
+            except Exception:
+                selected_embeddings = None
+        
+        for paper in remaining_papers:
+            paper_id = paper.get("paper_id", "")
+            base_score = score_lookup.get(paper_id, 0.0)
+            adjusted_score = base_score
+            
+            # Calculate similarity penalty if model is available
+            if model and selected_embeddings is not None:
+                try:
+                    paper_text = f"{paper.get('title', '')} {paper.get('abstract', '')}"
+                    paper_embedding = model.encode([paper_text])[0]
+                    
+                    # Calculate cosine similarity with all selected papers
+                    if HAS_SKLEARN and cosine_similarity is not None:
+                        paper_embedding_2d = paper_embedding.reshape(1, -1)
+                        similarities = cosine_similarity(paper_embedding_2d, selected_embeddings)[0]
+                        avg_similarity = float(similarities.mean())
+                    else:
+                        # Fallback: manual cosine similarity calculation
+                        try:
+                            import numpy as np
+                            similarities = []
+                            for sel_emb in selected_embeddings:
+                                dot_product = np.dot(paper_embedding, sel_emb)
+                                norm_paper = np.linalg.norm(paper_embedding)
+                                norm_sel = np.linalg.norm(sel_emb)
+                                if norm_paper > 0 and norm_sel > 0:
+                                    sim = dot_product / (norm_paper * norm_sel)
+                                    similarities.append(sim)
+                            avg_similarity = float(np.mean(similarities)) if similarities else 0.0
+                        except ImportError:
+                            # If numpy is not available, skip similarity penalty
+                            avg_similarity = 0.0
+                    
+                    # Apply penalty if average similarity >= 0.8
+                    if avg_similarity >= 0.8:
+                        adjusted_score -= 0.2
+                
+                except Exception:
+                    # If embedding calculation fails, use base score
+                    pass
+            
+            papers_with_adjusted_scores.append((adjusted_score, base_score, paper))
+        
+        # Sort by adjusted score (descending), then by base score if tied
+        papers_with_adjusted_scores.sort(key=lambda x: (x[0], x[1]), reverse=True)
+        
+        # Select the paper with highest adjusted score
+        selected_paper = papers_with_adjusted_scores[0][2]
+        selected.append(selected_paper)
+        remaining_papers.remove(selected_paper)
+    
+    return selected
+

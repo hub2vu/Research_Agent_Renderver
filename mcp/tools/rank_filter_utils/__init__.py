@@ -44,6 +44,7 @@ from .scores import (
     _calculate_dimension_scores,
     _apply_soft_penalty,
     _calculate_final_score,
+    _rank_and_select,
 )
 
 __all__ = [
@@ -82,5 +83,6 @@ __all__ = [
     "_calculate_dimension_scores",
     "_apply_soft_penalty",
     "_calculate_final_score",
+    "_rank_and_select",
 ]
 

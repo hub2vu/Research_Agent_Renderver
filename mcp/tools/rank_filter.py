@@ -26,6 +26,7 @@ from .rank_filter_utils import (
     _calculate_dimension_scores,
     _apply_soft_penalty,
     _calculate_final_score,
+    _rank_and_select,
 )
 
 # Try to import sentence-transformers
