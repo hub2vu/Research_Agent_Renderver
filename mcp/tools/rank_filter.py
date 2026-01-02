@@ -6,12 +6,19 @@ Provides tools for ranking and filtering research papers based on metadata
 full PDF text analysis is handled by paper_analyzer.
 """
 
-import json
-import os
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple, TypedDict
+from typing import Any, Dict, List, Optional
 
 from ..base import MCPTool, ToolParameter, ExecutionError
+
+from .rank_filter_utils import (
+    PaperInput,
+    UserProfile,
+    FilteredPaper,
+    load_profile,
+    load_history,
+    scan_local_pdfs,
+    filter_papers,
+)
 
 # Try to import sentence-transformers
 try:
@@ -20,222 +27,6 @@ try:
 except ImportError:
     HAS_SENTENCE_TRANSFORMERS = False
     SentenceTransformer = None  # type: ignore
-
-
-# Type Definitions
-
-class PaperInput(TypedDict, total=False):
-    """Input paper object structure from search tools."""
-    paper_id: str  # Required: arXiv ID (e.g., "2501.12345")
-    title: str  # Required: Paper title
-    abstract: str  # Required: Abstract
-    authors: List[str]  # Required: List of authors
-    published: str  # Optional: Publication date (YYYY-MM-DD)
-    categories: List[str]  # Optional: arXiv categories
-    pdf_url: str  # Optional: PDF download link
-    github_url: str  # Optional: GitHub repository link
-    affiliations: List[str]  # Optional: Author affiliations
-
-
-class UserProfileInterests(TypedDict):
-    """User interests structure."""
-    primary: List[str]  # Core research topics
-    secondary: List[str]  # Related topics
-    exploratory: List[str]  # Exploratory topics
-
-
-class UserProfileKeywordsExclude(TypedDict):
-    """Keywords exclude structure."""
-    hard: List[str]  # Must exclude keywords
-    soft: List[str]  # Soft penalty keywords
-
-
-class UserProfileKeywords(TypedDict):
-    """Keywords structure."""
-    must_include: List[str]  # Must include keywords
-    exclude: UserProfileKeywordsExclude  # Exclude keywords
-
-
-class UserProfileConstraints(TypedDict):
-    """User constraints structure."""
-    min_year: int  # Minimum publication year
-    require_code: bool  # Code availability required
-
-
-class UserProfile(TypedDict):
-    """User profile structure from profile.json."""
-    interests: UserProfileInterests
-    keywords: UserProfileKeywords
-    preferred_authors: List[str]
-    preferred_institutions: List[str]
-    constraints: UserProfileConstraints
-
-
-class ScoreBreakdown(TypedDict):
-    """Score breakdown structure."""
-    semantic_relevance: float  # 0.0-1.0
-    must_keywords: float  # 0.0-1.0
-    author_trust: float  # 0.0-1.0
-    institution_trust: float  # 0.0-1.0
-    recency: float  # 0.0-1.0
-    practicality: float  # 0.0-1.0
-
-
-class ScoreInfo(TypedDict):
-    """Score information structure."""
-    final: float  # Final score (0.0-1.0)
-    breakdown: ScoreBreakdown
-    soft_penalty: float  # Soft penalty value (negative)
-    penalty_keywords: List[str]  # Keywords that caused penalty
-    evaluation_method: str  # "embedding+llm" or "embedding_only"
-
-
-class LocalStatus(TypedDict):
-    """Local file status structure."""
-    already_downloaded: bool
-    local_path: Optional[str]  # Path to local PDF file or None
-
-
-class ScoredPaper(TypedDict):
-    """Scored paper structure after ranking."""
-    rank: int  # Ranking position (1-based)
-    paper_id: str
-    title: str
-    authors: List[str]
-    published: Optional[str]
-    score: ScoreInfo
-    tags: List[str]  # e.g., ["SEMANTIC_HIGH_MATCH", "CODE_AVAILABLE"]
-    local_status: LocalStatus
-    original_data: Dict[str, Any]  # Original paper input data
-
-
-class FilteredPaper(TypedDict):
-    """Filtered paper structure for removed papers."""
-    paper_id: str
-    title: str
-    filter_reason: str  # e.g., "BLACKLIST_KEYWORD:medical", "ALREADY_READ"
-    filter_phase: int  # Phase number where filtering occurred
-
-
-class ContrastiveInfo(TypedDict):
-    """Contrastive paper information structure."""
-    type: str  # "method", "assumption", or "domain"
-    selected_papers_common_traits: List[str]
-    this_paper_traits: List[str]
-    contrast_dimensions: List[Dict[str, str]]  # e.g., [{"dimension": "architecture", "others": "Transformer", "this": "SSM"}]
-
-
-class ContrastivePaper(TypedDict):
-    """Contrastive paper structure."""
-    paper_id: str
-    title: str
-    authors: List[str]
-    published: Optional[str]
-    score: ScoreInfo
-    tags: List[str]  # Includes "CONTRASTIVE_PICK", "CONTRASTIVE_METHOD", etc.
-    contrastive_info: ContrastiveInfo
-    original_data: Dict[str, Any]
-
-
-class ComparisonNote(TypedDict):
-    """Comparison note structure."""
-    paper_ids: List[str]
-    relation: str  # e.g., "similar_approach", "contrastive"
-    shared_traits: Optional[List[str]]
-    differentiator: Optional[str]  # Brief description of differences
-    contrast_point: Optional[str]  # For contrastive relations
-
-
-class ToolResultSummary(TypedDict):
-    """Tool result summary structure."""
-    input_count: int  # Number of input papers
-    filtered_count: int  # Number of filtered papers
-    scored_count: int  # Number of papers that were scored
-    output_count: int  # Final number of papers returned
-    purpose: str  # Purpose used: "general", "literature_review", etc.
-    ranking_mode: str  # Ranking mode used: "balanced", "novelty", etc.
-    profile_used: Optional[str]  # Profile path or None
-    llm_verification_used: bool
-    llm_calls_made: int  # Number of LLM batch calls made
-
-
-class ToolResult(TypedDict, total=False):
-    """Final tool result structure."""
-    success: bool
-    error: Optional[str]  # Error message if success is False
-    summary: ToolResultSummary
-    ranked_papers: List[ScoredPaper]
-    filtered_papers: List[FilteredPaper]
-    contrastive_paper: Optional[ContrastivePaper]  # Only if include_contrastive is True
-    comparison_notes: List[ComparisonNote]
-    output_path: str  # Path to saved result file
-    generated_at: str  # ISO timestamp
-
-
-# Utility Functions
-
-def resolve_path(path: str, path_type: str = "output") -> Path:
-    """
-    Resolve a path string to a Path object.
-    
-    If path is absolute, return it as-is.
-    If path is relative:
-    - For path_type="output": resolve relative to OUTPUT_DIR environment variable
-    - For path_type="pdf": resolve relative to PDF_DIR (or OUTPUT_DIR if PDF_DIR not set)
-    - If environment variable not set: resolve relative to current working directory
-    
-    Args:
-        path: Path string (absolute or relative)
-        path_type: Type of path - "output" or "pdf"
-        
-    Returns:
-        Path object with resolved path
-    """
-    path_obj = Path(path)
-    
-    # If absolute path, return as-is
-    if path_obj.is_absolute():
-        return path_obj
-    
-    # Resolve relative path based on path_type
-    if path_type == "output":
-        base_dir = os.getenv("OUTPUT_DIR")
-        if base_dir:
-            return Path(base_dir) / path
-        else:
-            return Path.cwd() / path
-    elif path_type == "pdf":
-        base_dir = os.getenv("PDF_DIR")
-        if base_dir:
-            return Path(base_dir) / path
-        else:
-            # Fallback to OUTPUT_DIR if PDF_DIR not set
-            output_dir = os.getenv("OUTPUT_DIR")
-            if output_dir:
-                return Path(output_dir) / path
-            else:
-                return Path.cwd() / path
-    else:
-        # Unknown path_type, use current working directory
-        return Path.cwd() / path
-
-
-def ensure_directory(path: Path) -> None:
-    """
-    Ensure that the directory exists, creating it if necessary.
-    
-    If path points to a file, ensures the parent directory exists.
-    If path points to a directory, ensures the directory itself exists.
-    
-    Args:
-        path: Path object to ensure directory for
-    """
-    # If path has an extension or looks like a file, ensure parent directory
-    if path.suffix or not path.name:  # Has extension or is empty name
-        path.parent.mkdir(parents=True, exist_ok=True)
-    else:
-        # Assume it's a directory
-        path.mkdir(parents=True, exist_ok=True)
 
 
 class RankAndFilterPapersTool(MCPTool):
@@ -426,307 +217,6 @@ class RankAndFilterPapersTool(MCPTool):
             self._model_load_failed = True
             return None
 
-    def _load_profile(self, profile_path: str) -> UserProfile:
-        """
-        Load user profile from JSON file.
-        
-        Args:
-            profile_path: Path to profile JSON file
-            
-        Returns:
-            UserProfile object with loaded data or default values
-            
-        Raises:
-            ExecutionError: If file exists but has invalid format
-        """
-        resolved_path = resolve_path(profile_path, path_type="output")
-        
-        # If file doesn't exist, return default profile
-        if not resolved_path.exists():
-            return {
-                "interests": {
-                    "primary": [],
-                    "secondary": [],
-                    "exploratory": []
-                },
-                "keywords": {
-                    "must_include": [],
-                    "exclude": {
-                        "hard": [],
-                        "soft": []
-                    }
-                },
-                "preferred_authors": [],
-                "preferred_institutions": [],
-                "constraints": {
-                    "min_year": 2000,  # Default to allow all papers
-                    "require_code": False
-                }
-            }
-        
-        # Load and validate JSON file
-        try:
-            with open(resolved_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-            
-            # Validate and build profile structure
-            profile: UserProfile = {
-                "interests": {
-                    "primary": data.get("interests", {}).get("primary", []),
-                    "secondary": data.get("interests", {}).get("secondary", []),
-                    "exploratory": data.get("interests", {}).get("exploratory", [])
-                },
-                "keywords": {
-                    "must_include": data.get("keywords", {}).get("must_include", []),
-                    "exclude": {
-                        "hard": data.get("keywords", {}).get("exclude", {}).get("hard", []),
-                        "soft": data.get("keywords", {}).get("exclude", {}).get("soft", [])
-                    }
-                },
-                "preferred_authors": data.get("preferred_authors", []),
-                "preferred_institutions": data.get("preferred_institutions", []),
-                "constraints": {
-                    "min_year": data.get("constraints", {}).get("min_year", 2000),
-                    "require_code": data.get("constraints", {}).get("require_code", False)
-                }
-            }
-            
-            return profile
-            
-        except json.JSONDecodeError as e:
-            raise ExecutionError(
-                f"Invalid JSON format in profile file: {resolved_path}. Error: {str(e)}",
-                tool_name=self.name
-            )
-        except Exception as e:
-            raise ExecutionError(
-                f"Failed to load profile from {resolved_path}: {str(e)}",
-                tool_name=self.name
-            )
-
-    def _load_history(self, history_path: str) -> Set[str]:
-        """
-        Load list of already-read paper IDs from JSON file.
-        
-        Args:
-            history_path: Path to history JSON file
-            
-        Returns:
-            Set of paper IDs. Empty set if file doesn't exist.
-        """
-        resolved_path = resolve_path(history_path, path_type="output")
-        
-        # If file doesn't exist, return empty set
-        if not resolved_path.exists():
-            return set()
-        
-        try:
-            with open(resolved_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-            
-            # Handle different JSON structures:
-            # - List of strings: ["2501.12345", "2501.12346"]
-            # - List of objects with paper_id: [{"paper_id": "2501.12345"}, ...]
-            # - Object with papers key: {"papers": ["2501.12345", ...]}
-            paper_ids = set()
-            
-            if isinstance(data, list):
-                for item in data:
-                    if isinstance(item, str):
-                        paper_ids.add(item)
-                    elif isinstance(item, dict) and "paper_id" in item:
-                        paper_ids.add(item["paper_id"])
-            elif isinstance(data, dict):
-                if "papers" in data:
-                    papers = data["papers"]
-                    if isinstance(papers, list):
-                        for item in papers:
-                            if isinstance(item, str):
-                                paper_ids.add(item)
-                            elif isinstance(item, dict) and "paper_id" in item:
-                                paper_ids.add(item["paper_id"])
-                elif "paper_ids" in data:
-                    paper_ids = set(data["paper_ids"])
-            
-            return paper_ids
-            
-        except json.JSONDecodeError:
-            # Invalid JSON, return empty set (don't fail the tool)
-            return set()
-        except Exception:
-            # Any other error, return empty set
-            return set()
-
-    def _scan_local_pdfs(self, pdf_dir: str) -> Set[str]:
-        """
-        Scan local PDF directory and extract paper IDs from filenames.
-        
-        Args:
-            pdf_dir: Path to PDF directory
-            
-        Returns:
-            Set of paper IDs extracted from filenames. Empty set if directory doesn't exist.
-        """
-        resolved_path = resolve_path(pdf_dir, path_type="pdf")
-        
-        # If directory doesn't exist, return empty set
-        if not resolved_path.exists() or not resolved_path.is_dir():
-            return set()
-        
-        paper_ids = set()
-        
-        try:
-            # Scan for PDF files
-            for pdf_file in resolved_path.glob("*.pdf"):
-                filename = pdf_file.stem  # Filename without extension
-                
-                # Extract paper_id from filename
-                # Examples: "2501.12345.pdf" -> "2501.12345"
-                #           "2501.12345_v2.pdf" -> "2501.12345"
-                #           "10.48550_arxiv.2506.07976.pdf" -> "2506.07976" (extract from arxiv ID)
-                
-                # Try to extract arXiv ID pattern (YYYY.NNNNN)
-                # Remove version suffix if present (e.g., "_v2", ".v2")
-                clean_id = filename.split("_v")[0].split(".v")[0]
-                
-                # Handle arxiv.org URL format: "10.48550_arxiv.2506.07976" -> "2506.07976"
-                if "arxiv." in clean_id:
-                    # Extract the part after "arxiv."
-                    parts = clean_id.split("arxiv.")
-                    if len(parts) > 1:
-                        clean_id = parts[-1]
-                
-                # Validate format (should be YYYY.NNNNN or similar)
-                if clean_id and (clean_id.replace(".", "").replace("/", "_").isdigit() or "." in clean_id):
-                    paper_ids.add(clean_id)
-            
-            return paper_ids
-            
-        except Exception:
-            # Any error, return empty set
-            return set()
-
-    def _filter_papers(
-        self,
-        papers: List[PaperInput],
-        profile: UserProfile,
-        history: Set[str],
-        purpose: str
-    ) -> Tuple[List[PaperInput], List[FilteredPaper]]:
-        """
-        Filter papers based on profile, history, and purpose.
-        
-        Filtering phases (in order):
-        1. ALREADY_READ: Remove papers already in history
-        2. BLACKLIST_KEYWORD: Remove papers with hard exclude keywords in title/abstract
-        3. TOO_OLD: Remove papers older than min_year (relaxed for literature_review)
-        4. NO_CODE_REQUIRED: (TODO - commented out, to be discussed with team)
-        
-        Args:
-            papers: List of input papers to filter
-            profile: User profile with keywords and constraints
-            history: Set of already-read paper IDs
-            purpose: Research purpose ("general", "literature_review", etc.)
-            
-        Returns:
-            Tuple of (filtered papers that passed, list of filtered papers with reasons)
-        """
-        passed_papers: List[PaperInput] = []
-        filtered_papers: List[FilteredPaper] = []
-        
-        # Phase 1: ALREADY_READ - Remove papers in history
-        remaining_papers = []
-        for paper in papers:
-            paper_id = paper.get("paper_id", "")
-            if paper_id in history:
-                filtered_papers.append({
-                    "paper_id": paper_id,
-                    "title": paper.get("title", ""),
-                    "filter_reason": "ALREADY_READ",
-                    "filter_phase": 1
-                })
-            else:
-                remaining_papers.append(paper)
-        
-        # Phase 2: BLACKLIST_KEYWORD - Remove papers with hard exclude keywords
-        hard_keywords = profile["keywords"]["exclude"]["hard"]
-        phase2_remaining = []
-        for paper in remaining_papers:
-            title = paper.get("title", "").lower()
-            abstract = paper.get("abstract", "").lower()
-            text_to_check = f"{title} {abstract}"
-            
-            # Check if any hard keyword is in title or abstract
-            should_filter = False
-            matched_keyword = None
-            for keyword in hard_keywords:
-                if keyword.lower() in text_to_check:
-                    should_filter = True
-                    matched_keyword = keyword
-                    break
-            
-            if should_filter:
-                filtered_papers.append({
-                    "paper_id": paper.get("paper_id", ""),
-                    "title": paper.get("title", ""),
-                    "filter_reason": f"BLACKLIST_KEYWORD:{matched_keyword}",
-                    "filter_phase": 2
-                })
-            else:
-                phase2_remaining.append(paper)
-        
-        # Phase 3: TOO_OLD - Remove papers older than min_year
-        min_year = profile["constraints"]["min_year"]
-        # Relax min_year by 5 years for literature_review
-        if purpose == "literature_review":
-            min_year = min_year - 5
-        
-        phase3_remaining = []
-        for paper in phase2_remaining:
-            published = paper.get("published")
-            if published:
-                # Extract year from YYYY-MM-DD format
-                try:
-                    year = int(published.split("-")[0])
-                    if year < min_year:
-                        filtered_papers.append({
-                            "paper_id": paper.get("paper_id", ""),
-                            "title": paper.get("title", ""),
-                            "filter_reason": f"TOO_OLD:{year}",
-                            "filter_phase": 3
-                        })
-                        continue
-                except (ValueError, IndexError):
-                    # If date format is invalid, skip this filter
-                    pass
-            
-            phase3_remaining.append(paper)
-        
-        # Phase 4: NO_CODE_REQUIRED (TODO - commented out for now)
-        # TODO: To be discussed with team before implementation
-        # If purpose is "implementation" or profile.constraints.require_code is True,
-        # filter out papers without github_url
-        # 
-        # phase4_remaining = []
-        # require_code = (purpose == "implementation" or profile["constraints"]["require_code"])
-        # for paper in phase3_remaining:
-        #     if require_code and not paper.get("github_url"):
-        #         filtered_papers.append({
-        #             "paper_id": paper.get("paper_id", ""),
-        #             "title": paper.get("title", ""),
-        #             "filter_reason": "NO_CODE_REQUIRED",
-        #             "filter_phase": 4
-        #         })
-        #     else:
-        #         phase4_remaining.append(paper)
-        # 
-        # passed_papers = phase4_remaining
-        
-        # For now, all papers from phase 3 pass
-        passed_papers = phase3_remaining
-        
-        return (passed_papers, filtered_papers)
-
     async def execute(
         self,
         papers: List[Dict[str, Any]],
@@ -745,9 +235,26 @@ class RankAndFilterPapersTool(MCPTool):
         
         TODO: Implement the ranking and filtering algorithm.
         """
+        # Convert input papers to PaperInput format
+        paper_inputs: List[PaperInput] = [PaperInput(**p) for p in papers]
+        
+        # Phase 1: Load data
+        profile = load_profile(profile_path, tool_name=self.name)
+        history = load_history(history_path or "history/read_papers.json")
+        local_pdfs = scan_local_pdfs(local_pdf_dir)
+        
+        # Phase 2: Filter papers
+        passed_papers, filtered_papers = filter_papers(
+            paper_inputs, profile, history, purpose
+        )
+        
+        # Phase 3: Scoring (TODO - to be implemented)
+        # scores = calculate_embedding_scores(passed_papers, profile)
+        # ...
+        
         # Placeholder implementation
         raise ExecutionError(
-            "rank_and_filter_papers execute() method not yet implemented",
+            "rank_and_filter_papers execute() method not yet implemented (scoring phase pending)",
             tool_name=self.name
         )
 
