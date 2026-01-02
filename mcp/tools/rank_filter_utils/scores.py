@@ -2,9 +2,19 @@
 Scoring utilities for rank and filter papers tool.
 """
 
-from typing import Dict, List
+import json
+import os
+from typing import Dict, List, Tuple
 
 from .types import PaperInput, UserProfile
+
+# Try to import OpenAI for LLM verification
+try:
+    from openai import OpenAI
+    HAS_OPENAI = True
+except ImportError:
+    HAS_OPENAI = False
+    OpenAI = None  # type: ignore
 
 # Try to import sentence-transformers
 try:
@@ -178,4 +188,164 @@ def _calculate_keyword_scores(
     else:
         # All scores are zero
         return {paper_id: 0.0 for paper_id in scores.keys()}
+
+
+def _classify_papers_by_score(
+    papers: List[PaperInput],
+    scores: Dict[str, float]
+) -> Tuple[List[PaperInput], List[PaperInput], List[PaperInput]]:
+    """
+    Classify papers into three groups based on their scores.
+    
+    Args:
+        papers: List of papers to classify
+        scores: Dictionary mapping paper_id to score
+        
+    Returns:
+        Tuple of (high_group, mid_group, low_group) where:
+        - high_group: papers with score >= 0.7
+        - mid_group: papers with 0.4 <= score < 0.7
+        - low_group: papers with score < 0.4
+    """
+    high_group: List[PaperInput] = []
+    mid_group: List[PaperInput] = []
+    low_group: List[PaperInput] = []
+    
+    for paper in papers:
+        paper_id = paper["paper_id"]
+        score = scores.get(paper_id, 0.0)
+        
+        if score >= 0.7:
+            high_group.append(paper)
+        elif score >= 0.4:
+            mid_group.append(paper)
+        else:
+            low_group.append(paper)
+    
+    return (high_group, mid_group, low_group)
+
+
+def _verify_with_llm(
+    papers: List[PaperInput],
+    profile: UserProfile,
+    batch_size: int = 5
+) -> Dict[str, Tuple[float, str]]:
+    """
+    Verify paper relevance using LLM batch evaluation.
+    
+    Args:
+        papers: List of papers to verify
+        profile: User profile with interests
+        batch_size: Number of papers per LLM batch call
+        
+    Returns:
+        Dictionary mapping paper_id to (llm_score, reason) tuple.
+        If LLM verification fails for a paper, returns (0.0, "") for that paper.
+    """
+    if not HAS_OPENAI:
+        # If OpenAI is not available, return empty results
+        return {paper["paper_id"]: (0.0, "") for paper in papers}
+    
+    api_key = os.getenv("OPENAI_API_KEY")
+    model = os.getenv("OPENAI_MODEL", "gpt-4o")
+    
+    if not api_key:
+        # If API key is not available, return empty results
+        return {paper["paper_id"]: (0.0, "") for paper in papers}
+    
+    try:
+        client = OpenAI(api_key=api_key)
+    except Exception:
+        return {paper["paper_id"]: (0.0, "") for paper in papers}
+    
+    results: Dict[str, Tuple[float, str]] = {}
+    
+    # Split papers into batches
+    for i in range(0, len(papers), batch_size):
+        batch = papers[i:i + batch_size]
+        
+        # Build prompt
+        primary_interests = ", ".join(profile["interests"]["primary"]) if profile["interests"]["primary"] else "None"
+        secondary_interests = ", ".join(profile["interests"]["secondary"]) if profile["interests"]["secondary"] else "None"
+        
+        prompt = f"""사용자 연구 관심사:
+
+- Primary: {primary_interests}
+- Secondary: {secondary_interests}
+
+다음 논문들이 위 관심사와 얼마나 관련있는지 평가하세요.
+각 논문에 대해 0.0~1.0 점수와 한 줄 판단 근거를 JSON으로 제공하세요.
+
+논문 목록:
+
+"""
+        
+        for idx, paper in enumerate(batch, start=1):
+            paper_id = paper.get("paper_id", "")
+            title = paper.get("title", "")
+            abstract = paper.get("abstract", "")[:500]  # Limit abstract length
+            prompt += f"{idx}. [ID: {paper_id}] 제목: {title} / 초록: {abstract}\n\n"
+        
+        prompt += """응답 형식:
+[{{"paper_id": "...", "relevance": 0.75, "reason": "..."}}, ...]
+"""
+        
+        try:
+            # Call LLM
+            response = client.chat.completions.create(
+                model=model,
+                messages=[
+                    {"role": "system", "content": "You are a research paper evaluation assistant. Always respond with valid JSON array."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.3
+            )
+            
+            content = response.choices[0].message.content.strip()
+            
+            # Parse JSON response
+            # Try to extract JSON from markdown code blocks if present
+            if "```json" in content:
+                content = content.split("```json")[1].split("```")[0].strip()
+            elif "```" in content:
+                content = content.split("```")[1].split("```")[0].strip()
+            
+            evaluations = json.loads(content)
+            
+            # Process evaluations
+            if isinstance(evaluations, list):
+                for eval_item in evaluations:
+                    if isinstance(eval_item, dict):
+                        paper_id = eval_item.get("paper_id", "")
+                        relevance = eval_item.get("relevance", 0.0)
+                        reason = eval_item.get("reason", "")
+                        
+                        # Clamp relevance to [0.0, 1.0]
+                        relevance = max(0.0, min(1.0, float(relevance)))
+                        
+                        results[paper_id] = (relevance, reason)
+            
+        except (json.JSONDecodeError, KeyError, ValueError, AttributeError) as e:
+            # If parsing fails, keep existing embedding scores (will be handled by caller)
+            # Mark all papers in this batch as failed
+            for paper in batch:
+                paper_id = paper.get("paper_id", "")
+                if paper_id not in results:
+                    results[paper_id] = (0.0, "")
+            continue
+        except Exception as e:
+            # Any other error, mark batch as failed
+            for paper in batch:
+                paper_id = paper.get("paper_id", "")
+                if paper_id not in results:
+                    results[paper_id] = (0.0, "")
+            continue
+    
+    # Ensure all papers have results
+    for paper in papers:
+        paper_id = paper.get("paper_id", "")
+        if paper_id not in results:
+            results[paper_id] = (0.0, "")
+    
+    return results
 

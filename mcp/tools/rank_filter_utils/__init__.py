@@ -35,7 +35,12 @@ from .loaders import load_history, load_profile, scan_local_pdfs
 from .filters import filter_papers
 
 # Score exports
-from .scores import _calculate_embedding_scores, _calculate_keyword_scores
+from .scores import (
+    _calculate_embedding_scores,
+    _calculate_keyword_scores,
+    _classify_papers_by_score,
+    _verify_with_llm,
+)
 
 __all__ = [
     # Types
@@ -67,5 +72,7 @@ __all__ = [
     # Scores
     "_calculate_embedding_scores",
     "_calculate_keyword_scores",
+    "_classify_papers_by_score",
+    "_verify_with_llm",
 ]
 

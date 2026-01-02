@@ -20,6 +20,8 @@ from .rank_filter_utils import (
     filter_papers,
     _calculate_embedding_scores,
     _calculate_keyword_scores,
+    _classify_papers_by_score,
+    _verify_with_llm,
 )
 
 # Try to import sentence-transformers
