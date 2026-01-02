@@ -50,7 +50,7 @@ from .scores import (
 from .rankers import _rank_and_select, _select_contrastive_paper
 
 # Formatter exports
-from .formatters import _generate_tags, _generate_comparison_notes
+from .formatters import _generate_comparison_notes, _generate_tags, _save_and_format_result
 
 __all__ = [
     # Types
@@ -93,5 +93,6 @@ __all__ = [
     # Formatters
     "_generate_tags",
     "_generate_comparison_notes",
+    "_save_and_format_result",
 ]
 

@@ -2,10 +2,14 @@
 Formatting utilities for rank and filter papers tool.
 """
 
+import json
 import re
+from datetime import date, datetime
+from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
-from .types import ComparisonNote, PaperInput
+from .path_resolver import ensure_directory, resolve_path
+from .types import ComparisonNote, FilteredPaper, PaperInput
 
 # Try to import sentence-transformers for similarity calculation
 try:
@@ -295,4 +299,68 @@ def _extract_differentiator(title1: str, title2: str) -> Optional[str]:
         return "_vs_".join(diff_keywords[:3])
     
     return None
+
+
+def _save_and_format_result(
+    ranked_papers: List[Dict],
+    filtered_papers: List[FilteredPaper],
+    contrastive_paper: Optional[Dict],
+    comparison_notes: List[Dict],
+    summary: Dict,
+    profile_path: Optional[str]
+) -> Dict:
+    """
+    Save result to JSON file and format final result object.
+    
+    Args:
+        ranked_papers: List of formatted ranked papers
+        filtered_papers: List of filtered papers
+        contrastive_paper: Optional formatted contrastive paper
+        comparison_notes: List of comparison notes
+        summary: Summary dictionary
+        profile_path: Optional profile path used
+        
+    Returns:
+        Final result dictionary with all information
+    """
+    # Step 1: Generate timestamp
+    timestamp = datetime.now().isoformat()
+    
+    # Step 2: Generate date string
+    date_str = date.today().strftime("%Y-%m-%d")
+    
+    # Step 3: Determine save path
+    output_dir = resolve_path("rankings", "output")
+    ensure_directory(output_dir)
+    
+    # Create filename with timestamp (use only time part for uniqueness)
+    time_part = timestamp.replace(":", "-").split(".")[0]  # Remove microseconds and colons
+    filename = f"{date_str}_{time_part}_ranked.json"
+    output_path = output_dir / filename
+    
+    # Step 4: Build complete result object
+    # Note: FilteredPaper is a TypedDict, so we can use it directly as dict
+    result = {
+        "success": True,
+        "error": None,
+        "summary": summary,
+        "ranked_papers": ranked_papers,
+        "filtered_papers": list(filtered_papers),  # TypedDict is already a dict
+        "contrastive_paper": contrastive_paper,
+        "comparison_notes": comparison_notes,
+        "output_path": str(output_path),
+        "generated_at": timestamp
+    }
+    
+    # Step 5: Save to JSON file
+    try:
+        with open(output_path, "w", encoding="utf-8") as f:
+            json.dump(result, f, indent=2, ensure_ascii=False)
+    except Exception as e:
+        # If saving fails, still return the result but note the error
+        result["error"] = f"Failed to save result file: {str(e)}"
+        result["output_path"] = None
+    
+    # Step 6: Return result object
+    return result
 
