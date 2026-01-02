@@ -73,7 +73,7 @@ services:
     volumes:
       - ./web:/app
       - /app/node_modules
-      - ./output:/app/output:ro
+      - ./output:/app/output  # writable for node_colors.json
     environment:
       - MCP_SERVER_URL=http://mcp-server:8000
       - NODE_ENV=development

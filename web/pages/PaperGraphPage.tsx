@@ -15,6 +15,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import GraphCanvas from '../components/GraphCanvas';
 import SidePanel from '../components/SidePanel';
 import { GraphNode, GraphEdge } from '../lib/mcp';
+import { useNodeColors } from '../hooks/useNodeColors';
 
 /* ----------------------------- Types ----------------------------- */
 
@@ -118,38 +119,13 @@ export default function PaperGraphPage() {
 
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
 
-  /* ------------------- Node color map (custom colors) ------------------- */
+  /* ------------------- Node color map (file-based persistence) ------------------- */
 
-  const [nodeColorMap, setNodeColorMap] = useState<Record<string, string>>(() => {
-    try {
-      return JSON.parse(localStorage.getItem('nodeColorMap') || '{}');
-    } catch {
-      return {};
-    }
-  });
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('nodeColorMap', JSON.stringify(nodeColorMap));
-    } catch {
-      // ignore
-    }
-  }, [nodeColorMap]);
-
-  // 이제 “nodeId”가 아니라 “nodeKey(stableKey 우선)”를 저장하는 게 정석
-  const handleNodeColorChange = useCallback((nodeKey: string, color: string) => {
-    if (!nodeKey) return;
-    setNodeColorMap(prev => ({ ...prev, [nodeKey]: color }));
-  }, []);
-
-  const handleNodeColorReset = useCallback((nodeKey: string) => {
-    if (!nodeKey) return;
-    setNodeColorMap(prev => {
-      const next = { ...prev };
-      delete next[nodeKey];
-      return next;
-    });
-  }, []);
+  const {
+    nodeColorMap,
+    setNodeColor: handleNodeColorChange,
+    resetNodeColor: handleNodeColorReset
+  } = useNodeColors();
 
   /* ----------------------- Load from reference_titles.json ----------------------- */
 
