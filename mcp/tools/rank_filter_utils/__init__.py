@@ -44,8 +44,10 @@ from .scores import (
     _calculate_dimension_scores,
     _apply_soft_penalty,
     _calculate_final_score,
-    _rank_and_select,
 )
+
+# Rank and select exports
+from .rankers import _rank_and_select, _select_contrastive_paper
 
 __all__ = [
     # Types
@@ -84,5 +86,6 @@ __all__ = [
     "_apply_soft_penalty",
     "_calculate_final_score",
     "_rank_and_select",
+    "_select_contrastive_paper",
 ]
 
