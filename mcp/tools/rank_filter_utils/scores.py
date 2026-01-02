@@ -622,7 +622,9 @@ def _apply_soft_penalty(
     penalty_per_keyword = -0.15
     max_penalty = -0.3
     
-    total_penalty = min(max_penalty, len(matched_keywords) * penalty_per_keyword)
+    # Calculate penalty: if no matches, penalty is 0.0; otherwise apply per-keyword penalty up to max
+    calculated_penalty = len(matched_keywords) * penalty_per_keyword
+    total_penalty = max(max_penalty, calculated_penalty)  # max(-0.3, calculated) ensures we don't go below -0.3, and 0.0 if no matches
     
     return (total_penalty, matched_keywords)
 
