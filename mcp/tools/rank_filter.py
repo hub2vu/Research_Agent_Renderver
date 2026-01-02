@@ -414,7 +414,17 @@ class RankAndFilterPapersTool(MCPTool):
             if contrastive_result:
                 contrastive_paper, contrastive_info = contrastive_result
                 paper_id = contrastive_paper["paper_id"]
-                tags = _generate_tags(contrastive_paper, final_scores[paper_id], local_pdfs, True, contrastive_type)
+                
+                # Get score info - use default if not in final_scores (shouldn't happen in normal flow, but handle for safety)
+                score_info = final_scores.get(paper_id, {
+                    "final_score": 0.0,
+                    "breakdown": {},
+                    "soft_penalty": 0.0,
+                    "penalty_keywords": [],
+                    "evaluation_method": "unknown"
+                })
+                
+                tags = _generate_tags(contrastive_paper, score_info, local_pdfs, True, contrastive_type)
                 
                 contrastive_formatted = {
                     "paper_id": paper_id,
@@ -422,11 +432,11 @@ class RankAndFilterPapersTool(MCPTool):
                     "authors": contrastive_paper.get("authors", []),
                     "published": contrastive_paper.get("published"),
                     "score": {
-                        "final": final_scores[paper_id]["final_score"],
-                        "breakdown": final_scores[paper_id]["breakdown"],
-                        "soft_penalty": final_scores[paper_id]["soft_penalty"],
-                        "penalty_keywords": final_scores[paper_id]["penalty_keywords"],
-                        "evaluation_method": final_scores[paper_id]["evaluation_method"],
+                        "final": score_info["final_score"],
+                        "breakdown": score_info["breakdown"],
+                        "soft_penalty": score_info["soft_penalty"],
+                        "penalty_keywords": score_info["penalty_keywords"],
+                        "evaluation_method": score_info["evaluation_method"],
                     },
                     "tags": tags,
                     "contrastive_info": contrastive_info,
