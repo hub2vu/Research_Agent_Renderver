@@ -13,6 +13,14 @@ from typing import Any, Dict, List, Optional, Set, Tuple, TypedDict
 
 from ..base import MCPTool, ToolParameter, ExecutionError
 
+# Try to import sentence-transformers
+try:
+    from sentence_transformers import SentenceTransformer
+    HAS_SENTENCE_TRANSFORMERS = True
+except ImportError:
+    HAS_SENTENCE_TRANSFORMERS = False
+    SentenceTransformer = None  # type: ignore
+
 
 # Type Definitions
 
@@ -239,6 +247,10 @@ class RankAndFilterPapersTool(MCPTool):
     PDF full-text analysis. It does NOT analyze PDF content - that is the role
     of paper_analyzer.
     """
+    
+    # Class-level embedding model cache
+    _embedding_model: Optional[SentenceTransformer] = None
+    _model_load_failed: bool = False
 
     @property
     def name(self) -> str:
@@ -381,6 +393,38 @@ class RankAndFilterPapersTool(MCPTool):
     @property
     def category(self) -> str:
         return "ranking"
+
+    def _get_embedding_model(self) -> Optional[SentenceTransformer]:
+        """
+        Get the embedding model with lazy loading.
+        
+        Returns the cached model if already loaded, attempts to load it if not,
+        or returns None if loading failed previously or library is not available.
+        
+        Returns:
+            SentenceTransformer model instance or None if unavailable/failed
+        """
+        # If already loaded, return it
+        if self._embedding_model is not None:
+            return self._embedding_model
+        
+        # If loading failed before, don't try again
+        if self._model_load_failed:
+            return None
+        
+        # Check if library is available
+        if not HAS_SENTENCE_TRANSFORMERS:
+            self._model_load_failed = True
+            return None
+        
+        # Try to load the model
+        try:
+            self._embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+            return self._embedding_model
+        except Exception:
+            # Mark as failed so we don't try again
+            self._model_load_failed = True
+            return None
 
     def _load_profile(self, profile_path: str) -> UserProfile:
         """
