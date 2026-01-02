@@ -34,6 +34,9 @@ from .loaders import load_history, load_profile, scan_local_pdfs
 # Filter exports
 from .filters import filter_papers
 
+# Score exports
+from .scores import _calculate_embedding_scores, _calculate_keyword_scores
+
 __all__ = [
     # Types
     "PaperInput",
@@ -61,5 +64,8 @@ __all__ = [
     "scan_local_pdfs",
     # Filters
     "filter_papers",
+    # Scores
+    "_calculate_embedding_scores",
+    "_calculate_keyword_scores",
 ]
 

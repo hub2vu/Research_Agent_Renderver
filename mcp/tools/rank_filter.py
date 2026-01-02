@@ -18,6 +18,8 @@ from .rank_filter_utils import (
     load_history,
     scan_local_pdfs,
     filter_papers,
+    _calculate_embedding_scores,
+    _calculate_keyword_scores,
 )
 
 # Try to import sentence-transformers
