@@ -68,6 +68,7 @@
 | `pdf_url` | string | PDF 다운로드 링크 |
 | `github_url` | string | GitHub 저장소 링크 |
 | `affiliations` | array | 저자 소속 기관 리스트 |
+** 현재는 github_url 관련 코드 주석 처리 **
 
 ### 2.2 선택 파라미터
 
@@ -352,6 +353,7 @@
 | **기관 신뢰도** | preferred_institutions 부분 문자열 매칭 |
 | **최신성** | 출판일 기준 (2주 이내 1.0 → 1년 초과 0.1) |
 | **실용성** | 코드 공개 +0.5, 로컬 보유 +0.3 |
+현재난 단순한 키워드 매칭칭
 
 ### Phase 4: Soft 감점 적용
 

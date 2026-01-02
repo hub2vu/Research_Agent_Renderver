@@ -4,6 +4,7 @@ Scoring utilities for rank and filter papers tool.
 
 import json
 import os
+from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Set, Tuple
 
 from .types import PaperInput, UserProfile
@@ -415,4 +416,141 @@ def _merge_scores(
                 }
     
     return merged_scores
+
+
+def _calculate_dimension_scores(
+    paper: PaperInput,
+    profile: UserProfile,
+    semantic_score: float,
+    local_pdfs: Set[str]
+) -> Dict[str, float]:
+    """
+    Calculate 6-dimensional scores for a paper.
+    
+    Args:
+        paper: Paper input object
+        profile: User profile with keywords, preferred authors/institutions
+        semantic_score: Pre-calculated semantic relevance score (0.0-1.0)
+        local_pdfs: Set of paper IDs available locally
+        
+    Returns:
+        Dictionary with 6 dimension scores:
+        {
+            "semantic_relevance": float,
+            "must_keywords": float,
+            "author_trust": float,
+            "institution_trust": float,
+            "recency": float,
+            "practicality": float
+        }
+    """
+    paper_id = paper.get("paper_id", "")
+    title = paper.get("title", "").lower()
+    abstract = paper.get("abstract", "").lower()
+    authors = paper.get("authors", [])
+    affiliations = paper.get("affiliations", [])
+    published = paper.get("published", "")
+    github_url = paper.get("github_url", "")
+    
+    scores: Dict[str, float] = {}
+    
+    # 1. semantic_relevance: Use provided semantic_score
+    scores["semantic_relevance"] = semantic_score
+    
+    # 2. must_keywords: Ratio of must_include keywords found
+    must_keywords = profile["keywords"]["must_include"]
+    if not must_keywords:
+        scores["must_keywords"] = 1.0  # No requirements = perfect score
+    else:
+        text_to_check = f"{title} {abstract}"
+        found_count = 0
+        for keyword in must_keywords:
+            if keyword.lower() in text_to_check:
+                found_count += 1
+        scores["must_keywords"] = found_count / len(must_keywords)
+    
+    # 3. author_trust: Check if any preferred author is in authors list
+    preferred_authors = profile["preferred_authors"]
+    if not preferred_authors:
+        scores["author_trust"] = 1.0  # No preferences = perfect score
+    else:
+        # Normalize author names for comparison (case-insensitive)
+        paper_authors_lower = [a.lower().strip() for a in authors]
+        preferred_authors_lower = [a.lower().strip() for a in preferred_authors]
+        
+        # Check if any preferred author matches (exact or substring)
+        found = False
+        for pref_author in preferred_authors_lower:
+            for paper_author in paper_authors_lower:
+                if pref_author in paper_author or paper_author in pref_author:
+                    found = True
+                    break
+            if found:
+                break
+        
+        scores["author_trust"] = 1.0 if found else 0.0
+    
+    # 4. institution_trust: Check preferred_institutions against affiliations
+    preferred_institutions = profile["preferred_institutions"]
+    if not preferred_institutions:
+        scores["institution_trust"] = 1.0  # No preferences = perfect score
+    elif not affiliations:
+        scores["institution_trust"] = 0.0  # No affiliations = no trust
+    else:
+        # Normalize for comparison (case-insensitive)
+        affiliations_lower = [aff.lower().strip() for aff in affiliations]
+        preferred_inst_lower = [inst.lower().strip() for inst in preferred_institutions]
+        
+        # Check if any preferred institution is found (substring match)
+        found = False
+        for pref_inst in preferred_inst_lower:
+            for aff in affiliations_lower:
+                if pref_inst in aff or aff in pref_inst:
+                    found = True
+                    break
+            if found:
+                break
+        
+        scores["institution_trust"] = 1.0 if found else 0.0
+    
+    # 5. recency: Calculate based on published date
+    if not published:
+        scores["recency"] = 0.1  # No date = very old
+    else:
+        try:
+            # Parse date (YYYY-MM-DD format)
+            pub_date = datetime.strptime(published, "%Y-%m-%d")
+            now = datetime.now()
+            time_diff = now - pub_date
+            
+            days_diff = time_diff.days
+            
+            if days_diff <= 14:  # 2 weeks
+                scores["recency"] = 1.0
+            elif days_diff <= 30:  # 1 month
+                scores["recency"] = 0.85
+            elif days_diff <= 90:  # 3 months
+                scores["recency"] = 0.7
+            elif days_diff <= 180:  # 6 months
+                scores["recency"] = 0.5
+            elif days_diff <= 365:  # 1 year
+                scores["recency"] = 0.3
+            else:  # More than 1 year
+                scores["recency"] = 0.1
+        except (ValueError, TypeError):
+            # Invalid date format
+            scores["recency"] = 0.1
+    
+    # 6. practicality: github_url + local_pdfs
+    # Note: github_url is used for scoring (bonus points) only, not for filtering.
+    # Filtering based on code requirement is disabled in filters.py (Phase 4 commented out)
+    # because there's no tool to verify github_url existence yet. Will be uncommented after team discussion.
+    practicality = 0.0
+    if github_url and github_url.strip():
+        practicality += 0.5
+    if paper_id in local_pdfs:
+        practicality += 0.3
+    scores["practicality"] = min(1.0, practicality)  # Clamp to max 1.0
+    
+    return scores
 

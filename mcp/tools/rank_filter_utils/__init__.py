@@ -41,6 +41,7 @@ from .scores import (
     _classify_papers_by_score,
     _verify_with_llm,
     _merge_scores,
+    _calculate_dimension_scores,
 )
 
 __all__ = [
@@ -76,5 +77,6 @@ __all__ = [
     "_classify_papers_by_score",
     "_verify_with_llm",
     "_merge_scores",
+    "_calculate_dimension_scores",
 ]
 

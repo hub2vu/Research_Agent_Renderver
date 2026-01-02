@@ -23,6 +23,7 @@ from .rank_filter_utils import (
     _classify_papers_by_score,
     _verify_with_llm,
     _merge_scores,
+    _calculate_dimension_scores,
 )
 
 # Try to import sentence-transformers
