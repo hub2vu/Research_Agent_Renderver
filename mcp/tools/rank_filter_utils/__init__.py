@@ -49,6 +49,9 @@ from .scores import (
 # Rank and select exports
 from .rankers import _rank_and_select, _select_contrastive_paper
 
+# Formatter exports
+from .formatters import _generate_tags, _generate_comparison_notes
+
 __all__ = [
     # Types
     "PaperInput",
@@ -87,5 +90,8 @@ __all__ = [
     "_calculate_final_score",
     "_rank_and_select",
     "_select_contrastive_paper",
+    # Formatters
+    "_generate_tags",
+    "_generate_comparison_notes",
 ]
 
