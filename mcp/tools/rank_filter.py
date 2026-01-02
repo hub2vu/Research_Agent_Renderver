@@ -24,6 +24,8 @@ from .rank_filter_utils import (
     _verify_with_llm,
     _merge_scores,
     _calculate_dimension_scores,
+    _apply_soft_penalty,
+    _calculate_final_score,
 )
 
 # Try to import sentence-transformers

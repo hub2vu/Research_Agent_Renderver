@@ -9,6 +9,42 @@ from typing import Dict, List, Optional, Set, Tuple
 
 from .types import PaperInput, UserProfile
 
+# Weight tables for different purposes
+WEIGHTS: Dict[str, Dict[str, float]] = {
+    "general": {
+        "semantic": 0.30,
+        "must_kw": 0.10,
+        "author": 0.15,
+        "institution": 0.10,
+        "recency": 0.20,
+        "practicality": 0.15
+    },
+    "literature_review": {
+        "semantic": 0.25,
+        "must_kw": 0.10,
+        "author": 0.15,
+        "institution": 0.10,
+        "recency": 0.15,  # Less emphasis on recency for literature review
+        "practicality": 0.25
+    },
+    "implementation": {
+        "semantic": 0.25,
+        "must_kw": 0.10,
+        "author": 0.10,
+        "institution": 0.10,
+        "recency": 0.20,
+        "practicality": 0.25  # Higher emphasis on practicality (code availability)
+    },
+    "idea_generation": {
+        "semantic": 0.30,
+        "must_kw": 0.10,
+        "author": 0.15,
+        "institution": 0.10,
+        "recency": 0.30,  # Higher emphasis on recency for new ideas
+        "practicality": 0.05
+    }
+}
+
 # Try to import OpenAI for LLM verification
 try:
     from openai import OpenAI
@@ -553,4 +589,106 @@ def _calculate_dimension_scores(
     scores["practicality"] = min(1.0, practicality)  # Clamp to max 1.0
     
     return scores
+
+
+def _apply_soft_penalty(
+    paper: PaperInput,
+    profile: UserProfile
+) -> Tuple[float, List[str]]:
+    """
+    Apply soft penalty based on exclude keywords in title/abstract.
+    
+    Args:
+        paper: Paper input object
+        profile: User profile with soft exclude keywords
+        
+    Returns:
+        Tuple of (total_penalty, matched_keywords_list)
+        - total_penalty: Negative value (e.g., -0.15, -0.30)
+        - matched_keywords_list: List of keywords that matched
+    """
+    title = paper.get("title", "").lower()
+    abstract = paper.get("abstract", "").lower()
+    text_to_check = f"{title} {abstract}"
+    
+    soft_keywords = profile["keywords"]["exclude"]["soft"]
+    matched_keywords: List[str] = []
+    
+    for keyword in soft_keywords:
+        if keyword.lower() in text_to_check:
+            matched_keywords.append(keyword)
+    
+    # Calculate penalty: -0.15 per keyword, maximum -0.3
+    penalty_per_keyword = -0.15
+    max_penalty = -0.3
+    
+    total_penalty = min(max_penalty, len(matched_keywords) * penalty_per_keyword)
+    
+    return (total_penalty, matched_keywords)
+
+
+def _calculate_final_score(
+    dimension_scores: Dict[str, float],
+    soft_penalty: float,
+    purpose: str,
+    ranking_mode: str
+) -> float:
+    """
+    Calculate final score from dimension scores with weights and penalty.
+    
+    Args:
+        dimension_scores: Dictionary with 6 dimension scores
+        soft_penalty: Soft penalty value (negative, e.g., -0.15)
+        purpose: Research purpose ("general", "literature_review", etc.)
+        ranking_mode: Ranking mode ("balanced", "novelty", "practicality", "diversity")
+        
+    Returns:
+        Final score (0.0-1.0, but may exceed 1.0 if penalty is applied)
+    """
+    # Get base weights for purpose
+    base_weights = WEIGHTS.get(purpose, WEIGHTS["general"]).copy()
+    
+    # Apply ranking_mode adjustments
+    if ranking_mode == "novelty":
+        # Increase recency weight, decrease author/institution weights
+        base_weights["recency"] += 0.1
+        base_weights["author"] = max(0.0, base_weights["author"] - 0.05)
+        base_weights["institution"] = max(0.0, base_weights["institution"] - 0.05)
+    elif ranking_mode == "practicality":
+        # Increase practicality weight, decrease recency weight
+        base_weights["practicality"] += 0.1
+        base_weights["recency"] = max(0.0, base_weights["recency"] - 0.1)
+    # "diversity" and "balanced" modes: no adjustment (handled in Phase 6 for diversity)
+    
+    # Normalize weights to sum to 1.0 (in case adjustments changed the sum)
+    total_weight = sum(base_weights.values())
+    if total_weight > 0:
+        normalized_weights = {k: v / total_weight for k, v in base_weights.items()}
+    else:
+        normalized_weights = base_weights
+    
+    # Map dimension score keys to weight keys
+    score_key_mapping = {
+        "semantic_relevance": "semantic",
+        "must_keywords": "must_kw",
+        "author_trust": "author",
+        "institution_trust": "institution",
+        "recency": "recency",
+        "practicality": "practicality"
+    }
+    
+    # Calculate weighted sum
+    final_score = 0.0
+    for score_key, weight_key in score_key_mapping.items():
+        score = dimension_scores.get(score_key, 0.0)
+        weight = normalized_weights.get(weight_key, 0.0)
+        final_score += score * weight
+    
+    # Apply soft penalty
+    final_score += soft_penalty
+    
+    # Clamp to reasonable range (allow slightly negative but not too much)
+    final_score = max(-0.5, min(1.5, final_score))
+    
+    return final_score
 
