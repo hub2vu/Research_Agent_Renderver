@@ -21,6 +21,7 @@ class ToolParameter:
     description: str
     required: bool = True
     default: Any = None
+    items_type: Optional[str] = None  # For array types, specifies the type of items
 
 
 @dataclass
