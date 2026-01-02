@@ -4,7 +4,7 @@ Scoring utilities for rank and filter papers tool.
 
 import json
 import os
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 from .types import PaperInput, UserProfile
 
@@ -348,4 +348,71 @@ def _verify_with_llm(
             results[paper_id] = (0.0, "")
     
     return results
+
+
+def _merge_scores(
+    embedding_scores: Dict[str, float],
+    llm_results: Dict[str, Tuple[float, str]],
+    high_group_ids: Set[str],
+    low_group_ids: Set[str]
+) -> Dict[str, Dict]:
+    """
+    Merge embedding scores and LLM verification results.
+    
+    Args:
+        embedding_scores: Dictionary mapping paper_id to embedding score (0.0-1.0)
+        llm_results: Dictionary mapping paper_id to (llm_score, reason) tuple
+        high_group_ids: Set of paper IDs in high group (score >= 0.7)
+        low_group_ids: Set of paper IDs in low group (score < 0.4)
+        
+    Returns:
+        Dictionary mapping paper_id to {
+            "semantic_score": float,
+            "evaluation_method": str,
+            "llm_reason": Optional[str]
+        }
+    """
+    merged_scores: Dict[str, Dict] = {}
+    
+    # Get all paper IDs from embedding_scores
+    all_paper_ids = set(embedding_scores.keys())
+    
+    # mid_group_ids = all papers not in high or low groups
+    mid_group_ids = all_paper_ids - high_group_ids - low_group_ids
+    
+    for paper_id in all_paper_ids:
+        embedding_score = embedding_scores.get(paper_id, 0.0)
+        
+        if paper_id in high_group_ids:
+            # High group: use embedding score as-is
+            merged_scores[paper_id] = {
+                "semantic_score": embedding_score,
+                "evaluation_method": "embedding_high",
+                "llm_reason": None
+            }
+        elif paper_id in low_group_ids:
+            # Low group: use embedding score as-is
+            merged_scores[paper_id] = {
+                "semantic_score": embedding_score,
+                "evaluation_method": "embedding_low",
+                "llm_reason": None
+            }
+        else:
+            # Mid group: use LLM score if available, otherwise embedding score
+            if paper_id in llm_results and llm_results[paper_id][0] > 0.0:
+                llm_score, llm_reason = llm_results[paper_id]
+                merged_scores[paper_id] = {
+                    "semantic_score": llm_score,
+                    "evaluation_method": "embedding+llm",
+                    "llm_reason": llm_reason if llm_reason else None
+                }
+            else:
+                # LLM verification failed or not available, use embedding score
+                merged_scores[paper_id] = {
+                    "semantic_score": embedding_score,
+                    "evaluation_method": "embedding_only",
+                    "llm_reason": None
+                }
+    
+    return merged_scores
 
