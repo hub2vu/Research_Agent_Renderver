@@ -9,6 +9,8 @@ uvicorn>=0.24.0
 pymupdf>=1.24.0
 Pillow>=10.0.0
 openreview-py
+pandas
+
 
 # arXiv API
 arxiv>=2.0.0

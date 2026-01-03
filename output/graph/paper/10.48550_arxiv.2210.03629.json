@@ -1,0 +1,20 @@
+{
+  "center": "10.48550_arxiv.2210.03629",
+  "nodes": [
+    {
+      "id": "10.48550_arxiv.2210.03629",
+      "is_center": true
+    }
+  ],
+  "new_nodes": [
+    {
+      "id": "10.48550_arxiv.2210.03629",
+      "is_center": true
+    }
+  ],
+  "edges": [],
+  "new_edges": [],
+  "meta": {
+    "depth": 1
+  }
+}
