@@ -237,21 +237,21 @@ export default function NeurIPS2025Page() {
     return (
       <div style={{ marginTop: '16px' }}>
         <div style={{ marginBottom: '12px' }}>
-          <label style={{ fontSize: '11px', color: '#a0aec0', textTransform: 'uppercase' }}>
+          <label style={{ fontSize: '11px', color: '#000000', textTransform: 'uppercase' }}>
             Authors
           </label>
-          <div style={{ fontSize: '13px', color: '#e2e8f0', marginTop: '4px' }}>
+          <div style={{ fontSize: '13px', color: '#000000', marginTop: '4px' }}>
             {selectedPaper['speakers/authors'] || 'N/A'}
           </div>
         </div>
 
         <div style={{ marginBottom: '12px' }}>
-          <label style={{ fontSize: '11px', color: '#a0aec0', textTransform: 'uppercase' }}>
+          <label style={{ fontSize: '11px', color: '#000000', textTransform: 'uppercase' }}>
             Abstract
           </label>
           <div style={{
             fontSize: '12px',
-            color: '#cbd5e0',
+            color: '#000000',
             marginTop: '4px',
             maxHeight: '200px',
             overflowY: 'auto',
