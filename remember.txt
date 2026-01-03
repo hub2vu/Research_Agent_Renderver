@@ -1,0 +1,3 @@
+# mcp/tools/neurips2025_pdf.py
+“neurips2025_download_pdf로 paper_id 119181 PDF 다운로드해줘”
+“NeurIPS 2025에서 ‘diffusion policy’ 들어간 제목 논문들 PDF 링크만 뽑아줘 (title_query 사용, mode=link)”
