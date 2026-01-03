@@ -8,7 +8,7 @@
  * - SidePanel shows paper details + PDF download button
  */
 
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import GraphCanvas from '../components/GraphCanvas';
 import SidePanel from '../components/SidePanel';
 import { GraphNode, GraphEdge } from '../lib/mcp';
@@ -30,7 +30,6 @@ interface SimilarityEdge {
 
 interface NeurIPSGraphState {
   nodes: GraphNode[];
-  edges: GraphEdge[];
 }
 
 // Generate stable key for NeurIPS paper
@@ -41,13 +40,16 @@ function neuripsStableKey(paperId: string): string {
 export default function NeurIPS2025Page() {
   const [graphState, setGraphState] = useState<NeurIPSGraphState>({
     nodes: [],
-    edges: [],
   });
   const [papers, setPapers] = useState<Map<string, NeurIPSPaper>>(new Map());
+  const [rawSimEdges, setRawSimEdges] = useState<SimilarityEdge[]>([]);
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
+
+  // ✅ 유사도 기준(슬라이더)
+  const [minSim, setMinSim] = useState<number>(0.75);
 
   const {
     nodeColorMap,
@@ -82,27 +84,31 @@ export default function NeurIPS2025Page() {
         y: Math.floor(idx / 50) * 30,
       }));
 
-      // Load similarities
-      let edges: GraphEdge[] = [];
+      // Load similarities (raw, no filtering here)
+      let simEdges: SimilarityEdge[] = [];
       try {
         const simRes = await fetch('/api/neurips/similarities');
         if (simRes.ok) {
           const simData = await simRes.json();
-          const simEdges: SimilarityEdge[] = simData.edges || [];
-
-          edges = simEdges
-            .filter(e => paperMap.has(e.source) && paperMap.has(e.target))
-            .map(e => ({
-              source: e.source,
-              target: e.target,
-              weight: e.similarity,
-            }));
+          simEdges = simData.edges || [];
         }
       } catch (e) {
         console.warn('Could not load similarities:', e);
       }
 
-      setGraphState({ nodes, edges });
+      // ✅ raw edges 저장
+      setRawSimEdges(simEdges);
+
+      // ✅ nodes만 graphState에 저장
+      setGraphState({ nodes });
+
+      // (선택) 초기 minSim을 데이터에 맞게 살짝 자동 보정하고 싶으면 아래 주석 해제
+      // if (simEdges.length > 0) {
+      //   const maxSim = Math.max(...simEdges.map(e => e.similarity));
+      //   const suggested = Math.max(0, Math.min(1, maxSim - 0.05));
+      //   setMinSim(prev => (prev === 0.75 ? suggested : prev));
+      // }
+
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load data');
     } finally {
@@ -113,6 +119,22 @@ export default function NeurIPS2025Page() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // ✅ minSim에 따라 edges를 “실시간”으로 재구성
+  const filteredEdges: GraphEdge[] = useMemo(() => {
+    if (rawSimEdges.length === 0 || papers.size === 0) return [];
+
+    const edges = rawSimEdges
+      .filter(e => e.similarity >= minSim)
+      .filter(e => papers.has(e.source) && papers.has(e.target))
+      .map(e => ({
+        source: e.source,
+        target: e.target,
+        weight: e.similarity,
+      }));
+
+    return edges;
+  }, [rawSimEdges, papers, minSim]);
 
   // Handle node click
   const handleNodeClick = useCallback((node: GraphNode) => {
@@ -259,9 +281,41 @@ export default function NeurIPS2025Page() {
   return (
     <div style={{ display: 'flex', height: 'calc(100vh - 60px)' }}>
       <div style={{ flex: 1, position: 'relative' }}>
+
+        {/* ✅ Similarity Threshold Slider */}
+        <div style={{
+          position: 'absolute',
+          top: '16px',
+          left: '16px',
+          zIndex: 5,
+          backgroundColor: 'rgba(26, 32, 44, 0.9)',
+          padding: '10px 12px',
+          borderRadius: '6px',
+          fontSize: '12px',
+          color: '#a0aec0',
+          width: '240px'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+            <span>Min similarity</span>
+            <span style={{ color: '#e2e8f0' }}>{minSim.toFixed(2)}</span>
+          </div>
+          <input
+            type="range"
+            min={0}
+            max={1}
+            step={0.01}
+            value={minSim}
+            onChange={(e) => setMinSim(parseFloat(e.target.value))}
+            style={{ width: '100%' }}
+          />
+          <div style={{ marginTop: '6px', color: '#718096', fontSize: '11px' }}>
+            Increase to reduce links (stricter).
+          </div>
+        </div>
+
         <GraphCanvas
           nodes={graphState.nodes}
-          edges={graphState.edges}
+          edges={filteredEdges}
           onNodeClick={handleNodeClick}
           selectedNodeId={selectedNode?.id}
           nodeColorMap={nodeColorMap}
@@ -279,7 +333,7 @@ export default function NeurIPS2025Page() {
           fontSize: '12px',
           color: '#a0aec0',
         }}>
-          {graphState.nodes.length} papers | {graphState.edges.length} similarity edges
+          {graphState.nodes.length} papers | {filteredEdges.length} similarity edges (minSim {minSim.toFixed(2)})
         </div>
       </div>
 
