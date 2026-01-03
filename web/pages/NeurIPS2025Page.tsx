@@ -32,9 +32,36 @@ interface NeurIPSGraphState {
   nodes: GraphNode[];
 }
 
+interface ClusterData {
+  paper_id_to_cluster: Record<string, number>;
+  cluster_sizes: Record<string, number>;
+  k: number;
+}
+
+interface ClusterCenters {
+  [clusterId: string]: { x: number; y: number };
+}
+
 // Generate stable key for NeurIPS paper
 function neuripsStableKey(paperId: string): string {
   return `neurips:${paperId}`;
+}
+
+// Generate cluster centers in a grid layout
+function generateClusterCenters(k: number): ClusterCenters {
+  const centers: ClusterCenters = {};
+  const cols = Math.ceil(Math.sqrt(k));
+  const spacing = 600;
+
+  for (let i = 0; i < k; i++) {
+    const row = Math.floor(i / cols);
+    const col = i % cols;
+    centers[String(i)] = {
+      x: col * spacing + 400,
+      y: row * spacing + 400
+    };
+  }
+  return centers;
 }
 
 export default function NeurIPS2025Page() {
@@ -43,6 +70,7 @@ export default function NeurIPS2025Page() {
   });
   const [papers, setPapers] = useState<Map<string, NeurIPSPaper>>(new Map());
   const [rawSimEdges, setRawSimEdges] = useState<SimilarityEdge[]>([]);
+  const [clusterCenters, setClusterCenters] = useState<ClusterCenters>({});
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -57,32 +85,56 @@ export default function NeurIPS2025Page() {
     resetNodeColor: handleNodeColorReset
   } = useNodeColors();
 
-  // Load papers and similarities
+  // Load papers, similarities, and clusters
   const loadData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      // Load papers
-      const papersRes = await fetch('/api/neurips/papers');
+      // Load papers and clusters in parallel
+      const [papersRes, clustersRes] = await Promise.all([
+        fetch('/api/neurips/papers'),
+        fetch('/api/neurips/clusters')
+      ]);
+
       if (!papersRes.ok) throw new Error(`Failed to load papers: ${papersRes.status}`);
       const papersData = await papersRes.json();
+
+      // Parse clusters
+      let clusterMap: Record<string, number> = {};
+      let k = 15;
+      if (clustersRes.ok) {
+        const clusterData: ClusterData = await clustersRes.json();
+        clusterMap = clusterData.paper_id_to_cluster || {};
+        k = clusterData.k || 15;
+      }
+
+      // Generate cluster centers
+      const centers = generateClusterCenters(k);
+      setClusterCenters(centers);
 
       const paperList: NeurIPSPaper[] = papersData.papers || [];
       const paperMap = new Map<string, NeurIPSPaper>();
       paperList.forEach(p => paperMap.set(p.paper_id, p));
       setPapers(paperMap);
 
-      // Create nodes
-      const nodes: GraphNode[] = paperList.map((p, idx) => ({
-        id: p.paper_id,
-        label: p.name.length > 60 ? p.name.substring(0, 57) + '...' : p.name,
-        stableKey: neuripsStableKey(p.paper_id),
-        type: 'neurips_paper',
-        // Initial positions in a grid to help clustering
-        x: (idx % 50) * 30,
-        y: Math.floor(idx / 50) * 30,
-      }));
+      // Create nodes with cluster info and paper name as title
+      const nodes: GraphNode[] = paperList.map((p, idx) => {
+        const clusterId = clusterMap[p.paper_id] ?? 0;
+        const center = centers[String(clusterId)];
+
+        return {
+          id: p.paper_id,
+          label: p.name.length > 40 ? p.name.substring(0, 37) + '...' : p.name,
+          title: p.name,  // Full paper name for display
+          stableKey: neuripsStableKey(p.paper_id),
+          type: 'neurips_paper',
+          cluster: clusterId,
+          // Initial position near cluster center
+          x: center ? center.x + (Math.random() - 0.5) * 200 : (idx % 50) * 30,
+          y: center ? center.y + (Math.random() - 0.5) * 200 : Math.floor(idx / 50) * 30,
+        };
+      });
 
       // Load similarities (raw, no filtering here)
       let simEdges: SimilarityEdge[] = [];
@@ -101,13 +153,6 @@ export default function NeurIPS2025Page() {
 
       // ✅ nodes만 graphState에 저장
       setGraphState({ nodes });
-
-      // (선택) 초기 minSim을 데이터에 맞게 살짝 자동 보정하고 싶으면 아래 주석 해제
-      // if (simEdges.length > 0) {
-      //   const maxSim = Math.max(...simEdges.map(e => e.similarity));
-      //   const suggested = Math.max(0, Math.min(1, maxSim - 0.05));
-      //   setMinSim(prev => (prev === 0.75 ? suggested : prev));
-      // }
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load data');
@@ -319,6 +364,7 @@ export default function NeurIPS2025Page() {
           onNodeClick={handleNodeClick}
           selectedNodeId={selectedNode?.id}
           nodeColorMap={nodeColorMap}
+          clusterCenters={clusterCenters}
           mode="global"
         />
 

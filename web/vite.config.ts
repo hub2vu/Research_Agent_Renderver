@@ -268,6 +268,32 @@ export default defineConfig({
             res.end(JSON.stringify({ error: String(err) }));
           }
         });
+
+        // API: GET /api/neurips/clusters - Get KMeans clusters
+        server.middlewares.use('/api/neurips/clusters', (req: IncomingMessage, res: ServerResponse, next) => {
+          if (req.method === 'OPTIONS') {
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            res.statusCode = 204;
+            res.end();
+            return;
+          }
+
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          res.setHeader('Content-Type', 'application/json');
+
+          try {
+            const clusterPath = '/app/data/embeddings_Neu/neurips_clusters_k15.json';
+            if (fs.existsSync(clusterPath)) {
+              const data = fs.readFileSync(clusterPath, 'utf-8');
+              res.end(data);
+            } else {
+              res.end(JSON.stringify({ paper_id_to_cluster: {}, k: 0 }));
+            }
+          } catch (err) {
+            res.statusCode = 500;
+            res.end(JSON.stringify({ error: String(err) }));
+          }
+        });
       }
     },
     {
