@@ -6,7 +6,8 @@ A Docker-based research assistant with MCP (Model Context Protocol) architecture
 
 <img width="1979" height="1444" alt="스크린샷 2025-12-29 210026" src="https://github.com/user-attachments/assets/65912fb0-2f24-4ea9-a065-4dab52e39179" />
 
-
+# NeurIPS Graph
+<img width="2850" height="1518" alt="스크린샷 2026-01-03 232421" src="https://github.com/user-attachments/assets/a907d3de-baf1-4d77-b3d8-e55d25989146" />
 
 
 
