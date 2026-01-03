@@ -269,7 +269,7 @@ export default defineConfig({
           }
         });
 
-        // API: GET /api/neurips/clusters - Get KMeans clusters
+        // API: GET /api/neurips/clusters?k=15 - Get KMeans clusters
         server.middlewares.use('/api/neurips/clusters', (req: IncomingMessage, res: ServerResponse, next) => {
           if (req.method === 'OPTIONS') {
             res.setHeader('Access-Control-Allow-Origin', '*');
@@ -282,7 +282,13 @@ export default defineConfig({
           res.setHeader('Content-Type', 'application/json');
 
           try {
-            const clusterPath = '/app/data/embeddings_Neu/neurips_clusters_k15.json';
+            // Parse k from query string (default: 15)
+            const url = new URL(req.url || '', `http://${req.headers.host}`);
+            const kParam = url.searchParams.get('k');
+            const k = kParam ? parseInt(kParam, 10) : 15;
+            const validK = Math.max(5, Math.min(30, k)); // Clamp to 5-30
+
+            const clusterPath = `/app/data/embeddings_Neu/neurips_clusters_k${validK}.json`;
             if (fs.existsSync(clusterPath)) {
               const data = fs.readFileSync(clusterPath, 'utf-8');
               res.end(data);

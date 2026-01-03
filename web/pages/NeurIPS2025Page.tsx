@@ -79,6 +79,9 @@ export default function NeurIPS2025Page() {
   // ✅ 유사도 기준(슬라이더)
   const [minSim, setMinSim] = useState<number>(0.75);
 
+  // ✅ 클러스터 수 (k) 선택
+  const [numClusters, setNumClusters] = useState<number>(15);
+
   const {
     nodeColorMap,
     setNodeColor: handleNodeColorChange,
@@ -86,7 +89,7 @@ export default function NeurIPS2025Page() {
   } = useNodeColors();
 
   // Load papers, similarities, and clusters
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (k: number = 15) => {
     setIsLoading(true);
     setError(null);
 
@@ -94,7 +97,7 @@ export default function NeurIPS2025Page() {
       // Load papers and clusters in parallel
       const [papersRes, clustersRes] = await Promise.all([
         fetch('/api/neurips/papers'),
-        fetch('/api/neurips/clusters')
+        fetch(`/api/neurips/clusters?k=${k}`)
       ]);
 
       if (!papersRes.ok) throw new Error(`Failed to load papers: ${papersRes.status}`);
@@ -102,15 +105,15 @@ export default function NeurIPS2025Page() {
 
       // Parse clusters
       let clusterMap: Record<string, number> = {};
-      let k = 15;
+      let actualK = k;
       if (clustersRes.ok) {
         const clusterData: ClusterData = await clustersRes.json();
         clusterMap = clusterData.paper_id_to_cluster || {};
-        k = clusterData.k || 15;
+        actualK = clusterData.k || k;
       }
 
       // Generate cluster centers
-      const centers = generateClusterCenters(k);
+      const centers = generateClusterCenters(actualK);
       setClusterCenters(centers);
 
       const paperList: NeurIPSPaper[] = papersData.papers || [];
@@ -161,9 +164,10 @@ export default function NeurIPS2025Page() {
     }
   }, []);
 
+  // Load data when numClusters changes
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    loadData(numClusters);
+  }, [loadData, numClusters]);
 
   // ✅ minSim에 따라 edges를 “실시간”으로 재구성
   const filteredEdges: GraphEdge[] = useMemo(() => {
@@ -327,34 +331,58 @@ export default function NeurIPS2025Page() {
     <div style={{ display: 'flex', height: 'calc(100vh - 60px)' }}>
       <div style={{ flex: 1, position: 'relative' }}>
 
-        {/* ✅ Similarity Threshold Slider */}
+        {/* ✅ Control Panel: Clusters + Similarity */}
         <div style={{
           position: 'absolute',
           top: '16px',
           left: '16px',
           zIndex: 5,
-          backgroundColor: 'rgba(26, 32, 44, 0.9)',
-          padding: '10px 12px',
-          borderRadius: '6px',
+          backgroundColor: 'rgba(26, 32, 44, 0.95)',
+          padding: '12px 14px',
+          borderRadius: '8px',
           fontSize: '12px',
           color: '#a0aec0',
-          width: '240px'
+          width: '260px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-            <span>Min similarity</span>
-            <span style={{ color: '#e2e8f0' }}>{minSim.toFixed(2)}</span>
+          {/* Cluster Count (k) Slider */}
+          <div style={{ marginBottom: '14px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+              <span>Clusters (k)</span>
+              <span style={{ color: '#e2e8f0', fontWeight: 500 }}>{numClusters}</span>
+            </div>
+            <input
+              type="range"
+              min={5}
+              max={30}
+              step={1}
+              value={numClusters}
+              onChange={(e) => setNumClusters(parseInt(e.target.value, 10))}
+              style={{ width: '100%' }}
+            />
+            <div style={{ marginTop: '4px', color: '#718096', fontSize: '11px' }}>
+              Adjust number of topic clusters.
+            </div>
           </div>
-          <input
-            type="range"
-            min={0}
-            max={1}
-            step={0.01}
-            value={minSim}
-            onChange={(e) => setMinSim(parseFloat(e.target.value))}
-            style={{ width: '100%' }}
-          />
-          <div style={{ marginTop: '6px', color: '#718096', fontSize: '11px' }}>
-            Increase to reduce links (stricter).
+
+          {/* Similarity Threshold Slider */}
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+              <span>Min similarity</span>
+              <span style={{ color: '#e2e8f0' }}>{minSim.toFixed(2)}</span>
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.01}
+              value={minSim}
+              onChange={(e) => setMinSim(parseFloat(e.target.value))}
+              style={{ width: '100%' }}
+            />
+            <div style={{ marginTop: '4px', color: '#718096', fontSize: '11px' }}>
+              Increase to reduce links (stricter).
+            </div>
           </div>
         </div>
 
@@ -379,7 +407,7 @@ export default function NeurIPS2025Page() {
           fontSize: '12px',
           color: '#a0aec0',
         }}>
-          {graphState.nodes.length} papers | {filteredEdges.length} similarity edges (minSim {minSim.toFixed(2)})
+          {graphState.nodes.length} papers | {numClusters} clusters | {filteredEdges.length} edges
         </div>
       </div>
 
