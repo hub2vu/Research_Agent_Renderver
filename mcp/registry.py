@@ -132,8 +132,12 @@ def get_openai_tools_schema() -> List[Dict]:
             # 🔥 핵심: array 타입 처리
             if param.type == "array":
                 prop["type"] = "array"
+                # items_type이 None이거나 없으면 기본값 "string" 사용
+                items_type = getattr(param, "items_type", None)
+                if items_type is None:
+                    items_type = "string"
                 prop["items"] = {
-                    "type": getattr(param, "items_type", "string")
+                    "type": items_type
                 }
             else:
                 prop["type"] = param.type
