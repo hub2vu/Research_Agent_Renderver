@@ -295,7 +295,7 @@ export default function SidePanel({
           </div>
 
           <div style={{ marginTop: 8, fontSize: 11, color: '#a0aec0' }}>
-            Tip: 선택 하이라이트는 테두리로 표시돼서, 사용자 지정 색은 그대로 유지돼.
+            
           </div>
 
           <div style={{ marginTop: 6, fontSize: 11, color: '#a0aec0' }}>
