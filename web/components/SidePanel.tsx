@@ -90,7 +90,7 @@ interface SidePanelProps {
   // 페이지에서 넘기고 있을 수 있어서 남겨둠(사용 안 함)
   onAction?: () => void;
 
-  mode: 'global' | 'paper';
+  mode?: 'global' | 'paper' | 'neurips';
   isLoading?: boolean;
 
   // nodeKey(stableKey 우선) -> color
@@ -98,6 +98,9 @@ interface SidePanelProps {
   nodeColor?: string;
   onNodeColorChange?: (nodeKey: string, color: string) => void;
   onNodeColorReset?: (nodeKey: string) => void;
+
+  // Extra content to render (for custom pages like NeurIPS)
+  extraContent?: React.ReactNode;
 }
 
 export default function SidePanel({
@@ -105,12 +108,13 @@ export default function SidePanel({
   onClose,
   onExpand,
   onNavigate,
-  mode,
+  mode = 'global',
   isLoading = false,
   nodeColorMap,
   nodeColor,
   onNodeColorChange,
-  onNodeColorReset
+  onNodeColorReset,
+  extraContent
 }: SidePanelProps) {
   if (!selectedNode) return null;
 
@@ -360,6 +364,9 @@ export default function SidePanel({
             </a>
           )}
         </div>
+
+        {/* Extra content (for custom pages like NeurIPS) */}
+        {extraContent}
       </div>
 
       {/* Loading indicator */}
