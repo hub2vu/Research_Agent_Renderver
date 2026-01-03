@@ -82,6 +82,9 @@ export default function NeurIPS2025Page() {
   // ✅ 클러스터 수 (k) 선택
   const [numClusters, setNumClusters] = useState<number>(15);
 
+  // ✅ 클러스터 인력 강도
+  const [clusterStrength, setClusterStrength] = useState<number>(0.15);
+
   const {
     nodeColorMap,
     setNodeColor: handleNodeColorChange,
@@ -365,6 +368,26 @@ export default function NeurIPS2025Page() {
             </div>
           </div>
 
+          {/* Cluster Strength Slider */}
+          <div style={{ marginBottom: '14px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+              <span>Cluster strength</span>
+              <span style={{ color: '#e2e8f0', fontWeight: 500 }}>{clusterStrength.toFixed(2)}</span>
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.01}
+              value={clusterStrength}
+              onChange={(e) => setClusterStrength(parseFloat(e.target.value))}
+              style={{ width: '100%' }}
+            />
+            <div style={{ marginTop: '4px', color: '#718096', fontSize: '11px' }}>
+              How strongly nodes attract to cluster centers.
+            </div>
+          </div>
+
           {/* Similarity Threshold Slider */}
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
@@ -393,6 +416,7 @@ export default function NeurIPS2025Page() {
           selectedNodeId={selectedNode?.id}
           nodeColorMap={nodeColorMap}
           clusterCenters={clusterCenters}
+          clusterStrength={clusterStrength}
           mode="global"
         />
 

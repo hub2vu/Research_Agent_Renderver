@@ -25,6 +25,9 @@ interface GraphCanvasProps {
   // Cluster centers for cluster force (NeurIPS mode)
   clusterCenters?: ClusterCenters;
 
+  // Cluster force strength (0-1, default 0.15)
+  clusterStrength?: number;
+
   onNodeClick?: (node: GraphNode) => void;
   onNodeDoubleClick?: (node: GraphNode) => void;
 }
@@ -53,6 +56,7 @@ export default function GraphCanvas({
   selectedNodeId,
   nodeColorMap,
   clusterCenters,
+  clusterStrength = 0.15,
   onNodeClick,
   onNodeDoubleClick
 }: GraphCanvasProps) {
@@ -230,8 +234,6 @@ export default function GraphCanvas({
 
     // Add cluster force if clusterCenters provided
     if (clusterCenters && Object.keys(clusterCenters).length > 0) {
-      const clusterStrength = 0.15;
-
       simulation
         .force('clusterX', d3.forceX<any>((d) => {
           const clusterId = String(d.cluster ?? 0);
@@ -354,7 +356,8 @@ export default function GraphCanvas({
     isCenterNode,
     getNodeFill,
     nodeKey,
-    clusterCenters
+    clusterCenters,
+    clusterStrength
     // ❌ selectedNodeId/nodeColorMap 제외: 튐 방지 핵심
   ]);
 
