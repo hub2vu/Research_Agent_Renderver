@@ -56,9 +56,10 @@ Be concise and informative. When analyzing documents, provide key insights.
 When searching, summarize the most relevant findings.
 
 Available tool categories:
-- PDF: list_pdfs, extract_text, extract_images, extract_all, process_all_pdfs, get_pdf_info, read_extracted_text
+- PDF: list_pdfs, extract_text, extract_images, extract_all, process_all_pdfs, get_pdf_info, read_extracted_text, check_github_link
 - arXiv: arxiv_search, arxiv_get_paper, arxiv_download
 - Web: web_search, web_get_content, web_research
+- Ranking: update_user_profile, apply_hard_filters, calculate_semantic_scores, evaluate_paper_metrics, rank_and_select_top_k
 """
 
 
