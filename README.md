@@ -224,6 +224,15 @@ docker compose run --rm agent "List all PDFs and extract text from each"
 | `web_get_content` | Fetch URL content |
 | `web_research` | In-depth topic research |
 
+### Ranking Tools
+| Tool | Description |
+|------|-------------|
+| `update_user_profile` | Update interests/keywords and toggle `exclude_local_papers` (writes to `OUTPUT_DIR/users/profile.json`). |
+| `apply_hard_filters` | Apply ALREADY_READ, blacklist keywords, and year filters. |
+| `calculate_semantic_scores` | Compute hybrid semantic relevance scores (embeddings + optional LLM for borderline cases). |
+| `evaluate_paper_metrics` | Compute dimension scores (keywords/authors/institutions/recency/practicality) and soft penalties. |
+| `rank_and_select_top_k` | Combine scores, compute final ranking, and optionally add a contrastive paper. |
+
 ### Paper Graph Tools
 | Tool | Description |
 |------|-------------|
