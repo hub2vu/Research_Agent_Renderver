@@ -17,6 +17,8 @@ class PaperInput(TypedDict, total=False):
     categories: List[str]  # Optional: arXiv categories
     pdf_url: str  # Optional: PDF download link
     github_url: str  # Optional: GitHub repository link
+    semantic_score: float  # Optional: Semantic relevance score
+    metrics_score: float  # Optional: Metrics-based score
     affiliations: List[str]  # Optional: Author affiliations
 
 
@@ -45,6 +47,7 @@ class UserProfileConstraints(TypedDict):
     """User constraints structure."""
     min_year: int  # Minimum publication year
     require_code: bool  # Code availability required
+    exclude_local_papers: bool  # Exclude papers that are already downloaded locally
 
 
 class UserProfile(TypedDict):
