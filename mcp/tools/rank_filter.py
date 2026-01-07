@@ -92,6 +92,71 @@ class UpdateUserProfileTool(MCPTool):
                 required=False,
                 default=False,
             ),
+            ToolParameter(
+                name="purpose",
+                type="string",
+                description=(
+                    "Research purpose/goal. Choose 'general' for balanced recommendation, "
+                    "'literature_review' for broad coverage, 'implementation' to require code, "
+                    "'idea_generation' to prioritize novelty."
+                ),
+                required=False,
+            ),
+            ToolParameter(
+                name="ranking_mode",
+                type="string",
+                description=(
+                    "Scoring emphasis mode. Choose 'balanced' for equal weight, "
+                    "'novelty' to emphasize recent papers, 'practicality' to emphasize code availability, "
+                    "'diversity' to minimize overlap."
+                ),
+                required=False,
+            ),
+            ToolParameter(
+                name="top_k",
+                type="integer",
+                description="Maximum number of papers to return after ranking.",
+                required=False,
+            ),
+            ToolParameter(
+                name="include_contrastive",
+                type="boolean",
+                description="If true, include a contrastive paper that presents different approach.",
+                required=False,
+            ),
+            ToolParameter(
+                name="contrastive_type",
+                type="string",
+                description=(
+                    "Type of contrastive paper. Choose 'method' for same problem with different methodology, "
+                    "'assumption' for same method with different assumptions, "
+                    "'domain' for same technique applied to different domain."
+                ),
+                required=False,
+            ),
+            ToolParameter(
+                name="preferred_authors",
+                type="array",
+                items_type="string",
+                description="List of preferred author names.",
+                required=False,
+            ),
+            ToolParameter(
+                name="preferred_institutions",
+                type="array",
+                items_type="string",
+                description="List of preferred institution names.",
+                required=False,
+            ),
+            ToolParameter(
+                name="constraints",
+                type="object",
+                description=(
+                    "Optional constraints object with keys: min_year (integer), require_code (boolean), "
+                    "exclude_local_papers (boolean). Only provided keys are updated."
+                ),
+                required=False,
+            ),
         ]
 
     @property
@@ -104,6 +169,14 @@ class UpdateUserProfileTool(MCPTool):
         interests: Optional[Dict[str, List[str]]] = None,
         keywords: Optional[Dict[str, Any]] = None,
         exclude_local_papers: Optional[bool] = None,
+        purpose: Optional[str] = None,
+        ranking_mode: Optional[str] = None,
+        top_k: Optional[int] = None,
+        include_contrastive: Optional[bool] = None,
+        contrastive_type: Optional[str] = None,
+        preferred_authors: Optional[List[str]] = None,
+        preferred_institutions: Optional[List[str]] = None,
+        constraints: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         profile = load_profile(profile_path, tool_name=self.name)
 
@@ -124,6 +197,35 @@ class UpdateUserProfileTool(MCPTool):
         if exclude_local_papers is not None:
             profile["constraints"]["exclude_local_papers"] = bool(exclude_local_papers)
 
+        if purpose is not None:
+            profile["purpose"] = purpose
+
+        if ranking_mode is not None:
+            profile["ranking_mode"] = ranking_mode
+
+        if top_k is not None:
+            profile["top_k"] = top_k
+
+        if include_contrastive is not None:
+            profile["include_contrastive"] = bool(include_contrastive)
+
+        if contrastive_type is not None:
+            profile["contrastive_type"] = contrastive_type
+
+        if preferred_authors is not None:
+            profile["preferred_authors"] = preferred_authors
+
+        if preferred_institutions is not None:
+            profile["preferred_institutions"] = preferred_institutions
+
+        if constraints is not None:
+            if "min_year" in constraints:
+                profile["constraints"]["min_year"] = constraints["min_year"]
+            if "require_code" in constraints:
+                profile["constraints"]["require_code"] = bool(constraints["require_code"])
+            if "exclude_local_papers" in constraints:
+                profile["constraints"]["exclude_local_papers"] = bool(constraints["exclude_local_papers"])
+
         # Save
         resolved = resolve_path(profile_path, path_type="output")
         ensure_directory(resolved)
@@ -134,6 +236,11 @@ class UpdateUserProfileTool(MCPTool):
             "profile_path": str(resolved),
             "updated": True,
             "exclude_local_papers": profile["constraints"]["exclude_local_papers"],
+            "purpose": profile.get("purpose", "general"),
+            "ranking_mode": profile.get("ranking_mode", "balanced"),
+            "top_k": profile.get("top_k", 5),
+            "include_contrastive": profile.get("include_contrastive", False),
+            "contrastive_type": profile.get("contrastive_type", "method"),
         }
 
 
