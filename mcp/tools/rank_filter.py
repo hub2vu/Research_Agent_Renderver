@@ -213,16 +213,18 @@ class UpdateUserProfileTool(MCPTool):
             profile["contrastive_type"] = contrastive_type
 
         if preferred_authors is not None:
-            # If empty array, remove the field (set to empty list for JSON compatibility)
             if len(preferred_authors) == 0:
-                profile["preferred_authors"] = []
+                # Remove field if empty array
+                if "preferred_authors" in profile:
+                    del profile["preferred_authors"]
             else:
                 profile["preferred_authors"] = preferred_authors
 
         if preferred_institutions is not None:
-            # If empty array, remove the field (set to empty list for JSON compatibility)
             if len(preferred_institutions) == 0:
-                profile["preferred_institutions"] = []
+                # Remove field if empty array
+                if "preferred_institutions" in profile:
+                    del profile["preferred_institutions"]
             else:
                 profile["preferred_institutions"] = preferred_institutions
 
