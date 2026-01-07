@@ -48,7 +48,8 @@ def load_profile(profile_path: str, tool_name: str = "rank_and_filter_papers") -
             "preferred_institutions": [],
             "constraints": {
                 "min_year": 2000,  # Default to allow all papers
-                "require_code": False
+                "require_code": False,
+                "exclude_local_papers": False
             }
         }
     
@@ -75,7 +76,8 @@ def load_profile(profile_path: str, tool_name: str = "rank_and_filter_papers") -
             "preferred_institutions": data.get("preferred_institutions", []),
             "constraints": {
                 "min_year": data.get("constraints", {}).get("min_year", 2000),
-                "require_code": data.get("constraints", {}).get("require_code", False)
+                "require_code": data.get("constraints", {}).get("require_code", False),
+                "exclude_local_papers": data.get("constraints", {}).get("exclude_local_papers", False)
             }
         }
         
