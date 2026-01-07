@@ -70,6 +70,21 @@ except ImportError:
     HAS_SKLEARN = False
     cosine_similarity = None  # type: ignore
 
+# Try to import numpy for weighted average embeddings
+try:
+    import numpy as np
+    HAS_NUMPY = True
+except ImportError:
+    HAS_NUMPY = False
+    np = None  # type: ignore
+
+# Interest group weights for weighted average embedding
+INTEREST_WEIGHTS: Dict[str, float] = {
+    "primary": 1.0,
+    "secondary": 0.7,
+    "exploratory": 0.4
+}
+
 # Module-level model cache for singleton pattern
 _embedding_model_cache = None
 
@@ -110,36 +125,36 @@ def _calculate_embedding_scores(
     """
     # Try to use embedding model (singleton pattern - model loaded once)
     model = _get_embedding_model()
-    if model is not None and HAS_SKLEARN:
+    if model is not None and HAS_SKLEARN and HAS_NUMPY:
         try:
-            # Build interests text with weights
-            # primary: 1.0, secondary: 0.7, exploratory: 0.4
-            # Repeat keywords proportionally to reflect weights
-            interests_text_parts = []
+            # Build weighted average embedding from interest groups
+            # Each group (primary, secondary, exploratory) is encoded separately,
+            # then combined using weighted average for mathematically accurate representation
             
-            # Primary interests (weight 1.0) - repeat 3 times to give highest weight
-            for interest in profile["interests"]["primary"]:
-                for _ in range(3):  # Repeat 3 times for weight 1.0
-                    interests_text_parts.append(interest)
+            # Get embedding dimension from a test encode
+            test_embedding = model.encode(["test"])
+            embedding_dim = test_embedding.shape[1]
             
-            # Secondary interests (weight 0.7) - repeat 2 times
-            for interest in profile["interests"]["secondary"]:
-                for _ in range(2):  # Repeat 2 times for weight ~0.67
-                    interests_text_parts.append(interest)
+            weighted_sum = np.zeros(embedding_dim)
+            total_weight = 0.0
             
-            # Exploratory interests (weight 0.4) - repeat 1 time
-            for interest in profile["interests"]["exploratory"]:
-                interests_text_parts.append(interest)  # Repeat 1 time for weight 0.33
+            for group_name, weight in INTEREST_WEIGHTS.items():
+                interests = profile["interests"].get(group_name, [])
+                if interests:
+                    # Encode all interests in this group
+                    group_embeddings = model.encode(interests)
+                    # Calculate mean embedding for this group
+                    group_mean = np.mean(group_embeddings, axis=0)
+                    # Add to weighted sum
+                    weighted_sum += weight * group_mean
+                    total_weight += weight
             
-            # Combine interests into a single text
-            interests_text = " ".join(interests_text_parts)
-            
-            # If no interests, return zero scores
-            if not interests_text.strip():
+            # If no interests at all, return zero scores
+            if total_weight == 0.0:
                 return {paper["paper_id"]: 0.0 for paper in papers}
             
-            # Generate interests embedding
-            interests_embedding = model.encode([interests_text])[0]
+            # Calculate final weighted average embedding
+            interests_embedding = weighted_sum / total_weight
             
             # Generate paper embeddings (batch processing)
             paper_texts = []
