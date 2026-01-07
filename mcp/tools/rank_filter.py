@@ -332,8 +332,33 @@ class EvaluatePaperMetricsTool(MCPTool):
     def description(self) -> str:
         return (
             "Evaluate metrics for each paper (keywords, authors, institutions, recency, practicality) "
-            "using provided semantic scores."
+            "using provided semantic scores. Automatically searches for GitHub URLs in extracted PDF text "
+            "if github_url is not already provided in the paper data."
         )
+
+    async def _find_github_urls(self, paper_id: str) -> Optional[str]:
+        """
+        Search for GitHub URLs in extracted PDF text file using CheckGithubLinkTool.
+        
+        Args:
+            paper_id: Paper identifier (filename without .pdf extension)
+            
+        Returns:
+            First GitHub URL found, or None if not found or text file doesn't exist
+        """
+        # Import here to avoid circular dependency
+        from .pdf import CheckGithubLinkTool
+        
+        # Use CheckGithubLinkTool to find GitHub URLs
+        github_tool = CheckGithubLinkTool()
+        result = await github_tool.execute(paper_id)
+        
+        # Extract first URL from result
+        github_urls = result.get("github_urls")
+        if github_urls and isinstance(github_urls, list) and len(github_urls) > 0:
+            return github_urls[0]
+        
+        return None
 
     @property
     def parameters(self) -> List[ToolParameter]:
@@ -390,6 +415,16 @@ class EvaluatePaperMetricsTool(MCPTool):
         profile = load_profile(profile_path, tool_name=self.name)
         local_pdfs = scan_local_pdfs(local_pdf_dir)
         paper_inputs: List[PaperInput] = [PaperInput(**p) for p in papers]
+
+        # Automatically enrich papers with GitHub URLs if missing
+        for paper in paper_inputs:
+            # Only search if github_url is not already provided
+            if not paper.get("github_url"):
+                paper_id = paper.get("paper_id", "")
+                if paper_id:
+                    github_url = await self._find_github_urls(paper_id)
+                    if github_url:
+                        paper["github_url"] = github_url
 
         results: Dict[str, Dict[str, Any]] = {}
         for paper in paper_inputs:
