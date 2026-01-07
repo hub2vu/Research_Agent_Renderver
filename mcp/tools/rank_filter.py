@@ -1,18 +1,18 @@
 """
 Rank and Filter Papers Tool
 
-Provides tools for ranking and filtering research papers based on metadata
-(title, authors, abstract) and user profile. This tool analyzes only abstracts;
-full PDF text analysis is handled by paper_analyzer.
+- UpdateUserProfileTool
+- ApplyHardFiltersTool
+- CalculateSemanticScoresTool
+- EvaluatePaperMetricsTool
+- RankAndSelectTopKTool
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
+from datetime import datetime
+import json
 
 from ..base import MCPTool, ToolParameter, ExecutionError
-
-from datetime import datetime
-from typing import Tuple
-
 from .rank_filter_utils import (
     PaperInput,
     UserProfile,
@@ -22,7 +22,6 @@ from .rank_filter_utils import (
     scan_local_pdfs,
     filter_papers,
     _calculate_embedding_scores,
-    _calculate_keyword_scores,
     _classify_papers_by_score,
     _verify_with_llm,
     _merge_scores,
@@ -35,42 +34,122 @@ from .rank_filter_utils import (
     _generate_comparison_notes,
     _save_and_format_result,
 )
-
-# Try to import sentence-transformers
-try:
-    from sentence_transformers import SentenceTransformer
-    HAS_SENTENCE_TRANSFORMERS = True
-except ImportError:
-    HAS_SENTENCE_TRANSFORMERS = False
-    SentenceTransformer = None  # type: ignore
+from .rank_filter_utils.path_resolver import resolve_path, ensure_directory
 
 
-class RankAndFilterPapersTool(MCPTool):
-    """
-    Rank and filter papers based on metadata analysis.
-    
-    This tool acts as a gatekeeper, performing lightweight evaluation based on
-    metadata (title, authors, abstract) to pre-select papers before expensive
-    PDF full-text analysis. It does NOT analyze PDF content - that is the role
-    of paper_analyzer.
-    """
-    
-    # Class-level embedding model cache
-    _embedding_model: Optional[SentenceTransformer] = None
-    _model_load_failed: bool = False
-
+# ========== 1) UpdateUserProfileTool ==========
+class UpdateUserProfileTool(MCPTool):
     @property
     def name(self) -> str:
-        return "rank_and_filter_papers"
+        return "update_user_profile"
 
     @property
     def description(self) -> str:
         return (
+            "Update the user profile (interests, keywords) and toggle exclude_local_papers. "
+            "Writes to OUTPUT_DIR/users/profile.json by default."
+        )
+
+    @property
+    def parameters(self) -> List[ToolParameter]:
+        return [
+            ToolParameter(
+                name="profile_path",
+                type="string",
+                description=(
+                    "Profile JSON path resolved under OUTPUT_DIR (default: users/profile.json). "
+                    "Contains user interests, keywords, preferred authors/institutions, and constraints "
+                    "(including exclude_local_papers toggle). If file doesn't exist, a default profile is created."
+                ),
+                required=False,
+                default="users/profile.json",
+            ),
+            ToolParameter(
+                name="interests",
+                type="object",
+                description=(
+                    "Optional interests object with keys: primary (array of strings), secondary (array of strings), "
+                    "exploratory (array of strings). Primary interests have highest weight in semantic scoring, "
+                    "secondary have medium weight, exploratory have lower weight. Only provided keys are updated."
+                ),
+                required=False,
+            ),
+            ToolParameter(
+                name="keywords",
+                type="object",
+                description=(
+                    "Optional keywords object with keys: must_include (array of strings), "
+                    "exclude (object with hard and soft arrays). must_include keywords must appear in title/abstract. "
+                    "hard exclude keywords cause immediate filtering, soft exclude keywords apply penalty. "
+                    "Only provided keys are updated."
+                ),
+                required=False,
+            ),
+            ToolParameter(
+                name="exclude_local_papers",
+                type="boolean",
+                description="If true, locally existing PDFs will be treated as already read.",
+                required=False,
+                default=False,
+            ),
+        ]
+
+    @property
+    def category(self) -> str:
+        return "ranking"
+
+    async def execute(
+        self,
+        profile_path: str = "users/profile.json",
+        interests: Optional[Dict[str, List[str]]] = None,
+        keywords: Optional[Dict[str, Any]] = None,
+        exclude_local_papers: Optional[bool] = None,
+    ) -> Dict[str, Any]:
+        profile = load_profile(profile_path, tool_name=self.name)
+
+        # Merge updates
+        if interests is not None:
+            for k in ["primary", "secondary", "exploratory"]:
+                if k in interests:
+                    profile["interests"][k] = interests.get(k, []) or []
+
+        if keywords is not None:
+            if "must_include" in keywords:
+                profile["keywords"]["must_include"] = keywords.get("must_include", []) or []
+            if "exclude" in keywords:
+                excl = keywords.get("exclude", {}) or {}
+                profile["keywords"]["exclude"]["hard"] = excl.get("hard", []) or []
+                profile["keywords"]["exclude"]["soft"] = excl.get("soft", []) or []
+
+        if exclude_local_papers is not None:
+            profile["constraints"]["exclude_local_papers"] = bool(exclude_local_papers)
+
+        # Save
+        resolved = resolve_path(profile_path, path_type="output")
+        ensure_directory(resolved)
+        with open(resolved, "w", encoding="utf-8") as f:
+            json.dump(profile, f, ensure_ascii=False, indent=2)
+
+        return {
+            "profile_path": str(resolved),
+            "updated": True,
+            "exclude_local_papers": profile["constraints"]["exclude_local_papers"],
+        }
+
+
+# ========== 2) ApplyHardFiltersTool ==========
+class ApplyHardFiltersTool(MCPTool):
+    @property
+    def name(self) -> str:
+        return "apply_hard_filters"
+
+    @property
+    def description(self) -> str:
+        return (
+            "Apply hard filters (already read, blacklist keywords, year). "
             "Analyzes search result metadata (title, authors, abstract) to evaluate "
-            "and filter papers according to user profile. This tool analyzes only "
-            "abstracts; PDF full-text analysis is handled by paper_analyzer. "
-            "Use this tool after arxiv_search or web_search to pre-select the most "
-            "relevant papers before expensive PDF processing."
+            "and filter papers according to user profile. "
+            "If profile.constraints.exclude_local_papers is true, treat local PDFs as ALREADY_READ."
         )
 
     @property
@@ -80,37 +159,35 @@ class RankAndFilterPapersTool(MCPTool):
                 name="papers",
                 type="array",
                 items_type="object",
-                description=(
-                    "List of papers returned by search tools (e.g., arxiv_search, web_search). "
-                    "Each paper object must have: paper_id (string), title (string), "
-                    "abstract (string), authors (array). Optional fields: published (string), "
-                    "categories (array), pdf_url (string), github_url (string), "
-                    "affiliations (array). Use this after search tools to filter and rank results."
-                ),
-                required=True
-            ),
-            ToolParameter(
-                name="top_k",
-                type="integer",
-                description=(
-                    "Maximum number of papers to return after ranking. Recommended range: 1-20. "
-                    "Use smaller values (3-5) for focused research, larger values (10-15) for "
-                    "broad exploration or literature reviews."
-                ),
-                required=False,
-                default=5
+                description="Input papers (PaperInput-like objects).",
+                required=True,
             ),
             ToolParameter(
                 name="profile_path",
                 type="string",
                 description=(
-                    "Path to user profile JSON file containing research interests, keywords, "
-                    "preferred authors, and constraints. Relative paths are resolved relative to "
-                    "OUTPUT_DIR environment variable. If file doesn't exist, basic scoring only "
-                    "will be performed. Use this to personalize paper selection."
+                    "Profile JSON path resolved under OUTPUT_DIR (default: users/profile.json). "
+                    "Contains filtering rules (keywords, year constraints) and exclude_local_papers toggle."
                 ),
                 required=False,
-                default="config/profile.json"
+                default="users/profile.json",
+            ),
+            ToolParameter(
+                name="history_path",
+                type="string",
+                description=(
+                    "History JSON path resolved under OUTPUT_DIR (default: history/read_papers.json). "
+                    "Contains list of already-read paper IDs. Papers in this list are filtered out as ALREADY_READ."
+                ),
+                required=False,
+                default="history/read_papers.json",
+            ),
+            ToolParameter(
+                name="local_pdf_dir",
+                type="string",
+                description="Local PDF directory (resolved under PDF_DIR).",
+                required=False,
+                default="pdf/",
             ),
             ToolParameter(
                 name="purpose",
@@ -122,7 +199,274 @@ class RankAndFilterPapersTool(MCPTool):
                     "'idea_generation' to prioritize novelty and recent papers with innovative approaches."
                 ),
                 required=False,
-                default="general"
+                default="general",
+            ),
+        ]
+
+    @property
+    def category(self) -> str:
+        return "ranking"
+
+    async def execute(
+        self,
+        papers: List[Dict[str, Any]],
+        profile_path: str = "users/profile.json",
+        history_path: str = "history/read_papers.json",
+        local_pdf_dir: str = "pdf/",
+        purpose: str = "general",
+    ) -> Dict[str, Any]:
+        if not papers:
+            return {"passed_papers": [], "filtered_papers": [], "filter_summary": {"total": 0, "passed": 0, "filtered": 0}}
+
+        profile = load_profile(profile_path, tool_name=self.name)
+        history = load_history(history_path)
+
+        # Treat local PDFs as ALREADY_READ when toggle is True
+        exclude_local = profile["constraints"].get("exclude_local_papers", False)
+        if exclude_local:
+            local_ids = scan_local_pdfs(local_pdf_dir)
+            history = set(history).union(local_ids)
+
+        paper_inputs: List[PaperInput] = [PaperInput(**p) for p in papers]
+
+        passed, filtered = filter_papers(paper_inputs, profile, history, purpose)
+
+        return {
+            "passed_papers": passed,
+            "filtered_papers": filtered,
+            "filter_summary": {
+                "total": len(papers),
+                "passed": len(passed),
+                "filtered": len(filtered),
+            },
+        }
+
+
+# ========== 3) CalculateSemanticScoresTool ==========
+class CalculateSemanticScoresTool(MCPTool):
+    @property
+    def name(self) -> str:
+        return "calculate_semantic_scores"
+
+    @property
+    def description(self) -> str:
+        return (
+            "Calculate hybrid semantic relevance scores for papers using embeddings "
+            "and optional LLM verification for borderline cases."
+        )
+
+    @property
+    def parameters(self) -> List[ToolParameter]:
+        return [
+            ToolParameter(
+                name="papers",
+                type="array",
+                items_type="object",
+                description="Papers to score (after filters).",
+                required=True,
+            ),
+            ToolParameter(
+                name="profile_path",
+                type="string",
+                description=(
+                    "Profile JSON path resolved under OUTPUT_DIR (default: users/profile.json). "
+                    "Contains user interests used for semantic relevance calculation."
+                ),
+                required=False,
+                default="users/profile.json",
+            ),
+            ToolParameter(
+                name="enable_llm_verification",
+                type="boolean",
+                description=(
+                    "If true, performs LLM batch verification on borderline papers (embedding score 0.4-0.7) "
+                    "to improve accuracy. If false, uses embedding scores only (faster but less accurate). "
+                    "Set to false when processing large batches or when speed is critical. "
+                    "Recommended: true for top_k <= 10, false for top_k > 15."
+                ),
+                required=False,
+                default=True,
+            ),
+        ]
+
+    @property
+    def category(self) -> str:
+        return "ranking"
+
+    async def execute(
+        self,
+        papers: List[Dict[str, Any]],
+        profile_path: str = "users/profile.json",
+        enable_llm_verification: bool = True,
+    ) -> Dict[str, Any]:
+        if not papers:
+            return {"scores": {}}
+
+        profile = load_profile(profile_path, tool_name=self.name)
+        paper_inputs: List[PaperInput] = [PaperInput(**p) for p in papers]
+
+        embedding_scores = _calculate_embedding_scores(paper_inputs, profile)
+        high_group, mid_group, low_group = _classify_papers_by_score(paper_inputs, embedding_scores)
+
+        llm_results: Dict[str, Tuple[float, str]] = {}
+        if enable_llm_verification and mid_group:
+            llm_results = await _verify_with_llm(mid_group, profile, batch_size=5)
+
+        merged = _merge_scores(
+            embedding_scores,
+            llm_results,
+            {p["paper_id"] for p in high_group},
+            {p["paper_id"] for p in low_group},
+        )
+
+        return {"scores": merged}
+
+
+# ========== 4) EvaluatePaperMetricsTool ==========
+class EvaluatePaperMetricsTool(MCPTool):
+    @property
+    def name(self) -> str:
+        return "evaluate_paper_metrics"
+
+    @property
+    def description(self) -> str:
+        return (
+            "Evaluate metrics for each paper (keywords, authors, institutions, recency, practicality) "
+            "using provided semantic scores."
+        )
+
+    @property
+    def parameters(self) -> List[ToolParameter]:
+        return [
+            ToolParameter(
+                name="papers",
+                type="array",
+                items_type="object",
+                description="Papers to evaluate.",
+                required=True,
+            ),
+            ToolParameter(
+                name="semantic_scores",
+                type="object",
+                description="Semantic scores map from calculate_semantic_scores.",
+                required=True,
+            ),
+            ToolParameter(
+                name="profile_path",
+                type="string",
+                description=(
+                    "Profile JSON path resolved under OUTPUT_DIR (default: users/profile.json). "
+                    "Contains keywords, preferred authors/institutions used for metrics calculation."
+                ),
+                required=False,
+                default="users/profile.json",
+            ),
+            ToolParameter(
+                name="local_pdf_dir",
+                type="string",
+                description=(
+                    "Local PDF directory path resolved under PDF_DIR (default: pdf/). "
+                    "Used to check which papers are already available locally for practicality scoring."
+                ),
+                required=False,
+                default="pdf/",
+            ),
+        ]
+
+    @property
+    def category(self) -> str:
+        return "ranking"
+
+    async def execute(
+        self,
+        papers: List[Dict[str, Any]],
+        semantic_scores: Dict[str, Dict[str, Any]],
+        profile_path: str = "users/profile.json",
+        local_pdf_dir: str = "pdf/",
+    ) -> Dict[str, Any]:
+        if not papers:
+            return {"scores": {}}
+
+        profile = load_profile(profile_path, tool_name=self.name)
+        local_pdfs = scan_local_pdfs(local_pdf_dir)
+        paper_inputs: List[PaperInput] = [PaperInput(**p) for p in papers]
+
+        results: Dict[str, Dict[str, Any]] = {}
+        for paper in paper_inputs:
+            pid = paper.get("paper_id", "")
+            sem = semantic_scores.get(pid, {})
+            sem_score = float(sem.get("semantic_score", 0.0))
+
+            breakdown = _calculate_dimension_scores(paper, profile, sem_score, local_pdfs)
+            penalty, penalty_kws = _apply_soft_penalty(paper, profile)
+
+            results[pid] = {
+                "breakdown": breakdown,
+                "soft_penalty": penalty,
+                "penalty_keywords": penalty_kws,
+            }
+
+        return {"scores": results}
+
+
+# ========== 5) RankAndSelectTopKTool ==========
+class RankAndSelectTopKTool(MCPTool):
+    @property
+    def name(self) -> str:
+        return "rank_and_select_top_k"
+
+    @property
+    def description(self) -> str:
+        return (
+            "Combine semantic and metrics scores to compute final scores, rank papers, "
+            "and select Top-K. Optionally include a contrastive paper."
+        )
+
+    @property
+    def parameters(self) -> List[ToolParameter]:
+        return [
+            ToolParameter(
+                name="papers",
+                type="array",
+                items_type="object",
+                description="Papers to rank.",
+                required=True,
+            ),
+            ToolParameter(
+                name="semantic_scores",
+                type="object",
+                description="Semantic scores map (from calculate_semantic_scores).",
+                required=True,
+            ),
+            ToolParameter(
+                name="metrics_scores",
+                type="object",
+                description="Metrics scores map (from evaluate_paper_metrics).",
+                required=True,
+            ),
+            ToolParameter(
+                name="top_k",
+                type="integer",
+                description=(
+                    "Maximum number of papers to return after ranking. Recommended range: 1-20. "
+                    "Use smaller values (3-5) for focused research, larger values (10-15) for "
+                    "broad exploration or literature reviews."
+                ),
+                required=False,
+                default=5,
+            ),
+            ToolParameter(
+                name="purpose",
+                type="string",
+                description=(
+                    "Research purpose/goal that determines score weight distribution. "
+                    "Choose 'general' for balanced recommendation across all factors, "
+                    "'literature_review' for broad coverage and diversity (relaxes year constraints), "
+                    "'implementation' to prioritize code availability and reproducibility, "
+                    "'idea_generation' to prioritize novelty and recent papers with innovative approaches."
+                ),
+                required=False,
+                default="general",
             ),
             ToolParameter(
                 name="ranking_mode",
@@ -134,7 +478,7 @@ class RankAndFilterPapersTool(MCPTool):
                     "'diversity' to minimize overlap and encourage diverse perspectives."
                 ),
                 required=False,
-                default="balanced"
+                default="balanced",
             ),
             ToolParameter(
                 name="include_contrastive",
@@ -145,7 +489,7 @@ class RankAndFilterPapersTool(MCPTool):
                     "perspective on the research topic. Requires contrastive_type to be specified."
                 ),
                 required=False,
-                default=False
+                default=False,
             ),
             ToolParameter(
                 name="contrastive_type",
@@ -157,332 +501,175 @@ class RankAndFilterPapersTool(MCPTool):
                     "include_contrastive is true."
                 ),
                 required=False,
-                default="method"
-            ),
-            ToolParameter(
-                name="history_path",
-                type="string",
-                description=(
-                    "Path to JSON file containing list of already-read paper IDs. Papers in this "
-                    "list will be automatically filtered out. Relative paths resolved relative to "
-                    "OUTPUT_DIR. If file doesn't exist, treated as empty list. Use this to avoid "
-                    "re-analyzing papers you've already reviewed."
-                ),
-                required=False,
-                default="history/read_papers.json"
+                default="method",
             ),
             ToolParameter(
                 name="local_pdf_dir",
                 type="string",
                 description=(
-                    "Local directory path containing downloaded PDF files. Relative paths resolved "
-                    "relative to PDF_DIR environment variable. Used to check which papers are "
-                    "already available locally and tag them accordingly. Useful for prioritizing "
-                    "papers you already have."
+                    "Local PDF directory path resolved under PDF_DIR (default: pdf/). "
+                    "Used to check which papers are already available locally for tagging."
                 ),
                 required=False,
-                default="pdf/"
+                default="pdf/",
             ),
             ToolParameter(
-                name="enable_llm_verification",
-                type="boolean",
+                name="profile_path",
+                type="string",
                 description=(
-                    "If true, performs LLM batch verification on borderline papers (embedding score "
-                    "0.4-0.7) to improve accuracy. If false, uses embedding scores only (faster but "
-                    "less accurate). Set to false when processing large batches or when speed is "
-                    "critical. Recommended: true for top_k <= 10, false for top_k > 15."
+                    "Profile JSON path resolved under OUTPUT_DIR (default: users/profile.json). "
+                    "Used for saving ranking results. The profile itself is not modified."
                 ),
                 required=False,
-                default=True
-            )
+                default="users/profile.json",
+            ),
         ]
 
     @property
     def category(self) -> str:
         return "ranking"
 
-    def _empty_result(
+    async def execute(
         self,
-        filtered_papers: List[FilteredPaper],
-        input_count: int,
-        purpose: str,
-        ranking_mode: str,
-        profile_path: Optional[str]
+        papers: List[Dict[str, Any]],
+        semantic_scores: Dict[str, Dict[str, Any]],
+        metrics_scores: Dict[str, Dict[str, Any]],
+        top_k: int = 5,
+        purpose: str = "general",
+        ranking_mode: str = "balanced",
+        include_contrastive: bool = False,
+        contrastive_type: str = "method",
+        local_pdf_dir: str = "pdf/",
+        profile_path: str = "users/profile.json",
     ) -> Dict[str, Any]:
-        """
-        Generate an empty result dictionary when all papers are filtered or input is empty.
-        
-        Args:
-            filtered_papers: List of filtered papers
-            input_count: Number of input papers
-            purpose: Research purpose
-            ranking_mode: Ranking mode
-            profile_path: Optional profile path used
-            
-        Returns:
-            Dictionary with empty result structure
-        """
-        return {
-            "success": True,
-            "error": None,
-            "summary": {
-                "input_count": input_count,
-                "filtered_count": len(filtered_papers),
+        if not papers:
+            summary = {
+                "input_count": 0,
+                "filtered_count": 0,
                 "scored_count": 0,
                 "output_count": 0,
                 "purpose": purpose,
                 "ranking_mode": ranking_mode,
                 "profile_used": profile_path,
                 "llm_verification_used": False,
-                "llm_calls_made": 0
-            },
-            "ranked_papers": [],
-            "filtered_papers": filtered_papers,
-            "contrastive_paper": None,
-            "comparison_notes": [],
-            "output_path": None,
-            "generated_at": datetime.now().isoformat()
+                "llm_calls_made": 0,
+            }
+            return _save_and_format_result([], [], None, [], summary, profile_path)
+
+        local_pdfs = scan_local_pdfs(local_pdf_dir)
+        paper_inputs: List[PaperInput] = [PaperInput(**p) for p in papers]
+
+        # Build final scores
+        final_scores: Dict[str, Dict[str, Any]] = {}
+        for p in paper_inputs:
+            pid = p.get("paper_id", "")
+            sem_info = semantic_scores.get(pid, {})
+            sem_score = float(sem_info.get("semantic_score", 0.0))
+
+            met = metrics_scores.get(pid, {})
+            breakdown = met.get("breakdown", {})
+            soft_penalty = float(met.get("soft_penalty", 0.0))
+
+            # If breakdown not provided, compute minimal one
+            if not breakdown:
+                profile = load_profile(profile_path, tool_name=self.name)
+                breakdown = _calculate_dimension_scores(p, profile, sem_score, local_pdfs)
+                penalty, _ = _apply_soft_penalty(p, profile)
+                soft_penalty = penalty
+
+            final = _calculate_final_score(breakdown, soft_penalty, purpose, ranking_mode)
+            final_scores[pid] = {
+                "final_score": final,
+                "breakdown": breakdown,
+                "soft_penalty": soft_penalty,
+                "penalty_keywords": met.get("penalty_keywords", []),
+                "evaluation_method": sem_info.get("evaluation_method", "unknown"),
+            }
+
+        # Rank and select
+        selected = _rank_and_select(paper_inputs, final_scores, top_k, ranking_mode, include_contrastive)
+
+        # Optional contrastive
+        contrastive_formatted = None
+        contrastive_result = None
+        if include_contrastive:
+            selected_ids = {p["paper_id"] for p in selected}
+            remaining = [p for p in paper_inputs if p["paper_id"] not in selected_ids]
+            contrastive_result = _select_contrastive_paper(selected, remaining, contrastive_type, final_scores)
+
+        # Format ranked results
+        ranked_results = []
+        for rank, paper in enumerate(selected, 1):
+            pid = paper["paper_id"]
+            tags = _generate_tags(paper, final_scores[pid], local_pdfs, False, None)
+            ranked_results.append({
+                "rank": rank,
+                "paper_id": pid,
+                "title": paper.get("title", ""),
+                "authors": paper.get("authors", []),
+                "published": paper.get("published"),
+                "score": {
+                    "final": final_scores[pid]["final_score"],
+                    "breakdown": final_scores[pid]["breakdown"],
+                    "soft_penalty": final_scores[pid]["soft_penalty"],
+                    "penalty_keywords": final_scores[pid].get("penalty_keywords", []),
+                    "evaluation_method": final_scores[pid]["evaluation_method"],
+                },
+                "tags": tags,
+                "local_status": {
+                    "already_downloaded": pid in local_pdfs,
+                    "local_path": f"pdf/{pid}.pdf" if pid in local_pdfs else None,
+                },
+                "original_data": paper,
+            })
+
+        if contrastive_result:
+            contrastive_paper, contrastive_info = contrastive_result
+            pid = contrastive_paper["paper_id"]
+            score_info = final_scores.get(pid, {
+                "final_score": 0.0,
+                "breakdown": {},
+                "soft_penalty": 0.0,
+                "penalty_keywords": [],
+                "evaluation_method": "unknown",
+            })
+            tags = _generate_tags(contrastive_paper, score_info, local_pdfs, True, contrastive_type)
+            contrastive_formatted = {
+                "paper_id": pid,
+                "title": contrastive_paper.get("title", ""),
+                "authors": contrastive_paper.get("authors", []),
+                "published": contrastive_paper.get("published"),
+                "score": {
+                    "final": score_info["final_score"],
+                    "breakdown": score_info["breakdown"],
+                    "soft_penalty": score_info["soft_penalty"],
+                    "penalty_keywords": score_info.get("penalty_keywords", []),
+                    "evaluation_method": score_info["evaluation_method"],
+                },
+                "tags": tags,
+                "contrastive_info": contrastive_info,
+                "original_data": contrastive_paper,
+            }
+
+        comparison_notes = _generate_comparison_notes(selected, final_scores, contrastive_result[0] if contrastive_result else None)
+
+        summary = {
+            "input_count": len(papers),
+            "filtered_count": 0,
+            "scored_count": len(papers),
+            "output_count": len(ranked_results) + (1 if contrastive_formatted else 0),
+            "purpose": purpose,
+            "ranking_mode": ranking_mode,
+            "profile_used": profile_path,
+            "llm_verification_used": False,
+            "llm_calls_made": 0,
         }
 
-    def _get_embedding_model(self) -> Optional[SentenceTransformer]:
-        """
-        Get the embedding model with lazy loading.
-        
-        Returns the cached model if already loaded, attempts to load it if not,
-        or returns None if loading failed previously or library is not available.
-        
-        Returns:
-            SentenceTransformer model instance or None if unavailable/failed
-        """
-        # If already loaded, return it
-        if self._embedding_model is not None:
-            return self._embedding_model
-        
-        # If loading failed before, don't try again
-        if self._model_load_failed:
-            return None
-        
-        # Check if library is available
-        if not HAS_SENTENCE_TRANSFORMERS:
-            self._model_load_failed = True
-            return None
-        
-        # Try to load the model
-        try:
-            self._embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
-            return self._embedding_model
-        except Exception:
-            # Mark as failed so we don't try again
-            self._model_load_failed = True
-            return None
-
-    async def execute(
-        self,
-        papers: List[Dict[str, Any]],
-        top_k: int = 5,
-        profile_path: str = "config/profile.json",
-        purpose: str = "general",
-        ranking_mode: str = "balanced",
-        include_contrastive: bool = False,
-        contrastive_type: str = "method",
-        history_path: Optional[str] = "history/read_papers.json",
-        local_pdf_dir: str = "pdf/",
-        enable_llm_verification: bool = True
-    ) -> Dict[str, Any]:
-        """
-        Execute ranking and filtering logic.
-        """
-        try:
-            # Parameter extraction and validation
-            if not papers:
-                return self._empty_result(
-                    [],
-                    0,
-                    purpose,
-                    ranking_mode,
-                    profile_path
-                )
-            
-            # Convert input papers to PaperInput format
-            paper_inputs: List[PaperInput] = [PaperInput(**p) for p in papers]
-            
-            # Phase 1: Load data
-            profile = load_profile(profile_path, tool_name=self.name)
-            history = load_history(history_path or "history/read_papers.json")
-            local_pdfs = scan_local_pdfs(local_pdf_dir)
-            
-            # Phase 2: Filter papers
-            passed_papers, filtered_papers = filter_papers(
-                paper_inputs, profile, history, purpose
-            )
-            
-            if not passed_papers:
-                return self._empty_result(
-                    filtered_papers,
-                    len(papers),
-                    purpose,
-                    ranking_mode,
-                    profile_path
-                )
-            
-            # Phase 3: Scoring
-            # Stage 1: Embedding scores
-            embedding_scores = _calculate_embedding_scores(passed_papers, profile)
-            high_group, mid_group, low_group = _classify_papers_by_score(passed_papers, embedding_scores)
-            
-            # Stage 2: LLM verification (conditional)
-            llm_results = {}
-            llm_calls = 0
-            if enable_llm_verification and mid_group:
-                llm_results = await _verify_with_llm(mid_group, profile, batch_size=5)
-                llm_calls = (len(mid_group) + 4) // 5  # batch_size 5 기준
-            
-            # Merge scores
-            merged_scores = _merge_scores(
-                embedding_scores,
-                llm_results,
-                {p["paper_id"] for p in high_group},
-                {p["paper_id"] for p in low_group}
-            )
-            
-            # Phase 4-5: Dimension scores + penalty + weighted final score
-            final_scores: Dict[str, Dict[str, Any]] = {}
-            for paper in passed_papers:
-                paper_id = paper["paper_id"]
-                semantic_info = merged_scores.get(paper_id, {"semantic_score": 0.0, "evaluation_method": "unknown", "llm_reason": None})
-                
-                dim_scores = _calculate_dimension_scores(
-                    paper, profile, semantic_info["semantic_score"], local_pdfs
-                )
-                
-                penalty, penalty_kws = _apply_soft_penalty(paper, profile)
-                
-                final = _calculate_final_score(dim_scores, penalty, purpose, ranking_mode)
-                
-                final_scores[paper_id] = {
-                    "final_score": final,
-                    "breakdown": dim_scores,
-                    "soft_penalty": penalty,
-                    "penalty_keywords": penalty_kws,
-                    "evaluation_method": semantic_info["evaluation_method"],
-                    "llm_reason": semantic_info.get("llm_reason")
-                }
-            
-            # Phase 6: Ranking and selection
-            selected = _rank_and_select(
-                passed_papers, final_scores, top_k, ranking_mode, include_contrastive
-            )
-            
-            # Phase 7: Contrastive (conditional)
-            contrastive_result = None
-            if include_contrastive:
-                selected_ids = {p["paper_id"] for p in selected}
-                remaining = [p for p in passed_papers if p["paper_id"] not in selected_ids]
-                contrastive_result = _select_contrastive_paper(
-                    selected, remaining, contrastive_type, final_scores
-                )
-            
-            # Phase 8: Tagging and result formatting
-            ranked_results = []
-            for rank, paper in enumerate(selected, 1):
-                paper_id = paper["paper_id"]
-                tags = _generate_tags(paper, final_scores[paper_id], local_pdfs, False, None)
-                
-                ranked_results.append({
-                    "rank": rank,
-                    "paper_id": paper_id,
-                    "title": paper.get("title", ""),
-                    "authors": paper.get("authors", []),
-                    "published": paper.get("published"),
-                    "score": {
-                        "final": final_scores[paper_id]["final_score"],
-                        "breakdown": final_scores[paper_id]["breakdown"],
-                        "soft_penalty": final_scores[paper_id]["soft_penalty"],
-                        "penalty_keywords": final_scores[paper_id]["penalty_keywords"],
-                        "evaluation_method": final_scores[paper_id]["evaluation_method"],
-                    },
-                    "tags": tags,
-                    "local_status": {
-                        "already_downloaded": paper_id in local_pdfs,
-                        "local_path": f"pdf/{paper_id}.pdf" if paper_id in local_pdfs else None
-                    },
-                    "original_data": paper
-                })
-            
-            # Contrastive formatting
-            contrastive_formatted = None
-            if contrastive_result:
-                contrastive_paper, contrastive_info = contrastive_result
-                paper_id = contrastive_paper["paper_id"]
-                
-                # Get score info - use default if not in final_scores (shouldn't happen in normal flow, but handle for safety)
-                score_info = final_scores.get(paper_id, {
-                    "final_score": 0.0,
-                    "breakdown": {},
-                    "soft_penalty": 0.0,
-                    "penalty_keywords": [],
-                    "evaluation_method": "unknown"
-                })
-                
-                tags = _generate_tags(contrastive_paper, score_info, local_pdfs, True, contrastive_type)
-                
-                contrastive_formatted = {
-                    "paper_id": paper_id,
-                    "title": contrastive_paper.get("title", ""),
-                    "authors": contrastive_paper.get("authors", []),
-                    "published": contrastive_paper.get("published"),
-                    "score": {
-                        "final": score_info["final_score"],
-                        "breakdown": score_info["breakdown"],
-                        "soft_penalty": score_info["soft_penalty"],
-                        "penalty_keywords": score_info["penalty_keywords"],
-                        "evaluation_method": score_info["evaluation_method"],
-                    },
-                    "tags": tags,
-                    "contrastive_info": contrastive_info,
-                    "original_data": contrastive_paper
-                }
-            
-            # Comparison notes
-            contrastive_paper_for_notes = contrastive_result[0] if contrastive_result else None
-            comparison_notes = _generate_comparison_notes(
-                selected,
-                final_scores,
-                contrastive_paper_for_notes
-            )
-            
-            # Phase 9: Save and return
-            summary = {
-                "input_count": len(papers),
-                "filtered_count": len(filtered_papers),
-                "scored_count": len(passed_papers),
-                "output_count": len(ranked_results) + (1 if contrastive_formatted else 0),
-                "purpose": purpose,
-                "ranking_mode": ranking_mode,
-                "profile_used": profile_path,
-                "llm_verification_used": enable_llm_verification and bool(mid_group),
-                "llm_calls_made": llm_calls
-            }
-            
-            return _save_and_format_result(
-                ranked_results,
-                filtered_papers,
-                contrastive_formatted,
-                comparison_notes,
-                summary,
-                profile_path
-            )
-        
-        except Exception as e:
-            return {
-                "success": False,
-                "error": str(e),
-                "summary": None,
-                "ranked_papers": [],
-                "filtered_papers": [],
-                "contrastive_paper": None,
-                "comparison_notes": [],
-                "output_path": None,
-                "generated_at": datetime.now().isoformat()
-            }
-
+        return _save_and_format_result(
+            ranked_results,
+            [],
+            contrastive_formatted,
+            comparison_notes,
+            summary,
+            profile_path,
+        )
