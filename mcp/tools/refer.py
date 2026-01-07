@@ -51,6 +51,30 @@ def _strip_pdf_page_markers(text: str) -> str:
     # "=== Page 14 ===" 제거
     return re.sub(r"(?m)^\s*===\s*Page\s*\d+\s*===\s*$", "", text)
 
+def _repair_wrapped_urls_and_ids(text: str) -> str:
+    # 1) URL이 줄바꿈으로 이어진 경우: https://arxiv.\norg/abs/... -> https://arxiv.org/abs/...
+    def _join_url(m: re.Match) -> str:
+        return re.sub(r"\s*\n\s*", "", m.group(0))
+
+    # 줄바꿈 포함 URL 전체를 한 덩어리로 잡아 붙임
+    text = re.sub(r"https?://[^\s)]+(?:\s*\n\s*[^\s)]+)+", _join_url, text)
+
+    # 2) arXiv: 가 줄바꿈으로 끊긴 경우
+    text = re.sub(
+        r"(?i)\barXiv:\s*\n\s*(\d{4}\.\d{4,5}(?:v\d+)?)\b",
+        r"arXiv: \1",
+        text,
+    )
+
+    # 3) DOI가 줄바꿈으로 끊긴 경우 (10.xxxx/ 다음이 다음 줄로)
+    text = re.sub(
+        r"\b(10\.\d{4,9}/[^\s<>\"']+)\s*\n\s*([^\s<>\"']+)\b",
+        r"\1\2",
+        text,
+    )
+
+    return text
+
 
 def _remove_common_noise_lines(text: str) -> str:
     """
@@ -86,6 +110,7 @@ def _remove_common_noise_lines(text: str) -> str:
 def _global_preprocess(text: str) -> str:
     text = _normalize_whitespace(text)
     text = _dehyphenate_linebreaks(text)
+    text = _repair_wrapped_urls_and_ids(text)
     text = _strip_pdf_page_markers(text)
     text = _remove_common_noise_lines(text)
     # 과도한 빈 줄 압축(단, 완전 제거 X)
@@ -96,19 +121,71 @@ def _global_preprocess(text: str) -> str:
 def _find_references_block(text: str) -> Optional[str]:
     """
     References 헤더(REFERENCES/Bibliography 등) 기준으로 뒤를 잘라냄.
-    문서에 references가 여러 번 등장할 수 있으므로 '마지막 섹션'을 우선.
+    - 섹션 번호(예: "5 References"), 콜론/대시(예: "REFERENCES:") 허용
+    - 헤더 라인에 첫 reference가 붙는 경우(예: "REFERENCES [1] ...")도 처리
+    - references가 여러 번 등장하면, 뒤에 '레퍼런스처럼 보이는 라인'이 많이 이어지는 후보를 선택
     """
-    # 라인 단위로 헤더 찾기
-    header_regex = r"(?im)^\s*(%s)\s*$" % "|".join(re.escape(h) for h in REF_HEADERS)
-    matches = list(re.finditer(header_regex, text))
-    if not matches:
+    headers = "|".join(re.escape(h) for h in REF_HEADERS)
+    header_line_re = re.compile(
+        rf"^\s*(?:\d+\s*[\.\)]?\s*)?(?:{headers})\b\s*[:\-–—]?\s*(.*)\s*$",
+        re.IGNORECASE
+    )
+
+    lines = text.splitlines()
+
+    def looks_like_ref_line(line: str) -> bool:
+        s = line.strip()
+        if not s:
+            return False
+        # [1] ... / (1) ... / 1. ... / 1) ...
+        if re.match(r"^\[\d{1,4}\]", s): return True
+        if re.match(r"^\(\d{1,4}\)\s", s): return True
+        if re.match(r"^\d{1,4}[\.\)]\s", s): return True
+        # 저자-연도 스타일(대략): "Smith, J., 2020" / "Smith et al. 2020"
+        if re.search(r"\b(19|20)\d{2}\b", s) and re.search(r"[A-Za-z].*,", s):
+            return True
+        # DOI / arXiv가 있으면 레퍼런스일 가능성 높음
+        if re.search(r"\bdoi\b|10\.\d{4,9}/|arXiv:\s*\d{4}\.\d{4,5}", s, re.IGNORECASE):
+            return True
+        return False
+
+    # 1) 헤더 후보 수집
+    candidates = []
+    for i, line in enumerate(lines):
+        m = header_line_re.match(line)
+        if not m:
+            continue
+        tail = (m.group(1) or "").strip()  # 헤더 줄 뒤에 붙어있는 내용
+        candidates.append((i, tail))
+
+    if not candidates:
         return None
 
-    # 마지막 references 헤더 사용
-    start = matches[-1].end()
-    block = text[start:].strip()
+    # 2) 가장 그럴듯한 헤더 선택: 이후 N줄에서 레퍼런스처럼 보이는 라인이 많은 후보
+    best_i, best_tail, best_score = None, "", -1
+    for i, tail in candidates:
+        window = []
+        if tail:
+            window.append(tail)
+        window.extend(lines[i+1:i+1+60])  # 다음 60줄 정도 검사
+        score = sum(1 for L in window[:60] if looks_like_ref_line(L))
+        # 동점이면 더 아래(마지막)에 있는 헤더를 선호
+        if score > best_score or (score == best_score and (best_i is None or i > best_i)):
+            best_i, best_tail, best_score = i, tail, score
 
-    # 끝 마커로 자르기
+    # 레퍼런스처럼 보이는 라인이 거의 없으면 실패로 간주
+    if best_i is None or best_score < 2:
+        return None
+
+    # 3) 블록 추출 (헤더 줄 tail 포함)
+    block_lines = []
+    if best_tail:
+        block_lines.append(best_tail)
+    block_lines.extend(lines[best_i + 1:])
+
+    block = "\n".join(block_lines).strip()
+
+    # 4) 끝 마커로 자르기
     end = len(block)
     for mpat in REF_END_MARKERS:
         m = re.search(mpat, block)
@@ -116,11 +193,10 @@ def _find_references_block(text: str) -> Optional[str]:
             end = min(end, m.start())
     block = block[:end].strip()
 
-    # 너무 짧으면 실패로 간주
+    # 5) 너무 짧으면 실패
     if len(block) < 200:
         return None
     return block
-
 
 def _split_numbered_items(block: str) -> List[Tuple[int, str]]:
     """
@@ -256,11 +332,24 @@ def _normalize_arxiv_to_doi_like(arxiv_id: str) -> str:
 
 def _clean_title_string(t: str) -> str:
     t = re.sub(r"https?://\S+", "", t)
+
+    # URL 앞부분이 이미 제거된 뒤 남는 조각들(대표적으로 arxiv/doi)
+    t = re.sub(r"(?i)\b(?:arxiv|doi)\.?org/\S+\b", "", t)
+    t = re.sub(r"(?i)\borg/abs/\S*\b", "", t)  # arxiv.\norg/abs/... 케이스 뒷조각
+    t = re.sub(r"(?i)\bcom/\S+\b", "", t)      # https://xxx.\ncom/... 케이스 뒷조각(슬래시 있을 때만)
+
     t = re.sub(r"(?i)arXiv:\s*\S+", "", t)
     t = t.strip(" .,[](){}")
-    # "In Proceedings of ..." 같은 venue 시작 제거
+
+    # venue 문장 시작 제거
     t = re.sub(r"(?i)^in\s+proceedings.*$", "", t).strip()
+
+    # "도메인/경로"처럼 보이면 제목으로 채택하지 않음
+    if "/" in t and " " not in t and len(t) <= 80:
+        return ""
+
     return t.strip()
+
 
 
 def _extract_title(entry: str) -> str:

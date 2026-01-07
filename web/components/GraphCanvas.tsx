@@ -8,6 +8,10 @@ import React, { useEffect, useRef, useCallback, useState } from 'react';
 import * as d3 from 'd3';
 import { GraphNode, GraphEdge } from '../lib/mcp';
 
+interface ClusterCenters {
+  [clusterId: string]: { x: number; y: number };
+}
+
 interface GraphCanvasProps {
   nodes: GraphNode[];
   edges: GraphEdge[];
@@ -17,6 +21,12 @@ interface GraphCanvasProps {
 
   // nodeKey(stableKey 우선) -> hex color
   nodeColorMap?: Record<string, string>;
+
+  // Cluster centers for cluster force (NeurIPS mode)
+  clusterCenters?: ClusterCenters;
+
+  // Cluster force strength (0-1, default 0.15)
+  clusterStrength?: number;
 
   onNodeClick?: (node: GraphNode) => void;
   onNodeDoubleClick?: (node: GraphNode) => void;
@@ -45,6 +55,8 @@ export default function GraphCanvas({
   centerId,
   selectedNodeId,
   nodeColorMap,
+  clusterCenters,
+  clusterStrength = 0.15,
   onNodeClick,
   onNodeDoubleClick
 }: GraphCanvasProps) {
@@ -220,6 +232,21 @@ export default function GraphCanvas({
       )
       .force('collide', d3.forceCollide().radius(30));
 
+    // Add cluster force if clusterCenters provided
+    if (clusterCenters && Object.keys(clusterCenters).length > 0) {
+      simulation
+        .force('clusterX', d3.forceX<any>((d) => {
+          const clusterId = String(d.cluster ?? 0);
+          const center = clusterCenters[clusterId];
+          return center ? center.x : width / 2;
+        }).strength(clusterStrength))
+        .force('clusterY', d3.forceY<any>((d) => {
+          const clusterId = String(d.cluster ?? 0);
+          const center = clusterCenters[clusterId];
+          return center ? center.y : height / 2;
+        }).strength(clusterStrength));
+    }
+
     simulationRef.current = simulation;
 
     // pin center in paper mode
@@ -328,7 +355,9 @@ export default function GraphCanvas({
     cachePositions,
     isCenterNode,
     getNodeFill,
-    nodeKey
+    nodeKey,
+    clusterCenters,
+    clusterStrength
     // ❌ selectedNodeId/nodeColorMap 제외: 튐 방지 핵심
   ]);
 

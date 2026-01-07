@@ -16,6 +16,7 @@ import { useNavigate } from 'react-router-dom';
 import GraphCanvas from '../components/GraphCanvas';
 import SidePanel from '../components/SidePanel';
 import { getGlobalGraph, rebuildGlobalGraph, GraphNode } from '../lib/mcp';
+import { useNodeColors } from '../hooks/useNodeColors';
 
 interface GlobalGraphState {
   nodes: GraphNode[];
@@ -71,36 +72,13 @@ export default function GlobalGraphPage() {
   // global_graph.json 변경 감지용
   const lastGraphSigRef = useRef<string | null>(null);
 
-  /* ------------------- Node color map (custom colors) ------------------- */
+  /* ------------------- Node color map (file-based persistence) ------------------- */
 
-  const [nodeColorMap, setNodeColorMap] = useState<Record<string, string>>(() => {
-    try {
-      return JSON.parse(localStorage.getItem('nodeColorMap') || '{}');
-    } catch {
-      return {};
-    }
-  });
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('nodeColorMap', JSON.stringify(nodeColorMap));
-    } catch {
-      // ignore
-    }
-  }, [nodeColorMap]);
-
-  // ✅ 이제 "nodeId"가 아니라 "nodeKey(stableKey)"를 받는다고 생각하면 됨
-  const handleNodeColorChange = useCallback((nodeKey: string, color: string) => {
-    setNodeColorMap(prev => ({ ...prev, [nodeKey]: color }));
-  }, []);
-
-  const handleNodeColorReset = useCallback((nodeKey: string) => {
-    setNodeColorMap(prev => {
-      const next = { ...prev };
-      delete next[nodeKey];
-      return next;
-    });
-  }, []);
+  const {
+    nodeColorMap,
+    setNodeColor: handleNodeColorChange,
+    resetNodeColor: handleNodeColorReset
+  } = useNodeColors();
 
   /* ----------------------- Load global graph ----------------------- */
 

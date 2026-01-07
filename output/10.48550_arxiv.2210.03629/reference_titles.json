@@ -1,0 +1,17 @@
+{
+  "filename": "10.48550_arxiv.2210.03629",
+  "original_filename": "10.48550_arxiv.2210.03629",
+  "references_detected": 3,
+  "titles_extracted": 3,
+  "titles": [
+    "org/abs/",
+    "com/Authors-Notes/sparrow/sparrow-final.pdf",
+    "Star: Bootstrapping reasoning with reasoning"
+  ],
+  "diagnostics": {
+    "has_references_header": true,
+    "parsed_items_count": 3,
+    "is_numbered": true,
+    "id_normalized": false
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "nodes": [
+    {
+      "id": "10.48550_arxiv.2201.07207",
+      "title": "Language Models as Zero-Shot Planners: Extracting Actionable Knowledge for Embodied Agents",
+      "cluster": 0,
+      "authors": [],
+      "year": null
+    },
+    {
+      "id": "10.48550_arxiv.2210.03629",
+      "title": "REACT: SYNERGIZING REASONING AND ACTING IN LANGUAGE MODELS",
+      "cluster": 0,
+      "authors": [],
+      "year": null
+    },
+    {
+      "id": "10.48550_arxiv.2506.07976",
+      "title": "Thinking vs. Doing: Agents that Reason by Scaling Test-Time Interaction",
+      "cluster": 0,
+      "authors": [],
+      "year": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "10.48550_arxiv.2201.07207",
+      "target": "10.48550_arxiv.2210.03629",
+      "weight": 0.6313140392303467,
+      "type": "similarity"
+    },
+    {
+      "source": "10.48550_arxiv.2210.03629",
+      "target": "10.48550_arxiv.2506.07976",
+      "weight": 0.5511950254440308,
+      "type": "similarity"
+    }
+  ],
+  "meta": {
+    "total_papers": 3,
+    "total_edges": 2,
+    "similarity_threshold": 0.5,
+    "used_embeddings": true,
+    "titles": {
+      "10.48550_arxiv.2201.07207": "Language Models as Zero-Shot Planners: Extracting Actionable Knowledge for Embodied Agents",
+      "10.48550_arxiv.2210.03629": "REACT: SYNERGIZING REASONING AND ACTING IN LANGUAGE MODELS",
+      "10.48550_arxiv.2506.07976": "Thinking vs. Doing: Agents that Reason by Scaling Test-Time Interaction"
+    }
+  }
+}
