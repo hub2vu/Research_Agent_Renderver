@@ -208,6 +208,7 @@ docker compose run --rm agent "List all PDFs and extract text from each"
 | `process_all_pdfs` | Process all PDFs |
 | `get_pdf_info` | Get PDF metadata |
 | `read_extracted_text` | Read previously extracted text |
+| `check_github_link` | Find GitHub repository URLs in extracted text |
 
 ### arXiv Tools
 | Tool | Description |

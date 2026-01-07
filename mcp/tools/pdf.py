@@ -7,8 +7,9 @@ Updated to avoid LLM Rate Limits by saving full text to disk and returning previ
 
 import json
 import os
+import re
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import fitz  # PyMuPDF
 
@@ -461,4 +462,93 @@ class ReadExtractedTextTool(MCPTool):
             "text_file": str(text_file),
             "content": content,
             "truncated": truncated
+        }
+
+
+class CheckGithubLinkTool(MCPTool):
+    """
+    Check for GitHub links in previously extracted text.
+    
+    This tool searches for GitHub URLs in the extracted text file that was created
+    by the extract_text or extract_all tool. It does NOT extract text from PDFs itself.
+    You must run extract_text or extract_all first to create the extracted_text.txt file.
+    """
+
+    @property
+    def name(self) -> str:
+        return "check_github_link"
+
+    @property
+    def description(self) -> str:
+        return (
+            "Search for GitHub repository URLs in previously extracted text. "
+            "This tool requires that extract_text or extract_all has already been run "
+            "to create the extracted_text.txt file. It scans the existing text file "
+            "for GitHub URLs using regex pattern. Returns None if the text file doesn't exist, "
+            "indicating that text extraction needs to be done first."
+        )
+
+    @property
+    def parameters(self) -> List[ToolParameter]:
+        return [
+            ToolParameter(
+                name="paper_id",
+                type="string",
+                description=(
+                    "Paper identifier (filename without .pdf extension) or full filename. "
+                    "For example: 'paper' or 'paper.pdf'. The tool will look for "
+                    "OUTPUT_DIR/{paper_id}/extracted_text.txt"
+                ),
+                required=True
+            )
+        ]
+
+    @property
+    def category(self) -> str:
+        return "pdf"
+
+    async def execute(self, paper_id: str) -> Dict[str, Any]:
+        # Normalize paper_id: remove .pdf extension if present
+        paper_name = paper_id.replace(".pdf", "")
+        text_file = OUTPUT_DIR / paper_name / "extracted_text.txt"
+
+        # Check if extracted text file exists
+        if not text_file.exists():
+            return {
+                "status": "text_extraction_required",
+                "paper_id": paper_name,
+                "message": "텍스트 추출(extract_text)이 먼저 필요함",
+                "github_urls": None,
+                "text_file_path": str(text_file)
+            }
+
+        # Read the extracted text file
+        try:
+            with open(text_file, "r", encoding="utf-8") as f:
+                content = f.read()
+        except Exception as e:
+            raise ExecutionError(
+                f"Failed to read extracted text file: {str(e)}",
+                tool_name=self.name
+            )
+
+        # Search for GitHub URLs using regex
+        # Pattern: https?://github\.com/[\w\-/]+
+        github_pattern = r"https?://github\.com/[\w\-/]+"
+        matches = re.findall(github_pattern, content)
+
+        # Remove duplicates while preserving order
+        unique_urls = []
+        seen = set()
+        for url in matches:
+            if url not in seen:
+                unique_urls.append(url)
+                seen.add(url)
+
+        return {
+            "status": "success",
+            "paper_id": paper_name,
+            "text_file_path": str(text_file),
+            "github_urls": unique_urls if unique_urls else None,
+            "count": len(unique_urls)
         }
