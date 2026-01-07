@@ -1,0 +1,167 @@
+{
+  "filename": "1809.04281.pdf",
+  "total_pages": 14,
+  "images": [
+    {
+      "page_number": 4,
+      "image_index": 1,
+      "filename": "page4_img1.png",
+      "path": "/data/output/1809.04281/images/page4_img1.png",
+      "format": "png",
+      "size_bytes": 74198
+    },
+    {
+      "page_number": 5,
+      "image_index": 1,
+      "filename": "page5_img1.png",
+      "path": "/data/output/1809.04281/images/page5_img1.png",
+      "format": "png",
+      "size_bytes": 51015
+    },
+    {
+      "page_number": 6,
+      "image_index": 1,
+      "filename": "page6_img1.jpeg",
+      "path": "/data/output/1809.04281/images/page6_img1.jpeg",
+      "format": "jpeg",
+      "size_bytes": 67061
+    },
+    {
+      "page_number": 6,
+      "image_index": 2,
+      "filename": "page6_img2.jpeg",
+      "path": "/data/output/1809.04281/images/page6_img2.jpeg",
+      "format": "jpeg",
+      "size_bytes": 60387
+    },
+    {
+      "page_number": 8,
+      "image_index": 1,
+      "filename": "page8_img1.jpeg",
+      "path": "/data/output/1809.04281/images/page8_img1.jpeg",
+      "format": "jpeg",
+      "size_bytes": 4419
+    },
+    {
+      "page_number": 8,
+      "image_index": 2,
+      "filename": "page8_img2.jpeg",
+      "path": "/data/output/1809.04281/images/page8_img2.jpeg",
+      "format": "jpeg",
+      "size_bytes": 27515
+    },
+    {
+      "page_number": 8,
+      "image_index": 3,
+      "filename": "page8_img3.jpeg",
+      "path": "/data/output/1809.04281/images/page8_img3.jpeg",
+      "format": "jpeg",
+      "size_bytes": 11496
+    },
+    {
+      "page_number": 8,
+      "image_index": 4,
+      "filename": "page8_img4.jpeg",
+      "path": "/data/output/1809.04281/images/page8_img4.jpeg",
+      "format": "jpeg",
+      "size_bytes": 11461
+    },
+    {
+      "page_number": 8,
+      "image_index": 5,
+      "filename": "page8_img5.jpeg",
+      "path": "/data/output/1809.04281/images/page8_img5.jpeg",
+      "format": "jpeg",
+      "size_bytes": 13329
+    },
+    {
+      "page_number": 8,
+      "image_index": 6,
+      "filename": "page8_img6.jpeg",
+      "path": "/data/output/1809.04281/images/page8_img6.jpeg",
+      "format": "jpeg",
+      "size_bytes": 13170
+    },
+    {
+      "page_number": 8,
+      "image_index": 7,
+      "filename": "page8_img7.jpeg",
+      "path": "/data/output/1809.04281/images/page8_img7.jpeg",
+      "format": "jpeg",
+      "size_bytes": 12357
+    },
+    {
+      "page_number": 8,
+      "image_index": 8,
+      "filename": "page8_img8.jpeg",
+      "path": "/data/output/1809.04281/images/page8_img8.jpeg",
+      "format": "jpeg",
+      "size_bytes": 13313
+    },
+    {
+      "page_number": 8,
+      "image_index": 9,
+      "filename": "page8_img9.jpeg",
+      "path": "/data/output/1809.04281/images/page8_img9.jpeg",
+      "format": "jpeg",
+      "size_bytes": 25390
+    },
+    {
+      "page_number": 8,
+      "image_index": 10,
+      "filename": "page8_img10.jpeg",
+      "path": "/data/output/1809.04281/images/page8_img10.jpeg",
+      "format": "jpeg",
+      "size_bytes": 24038
+    },
+    {
+      "page_number": 9,
+      "image_index": 1,
+      "filename": "page9_img1.jpeg",
+      "path": "/data/output/1809.04281/images/page9_img1.jpeg",
+      "format": "jpeg",
+      "size_bytes": 49552
+    },
+    {
+      "page_number": 11,
+      "image_index": 1,
+      "filename": "page11_img1.png",
+      "path": "/data/output/1809.04281/images/page11_img1.png",
+      "format": "png",
+      "size_bytes": 6427
+    },
+    {
+      "page_number": 12,
+      "image_index": 1,
+      "filename": "page12_img1.png",
+      "path": "/data/output/1809.04281/images/page12_img1.png",
+      "format": "png",
+      "size_bytes": 19843
+    },
+    {
+      "page_number": 13,
+      "image_index": 1,
+      "filename": "page13_img1.png",
+      "path": "/data/output/1809.04281/images/page13_img1.png",
+      "format": "png",
+      "size_bytes": 64453
+    },
+    {
+      "page_number": 13,
+      "image_index": 2,
+      "filename": "page13_img2.png",
+      "path": "/data/output/1809.04281/images/page13_img2.png",
+      "format": "png",
+      "size_bytes": 78035
+    },
+    {
+      "page_number": 14,
+      "image_index": 1,
+      "filename": "page14_img1.jpeg",
+      "path": "/data/output/1809.04281/images/page14_img1.jpeg",
+      "format": "jpeg",
+      "size_bytes": 25019
+    }
+  ],
+  "total_images_extracted": 20
+}

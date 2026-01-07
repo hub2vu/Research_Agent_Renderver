@@ -1,0 +1,1271 @@
+{
+  "filename": "SpaceTimePilot.pdf",
+  "total_pages": 17,
+  "images": [
+    {
+      "page_number": 1,
+      "image_index": 1,
+      "filename": "page1_img1.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page1_img1.jpeg",
+      "format": "jpeg",
+      "size_bytes": 118087
+    },
+    {
+      "page_number": 1,
+      "image_index": 2,
+      "filename": "page1_img2.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page1_img2.jpeg",
+      "format": "jpeg",
+      "size_bytes": 20319
+    },
+    {
+      "page_number": 1,
+      "image_index": 3,
+      "filename": "page1_img3.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page1_img3.jpeg",
+      "format": "jpeg",
+      "size_bytes": 214580
+    },
+    {
+      "page_number": 1,
+      "image_index": 4,
+      "filename": "page1_img4.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page1_img4.jpeg",
+      "format": "jpeg",
+      "size_bytes": 183311
+    },
+    {
+      "page_number": 1,
+      "image_index": 5,
+      "filename": "page1_img5.png",
+      "path": "/data/output/SpaceTimePilot/images/page1_img5.png",
+      "format": "png",
+      "size_bytes": 2980
+    },
+    {
+      "page_number": 1,
+      "image_index": 6,
+      "filename": "page1_img6.png",
+      "path": "/data/output/SpaceTimePilot/images/page1_img6.png",
+      "format": "png",
+      "size_bytes": 266
+    },
+    {
+      "page_number": 1,
+      "image_index": 7,
+      "filename": "page1_img7.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page1_img7.jpeg",
+      "format": "jpeg",
+      "size_bytes": 7391
+    },
+    {
+      "page_number": 1,
+      "image_index": 8,
+      "filename": "page1_img8.png",
+      "path": "/data/output/SpaceTimePilot/images/page1_img8.png",
+      "format": "png",
+      "size_bytes": 2990
+    },
+    {
+      "page_number": 1,
+      "image_index": 9,
+      "filename": "page1_img9.png",
+      "path": "/data/output/SpaceTimePilot/images/page1_img9.png",
+      "format": "png",
+      "size_bytes": 266
+    },
+    {
+      "page_number": 1,
+      "image_index": 10,
+      "filename": "page1_img10.png",
+      "path": "/data/output/SpaceTimePilot/images/page1_img10.png",
+      "format": "png",
+      "size_bytes": 9157
+    },
+    {
+      "page_number": 1,
+      "image_index": 11,
+      "filename": "page1_img11.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page1_img11.jpeg",
+      "format": "jpeg",
+      "size_bytes": 4771
+    },
+    {
+      "page_number": 1,
+      "image_index": 12,
+      "filename": "page1_img12.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page1_img12.jpeg",
+      "format": "jpeg",
+      "size_bytes": 99673
+    },
+    {
+      "page_number": 1,
+      "image_index": 13,
+      "filename": "page1_img13.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page1_img13.jpeg",
+      "format": "jpeg",
+      "size_bytes": 4771
+    },
+    {
+      "page_number": 1,
+      "image_index": 14,
+      "filename": "page1_img14.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page1_img14.jpeg",
+      "format": "jpeg",
+      "size_bytes": 123566
+    },
+    {
+      "page_number": 1,
+      "image_index": 15,
+      "filename": "page1_img15.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page1_img15.jpeg",
+      "format": "jpeg",
+      "size_bytes": 3141
+    },
+    {
+      "page_number": 1,
+      "image_index": 16,
+      "filename": "page1_img16.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page1_img16.jpeg",
+      "format": "jpeg",
+      "size_bytes": 4771
+    },
+    {
+      "page_number": 1,
+      "image_index": 17,
+      "filename": "page1_img17.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page1_img17.jpeg",
+      "format": "jpeg",
+      "size_bytes": 192483
+    },
+    {
+      "page_number": 1,
+      "image_index": 18,
+      "filename": "page1_img18.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page1_img18.jpeg",
+      "format": "jpeg",
+      "size_bytes": 196814
+    },
+    {
+      "page_number": 1,
+      "image_index": 19,
+      "filename": "page1_img19.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page1_img19.jpeg",
+      "format": "jpeg",
+      "size_bytes": 8960
+    },
+    {
+      "page_number": 1,
+      "image_index": 20,
+      "filename": "page1_img20.png",
+      "path": "/data/output/SpaceTimePilot/images/page1_img20.png",
+      "format": "png",
+      "size_bytes": 2946
+    },
+    {
+      "page_number": 1,
+      "image_index": 21,
+      "filename": "page1_img21.png",
+      "path": "/data/output/SpaceTimePilot/images/page1_img21.png",
+      "format": "png",
+      "size_bytes": 266
+    },
+    {
+      "page_number": 1,
+      "image_index": 22,
+      "filename": "page1_img22.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page1_img22.jpeg",
+      "format": "jpeg",
+      "size_bytes": 4771
+    },
+    {
+      "page_number": 1,
+      "image_index": 23,
+      "filename": "page1_img23.png",
+      "path": "/data/output/SpaceTimePilot/images/page1_img23.png",
+      "format": "png",
+      "size_bytes": 2980
+    },
+    {
+      "page_number": 1,
+      "image_index": 24,
+      "filename": "page1_img24.png",
+      "path": "/data/output/SpaceTimePilot/images/page1_img24.png",
+      "format": "png",
+      "size_bytes": 266
+    },
+    {
+      "page_number": 1,
+      "image_index": 25,
+      "filename": "page1_img25.png",
+      "path": "/data/output/SpaceTimePilot/images/page1_img25.png",
+      "format": "png",
+      "size_bytes": 2990
+    },
+    {
+      "page_number": 1,
+      "image_index": 26,
+      "filename": "page1_img26.png",
+      "path": "/data/output/SpaceTimePilot/images/page1_img26.png",
+      "format": "png",
+      "size_bytes": 266
+    },
+    {
+      "page_number": 1,
+      "image_index": 27,
+      "filename": "page1_img27.png",
+      "path": "/data/output/SpaceTimePilot/images/page1_img27.png",
+      "format": "png",
+      "size_bytes": 2946
+    },
+    {
+      "page_number": 1,
+      "image_index": 28,
+      "filename": "page1_img28.png",
+      "path": "/data/output/SpaceTimePilot/images/page1_img28.png",
+      "format": "png",
+      "size_bytes": 266
+    },
+    {
+      "page_number": 5,
+      "image_index": 1,
+      "filename": "page5_img1.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page5_img1.jpeg",
+      "format": "jpeg",
+      "size_bytes": 24261
+    },
+    {
+      "page_number": 5,
+      "image_index": 2,
+      "filename": "page5_img2.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page5_img2.jpeg",
+      "format": "jpeg",
+      "size_bytes": 22239
+    },
+    {
+      "page_number": 5,
+      "image_index": 3,
+      "filename": "page5_img3.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page5_img3.jpeg",
+      "format": "jpeg",
+      "size_bytes": 25693
+    },
+    {
+      "page_number": 5,
+      "image_index": 4,
+      "filename": "page5_img4.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page5_img4.jpeg",
+      "format": "jpeg",
+      "size_bytes": 24670
+    },
+    {
+      "page_number": 5,
+      "image_index": 5,
+      "filename": "page5_img5.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page5_img5.jpeg",
+      "format": "jpeg",
+      "size_bytes": 23981
+    },
+    {
+      "page_number": 5,
+      "image_index": 6,
+      "filename": "page5_img6.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page5_img6.jpeg",
+      "format": "jpeg",
+      "size_bytes": 23809
+    },
+    {
+      "page_number": 5,
+      "image_index": 7,
+      "filename": "page5_img7.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page5_img7.jpeg",
+      "format": "jpeg",
+      "size_bytes": 25815
+    },
+    {
+      "page_number": 5,
+      "image_index": 8,
+      "filename": "page5_img8.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page5_img8.jpeg",
+      "format": "jpeg",
+      "size_bytes": 23147
+    },
+    {
+      "page_number": 5,
+      "image_index": 9,
+      "filename": "page5_img9.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page5_img9.jpeg",
+      "format": "jpeg",
+      "size_bytes": 23760
+    },
+    {
+      "page_number": 5,
+      "image_index": 10,
+      "filename": "page5_img10.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page5_img10.jpeg",
+      "format": "jpeg",
+      "size_bytes": 25841
+    },
+    {
+      "page_number": 5,
+      "image_index": 11,
+      "filename": "page5_img11.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page5_img11.jpeg",
+      "format": "jpeg",
+      "size_bytes": 25504
+    },
+    {
+      "page_number": 5,
+      "image_index": 12,
+      "filename": "page5_img12.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page5_img12.jpeg",
+      "format": "jpeg",
+      "size_bytes": 23782
+    },
+    {
+      "page_number": 5,
+      "image_index": 13,
+      "filename": "page5_img13.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page5_img13.jpeg",
+      "format": "jpeg",
+      "size_bytes": 23786
+    },
+    {
+      "page_number": 5,
+      "image_index": 14,
+      "filename": "page5_img14.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page5_img14.jpeg",
+      "format": "jpeg",
+      "size_bytes": 22293
+    },
+    {
+      "page_number": 5,
+      "image_index": 15,
+      "filename": "page5_img15.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page5_img15.jpeg",
+      "format": "jpeg",
+      "size_bytes": 22678
+    },
+    {
+      "page_number": 5,
+      "image_index": 16,
+      "filename": "page5_img16.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page5_img16.jpeg",
+      "format": "jpeg",
+      "size_bytes": 22886
+    },
+    {
+      "page_number": 5,
+      "image_index": 17,
+      "filename": "page5_img17.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page5_img17.jpeg",
+      "format": "jpeg",
+      "size_bytes": 23508
+    },
+    {
+      "page_number": 7,
+      "image_index": 1,
+      "filename": "page7_img1.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page7_img1.jpeg",
+      "format": "jpeg",
+      "size_bytes": 203124
+    },
+    {
+      "page_number": 7,
+      "image_index": 2,
+      "filename": "page7_img2.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page7_img2.jpeg",
+      "format": "jpeg",
+      "size_bytes": 238738
+    },
+    {
+      "page_number": 7,
+      "image_index": 3,
+      "filename": "page7_img3.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page7_img3.jpeg",
+      "format": "jpeg",
+      "size_bytes": 188165
+    },
+    {
+      "page_number": 7,
+      "image_index": 4,
+      "filename": "page7_img4.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page7_img4.jpeg",
+      "format": "jpeg",
+      "size_bytes": 184433
+    },
+    {
+      "page_number": 7,
+      "image_index": 5,
+      "filename": "page7_img5.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page7_img5.jpeg",
+      "format": "jpeg",
+      "size_bytes": 5421
+    },
+    {
+      "page_number": 7,
+      "image_index": 6,
+      "filename": "page7_img6.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page7_img6.jpeg",
+      "format": "jpeg",
+      "size_bytes": 3141
+    },
+    {
+      "page_number": 7,
+      "image_index": 7,
+      "filename": "page7_img7.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page7_img7.jpeg",
+      "format": "jpeg",
+      "size_bytes": 118649
+    },
+    {
+      "page_number": 7,
+      "image_index": 8,
+      "filename": "page7_img8.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page7_img8.jpeg",
+      "format": "jpeg",
+      "size_bytes": 133475
+    },
+    {
+      "page_number": 8,
+      "image_index": 1,
+      "filename": "page8_img1.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page8_img1.jpeg",
+      "format": "jpeg",
+      "size_bytes": 36847
+    },
+    {
+      "page_number": 8,
+      "image_index": 2,
+      "filename": "page8_img2.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page8_img2.jpeg",
+      "format": "jpeg",
+      "size_bytes": 34927
+    },
+    {
+      "page_number": 8,
+      "image_index": 3,
+      "filename": "page8_img3.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page8_img3.jpeg",
+      "format": "jpeg",
+      "size_bytes": 28481
+    },
+    {
+      "page_number": 8,
+      "image_index": 4,
+      "filename": "page8_img4.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page8_img4.jpeg",
+      "format": "jpeg",
+      "size_bytes": 27727
+    },
+    {
+      "page_number": 8,
+      "image_index": 5,
+      "filename": "page8_img5.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page8_img5.jpeg",
+      "format": "jpeg",
+      "size_bytes": 27296
+    },
+    {
+      "page_number": 8,
+      "image_index": 6,
+      "filename": "page8_img6.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page8_img6.jpeg",
+      "format": "jpeg",
+      "size_bytes": 27641
+    },
+    {
+      "page_number": 8,
+      "image_index": 7,
+      "filename": "page8_img7.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page8_img7.jpeg",
+      "format": "jpeg",
+      "size_bytes": 38871
+    },
+    {
+      "page_number": 8,
+      "image_index": 8,
+      "filename": "page8_img8.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page8_img8.jpeg",
+      "format": "jpeg",
+      "size_bytes": 27817
+    },
+    {
+      "page_number": 8,
+      "image_index": 9,
+      "filename": "page8_img9.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page8_img9.jpeg",
+      "format": "jpeg",
+      "size_bytes": 28699
+    },
+    {
+      "page_number": 8,
+      "image_index": 10,
+      "filename": "page8_img10.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page8_img10.jpeg",
+      "format": "jpeg",
+      "size_bytes": 29526
+    },
+    {
+      "page_number": 8,
+      "image_index": 11,
+      "filename": "page8_img11.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page8_img11.jpeg",
+      "format": "jpeg",
+      "size_bytes": 29520
+    },
+    {
+      "page_number": 8,
+      "image_index": 12,
+      "filename": "page8_img12.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page8_img12.jpeg",
+      "format": "jpeg",
+      "size_bytes": 23486
+    },
+    {
+      "page_number": 8,
+      "image_index": 13,
+      "filename": "page8_img13.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page8_img13.jpeg",
+      "format": "jpeg",
+      "size_bytes": 23528
+    },
+    {
+      "page_number": 8,
+      "image_index": 14,
+      "filename": "page8_img14.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page8_img14.jpeg",
+      "format": "jpeg",
+      "size_bytes": 24111
+    },
+    {
+      "page_number": 8,
+      "image_index": 15,
+      "filename": "page8_img15.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page8_img15.jpeg",
+      "format": "jpeg",
+      "size_bytes": 27257
+    },
+    {
+      "page_number": 8,
+      "image_index": 16,
+      "filename": "page8_img16.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page8_img16.jpeg",
+      "format": "jpeg",
+      "size_bytes": 38613
+    },
+    {
+      "page_number": 8,
+      "image_index": 17,
+      "filename": "page8_img17.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page8_img17.jpeg",
+      "format": "jpeg",
+      "size_bytes": 230432
+    },
+    {
+      "page_number": 8,
+      "image_index": 18,
+      "filename": "page8_img18.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page8_img18.jpeg",
+      "format": "jpeg",
+      "size_bytes": 265703
+    },
+    {
+      "page_number": 8,
+      "image_index": 19,
+      "filename": "page8_img19.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page8_img19.jpeg",
+      "format": "jpeg",
+      "size_bytes": 362464
+    },
+    {
+      "page_number": 8,
+      "image_index": 20,
+      "filename": "page8_img20.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page8_img20.jpeg",
+      "format": "jpeg",
+      "size_bytes": 283065
+    },
+    {
+      "page_number": 8,
+      "image_index": 21,
+      "filename": "page8_img21.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page8_img21.jpeg",
+      "format": "jpeg",
+      "size_bytes": 276087
+    },
+    {
+      "page_number": 8,
+      "image_index": 22,
+      "filename": "page8_img22.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page8_img22.jpeg",
+      "format": "jpeg",
+      "size_bytes": 254462
+    },
+    {
+      "page_number": 12,
+      "image_index": 1,
+      "filename": "page12_img1.png",
+      "path": "/data/output/SpaceTimePilot/images/page12_img1.png",
+      "format": "png",
+      "size_bytes": 1327
+    },
+    {
+      "page_number": 12,
+      "image_index": 2,
+      "filename": "page12_img2.png",
+      "path": "/data/output/SpaceTimePilot/images/page12_img2.png",
+      "format": "png",
+      "size_bytes": 137
+    },
+    {
+      "page_number": 12,
+      "image_index": 3,
+      "filename": "page12_img3.png",
+      "path": "/data/output/SpaceTimePilot/images/page12_img3.png",
+      "format": "png",
+      "size_bytes": 1596
+    },
+    {
+      "page_number": 12,
+      "image_index": 4,
+      "filename": "page12_img4.png",
+      "path": "/data/output/SpaceTimePilot/images/page12_img4.png",
+      "format": "png",
+      "size_bytes": 151
+    },
+    {
+      "page_number": 12,
+      "image_index": 5,
+      "filename": "page12_img5.png",
+      "path": "/data/output/SpaceTimePilot/images/page12_img5.png",
+      "format": "png",
+      "size_bytes": 1327
+    },
+    {
+      "page_number": 12,
+      "image_index": 6,
+      "filename": "page12_img6.png",
+      "path": "/data/output/SpaceTimePilot/images/page12_img6.png",
+      "format": "png",
+      "size_bytes": 144
+    },
+    {
+      "page_number": 12,
+      "image_index": 7,
+      "filename": "page12_img7.png",
+      "path": "/data/output/SpaceTimePilot/images/page12_img7.png",
+      "format": "png",
+      "size_bytes": 1087
+    },
+    {
+      "page_number": 12,
+      "image_index": 8,
+      "filename": "page12_img8.png",
+      "path": "/data/output/SpaceTimePilot/images/page12_img8.png",
+      "format": "png",
+      "size_bytes": 134
+    },
+    {
+      "page_number": 12,
+      "image_index": 9,
+      "filename": "page12_img9.png",
+      "path": "/data/output/SpaceTimePilot/images/page12_img9.png",
+      "format": "png",
+      "size_bytes": 1206
+    },
+    {
+      "page_number": 12,
+      "image_index": 10,
+      "filename": "page12_img10.png",
+      "path": "/data/output/SpaceTimePilot/images/page12_img10.png",
+      "format": "png",
+      "size_bytes": 142
+    },
+    {
+      "page_number": 12,
+      "image_index": 11,
+      "filename": "page12_img11.png",
+      "path": "/data/output/SpaceTimePilot/images/page12_img11.png",
+      "format": "png",
+      "size_bytes": 1422
+    },
+    {
+      "page_number": 12,
+      "image_index": 12,
+      "filename": "page12_img12.png",
+      "path": "/data/output/SpaceTimePilot/images/page12_img12.png",
+      "format": "png",
+      "size_bytes": 138
+    },
+    {
+      "page_number": 12,
+      "image_index": 13,
+      "filename": "page12_img13.png",
+      "path": "/data/output/SpaceTimePilot/images/page12_img13.png",
+      "format": "png",
+      "size_bytes": 1295
+    },
+    {
+      "page_number": 12,
+      "image_index": 14,
+      "filename": "page12_img14.png",
+      "path": "/data/output/SpaceTimePilot/images/page12_img14.png",
+      "format": "png",
+      "size_bytes": 128
+    },
+    {
+      "page_number": 12,
+      "image_index": 15,
+      "filename": "page12_img15.png",
+      "path": "/data/output/SpaceTimePilot/images/page12_img15.png",
+      "format": "png",
+      "size_bytes": 1702
+    },
+    {
+      "page_number": 12,
+      "image_index": 16,
+      "filename": "page12_img16.png",
+      "path": "/data/output/SpaceTimePilot/images/page12_img16.png",
+      "format": "png",
+      "size_bytes": 161
+    },
+    {
+      "page_number": 12,
+      "image_index": 17,
+      "filename": "page12_img17.png",
+      "path": "/data/output/SpaceTimePilot/images/page12_img17.png",
+      "format": "png",
+      "size_bytes": 12860
+    },
+    {
+      "page_number": 12,
+      "image_index": 18,
+      "filename": "page12_img18.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page12_img18.jpeg",
+      "format": "jpeg",
+      "size_bytes": 3543
+    },
+    {
+      "page_number": 12,
+      "image_index": 19,
+      "filename": "page12_img19.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page12_img19.jpeg",
+      "format": "jpeg",
+      "size_bytes": 3543
+    },
+    {
+      "page_number": 12,
+      "image_index": 20,
+      "filename": "page12_img20.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page12_img20.jpeg",
+      "format": "jpeg",
+      "size_bytes": 3543
+    },
+    {
+      "page_number": 12,
+      "image_index": 21,
+      "filename": "page12_img21.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page12_img21.jpeg",
+      "format": "jpeg",
+      "size_bytes": 3543
+    },
+    {
+      "page_number": 12,
+      "image_index": 22,
+      "filename": "page12_img22.png",
+      "path": "/data/output/SpaceTimePilot/images/page12_img22.png",
+      "format": "png",
+      "size_bytes": 1380
+    },
+    {
+      "page_number": 12,
+      "image_index": 23,
+      "filename": "page12_img23.png",
+      "path": "/data/output/SpaceTimePilot/images/page12_img23.png",
+      "format": "png",
+      "size_bytes": 139
+    },
+    {
+      "page_number": 12,
+      "image_index": 24,
+      "filename": "page12_img24.png",
+      "path": "/data/output/SpaceTimePilot/images/page12_img24.png",
+      "format": "png",
+      "size_bytes": 1491
+    },
+    {
+      "page_number": 12,
+      "image_index": 25,
+      "filename": "page12_img25.png",
+      "path": "/data/output/SpaceTimePilot/images/page12_img25.png",
+      "format": "png",
+      "size_bytes": 148
+    },
+    {
+      "page_number": 12,
+      "image_index": 26,
+      "filename": "page12_img26.png",
+      "path": "/data/output/SpaceTimePilot/images/page12_img26.png",
+      "format": "png",
+      "size_bytes": 1202
+    },
+    {
+      "page_number": 12,
+      "image_index": 27,
+      "filename": "page12_img27.png",
+      "path": "/data/output/SpaceTimePilot/images/page12_img27.png",
+      "format": "png",
+      "size_bytes": 128
+    },
+    {
+      "page_number": 13,
+      "image_index": 1,
+      "filename": "page13_img1.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page13_img1.jpeg",
+      "format": "jpeg",
+      "size_bytes": 103182
+    },
+    {
+      "page_number": 13,
+      "image_index": 2,
+      "filename": "page13_img2.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page13_img2.jpeg",
+      "format": "jpeg",
+      "size_bytes": 124023
+    },
+    {
+      "page_number": 14,
+      "image_index": 1,
+      "filename": "page14_img1.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page14_img1.jpeg",
+      "format": "jpeg",
+      "size_bytes": 477990
+    },
+    {
+      "page_number": 14,
+      "image_index": 2,
+      "filename": "page14_img2.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page14_img2.jpeg",
+      "format": "jpeg",
+      "size_bytes": 795094
+    },
+    {
+      "page_number": 15,
+      "image_index": 1,
+      "filename": "page15_img1.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page15_img1.jpeg",
+      "format": "jpeg",
+      "size_bytes": 87181
+    },
+    {
+      "page_number": 15,
+      "image_index": 2,
+      "filename": "page15_img2.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page15_img2.jpeg",
+      "format": "jpeg",
+      "size_bytes": 45784
+    },
+    {
+      "page_number": 15,
+      "image_index": 3,
+      "filename": "page15_img3.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page15_img3.jpeg",
+      "format": "jpeg",
+      "size_bytes": 67176
+    },
+    {
+      "page_number": 15,
+      "image_index": 4,
+      "filename": "page15_img4.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page15_img4.jpeg",
+      "format": "jpeg",
+      "size_bytes": 50025
+    },
+    {
+      "page_number": 15,
+      "image_index": 5,
+      "filename": "page15_img5.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page15_img5.jpeg",
+      "format": "jpeg",
+      "size_bytes": 75628
+    },
+    {
+      "page_number": 15,
+      "image_index": 6,
+      "filename": "page15_img6.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page15_img6.jpeg",
+      "format": "jpeg",
+      "size_bytes": 78695
+    },
+    {
+      "page_number": 15,
+      "image_index": 7,
+      "filename": "page15_img7.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page15_img7.jpeg",
+      "format": "jpeg",
+      "size_bytes": 51087
+    },
+    {
+      "page_number": 15,
+      "image_index": 8,
+      "filename": "page15_img8.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page15_img8.jpeg",
+      "format": "jpeg",
+      "size_bytes": 50241
+    },
+    {
+      "page_number": 15,
+      "image_index": 9,
+      "filename": "page15_img9.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page15_img9.jpeg",
+      "format": "jpeg",
+      "size_bytes": 1374
+    },
+    {
+      "page_number": 15,
+      "image_index": 10,
+      "filename": "page15_img10.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page15_img10.jpeg",
+      "format": "jpeg",
+      "size_bytes": 2572
+    },
+    {
+      "page_number": 15,
+      "image_index": 11,
+      "filename": "page15_img11.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page15_img11.jpeg",
+      "format": "jpeg",
+      "size_bytes": 2555
+    },
+    {
+      "page_number": 15,
+      "image_index": 12,
+      "filename": "page15_img12.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page15_img12.jpeg",
+      "format": "jpeg",
+      "size_bytes": 2445
+    },
+    {
+      "page_number": 15,
+      "image_index": 13,
+      "filename": "page15_img13.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page15_img13.jpeg",
+      "format": "jpeg",
+      "size_bytes": 2622
+    },
+    {
+      "page_number": 15,
+      "image_index": 14,
+      "filename": "page15_img14.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page15_img14.jpeg",
+      "format": "jpeg",
+      "size_bytes": 2476
+    },
+    {
+      "page_number": 15,
+      "image_index": 15,
+      "filename": "page15_img15.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page15_img15.jpeg",
+      "format": "jpeg",
+      "size_bytes": 2210
+    },
+    {
+      "page_number": 15,
+      "image_index": 16,
+      "filename": "page15_img16.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page15_img16.jpeg",
+      "format": "jpeg",
+      "size_bytes": 900
+    },
+    {
+      "page_number": 15,
+      "image_index": 17,
+      "filename": "page15_img17.png",
+      "path": "/data/output/SpaceTimePilot/images/page15_img17.png",
+      "format": "png",
+      "size_bytes": 111
+    },
+    {
+      "page_number": 15,
+      "image_index": 18,
+      "filename": "page15_img18.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page15_img18.jpeg",
+      "format": "jpeg",
+      "size_bytes": 1006
+    },
+    {
+      "page_number": 15,
+      "image_index": 19,
+      "filename": "page15_img19.png",
+      "path": "/data/output/SpaceTimePilot/images/page15_img19.png",
+      "format": "png",
+      "size_bytes": 118
+    },
+    {
+      "page_number": 15,
+      "image_index": 20,
+      "filename": "page15_img20.png",
+      "path": "/data/output/SpaceTimePilot/images/page15_img20.png",
+      "format": "png",
+      "size_bytes": 820
+    },
+    {
+      "page_number": 15,
+      "image_index": 21,
+      "filename": "page15_img21.png",
+      "path": "/data/output/SpaceTimePilot/images/page15_img21.png",
+      "format": "png",
+      "size_bytes": 118
+    },
+    {
+      "page_number": 15,
+      "image_index": 22,
+      "filename": "page15_img22.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page15_img22.jpeg",
+      "format": "jpeg",
+      "size_bytes": 900
+    },
+    {
+      "page_number": 15,
+      "image_index": 23,
+      "filename": "page15_img23.png",
+      "path": "/data/output/SpaceTimePilot/images/page15_img23.png",
+      "format": "png",
+      "size_bytes": 111
+    },
+    {
+      "page_number": 15,
+      "image_index": 24,
+      "filename": "page15_img24.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page15_img24.jpeg",
+      "format": "jpeg",
+      "size_bytes": 1006
+    },
+    {
+      "page_number": 15,
+      "image_index": 25,
+      "filename": "page15_img25.png",
+      "path": "/data/output/SpaceTimePilot/images/page15_img25.png",
+      "format": "png",
+      "size_bytes": 118
+    },
+    {
+      "page_number": 15,
+      "image_index": 26,
+      "filename": "page15_img26.png",
+      "path": "/data/output/SpaceTimePilot/images/page15_img26.png",
+      "format": "png",
+      "size_bytes": 820
+    },
+    {
+      "page_number": 15,
+      "image_index": 27,
+      "filename": "page15_img27.png",
+      "path": "/data/output/SpaceTimePilot/images/page15_img27.png",
+      "format": "png",
+      "size_bytes": 118
+    },
+    {
+      "page_number": 15,
+      "image_index": 28,
+      "filename": "page15_img28.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page15_img28.jpeg",
+      "format": "jpeg",
+      "size_bytes": 87181
+    },
+    {
+      "page_number": 15,
+      "image_index": 29,
+      "filename": "page15_img29.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page15_img29.jpeg",
+      "format": "jpeg",
+      "size_bytes": 45784
+    },
+    {
+      "page_number": 15,
+      "image_index": 30,
+      "filename": "page15_img30.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page15_img30.jpeg",
+      "format": "jpeg",
+      "size_bytes": 67176
+    },
+    {
+      "page_number": 15,
+      "image_index": 31,
+      "filename": "page15_img31.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page15_img31.jpeg",
+      "format": "jpeg",
+      "size_bytes": 50025
+    },
+    {
+      "page_number": 15,
+      "image_index": 32,
+      "filename": "page15_img32.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page15_img32.jpeg",
+      "format": "jpeg",
+      "size_bytes": 75628
+    },
+    {
+      "page_number": 15,
+      "image_index": 33,
+      "filename": "page15_img33.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page15_img33.jpeg",
+      "format": "jpeg",
+      "size_bytes": 78695
+    },
+    {
+      "page_number": 15,
+      "image_index": 34,
+      "filename": "page15_img34.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page15_img34.jpeg",
+      "format": "jpeg",
+      "size_bytes": 51087
+    },
+    {
+      "page_number": 15,
+      "image_index": 35,
+      "filename": "page15_img35.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page15_img35.jpeg",
+      "format": "jpeg",
+      "size_bytes": 50241
+    },
+    {
+      "page_number": 15,
+      "image_index": 36,
+      "filename": "page15_img36.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page15_img36.jpeg",
+      "format": "jpeg",
+      "size_bytes": 1374
+    },
+    {
+      "page_number": 15,
+      "image_index": 37,
+      "filename": "page15_img37.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page15_img37.jpeg",
+      "format": "jpeg",
+      "size_bytes": 2572
+    },
+    {
+      "page_number": 15,
+      "image_index": 38,
+      "filename": "page15_img38.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page15_img38.jpeg",
+      "format": "jpeg",
+      "size_bytes": 2555
+    },
+    {
+      "page_number": 15,
+      "image_index": 39,
+      "filename": "page15_img39.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page15_img39.jpeg",
+      "format": "jpeg",
+      "size_bytes": 2445
+    },
+    {
+      "page_number": 15,
+      "image_index": 40,
+      "filename": "page15_img40.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page15_img40.jpeg",
+      "format": "jpeg",
+      "size_bytes": 2622
+    },
+    {
+      "page_number": 15,
+      "image_index": 41,
+      "filename": "page15_img41.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page15_img41.jpeg",
+      "format": "jpeg",
+      "size_bytes": 2476
+    },
+    {
+      "page_number": 15,
+      "image_index": 42,
+      "filename": "page15_img42.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page15_img42.jpeg",
+      "format": "jpeg",
+      "size_bytes": 2210
+    },
+    {
+      "page_number": 16,
+      "image_index": 1,
+      "filename": "page16_img1.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page16_img1.jpeg",
+      "format": "jpeg",
+      "size_bytes": 57789
+    },
+    {
+      "page_number": 16,
+      "image_index": 2,
+      "filename": "page16_img2.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page16_img2.jpeg",
+      "format": "jpeg",
+      "size_bytes": 112905
+    },
+    {
+      "page_number": 16,
+      "image_index": 3,
+      "filename": "page16_img3.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page16_img3.jpeg",
+      "format": "jpeg",
+      "size_bytes": 97884
+    },
+    {
+      "page_number": 16,
+      "image_index": 4,
+      "filename": "page16_img4.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page16_img4.jpeg",
+      "format": "jpeg",
+      "size_bytes": 65477
+    },
+    {
+      "page_number": 17,
+      "image_index": 1,
+      "filename": "page17_img1.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page17_img1.jpeg",
+      "format": "jpeg",
+      "size_bytes": 158016
+    },
+    {
+      "page_number": 17,
+      "image_index": 2,
+      "filename": "page17_img2.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page17_img2.jpeg",
+      "format": "jpeg",
+      "size_bytes": 183087
+    },
+    {
+      "page_number": 17,
+      "image_index": 3,
+      "filename": "page17_img3.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page17_img3.jpeg",
+      "format": "jpeg",
+      "size_bytes": 27190
+    },
+    {
+      "page_number": 17,
+      "image_index": 4,
+      "filename": "page17_img4.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page17_img4.jpeg",
+      "format": "jpeg",
+      "size_bytes": 31164
+    },
+    {
+      "page_number": 17,
+      "image_index": 5,
+      "filename": "page17_img5.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page17_img5.jpeg",
+      "format": "jpeg",
+      "size_bytes": 146906
+    },
+    {
+      "page_number": 17,
+      "image_index": 6,
+      "filename": "page17_img6.jpeg",
+      "path": "/data/output/SpaceTimePilot/images/page17_img6.jpeg",
+      "format": "jpeg",
+      "size_bytes": 174599
+    }
+  ],
+  "total_images_extracted": 158
+}

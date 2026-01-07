@@ -24,3 +24,6 @@ networkx>=3.0
 # Embeddings & Similarity
 sentence-transformers>=2.2.0
 scikit-learn>=1.3.0
+
+# [추가] OpenAI Library
+openai>=1.0.0
