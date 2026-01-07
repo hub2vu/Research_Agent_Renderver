@@ -8,7 +8,7 @@ Rank and Filter Papers Tool
 - RankAndSelectTopKTool
 """
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 from datetime import datetime
 import json
 
@@ -391,10 +391,21 @@ class EvaluatePaperMetricsTool(MCPTool):
                 type="string",
                 description=(
                     "Local PDF directory path resolved under PDF_DIR (default: pdf/). "
-                    "Used to check which papers are already available locally for practicality scoring."
+                    "Used to check which papers are already available locally for practicality scoring. "
+                    "Only used if local_pdfs is not provided."
                 ),
                 required=False,
                 default="pdf/",
+            ),
+            ToolParameter(
+                name="local_pdfs",
+                type="array",
+                items_type="string",
+                description=(
+                    "Optional: Pre-scanned set of paper IDs that exist locally (from apply_hard_filters or previous scan). "
+                    "If provided, avoids re-scanning the PDF directory. If not provided, will scan local_pdf_dir automatically."
+                ),
+                required=False,
             ),
         ]
 
@@ -408,12 +419,19 @@ class EvaluatePaperMetricsTool(MCPTool):
         semantic_scores: Dict[str, Dict[str, Any]],
         profile_path: str = "users/profile.json",
         local_pdf_dir: str = "pdf/",
+        local_pdfs: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
         if not papers:
             return {"scores": {}}
 
         profile = load_profile(profile_path, tool_name=self.name)
-        local_pdfs = scan_local_pdfs(local_pdf_dir)
+        
+        # Use provided local_pdfs or scan if not provided
+        if local_pdfs is not None:
+            local_pdfs_set: Set[str] = set(local_pdfs)
+        else:
+            local_pdfs_set = scan_local_pdfs(local_pdf_dir)
+        
         paper_inputs: List[PaperInput] = [PaperInput(**p) for p in papers]
 
         # Automatically enrich papers with GitHub URLs if missing
@@ -432,7 +450,7 @@ class EvaluatePaperMetricsTool(MCPTool):
             sem = semantic_scores.get(pid, {})
             sem_score = float(sem.get("semantic_score", 0.0))
 
-            breakdown = _calculate_dimension_scores(paper, profile, sem_score, local_pdfs)
+            breakdown = _calculate_dimension_scores(paper, profile, sem_score, local_pdfs_set)
             penalty, penalty_kws = _apply_soft_penalty(paper, profile)
 
             results[pid] = {
@@ -543,10 +561,21 @@ class RankAndSelectTopKTool(MCPTool):
                 type="string",
                 description=(
                     "Local PDF directory path resolved under PDF_DIR (default: pdf/). "
-                    "Used to check which papers are already available locally for tagging."
+                    "Used to check which papers are already available locally for tagging. "
+                    "Only used if local_pdfs is not provided."
                 ),
                 required=False,
                 default="pdf/",
+            ),
+            ToolParameter(
+                name="local_pdfs",
+                type="array",
+                items_type="string",
+                description=(
+                    "Optional: Pre-scanned set of paper IDs that exist locally (from apply_hard_filters or evaluate_paper_metrics). "
+                    "If provided, avoids re-scanning the PDF directory. If not provided, will scan local_pdf_dir automatically."
+                ),
+                required=False,
             ),
             ToolParameter(
                 name="profile_path",
@@ -575,6 +604,7 @@ class RankAndSelectTopKTool(MCPTool):
         include_contrastive: bool = False,
         contrastive_type: str = "method",
         local_pdf_dir: str = "pdf/",
+        local_pdfs: Optional[List[str]] = None,
         profile_path: str = "users/profile.json",
     ) -> Dict[str, Any]:
         if not papers:
@@ -591,11 +621,16 @@ class RankAndSelectTopKTool(MCPTool):
             }
             return _save_and_format_result([], [], None, [], summary, profile_path)
 
-        local_pdfs = scan_local_pdfs(local_pdf_dir)
-        paper_inputs: List[PaperInput] = [PaperInput(**p) for p in papers]
-
+        # Use provided local_pdfs or scan if not provided
+        if local_pdfs is not None:
+            local_pdfs_set: Set[str] = set(local_pdfs)
+        else:
+            local_pdfs_set = scan_local_pdfs(local_pdf_dir)
+        
+            paper_inputs: List[PaperInput] = [PaperInput(**p) for p in papers]
+            
         # Build final scores
-        final_scores: Dict[str, Dict[str, Any]] = {}
+            final_scores: Dict[str, Dict[str, Any]] = {}
         for p in paper_inputs:
             pid = p.get("paper_id", "")
             sem_info = semantic_scores.get(pid, {})
@@ -608,13 +643,13 @@ class RankAndSelectTopKTool(MCPTool):
             # If breakdown not provided, compute minimal one
             if not breakdown:
                 profile = load_profile(profile_path, tool_name=self.name)
-                breakdown = _calculate_dimension_scores(p, profile, sem_score, local_pdfs)
+                breakdown = _calculate_dimension_scores(p, profile, sem_score, local_pdfs_set)
                 penalty, _ = _apply_soft_penalty(p, profile)
                 soft_penalty = penalty
 
             final = _calculate_final_score(breakdown, soft_penalty, purpose, ranking_mode)
             final_scores[pid] = {
-                "final_score": final,
+                    "final_score": final,
                 "breakdown": breakdown,
                 "soft_penalty": soft_penalty,
                 "penalty_keywords": met.get("penalty_keywords", []),
@@ -636,7 +671,7 @@ class RankAndSelectTopKTool(MCPTool):
         ranked_results = []
         for rank, paper in enumerate(selected, 1):
             pid = paper["paper_id"]
-            tags = _generate_tags(paper, final_scores[pid], local_pdfs, False, None)
+            tags = _generate_tags(paper, final_scores[pid], local_pdfs_set, False, None)
             ranked_results.append({
                 "rank": rank,
                 "paper_id": pid,
@@ -652,8 +687,8 @@ class RankAndSelectTopKTool(MCPTool):
                 },
                 "tags": tags,
                 "local_status": {
-                    "already_downloaded": pid in local_pdfs,
-                    "local_path": f"pdf/{pid}.pdf" if pid in local_pdfs else None,
+                    "already_downloaded": pid in local_pdfs_set,
+                    "local_path": f"pdf/{pid}.pdf" if pid in local_pdfs_set else None,
                 },
                 "original_data": paper,
             })
@@ -668,7 +703,7 @@ class RankAndSelectTopKTool(MCPTool):
                 "penalty_keywords": [],
                 "evaluation_method": "unknown",
             })
-            tags = _generate_tags(contrastive_paper, score_info, local_pdfs, True, contrastive_type)
+            tags = _generate_tags(contrastive_paper, score_info, local_pdfs_set, True, contrastive_type)
             contrastive_formatted = {
                 "paper_id": pid,
                 "title": contrastive_paper.get("title", ""),
