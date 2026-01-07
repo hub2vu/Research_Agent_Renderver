@@ -4,6 +4,7 @@ Scoring utilities for rank and filter papers tool.
 
 import json
 import os
+import re
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Set, Tuple
 
@@ -69,6 +70,25 @@ except ImportError:
     HAS_SKLEARN = False
     cosine_similarity = None  # type: ignore
 
+# Module-level model cache for singleton pattern
+_embedding_model_cache = None
+
+
+def _get_embedding_model():
+    """
+    Get or create the embedding model (singleton pattern).
+    
+    Returns the cached SentenceTransformer model, loading it only once.
+    Returns None if sentence-transformers is not available or loading fails.
+    """
+    global _embedding_model_cache
+    if _embedding_model_cache is None and HAS_SENTENCE_TRANSFORMERS:
+        try:
+            _embedding_model_cache = SentenceTransformer('all-MiniLM-L6-v2')
+        except Exception:
+            _embedding_model_cache = None
+    return _embedding_model_cache
+
 
 def _calculate_embedding_scores(
     papers: List[PaperInput],
@@ -88,11 +108,10 @@ def _calculate_embedding_scores(
     Returns:
         Dictionary mapping paper_id to embedding score (0.0-1.0)
     """
-    # Try to use embedding model
-    if HAS_SENTENCE_TRANSFORMERS and HAS_SKLEARN:
+    # Try to use embedding model (singleton pattern - model loaded once)
+    model = _get_embedding_model()
+    if model is not None and HAS_SKLEARN:
         try:
-            model = SentenceTransformer('all-MiniLM-L6-v2')
-            
             # Build interests text with weights
             # primary: 1.0, secondary: 0.7, exploratory: 0.4
             # Repeat keywords proportionally to reflect weights
@@ -506,19 +525,20 @@ def _calculate_dimension_scores(
         scores["must_keywords"] = found_count / len(must_keywords)
     
     # 3. author_trust: Check if any preferred author is in authors list
+    # Uses word boundary regex to avoid false positives (e.g., "Lee" matching "Leeann")
     preferred_authors = profile["preferred_authors"]
     if not preferred_authors:
         scores["author_trust"] = 1.0  # No preferences = perfect score
     else:
-        # Normalize author names for comparison (case-insensitive)
-        paper_authors_lower = [a.lower().strip() for a in authors]
-        preferred_authors_lower = [a.lower().strip() for a in preferred_authors]
-        
-        # Check if any preferred author matches (exact or substring)
         found = False
-        for pref_author in preferred_authors_lower:
-            for paper_author in paper_authors_lower:
-                if pref_author in paper_author or paper_author in pref_author:
+        for pref_author in preferred_authors:
+            # Escape special regex characters and create word boundary pattern
+            pref_author_escaped = re.escape(pref_author.strip())
+            # Use word boundary \b for exact word matching (case-insensitive)
+            pattern = rf'\b{pref_author_escaped}\b'
+            
+            for paper_author in authors:
+                if re.search(pattern, paper_author, re.IGNORECASE):
                     found = True
                     break
             if found:
@@ -527,21 +547,22 @@ def _calculate_dimension_scores(
         scores["author_trust"] = 1.0 if found else 0.0
     
     # 4. institution_trust: Check preferred_institutions against affiliations
+    # Uses word boundary regex to avoid false positives
     preferred_institutions = profile["preferred_institutions"]
     if not preferred_institutions:
         scores["institution_trust"] = 1.0  # No preferences = perfect score
     elif not affiliations:
         scores["institution_trust"] = 0.0  # No affiliations = no trust
     else:
-        # Normalize for comparison (case-insensitive)
-        affiliations_lower = [aff.lower().strip() for aff in affiliations]
-        preferred_inst_lower = [inst.lower().strip() for inst in preferred_institutions]
-        
-        # Check if any preferred institution is found (substring match)
         found = False
-        for pref_inst in preferred_inst_lower:
-            for aff in affiliations_lower:
-                if pref_inst in aff or aff in pref_inst:
+        for pref_inst in preferred_institutions:
+            # Escape special regex characters and create word boundary pattern
+            pref_inst_escaped = re.escape(pref_inst.strip())
+            # Use word boundary \b for exact word matching (case-insensitive)
+            pattern = rf'\b{pref_inst_escaped}\b'
+            
+            for aff in affiliations:
+                if re.search(pattern, aff, re.IGNORECASE):
                     found = True
                     break
             if found:
