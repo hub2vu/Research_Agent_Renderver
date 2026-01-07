@@ -4,7 +4,7 @@ Ranking and selection utilities for rank and filter papers tool.
 
 import re
 from collections import Counter
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 from .types import ContrastiveInfo, PaperInput
 
@@ -170,6 +170,175 @@ def _rank_and_select(
     return selected
 
 
+# ============================================================================
+# Taxonomy-based contrastive paper selection
+# ============================================================================
+
+# Method taxonomy for hierarchical classification
+METHOD_TAXONOMY = {
+    "Vision": ["CNN", "ViT", "ResNet", "Object Detection", "Segmentation", "YOLO", "Mask R-CNN"],
+    "NLP": ["Transformer", "RNN", "LSTM", "BERT", "GPT", "LLM", "Attention", "Language Model"],
+    "Learning Paradigm": ["Supervised", "Unsupervised", "Self-supervised", "Reinforcement Learning", "Semi-supervised"],
+    "Generative": ["GAN", "VAE", "Diffusion", "Flow-based", "Generative Model"],
+    "Architecture": ["Encoder-only", "Decoder-only", "Encoder-Decoder", "Mamba", "RWKV", "SSM"]
+}
+
+# Bidirectional opposite concepts mapping
+OPPOSITE_CONCEPTS = {
+    "supervised": "unsupervised",
+    "unsupervised": "supervised",
+    "self-supervised": "supervised",
+    "generative": "discriminative",
+    "discriminative": "generative",
+    "transformer": "cnn",
+    "cnn": "transformer",
+    "attention": "convolution",
+    "convolution": "attention",
+    "dense": "sparse",
+    "sparse": "dense",
+    "large-scale": "resource-efficient",
+    "resource-efficient": "large-scale",
+    "theoretical": "empirical",
+    "empirical": "theoretical"
+}
+
+# Common stop words for keyword extraction
+COMMON_STOP_WORDS = {
+    'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
+    'of', 'with', 'by', 'from', 'as', 'is', 'was', 'are', 'were', 'be',
+    'been', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would',
+    'could', 'should', 'may', 'might', 'must', 'can', 'this', 'that',
+    'these', 'those', 'i', 'you', 'he', 'she', 'it', 'we', 'they',
+    'which', 'what', 'who', 'when', 'where', 'why', 'how', 'all',
+    'each', 'every', 'many', 'some', 'any', 'more', 'most', 'other',
+    'such', 'only', 'own', 'so', 'than', 'too', 'very', 'just', 'now'
+}
+
+
+def _get_concept_roots(text: str) -> Set[str]:
+    """
+    Extract taxonomy roots (parent concepts) from text using improved matching.
+    
+    Uses word boundary matching to avoid false positives and handles
+    case-insensitive matching properly.
+    
+    Args:
+        text: Lowercase text to search
+        
+    Returns:
+        Set of taxonomy root names found in the text
+    """
+    roots = set()
+    text_lower = text.lower()
+    
+    # Create word boundary patterns for each taxonomy term
+    for root, children in METHOD_TAXONOMY.items():
+        for child in children:
+            # Use word boundary matching to avoid substring false positives
+            # Handle both standalone terms and hyphenated terms
+            pattern = r'\b' + re.escape(child.lower()) + r'\b'
+            if re.search(pattern, text_lower):
+                roots.add(root)
+                break  # Found one match in this category, move to next
+    
+    return roots
+
+
+def _extract_taxonomy_traits(text: str) -> Set[str]:
+    """
+    Extract taxonomy-based traits (method terms) from text.
+    
+    Args:
+        text: Lowercase text to extract from
+        
+    Returns:
+        Set of taxonomy method terms found in the text
+    """
+    traits = set()
+    text_lower = text.lower()
+    
+    for root, children in METHOD_TAXONOMY.items():
+        for child in children:
+            pattern = r'\b' + re.escape(child.lower()) + r'\b'
+            if re.search(pattern, text_lower):
+                traits.add(child.lower())
+    
+    return traits
+
+
+def _calculate_contrast_score(
+    paper: PaperInput,
+    selected_traits: Set[str],
+    selected_roots: Set[str],
+    contrastive_type: str
+) -> float:
+    """
+    Calculate how contrastive a paper is compared to selected papers.
+    
+    Args:
+        paper: Candidate paper
+        selected_traits: Set of taxonomy method terms from selected papers
+        selected_roots: Set of taxonomy roots from selected papers
+        contrastive_type: Type of contrast ("method", "assumption", "domain")
+        
+    Returns:
+        Contrast score between 0.0 and 1.0
+    """
+    paper_text = f"{paper.get('title', '')} {paper.get('abstract', '')}".lower()
+    paper_roots = _get_concept_roots(paper_text)
+    paper_traits = _extract_taxonomy_traits(paper_text)
+    
+    score = 0.0
+    
+    if contrastive_type == "method":
+        # Same field (common roots) but different methods
+        common_roots = paper_roots.intersection(selected_roots)
+        if common_roots:
+            # Same field - good for maintaining context
+            score += 0.5
+            # But methods should be different
+            if paper_traits and not paper_traits.intersection(selected_traits):
+                score += 0.5  # Different methods - high contrast
+        else:
+            # Different field entirely - still contrastive but less ideal
+            if paper_traits:
+                score += 0.3
+    
+    elif contrastive_type == "assumption":
+        # Look for opposite paradigm concepts
+        for trait in selected_traits:
+            opposite = OPPOSITE_CONCEPTS.get(trait.lower())
+            if opposite and opposite in paper_text:
+                score = 1.0  # Found clear opposite
+                break
+        
+        # Also check for opposite roots if no direct match
+        if score == 0.0:
+            # Check if paper has opposite learning paradigms
+            paradigm_opposites = {
+                "supervised": ["unsupervised", "self-supervised"],
+                "unsupervised": ["supervised"],
+                "self-supervised": ["supervised"],
+                "generative": ["discriminative"],
+                "discriminative": ["generative"]
+            }
+            for sel_trait in selected_traits:
+                opposites = paradigm_opposites.get(sel_trait.lower(), [])
+                if any(opp in paper_text for opp in opposites):
+                    score = 0.8
+                    break
+    
+    elif contrastive_type == "domain":
+        # Domain contrast is handled separately via category prefixes
+        # This scoring is mainly for ranking within domain candidates
+        if not paper_roots.intersection(selected_roots):
+            score = 1.0  # Completely different domain
+        else:
+            score = 0.3  # Some overlap but still different
+    
+    return min(score, 1.0)
+
+
 def _select_contrastive_paper(
     selected_papers: List[PaperInput],
     remaining_papers: List[PaperInput],
@@ -178,6 +347,9 @@ def _select_contrastive_paper(
 ) -> Optional[Tuple[PaperInput, ContrastiveInfo]]:
     """
     Select a contrastive paper based on selected papers and contrastive type.
+    
+    Uses taxonomy-based approach for better concept matching while maintaining
+    compatibility with existing types and functionality.
     
     Args:
         selected_papers: List of already selected papers
@@ -202,97 +374,76 @@ def _select_contrastive_paper(
     
     most_common_categories = [cat for cat, count in category_counter.most_common(3)]
     
-    # 1.2 Extract keywords from title + abstract (simple TF-based)
-    all_text = " ".join([
+    # 1.2 Extract taxonomy-based traits and roots
+    selected_text = " ".join([
         f"{p.get('title', '')} {p.get('abstract', '')}"
         for p in selected_papers
     ]).lower()
     
-    # Extract words (simple approach: 3+ character words, exclude common stop words)
-    common_stop_words = {
-        'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
-        'of', 'with', 'by', 'from', 'as', 'is', 'was', 'are', 'were', 'be',
-        'been', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would',
-        'could', 'should', 'may', 'might', 'must', 'can', 'this', 'that',
-        'these', 'those', 'i', 'you', 'he', 'she', 'it', 'we', 'they',
-        'which', 'what', 'who', 'when', 'where', 'why', 'how', 'all',
-        'each', 'every', 'many', 'some', 'any', 'more', 'most', 'other',
-        'such', 'only', 'own', 'so', 'than', 'too', 'very', 'just', 'now'
-    }
+    selected_traits = _extract_taxonomy_traits(selected_text)
+    selected_roots = _get_concept_roots(selected_text)
     
-    words = re.findall(r'\b[a-z]{3,}\b', all_text)
+    # 1.3 Also extract keywords for fallback and display
+    words = re.findall(r'\b[a-z]{3,}\b', selected_text)
     word_freq = Counter(words)
-    # Filter out stop words and get top keywords
     keywords = [
         word for word, count in word_freq.most_common(20)
-        if word not in common_stop_words
-    ][:10]  # Top 10 keywords
+        if word not in COMMON_STOP_WORDS
+    ][:10]
     
-    common_traits = most_common_categories + keywords
+    # Combine categories and taxonomy traits for common_traits
+    common_traits = most_common_categories + list(selected_traits)[:7]  # Limit taxonomy traits
     
     # Step 2: Filter contrastive candidates based on contrastive_type
     contrastive_candidates: List[PaperInput] = []
     
     if contrastive_type == "method":
-        # Different categories or different methodology keywords
-        # Exclude papers with same top categories
+        # Find papers in same field (common roots) but with different methods
         for paper in remaining_papers:
-            paper_categories = set(paper.get("categories", []))
-            selected_categories_set = set(most_common_categories)
-            
-            # If paper has different categories, it's a candidate
-            if not paper_categories.intersection(selected_categories_set):
-                contrastive_candidates.append(paper)
-                continue
-            
-            # Or check for different methodology keywords
             paper_text = f"{paper.get('title', '')} {paper.get('abstract', '')}".lower()
-            # Look for methodology contrast keywords
-            method_keywords = {
-                'supervised', 'unsupervised', 'semi-supervised', 'self-supervised',
-                'generative', 'discriminative', 'transformer', 'cnn', 'rnn', 'lstm',
-                'reinforcement', 'graph', 'attention', 'convolution', 'recurrent'
-            }
-            paper_method_keywords = method_keywords.intersection(set(re.findall(r'\b[a-z-]+\b', paper_text)))
-            selected_method_keywords = method_keywords.intersection(set(keywords))
+            paper_roots = _get_concept_roots(paper_text)
+            paper_traits = _extract_taxonomy_traits(paper_text)
             
-            # If paper has different method keywords, it's a candidate
-            if paper_method_keywords and not paper_method_keywords.intersection(selected_method_keywords):
+            # Same field but different methods
+            common_roots = paper_roots.intersection(selected_roots)
+            if common_roots:
+                # Same field - good for maintaining context
+                if paper_traits and not paper_traits.intersection(selected_traits):
+                    # Different methods - ideal contrastive candidate
+                    contrastive_candidates.append(paper)
+                elif not paper_traits:
+                    # No taxonomy match but same field - still candidate
+                    contrastive_candidates.append(paper)
+            else:
+                # Different field entirely - also a candidate but less ideal
+                # Will be scored lower in contrast_score
                 contrastive_candidates.append(paper)
     
     elif contrastive_type == "assumption":
-        # Opposite paradigm keywords (supervised/unsupervised, generative/discriminative, etc.)
-        paradigm_pairs = [
-            (['supervised'], ['unsupervised', 'self-supervised']),
-            (['unsupervised', 'self-supervised'], ['supervised']),
-            (['generative'], ['discriminative', 'classification']),
-            (['discriminative', 'classification'], ['generative']),
-            (['transformer', 'attention'], ['cnn', 'convolution', 'recurrent', 'lstm']),
-            (['cnn', 'convolution'], ['transformer', 'attention', 'recurrent']),
-        ]
-        
-        selected_text = " ".join([
-            f"{p.get('title', '')} {p.get('abstract', '')}"
-            for p in selected_papers
-        ]).lower()
-        
-        selected_paradigm_groups = []
-        for group, _ in paradigm_pairs:
-            if any(keyword in selected_text for keyword in group):
-                selected_paradigm_groups.extend(group)
-        
+        # Find papers with opposite paradigms using OPPOSITE_CONCEPTS
         for paper in remaining_papers:
             paper_text = f"{paper.get('title', '')} {paper.get('abstract', '')}".lower()
             
-            # Check if paper has opposite paradigm
+            # Check for opposite concepts
             is_contrastive = False
-            for group, opposites in paradigm_pairs:
-                if any(keyword in selected_text for keyword in group):
-                    if any(opposite in paper_text for opposite in opposites):
+            for trait in selected_traits:
+                opposite = OPPOSITE_CONCEPTS.get(trait.lower())
+                if opposite and opposite in paper_text:
                         is_contrastive = True
                         break
-                elif any(keyword in selected_text for keyword in opposites):
-                    if any(opp in paper_text for opp in group):
+            
+            # Also check for opposite learning paradigms
+            if not is_contrastive:
+                paradigm_opposites = {
+                    "supervised": ["unsupervised", "self-supervised"],
+                    "unsupervised": ["supervised"],
+                    "self-supervised": ["supervised"],
+                    "generative": ["discriminative"],
+                    "discriminative": ["generative"]
+                }
+                for sel_trait in selected_traits:
+                    opposites = paradigm_opposites.get(sel_trait.lower(), [])
+                    if any(opp in paper_text for opp in opposites):
                         is_contrastive = True
                         break
             
@@ -300,8 +451,7 @@ def _select_contrastive_paper(
                 contrastive_candidates.append(paper)
     
     elif contrastive_type == "domain":
-        # Completely different arXiv categories
-        # Extract primary category prefix (e.g., "cs" from "cs.LG")
+        # Completely different arXiv categories (keep existing logic)
         selected_prefixes = set()
         for cat in most_common_categories:
             if '.' in cat:
@@ -321,32 +471,51 @@ def _select_contrastive_paper(
                 if not paper_prefixes.intersection(selected_prefixes):
                     contrastive_candidates.append(paper)
     
-    # Step 3: Select the highest scored paper from contrastive candidates
+    # Step 3: Score and rank candidates using hybrid approach
     if not contrastive_candidates:
         return None
     
-    # Sort candidates by score
     candidates_with_scores = []
     for paper in contrastive_candidates:
         paper_id = paper.get("paper_id", "")
         score_info = scores.get(paper_id, {})
-        final_score = score_info.get("final_score", 0.0)
-        candidates_with_scores.append((final_score, paper))
+        base_score = score_info.get("final_score", 0.0)
+        
+        # Calculate contrast score
+        contrast_score = _calculate_contrast_score(
+            paper, selected_traits, selected_roots, contrastive_type
+        )
+        
+        # Hybrid scoring: 40% base_score + 60% contrast_score
+        # This prioritizes contrastiveness while maintaining quality
+        final_candidate_score = (base_score * 0.4) + (contrast_score * 0.6)
+        
+        # Only include candidates with some contrast
+        if contrast_score > 0:
+            candidates_with_scores.append((final_candidate_score, contrast_score, paper))
     
+    if not candidates_with_scores:
+        return None
+    
+    # Sort by final candidate score (descending)
     candidates_with_scores.sort(key=lambda x: x[0], reverse=True)
-    selected_paper = candidates_with_scores[0][1]
+    _, best_contrast_score, selected_paper = candidates_with_scores[0]
     
-    # Step 4: Generate contrastive_info
+    # Step 4: Generate contrastive_info (maintain type compatibility)
     selected_paper_categories = selected_paper.get("categories", [])[:3]
     selected_paper_text = f"{selected_paper.get('title', '')} {selected_paper.get('abstract', '')}".lower()
+    
+    # Extract traits for selected paper
+    selected_paper_traits = _extract_taxonomy_traits(selected_paper_text)
     selected_paper_words = re.findall(r'\b[a-z]{3,}\b', selected_paper_text)
     selected_paper_word_freq = Counter(selected_paper_words)
     selected_paper_keywords = [
         word for word, count in selected_paper_word_freq.most_common(10)
-        if word not in common_stop_words
+        if word not in COMMON_STOP_WORDS
     ][:5]
     
-    this_paper_traits = selected_paper_categories + selected_paper_keywords
+    # Combine categories and traits
+    this_paper_traits = selected_paper_categories + list(selected_paper_traits)[:7]
     
     # Generate contrast_dimensions
     contrast_dimensions = []
@@ -359,9 +528,18 @@ def _select_contrastive_paper(
                 "others": ", ".join(most_common_categories[:2]),
                 "this": ", ".join(selected_paper_categories[:2])
             })
-        # Compare methodology
-        if keywords and selected_paper_keywords:
-            # Find contrasting keywords
+        
+        # Compare methodology using taxonomy
+        if selected_traits and selected_paper_traits:
+            diff_traits = list(selected_paper_traits - selected_traits)[:3]
+            if diff_traits:
+                contrast_dimensions.append({
+                    "dimension": "methodology",
+                    "others": ", ".join(list(selected_traits)[:3]),
+                    "this": ", ".join(diff_traits[:3])
+                })
+        elif keywords and selected_paper_keywords:
+            # Fallback to keyword comparison
             selected_set = set(keywords[:5])
             paper_set = set(selected_paper_keywords[:5])
             diff_keywords = list(paper_set - selected_set)[:3]
@@ -373,40 +551,51 @@ def _select_contrastive_paper(
                 })
     
     elif contrastive_type == "assumption":
-        # Compare paradigms
-        paradigm_keywords_map = {
-            "supervised": "unsupervised",
-            "unsupervised": "supervised",
-            "generative": "discriminative",
-            "discriminative": "generative",
-            "transformer": "cnn/recurrent",
-            "cnn": "transformer/attention"
-        }
+        # Compare paradigms using OPPOSITE_CONCEPTS
+        selected_text_lower = selected_text.lower()
+        found_opposite = False
         
-        selected_text_lower = " ".join([
-            f"{p.get('title', '')} {p.get('abstract', '')}"
-            for p in selected_papers
-        ]).lower()
-        
-        for keyword, opposite in paradigm_keywords_map.items():
-            if keyword in selected_text_lower and opposite in selected_paper_text:
+        for trait in selected_traits:
+            opposite = OPPOSITE_CONCEPTS.get(trait.lower())
+            if opposite and opposite in selected_paper_text:
                 contrast_dimensions.append({
                     "dimension": "paradigm",
-                    "others": keyword,
+                    "others": trait,
                     "this": opposite
                 })
+                found_opposite = True
                 break
+        
+        # Fallback to keyword-based comparison
+        if not found_opposite:
+            paradigm_keywords_map = {
+                "supervised": "unsupervised",
+                "unsupervised": "supervised",
+                "generative": "discriminative",
+                "discriminative": "generative",
+                "transformer": "cnn/recurrent",
+                "cnn": "transformer/attention"
+            }
+            
+            for keyword, opposite in paradigm_keywords_map.items():
+                if keyword in selected_text_lower and opposite in selected_paper_text:
+                    contrast_dimensions.append({
+                        "dimension": "paradigm",
+                        "others": keyword,
+                        "this": opposite
+                    })
+                    break
     
     elif contrastive_type == "domain":
         # Compare category prefixes
         if most_common_categories and selected_paper_categories:
-            selected_prefixes = [cat.split('.')[0] for cat in most_common_categories if '.' in cat]
-            paper_prefixes = [cat.split('.')[0] for cat in selected_paper_categories if '.' in cat]
-            if selected_prefixes and paper_prefixes and selected_prefixes[0] != paper_prefixes[0]:
+            selected_prefixes_list = [cat.split('.')[0] for cat in most_common_categories if '.' in cat]
+            paper_prefixes_list = [cat.split('.')[0] for cat in selected_paper_categories if '.' in cat]
+            if selected_prefixes_list and paper_prefixes_list and selected_prefixes_list[0] != paper_prefixes_list[0]:
                 contrast_dimensions.append({
                     "dimension": "domain",
-                    "others": selected_prefixes[0],
-                    "this": paper_prefixes[0]
+                    "others": selected_prefixes_list[0],
+                    "this": paper_prefixes_list[0]
                 })
     
     # If no contrast_dimensions found, add at least one generic one
@@ -417,7 +606,15 @@ def _select_contrastive_paper(
                 "others": most_common_categories[0] if most_common_categories else "N/A",
                 "this": selected_paper_categories[0] if selected_paper_categories else "N/A"
             })
+        else:
+            # Last resort: use contrast score as dimension
+            contrast_dimensions.append({
+                "dimension": contrastive_type,
+                "others": "selected papers",
+                "this": "contrastive approach"
+            })
     
+    # Build contrastive_info matching ContrastiveInfo TypedDict exactly
     contrastive_info: ContrastiveInfo = {
         "type": contrastive_type,
         "selected_papers_common_traits": common_traits[:10],  # Limit to 10
