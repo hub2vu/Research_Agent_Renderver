@@ -50,13 +50,18 @@ class UserProfileConstraints(TypedDict):
     exclude_local_papers: bool  # Exclude papers that are already downloaded locally
 
 
-class UserProfile(TypedDict):
+class UserProfile(TypedDict, total=False):
     """User profile structure from profile.json."""
     interests: UserProfileInterests
     keywords: UserProfileKeywords
     preferred_authors: List[str]
     preferred_institutions: List[str]
     constraints: UserProfileConstraints
+    purpose: str  # Research purpose: "general", "literature_review", "implementation", "idea_generation"
+    ranking_mode: str  # Ranking mode: "balanced", "novelty", "practicality", "diversity"
+    top_k: int  # Number of papers to return
+    include_contrastive: bool  # Whether to include contrastive paper
+    contrastive_type: str  # Contrastive type: "method", "assumption", "domain"
 
 
 # Score Types

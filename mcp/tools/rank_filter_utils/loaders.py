@@ -50,7 +50,12 @@ def load_profile(profile_path: str, tool_name: str = "rank_and_filter_papers") -
                 "min_year": 2000,  # Default to allow all papers
                 "require_code": False,
                 "exclude_local_papers": False
-            }
+            },
+            "purpose": "general",
+            "ranking_mode": "balanced",
+            "top_k": 5,
+            "include_contrastive": False,
+            "contrastive_type": "method"
         }
     
     # Load and validate JSON file
@@ -78,7 +83,12 @@ def load_profile(profile_path: str, tool_name: str = "rank_and_filter_papers") -
                 "min_year": data.get("constraints", {}).get("min_year", 2000),
                 "require_code": data.get("constraints", {}).get("require_code", False),
                 "exclude_local_papers": data.get("constraints", {}).get("exclude_local_papers", False)
-            }
+            },
+            "purpose": data.get("purpose", "general"),
+            "ranking_mode": data.get("ranking_mode", "balanced"),
+            "top_k": data.get("top_k", 5),
+            "include_contrastive": data.get("include_contrastive", False),
+            "contrastive_type": data.get("contrastive_type", "method")
         }
         
         return profile
