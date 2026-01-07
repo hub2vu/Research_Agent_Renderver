@@ -3,6 +3,7 @@ Scoring utilities for rank and filter papers tool.
 """
 
 import json
+import math
 import os
 import re
 from datetime import datetime, timedelta
@@ -585,9 +586,14 @@ def _calculate_dimension_scores(
         
         scores["institution_trust"] = 1.0 if found else 0.0
     
-    # 5. recency: Calculate based on published date
+    # 5. recency: Calculate based on published date using exponential decay
+    # Formula: score = exp(-λ * days) where λ is the decay rate
+    # λ is calibrated so that score ≈ 0.1 at 365 days: λ = -ln(0.1) / 365 ≈ 0.0063
+    RECENCY_DECAY_RATE = 0.0063  # Decay rate (λ)
+    RECENCY_MIN_SCORE = 0.05    # Minimum score floor for very old papers
+    
     if not published:
-        scores["recency"] = 0.1  # No date = very old
+        scores["recency"] = RECENCY_MIN_SCORE  # No date = assume very old
     else:
         try:
             # Parse date (YYYY-MM-DD format)
@@ -595,23 +601,18 @@ def _calculate_dimension_scores(
             now = datetime.now()
             time_diff = now - pub_date
             
-            days_diff = time_diff.days
+            days_diff = max(0, time_diff.days)  # Ensure non-negative
             
-            if days_diff <= 14:  # 2 weeks
-                scores["recency"] = 1.0
-            elif days_diff <= 30:  # 1 month
-                scores["recency"] = 0.85
-            elif days_diff <= 90:  # 3 months
-                scores["recency"] = 0.7
-            elif days_diff <= 180:  # 6 months
-                scores["recency"] = 0.5
-            elif days_diff <= 365:  # 1 year
-                scores["recency"] = 0.3
-            else:  # More than 1 year
-                scores["recency"] = 0.1
+            # Exponential decay: score = exp(-λ * days)
+            # This provides smooth, continuous decay instead of step function
+            recency_score = math.exp(-RECENCY_DECAY_RATE * days_diff)
+            
+            # Clamp to [RECENCY_MIN_SCORE, 1.0]
+            scores["recency"] = max(RECENCY_MIN_SCORE, min(1.0, recency_score))
+            
         except (ValueError, TypeError):
             # Invalid date format
-            scores["recency"] = 0.1
+            scores["recency"] = RECENCY_MIN_SCORE
     
     # 6. practicality: github_url + local_pdfs
     # Note: github_url is used for scoring (bonus points) only, not for filtering.
