@@ -1,0 +1,713 @@
+{
+  "success": true,
+  "error": null,
+  "summary": {
+    "input_count": 47,
+    "filtered_count": 0,
+    "scored_count": 47,
+    "output_count": 10,
+    "purpose": "general",
+    "ranking_mode": "balanced",
+    "profile_used": "users/profile.json",
+    "llm_verification_used": false,
+    "llm_calls_made": 0
+  },
+  "ranked_papers": [
+    {
+      "rank": 1,
+      "paper_id": "2201.00978v1",
+      "title": "PyramidTNT: Improved Transformer-in-Transformer Baselines with Pyramid Architecture",
+      "authors": [
+        "Kai Han",
+        "Jianyuan Guo",
+        "Yehui Tang",
+        "Yunhe Wang"
+      ],
+      "published": "2022-01-04T04:56:57+00:00",
+      "score": {
+        "final": 0.36,
+        "breakdown": {
+          "semantic_relevance": 0.0,
+          "must_keywords": 1.0,
+          "author_trust": 1.0,
+          "institution_trust": 1.0,
+          "recency": 0.05,
+          "practicality": 0.0
+        },
+        "soft_penalty": -0.0,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_low"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR",
+        "PREFERRED_INSTITUTION",
+        "MUST_KEYWORD_MATCH",
+        "NO_CODE",
+        "OLDER_PAPER"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "2201.00978v1",
+        "title": "PyramidTNT: Improved Transformer-in-Transformer Baselines with Pyramid Architecture",
+        "abstract": "Transformer networks have achieved great progress for computer vision tasks. Transformer-in-Transformer (TNT) architecture utilizes inner transformer and outer transformer to extract both local and global representations. In this work, we present new TNT baselines by introducing two advanced designs: 1) pyramid architecture, and 2) convolutional stem. The new \"PyramidTNT\" significantly improves the original TNT by establishing hierarchical representations. PyramidTNT achieves better performances than the previous state-of-the-art vision transformers such as Swin Transformer. We hope this new baseline will be helpful to the further research and application of vision transformer. Code will be available at https://github.com/huawei-noah/CV-Backbones/tree/master/tnt_pytorch.",
+        "authors": [
+          "Kai Han",
+          "Jianyuan Guo",
+          "Yehui Tang",
+          "Yunhe Wang"
+        ],
+        "published": "2022-01-04T04:56:57+00:00",
+        "categories": [
+          "cs.CV"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2201.00978v1",
+        "github_url": null
+      }
+    },
+    {
+      "rank": 2,
+      "paper_id": "2104.11502v1",
+      "title": "Learning to Cluster Faces via Transformer",
+      "authors": [
+        "Jinxing Ye",
+        "Xioajiang Peng",
+        "Baigui Sun",
+        "Kai Wang",
+        "Xiuyu Sun",
+        "Hao Li",
+        "Hanqing Wu"
+      ],
+      "published": "2021-04-23T09:43:36+00:00",
+      "score": {
+        "final": 0.36,
+        "breakdown": {
+          "semantic_relevance": 0.0,
+          "must_keywords": 1.0,
+          "author_trust": 1.0,
+          "institution_trust": 1.0,
+          "recency": 0.05,
+          "practicality": 0.0
+        },
+        "soft_penalty": -0.0,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_low"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR",
+        "PREFERRED_INSTITUTION",
+        "MUST_KEYWORD_MATCH",
+        "NO_CODE",
+        "OLDER_PAPER"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "2104.11502v1",
+        "title": "Learning to Cluster Faces via Transformer",
+        "abstract": "Face clustering is a useful tool for applications like automatic face annotation and retrieval. The main challenge is that it is difficult to cluster images from the same identity with different face poses, occlusions, and image quality. Traditional clustering methods usually ignore the relationship between individual images and their neighbors which may contain useful context information. In this paper, we repurpose the well-known Transformer and introduce a Face Transformer for supervised face clustering. In Face Transformer, we decompose the face clustering into two steps: relation encoding and linkage predicting. Specifically, given a face image, a \\textbf{relation encoder} module aggregates local context information from its neighbors and a \\textbf{linkage predictor} module judges whether a pair of images belong to the same cluster or not. In the local linkage graph view, Face Transformer can generate more robust node and edge representations compared to existing methods. Experiments on both MS-Celeb-1M and DeepFashion show that our method achieves state-of-the-art performance, e.g., 91.12\\% in pairwise F-score on MS-Celeb-1M.",
+        "authors": [
+          "Jinxing Ye",
+          "Xioajiang Peng",
+          "Baigui Sun",
+          "Kai Wang",
+          "Xiuyu Sun",
+          "Hao Li",
+          "Hanqing Wu"
+        ],
+        "published": "2021-04-23T09:43:36+00:00",
+        "categories": [
+          "cs.CV"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2104.11502v1",
+        "github_url": null
+      }
+    },
+    {
+      "rank": 3,
+      "paper_id": "2305.14858v2",
+      "title": "Pre-RMSNorm and Pre-CRMSNorm Transformers: Equivalent and Efficient Pre-LN Transformers",
+      "authors": [
+        "Zixuan Jiang",
+        "Jiaqi Gu",
+        "Hanqing Zhu",
+        "David Z. Pan"
+      ],
+      "published": "2023-05-24T08:08:26+00:00",
+      "score": {
+        "final": 0.36,
+        "breakdown": {
+          "semantic_relevance": 0.0,
+          "must_keywords": 1.0,
+          "author_trust": 1.0,
+          "institution_trust": 1.0,
+          "recency": 0.05,
+          "practicality": 0.0
+        },
+        "soft_penalty": -0.0,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_low"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR",
+        "PREFERRED_INSTITUTION",
+        "MUST_KEYWORD_MATCH",
+        "NO_CODE",
+        "OLDER_PAPER"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "2305.14858v2",
+        "title": "Pre-RMSNorm and Pre-CRMSNorm Transformers: Equivalent and Efficient Pre-LN Transformers",
+        "abstract": "Transformers have achieved great success in machine learning applications. Normalization techniques, such as Layer Normalization (LayerNorm, LN) and Root Mean Square Normalization (RMSNorm), play a critical role in accelerating and stabilizing the training of Transformers. While LayerNorm recenters and rescales input vectors, RMSNorm only rescales the vectors by their RMS value. Despite being more computationally efficient, RMSNorm may compromise the representation ability of Transformers. There is currently no consensus regarding the preferred normalization technique, as some models employ LayerNorm while others utilize RMSNorm, especially in recent large language models. It is challenging to convert Transformers with one normalization to the other type. While there is an ongoing disagreement between the two normalization types, we propose a solution to unify two mainstream Transformer architectures, Pre-LN and Pre-RMSNorm Transformers. By removing the inherent redundant mean information in the main branch of Pre-LN Transformers, we can reduce LayerNorm to RMSNorm, achieving higher efficiency. We further propose the Compressed RMSNorm (CRMSNorm) and Pre-CRMSNorm Transformer based on a lossless compression of the zero-mean vectors. We formally establish the equivalence of Pre-LN, Pre-RMSNorm, and Pre-CRMSNorm Transformer variants in both training and inference. It implies that Pre-LN Transformers can be substituted with Pre-(C)RMSNorm counterparts at almost no cost, offering the same arithmetic functionality along with free efficiency improvement. Experiments demonstrate that we can reduce the training and inference time of Pre-LN Transformers by 1% - 10%.",
+        "authors": [
+          "Zixuan Jiang",
+          "Jiaqi Gu",
+          "Hanqing Zhu",
+          "David Z. Pan"
+        ],
+        "published": "2023-05-24T08:08:26+00:00",
+        "categories": [
+          "cs.LG",
+          "cs.AI",
+          "cs.NE"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2305.14858v2",
+        "github_url": null
+      }
+    },
+    {
+      "rank": 4,
+      "paper_id": "2308.16552v1",
+      "title": "Prompt-enhanced Hierarchical Transformer Elevating Cardiopulmonary Resuscitation Instruction via Temporal Action Segmentation",
+      "authors": [
+        "Yang Liu",
+        "Xiaoyun Zhong",
+        "Shiyao Zhai",
+        "Zhicheng Du",
+        "Zhenyuan Gao",
+        "Qiming Huang",
+        "Canyang Zhang",
+        "Bin Jiang",
+        "Vijay Kumar Pandey",
+        "Sanyang Han",
+        "Runming Wang",
+        "Yuxing Han",
+        "Peiwu Qin"
+      ],
+      "published": "2023-08-31T08:43:52+00:00",
+      "score": {
+        "final": 0.36,
+        "breakdown": {
+          "semantic_relevance": 0.0,
+          "must_keywords": 1.0,
+          "author_trust": 1.0,
+          "institution_trust": 1.0,
+          "recency": 0.05,
+          "practicality": 0.0
+        },
+        "soft_penalty": -0.0,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_low"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR",
+        "PREFERRED_INSTITUTION",
+        "MUST_KEYWORD_MATCH",
+        "NO_CODE",
+        "OLDER_PAPER"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "2308.16552v1",
+        "title": "Prompt-enhanced Hierarchical Transformer Elevating Cardiopulmonary Resuscitation Instruction via Temporal Action Segmentation",
+        "abstract": "The vast majority of people who suffer unexpected cardiac arrest are performed cardiopulmonary resuscitation (CPR) by passersby in a desperate attempt to restore life, but endeavors turn out to be fruitless on account of disqualification. Fortunately, many pieces of research manifest that disciplined training will help to elevate the success rate of resuscitation, which constantly desires a seamless combination of novel techniques to yield further advancement. To this end, we collect a custom CPR video dataset in which trainees make efforts to behave resuscitation on mannequins independently in adherence to approved guidelines, thereby devising an auxiliary toolbox to assist supervision and rectification of intermediate potential issues via modern deep learning methodologies. Our research empirically views this problem as a temporal action segmentation (TAS) task in computer vision, which aims to segment an untrimmed video at a frame-wise level. Here, we propose a Prompt-enhanced hierarchical Transformer (PhiTrans) that integrates three indispensable modules, including a textual prompt-based Video Features Extractor (VFE), a transformer-based Action Segmentation Executor (ASE), and a regression-based Prediction Refinement Calibrator (PRC). The backbone of the model preferentially derives from applications in three approved public datasets (GTEA, 50Salads, and Breakfast) collected for TAS tasks, which accounts for the excavation of the segmentation pipeline on the CPR dataset. In general, we unprecedentedly probe into a feasible pipeline that genuinely elevates the CPR instruction qualification via action segmentation in conjunction with cutting-edge deep learning techniques. Associated experiments advocate our implementation with multiple metrics surpassing 91.0%.",
+        "authors": [
+          "Yang Liu",
+          "Xiaoyun Zhong",
+          "Shiyao Zhai",
+          "Zhicheng Du",
+          "Zhenyuan Gao",
+          "Qiming Huang",
+          "Canyang Zhang",
+          "Bin Jiang",
+          "Vijay Kumar Pandey",
+          "Sanyang Han",
+          "Runming Wang",
+          "Yuxing Han",
+          "Peiwu Qin"
+        ],
+        "published": "2023-08-31T08:43:52+00:00",
+        "categories": [
+          "cs.CV"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2308.16552v1",
+        "github_url": null
+      }
+    },
+    {
+      "rank": 5,
+      "paper_id": "2505.11918v1",
+      "title": "Transformers as Unsupervised Learning Algorithms: A study on Gaussian Mixtures",
+      "authors": [
+        "Zhiheng Chen",
+        "Ruofan Wu",
+        "Guanhua Fang"
+      ],
+      "published": "2025-05-17T09:02:18+00:00",
+      "score": {
+        "final": 0.36,
+        "breakdown": {
+          "semantic_relevance": 0.0,
+          "must_keywords": 1.0,
+          "author_trust": 1.0,
+          "institution_trust": 1.0,
+          "recency": 0.05,
+          "practicality": 0.0
+        },
+        "soft_penalty": -0.0,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_low"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR",
+        "PREFERRED_INSTITUTION",
+        "MUST_KEYWORD_MATCH",
+        "NO_CODE",
+        "OLDER_PAPER"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "2505.11918v1",
+        "title": "Transformers as Unsupervised Learning Algorithms: A study on Gaussian Mixtures",
+        "abstract": "The transformer architecture has demonstrated remarkable capabilities in modern artificial intelligence, among which the capability of implicitly learning an internal model during inference time is widely believed to play a key role in the under standing of pre-trained large language models. However, most recent works have been focusing on studying supervised learning topics such as in-context learning, leaving the field of unsupervised learning largely unexplored. This paper investigates the capabilities of transformers in solving Gaussian Mixture Models (GMMs), a fundamental unsupervised learning problem through the lens of statistical estimation. We propose a transformer-based learning framework called TGMM that simultaneously learns to solve multiple GMM tasks using a shared transformer backbone. The learned models are empirically demonstrated to effectively mitigate the limitations of classical methods such as Expectation-Maximization (EM) or spectral algorithms, at the same time exhibit reasonable robustness to distribution shifts. Theoretically, we prove that transformers can approximate both the EM algorithm and a core component of spectral methods (cubic tensor power iterations). These results bridge the gap between practical success and theoretical understanding, positioning transformers as versatile tools for unsupervised learning.",
+        "authors": [
+          "Zhiheng Chen",
+          "Ruofan Wu",
+          "Guanhua Fang"
+        ],
+        "published": "2025-05-17T09:02:18+00:00",
+        "categories": [
+          "cs.LG",
+          "stat.ML"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2505.11918v1",
+        "github_url": null
+      }
+    },
+    {
+      "rank": 6,
+      "paper_id": "2407.10949v2",
+      "title": "Representing Rule-based Chatbots with Transformers",
+      "authors": [
+        "Dan Friedman",
+        "Abhishek Panigrahi",
+        "Danqi Chen"
+      ],
+      "published": "2024-07-15T17:45:53+00:00",
+      "score": {
+        "final": 0.36,
+        "breakdown": {
+          "semantic_relevance": 0.0,
+          "must_keywords": 1.0,
+          "author_trust": 1.0,
+          "institution_trust": 1.0,
+          "recency": 0.05,
+          "practicality": 0.0
+        },
+        "soft_penalty": -0.0,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_low"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR",
+        "PREFERRED_INSTITUTION",
+        "MUST_KEYWORD_MATCH",
+        "NO_CODE",
+        "OLDER_PAPER"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "2407.10949v2",
+        "title": "Representing Rule-based Chatbots with Transformers",
+        "abstract": "What kind of internal mechanisms might Transformers use to conduct fluid, natural-sounding conversations? Prior work has illustrated by construction how Transformers can solve various synthetic tasks, such as sorting a list or recognizing formal languages, but it remains unclear how to extend this approach to a conversational setting. In this work, we propose using ELIZA, a classic rule-based chatbot, as a setting for formal, mechanistic analysis of Transformer-based chatbots. ELIZA allows us to formally model key aspects of conversation, including local pattern matching and long-term dialogue state tracking. We first present a theoretical construction of a Transformer that implements the ELIZA chatbot. Building on prior constructions, particularly those for simulating finite-state automata, we show how simpler mechanisms can be composed and extended to produce more sophisticated behavior. Next, we conduct a set of empirical analyses of Transformers trained on synthetically generated ELIZA conversations. Our analysis illustrates the kinds of mechanisms these models tend to prefer--for example, models favor an induction head mechanism over a more precise, position-based copying mechanism; and using intermediate generations to simulate recurrent data structures, akin to an implicit scratchpad or Chain-of-Thought. Overall, by drawing an explicit connection between neural chatbots and interpretable, symbolic mechanisms, our results provide a new framework for the mechanistic analysis of conversational agents.",
+        "authors": [
+          "Dan Friedman",
+          "Abhishek Panigrahi",
+          "Danqi Chen"
+        ],
+        "published": "2024-07-15T17:45:53+00:00",
+        "categories": [
+          "cs.CL",
+          "cs.AI",
+          "cs.LG"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2407.10949v2",
+        "github_url": null
+      }
+    },
+    {
+      "rank": 7,
+      "paper_id": "1102.2017v2",
+      "title": "Synthesis of Mechanism for single- and hybrid-tasks using Differential Evolution",
+      "authors": [
+        "F. Penunuri",
+        "R. Peon-Escalante",
+        "C. Villanueva",
+        "D. Pech-Oy"
+      ],
+      "published": "2011-02-10T00:50:54+00:00",
+      "score": {
+        "final": 0.26,
+        "breakdown": {
+          "semantic_relevance": 0.0,
+          "must_keywords": 0.0,
+          "author_trust": 1.0,
+          "institution_trust": 1.0,
+          "recency": 0.05,
+          "practicality": 0.0
+        },
+        "soft_penalty": -0.0,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_low"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR",
+        "PREFERRED_INSTITUTION",
+        "NO_CODE",
+        "OLDER_PAPER"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "1102.2017v2",
+        "title": "Synthesis of Mechanism for single- and hybrid-tasks using Differential Evolution",
+        "abstract": "The optimal dimensional synthesis for planar mechanisms using differential evolution (DE) is demonstrated. Four examples are included: in the first case, the synthesis of a mechanism for hybrid-tasks, considering path generation, function generation, and motion generation, is carried out. The second and third cases pertain to path generation, with and without prescribed timing. Finally, the synthesis of an Ackerman mechanism is reported. Order defect problem is solved by manipulating individuals instead of penalizing or discretizing the search space for the parameters. A technique that consists in applying a transformation in order to satisfy the Grashof and crank conditions to generate an initial elitist population is introduced. As a result, the evolutionary algorithm increases its efficiency.",
+        "authors": [
+          "F. Penunuri",
+          "R. Peon-Escalante",
+          "C. Villanueva",
+          "D. Pech-Oy"
+        ],
+        "published": "2011-02-10T00:50:54+00:00",
+        "categories": [
+          "cs.CE"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/1102.2017v2",
+        "github_url": null
+      }
+    },
+    {
+      "rank": 8,
+      "paper_id": "1112.2954v2",
+      "title": "Synthesis of Spherical 4R Mechanism for Path Generation using Differential Evolution",
+      "authors": [
+        "F. Penunuri",
+        "R. Peon-Escalante",
+        "C. Villanueva",
+        "Carlos A. Cruz-Villar"
+      ],
+      "published": "2011-12-13T16:48:05+00:00",
+      "score": {
+        "final": 0.26,
+        "breakdown": {
+          "semantic_relevance": 0.0,
+          "must_keywords": 0.0,
+          "author_trust": 1.0,
+          "institution_trust": 1.0,
+          "recency": 0.05,
+          "practicality": 0.0
+        },
+        "soft_penalty": -0.0,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_low"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR",
+        "PREFERRED_INSTITUTION",
+        "NO_CODE",
+        "OLDER_PAPER"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "1112.2954v2",
+        "title": "Synthesis of Spherical 4R Mechanism for Path Generation using Differential Evolution",
+        "abstract": "The problem of path generation for the spherical 4R mechanism is solved using the Differential Evolution algorithm (DE). Formulas for the spherical geodesics are employed in order to obtain the parametric equation for the generated trajectory. Direct optimization of the objective function gives the solution to the path generation task without prescribed timing. Therefore, there is no need to separate this task into two stages to make the optimization. Moreover, the order defect problem can be solved without difficulty by means of manipulations of the individuals in the DE algorithm. Two examples of optimum synthesis showing the simplicity and effectiveness of this approach are included.",
+        "authors": [
+          "F. Penunuri",
+          "R. Peon-Escalante",
+          "C. Villanueva",
+          "Carlos A. Cruz-Villar"
+        ],
+        "published": "2011-12-13T16:48:05+00:00",
+        "categories": [
+          "cs.CE"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/1112.2954v2",
+        "github_url": null
+      }
+    },
+    {
+      "rank": 9,
+      "paper_id": "2107.12614v1",
+      "title": "Design and Analysis of a Robotic Lizard using Five-Bar Mechanism",
+      "authors": [
+        "Rajashekhar V S",
+        "Dinakar Raj C K",
+        "Vishwesh S",
+        "Selva Perumal E",
+        "Nirmal Kumar M"
+      ],
+      "published": "2021-07-27T06:01:24+00:00",
+      "score": {
+        "final": 0.26,
+        "breakdown": {
+          "semantic_relevance": 0.0,
+          "must_keywords": 0.0,
+          "author_trust": 1.0,
+          "institution_trust": 1.0,
+          "recency": 0.05,
+          "practicality": 0.0
+        },
+        "soft_penalty": -0.0,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_low"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR",
+        "PREFERRED_INSTITUTION",
+        "NO_CODE",
+        "OLDER_PAPER"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "2107.12614v1",
+        "title": "Design and Analysis of a Robotic Lizard using Five-Bar Mechanism",
+        "abstract": "Legged robots are being used to explore rough terrains as they are capable of traversing gaps and obstacles. In this paper, a new mechanism is designed to replicate a robotic lizard using integrated five-bar mechanisms. There are two five bar mechanisms from which two more are formed by connecting the links in a particular order. The legs are attached to the links of the five bar mechanism such that, when the mechanism is actuated, they move the robot forward. Position analysis using vector loop approach has been done for the mechanism. A prototype has been built and controlled using servo motors to verify the robotic lizard mechanism.",
+        "authors": [
+          "Rajashekhar V S",
+          "Dinakar Raj C K",
+          "Vishwesh S",
+          "Selva Perumal E",
+          "Nirmal Kumar M"
+        ],
+        "published": "2021-07-27T06:01:24+00:00",
+        "categories": [
+          "cs.RO"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2107.12614v1",
+        "github_url": null
+      }
+    }
+  ],
+  "filtered_papers": [],
+  "contrastive_paper": {
+    "paper_id": "2512.03377v2",
+    "title": "Nexus: Higher-Order Attention Mechanisms in Transformers",
+    "authors": [
+      "Hanting Chen",
+      "Chong Zhu",
+      "Kai Han",
+      "Yuchuan Tian",
+      "Yuchen Liang",
+      "Tianyu Guo",
+      "Xinghao Chen",
+      "Dacheng Tao",
+      "Yunhe Wang"
+    ],
+    "published": "2025-12-03T02:25:38+00:00",
+    "score": {
+      "final": 0.21,
+      "breakdown": {
+        "semantic_relevance": 0.0,
+        "must_keywords": 1.0,
+        "author_trust": 1.0,
+        "institution_trust": 1.0,
+        "recency": 0.05,
+        "practicality": 0.0
+      },
+      "soft_penalty": -0.15,
+      "penalty_keywords": [
+        "attention"
+      ],
+      "evaluation_method": "embedding_low"
+    },
+    "tags": [
+      "PREFERRED_AUTHOR",
+      "PREFERRED_INSTITUTION",
+      "MUST_KEYWORD_MATCH",
+      "NO_CODE",
+      "OLDER_PAPER",
+      "CONTRASTIVE_PICK",
+      "CONTRASTIVE_METHOD"
+    ],
+    "contrastive_info": {
+      "type": "method",
+      "selected_papers_common_traits": [
+        "cs.CV",
+        "cs.LG",
+        "cs.AI",
+        "unsupervised",
+        "transformer",
+        "supervised",
+        "segmentation"
+      ],
+      "this_paper_traits": [
+        "cs.CL",
+        "attention"
+      ],
+      "contrast_dimensions": [
+        {
+          "dimension": "category",
+          "others": "cs.CV, cs.LG",
+          "this": "cs.CL"
+        },
+        {
+          "dimension": "methodology",
+          "others": "unsupervised, transformer, supervised",
+          "this": "attention"
+        }
+      ]
+    },
+    "original_data": {
+      "paper_id": "2512.03377v2",
+      "title": "Nexus: Higher-Order Attention Mechanisms in Transformers",
+      "abstract": "Transformers have achieved significant success across various domains, relying on self-attention to capture dependencies. However, the standard first-order attention mechanism is often limited by a low-rank bottleneck, struggling to capture intricate, multi-hop relationships within a single layer. In this paper, we propose the Nexus, a novel architecture designed to enhance representational power through a recursive framework. Unlike standard approaches that use static linear projections for Queries and Keys, Nexus dynamically refines these representations via nested self-attention mechanisms. Specifically, the Query and Key vectors are themselves outputs of inner attention loops, allowing tokens to aggregate global context and model high-order correlations \\textit{prior} to the final attention computation. We enforce a parameter-efficient weight-sharing strategy across recursive steps, ensuring that this enhanced expressivity incurs $\\mathcal{O}(1)$ additional parameters. We provide theoretical analysis demonstrating that our method breaks the linear bottleneck of standard attention. Empirically, Nexus outperforms standard Transformers on multiple benchmarks.",
+      "authors": [
+        "Hanting Chen",
+        "Chong Zhu",
+        "Kai Han",
+        "Yuchuan Tian",
+        "Yuchen Liang",
+        "Tianyu Guo",
+        "Xinghao Chen",
+        "Dacheng Tao",
+        "Yunhe Wang"
+      ],
+      "published": "2025-12-03T02:25:38+00:00",
+      "categories": [
+        "cs.CL"
+      ],
+      "pdf_url": "https://arxiv.org/pdf/2512.03377v2",
+      "github_url": null
+    }
+  },
+  "comparison_notes": [
+    {
+      "paper_ids": [
+        "2201.00978v1",
+        "2512.03377v2"
+      ],
+      "relation": "contrastive",
+      "shared_traits": null,
+      "differentiator": null,
+      "contrast_point": "different_approach"
+    },
+    {
+      "paper_ids": [
+        "2104.11502v1",
+        "2512.03377v2"
+      ],
+      "relation": "contrastive",
+      "shared_traits": null,
+      "differentiator": null,
+      "contrast_point": "different_approach"
+    },
+    {
+      "paper_ids": [
+        "2305.14858v2",
+        "2512.03377v2"
+      ],
+      "relation": "contrastive",
+      "shared_traits": null,
+      "differentiator": null,
+      "contrast_point": "different_approach"
+    },
+    {
+      "paper_ids": [
+        "2308.16552v1",
+        "2512.03377v2"
+      ],
+      "relation": "contrastive",
+      "shared_traits": null,
+      "differentiator": null,
+      "contrast_point": "different_approach"
+    },
+    {
+      "paper_ids": [
+        "2505.11918v1",
+        "2512.03377v2"
+      ],
+      "relation": "contrastive",
+      "shared_traits": null,
+      "differentiator": null,
+      "contrast_point": "different_approach"
+    },
+    {
+      "paper_ids": [
+        "2407.10949v2",
+        "2512.03377v2"
+      ],
+      "relation": "contrastive",
+      "shared_traits": null,
+      "differentiator": null,
+      "contrast_point": "different_approach"
+    },
+    {
+      "paper_ids": [
+        "1102.2017v2",
+        "2512.03377v2"
+      ],
+      "relation": "contrastive",
+      "shared_traits": null,
+      "differentiator": null,
+      "contrast_point": "different_approach"
+    },
+    {
+      "paper_ids": [
+        "1112.2954v2",
+        "2512.03377v2"
+      ],
+      "relation": "contrastive",
+      "shared_traits": null,
+      "differentiator": null,
+      "contrast_point": "different_approach"
+    },
+    {
+      "paper_ids": [
+        "2107.12614v1",
+        "2512.03377v2"
+      ],
+      "relation": "contrastive",
+      "shared_traits": null,
+      "differentiator": null,
+      "contrast_point": "different_approach"
+    }
+  ],
+  "output_path": "/data/output/rankings/2026-01-07_2026-01-07T16-00-51_ranked.json",
+  "generated_at": "2026-01-07T16:00:51.841601"
+}

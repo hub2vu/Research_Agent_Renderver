@@ -35,7 +35,15 @@ export default function UserProfileSettingsModal({
     setError(null);
     try {
       const loadedProfile = await getUserProfile();
-      setProfile(loadedProfile);
+      // Filter out empty arrays for preferred_authors and preferred_institutions
+      const cleanedProfile = { ...loadedProfile };
+      if (Array.isArray(cleanedProfile.preferred_authors) && cleanedProfile.preferred_authors.length === 0) {
+        cleanedProfile.preferred_authors = undefined;
+      }
+      if (Array.isArray(cleanedProfile.preferred_institutions) && cleanedProfile.preferred_institutions.length === 0) {
+        cleanedProfile.preferred_institutions = undefined;
+      }
+      setProfile(cleanedProfile);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load profile');
       // Set defaults if profile doesn't exist
@@ -48,8 +56,8 @@ export default function UserProfileSettingsModal({
         exclude_local_papers: false,
         interests: { primary: [], secondary: [], exploratory: [] },
         keywords: { must_include: [], exclude: { hard: [], soft: [] } },
-        preferred_authors: [],
-        preferred_institutions: [],
+        preferred_authors: undefined,
+        preferred_institutions: undefined,
         constraints: { min_year: 2000, require_code: false, exclude_local_papers: false },
       });
     } finally {
@@ -61,7 +69,16 @@ export default function UserProfileSettingsModal({
     setSaving(true);
     setError(null);
     try {
-      await updateUserProfile(profile);
+      // Clean up empty arrays - convert to undefined so they're not saved
+      const cleanedProfile = { ...profile };
+      if (Array.isArray(cleanedProfile.preferred_authors) && cleanedProfile.preferred_authors.length === 0) {
+        cleanedProfile.preferred_authors = undefined;
+      }
+      if (Array.isArray(cleanedProfile.preferred_institutions) && cleanedProfile.preferred_institutions.length === 0) {
+        cleanedProfile.preferred_institutions = undefined;
+      }
+      
+      await updateUserProfile(cleanedProfile);
       if (onSave) {
         onSave();
       }
@@ -398,10 +415,13 @@ export default function UserProfileSettingsModal({
                   </label>
                   <input
                     type="text"
-                    value={profile.preferred_authors?.join(', ') || ''}
+                    value={profile.preferred_authors && profile.preferred_authors.length > 0 
+                      ? profile.preferred_authors.join(', ') 
+                      : ''}
                     onChange={(e) => {
                       const values = e.target.value.split(',').map(s => s.trim()).filter(s => s);
-                      updateField(['preferred_authors'], values);
+                      // If empty, set to empty array (will be converted to undefined on save)
+                      updateField(['preferred_authors'], values.length > 0 ? values : []);
                     }}
                     placeholder="Enter preferred authors..."
                     style={{
@@ -421,10 +441,13 @@ export default function UserProfileSettingsModal({
                   </label>
                   <input
                     type="text"
-                    value={profile.preferred_institutions?.join(', ') || ''}
+                    value={profile.preferred_institutions && profile.preferred_institutions.length > 0 
+                      ? profile.preferred_institutions.join(', ') 
+                      : ''}
                     onChange={(e) => {
                       const values = e.target.value.split(',').map(s => s.trim()).filter(s => s);
-                      updateField(['preferred_institutions'], values);
+                      // If empty, set to empty array (will be converted to undefined on save)
+                      updateField(['preferred_institutions'], values.length > 0 ? values : []);
                     }}
                     placeholder="Enter preferred institutions..."
                     style={{

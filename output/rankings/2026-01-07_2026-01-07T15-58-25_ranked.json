@@ -1,0 +1,191 @@
+{
+  "success": true,
+  "error": null,
+  "summary": {
+    "input_count": 50,
+    "filtered_count": 0,
+    "scored_count": 50,
+    "output_count": 3,
+    "purpose": "general",
+    "ranking_mode": "novelty",
+    "profile_used": "users/profile.json",
+    "llm_verification_used": false,
+    "llm_calls_made": 0
+  },
+  "ranked_papers": [
+    {
+      "rank": 1,
+      "paper_id": "1102.2017v2",
+      "title": "Synthesis of Mechanism for single- and hybrid-tasks using Differential Evolution",
+      "authors": [
+        "F. Penunuri",
+        "R. Peon-Escalante",
+        "C. Villanueva",
+        "D. Pech-Oy"
+      ],
+      "published": "2011-02-10T00:50:54+00:00",
+      "score": {
+        "final": 0.265,
+        "breakdown": {
+          "semantic_relevance": 0.0,
+          "must_keywords": 1.0,
+          "author_trust": 1.0,
+          "institution_trust": 1.0,
+          "recency": 0.05,
+          "practicality": 0.0
+        },
+        "soft_penalty": -0.0,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_low"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR",
+        "PREFERRED_INSTITUTION",
+        "MUST_KEYWORD_MATCH",
+        "NO_CODE",
+        "OLDER_PAPER"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "1102.2017v2",
+        "title": "Synthesis of Mechanism for single- and hybrid-tasks using Differential Evolution",
+        "abstract": "The optimal dimensional synthesis for planar mechanisms using differential evolution (DE) is demonstrated. Four examples are included: in the first case, the synthesis of a mechanism for hybrid-tasks, considering path generation, function generation, and motion generation, is carried out. The second and third cases pertain to path generation, with and without prescribed timing. Finally, the synthesis of an Ackerman mechanism is reported. Order defect problem is solved by manipulating individuals instead of penalizing or discretizing the search space for the parameters. A technique that consists in applying a transformation in order to satisfy the Grashof and crank conditions to generate an initial elitist population is introduced. As a result, the evolutionary algorithm increases its efficiency.",
+        "authors": [
+          "F. Penunuri",
+          "R. Peon-Escalante",
+          "C. Villanueva",
+          "D. Pech-Oy"
+        ],
+        "published": "2011-02-10T00:50:54+00:00",
+        "categories": [
+          "cs.CE"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/1102.2017v2",
+        "github_url": null
+      }
+    },
+    {
+      "rank": 2,
+      "paper_id": "1112.2954v2",
+      "title": "Synthesis of Spherical 4R Mechanism for Path Generation using Differential Evolution",
+      "authors": [
+        "F. Penunuri",
+        "R. Peon-Escalante",
+        "C. Villanueva",
+        "Carlos A. Cruz-Villar"
+      ],
+      "published": "2011-12-13T16:48:05+00:00",
+      "score": {
+        "final": 0.265,
+        "breakdown": {
+          "semantic_relevance": 0.0,
+          "must_keywords": 1.0,
+          "author_trust": 1.0,
+          "institution_trust": 1.0,
+          "recency": 0.05,
+          "practicality": 0.0
+        },
+        "soft_penalty": -0.0,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_low"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR",
+        "PREFERRED_INSTITUTION",
+        "MUST_KEYWORD_MATCH",
+        "NO_CODE",
+        "OLDER_PAPER"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "1112.2954v2",
+        "title": "Synthesis of Spherical 4R Mechanism for Path Generation using Differential Evolution",
+        "abstract": "The problem of path generation for the spherical 4R mechanism is solved using the Differential Evolution algorithm (DE). Formulas for the spherical geodesics are employed in order to obtain the parametric equation for the generated trajectory. Direct optimization of the objective function gives the solution to the path generation task without prescribed timing. Therefore, there is no need to separate this task into two stages to make the optimization. Moreover, the order defect problem can be solved without difficulty by means of manipulations of the individuals in the DE algorithm. Two examples of optimum synthesis showing the simplicity and effectiveness of this approach are included.",
+        "authors": [
+          "F. Penunuri",
+          "R. Peon-Escalante",
+          "C. Villanueva",
+          "Carlos A. Cruz-Villar"
+        ],
+        "published": "2011-12-13T16:48:05+00:00",
+        "categories": [
+          "cs.CE"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/1112.2954v2",
+        "github_url": null
+      }
+    },
+    {
+      "rank": 3,
+      "paper_id": "2206.03003v2",
+      "title": "Transformer-based Personalized Attention Mechanism for Medical Images with Clinical Records",
+      "authors": [
+        "Yusuke Takagi",
+        "Noriaki Hashimoto",
+        "Hiroki Masuda",
+        "Hiroaki Miyoshi",
+        "Koichi Ohshima",
+        "Hidekata Hontani",
+        "Ichiro Takeuchi"
+      ],
+      "published": "2022-06-07T04:35:22+00:00",
+      "score": {
+        "final": 0.265,
+        "breakdown": {
+          "semantic_relevance": 0.0,
+          "must_keywords": 1.0,
+          "author_trust": 1.0,
+          "institution_trust": 1.0,
+          "recency": 0.05,
+          "practicality": 0.0
+        },
+        "soft_penalty": -0.0,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_low"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR",
+        "PREFERRED_INSTITUTION",
+        "MUST_KEYWORD_MATCH",
+        "NO_CODE",
+        "OLDER_PAPER"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "2206.03003v2",
+        "title": "Transformer-based Personalized Attention Mechanism for Medical Images with Clinical Records",
+        "abstract": "In medical image diagnosis, identifying the attention region, i.e., the region of interest for which the diagnosis is made, is an important task. Various methods have been developed to automatically identify target regions from given medical images. However, in actual medical practice, the diagnosis is made based not only on the images but also on a variety of clinical records. This means that pathologists examine medical images with some prior knowledge of the patients and that the attention regions may change depending on the clinical records. In this study, we propose a method called the Personalized Attention Mechanism (PersAM), by which the attention regions in medical images are adaptively changed according to the clinical records. The primary idea of the PersAM method is to encode the relationships between the medical images and clinical records using a variant of Transformer architecture. To demonstrate the effectiveness of the PersAM method, we applied it to a large-scale digital pathology problem of identifying the subtypes of 842 malignant lymphoma patients based on their gigapixel whole slide images and clinical records.",
+        "authors": [
+          "Yusuke Takagi",
+          "Noriaki Hashimoto",
+          "Hiroki Masuda",
+          "Hiroaki Miyoshi",
+          "Koichi Ohshima",
+          "Hidekata Hontani",
+          "Ichiro Takeuchi"
+        ],
+        "published": "2022-06-07T04:35:22+00:00",
+        "categories": [
+          "eess.IV",
+          "cs.CV"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2206.03003v2",
+        "github_url": null
+      }
+    }
+  ],
+  "filtered_papers": [],
+  "contrastive_paper": null,
+  "comparison_notes": [],
+  "output_path": "/data/output/rankings/2026-01-07_2026-01-07T15-58-25_ranked.json",
+  "generated_at": "2026-01-07T15:58:25.123708"
+}

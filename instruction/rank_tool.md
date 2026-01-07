@@ -1,19 +1,139 @@
-# `rank_and_filter_papers` Tool 가이드
+# Ranking Tools 가이드
+---
+
+## 0. Best Practice 워크플로우
+
+### 0.1 5개 도구의 조합 순서
+
+논문 검색 후 필터링 및 순위화를 수행하는 권장 워크플로우:
+
+```
+Phase 0: 준비 (Pre-flight)
+  ↓
+Phase 1: 필터링
+  ↓
+Phase 2: 점수 계산
+  ↓
+Phase 3: 순위화
+```
+
+### 0.2 단계별 상세 가이드
+
+#### Phase 0: 준비 (Pre-flight)
+
+**1. `update_user_profile` (선택적)**
+- **언제 사용**: 프로필을 처음 설정하거나 수정할 때
+- **파라미터**: `interests`, `keywords`, `exclude_local_papers` 등
+- **출력**: 업데이트된 프로필 경로
+- **참고**: 프로필이 이미 설정되어 있으면 스킵 가능
+
+#### Phase 1: 필터링
+
+**2. `apply_hard_filters`**
+- **입력**: 검색 결과 논문 리스트 (`papers`)
+- **기능**: 
+  - ALREADY_READ 필터 (히스토리 + 로컬 PDF, `exclude_local_papers`가 True일 때)
+  - BLACKLIST_KEYWORD 필터
+  - TOO_OLD 필터 (연도 제약)
+- **출력**: 
+  - `passed_papers`: 필터링을 통과한 논문들
+  - `filtered_papers`: 제거된 논문들과 사유
+- **중요**: 이 단계에서 `local_pdfs` 스캔이 수행됨 (필요시)
+
+#### Phase 2: 점수 계산
+
+**3. `calculate_semantic_scores`**
+- **입력**: `apply_hard_filters`의 `passed_papers`
+- **기능**: 
+  - 임베딩 기반 시맨틱 유사도 계산
+  - LLM 검증 (선택적, 중간 점수 논문에 대해)
+- **출력**: `scores` - 각 논문의 시맨틱 점수와 평가 방법
+
+**4. `evaluate_paper_metrics`**
+- **입력**: 
+  - `papers`: `apply_hard_filters`의 `passed_papers`
+  - `semantic_scores`: `calculate_semantic_scores`의 결과
+  - `local_pdfs` (선택적): `apply_hard_filters`에서 스캔한 결과를 전달하면 중복 스캔 방지
+- **기능**: 
+  - 6차원 지표 계산 (keywords, authors, institutions, recency, practicality)
+  - GitHub URL 자동 탐색 (PDF 텍스트에서, `github_url`이 없을 때만)
+  - Soft penalty 적용
+- **출력**: `scores` - 각 논문의 breakdown, penalty 정보
+- **최적화 팁**: `local_pdfs` 파라미터에 이전 단계 결과를 전달하여 I/O 중복 방지
+
+#### Phase 3: 순위화
+
+**5. `rank_and_select_top_k`**
+- **입력**: 
+  - `papers`: `apply_hard_filters`의 `passed_papers`
+  - `semantic_scores`: `calculate_semantic_scores`의 결과
+  - `metrics_scores`: `evaluate_paper_metrics`의 결과
+  - `local_pdfs` (선택적): 이전 단계에서 전달받은 결과 재사용
+- **기능**: 
+  - 최종 가중치 점수 계산
+  - Top-K 선택
+  - Contrastive 논문 선택 (선택적)
+  - 태깅 및 결과 저장
+- **출력**: 최종 순위화된 논문 리스트와 상세 정보
+
+### 0.3 데이터 흐름 다이어그램
+
+```
+[검색 결과]
+    ↓
+[apply_hard_filters]
+    ├─→ passed_papers ──┐
+    └─→ local_pdfs ──────┼─→ (재사용)
+                         │
+[calculate_semantic_scores]
+    └─→ semantic_scores ─┼─→
+                         │
+[evaluate_paper_metrics] │
+    ├─→ metrics_scores ──┼─→
+    └─→ (local_pdfs 재사용) │
+                         │
+[rank_and_select_top_k]  │
+    └─→ (local_pdfs 재사용) │
+                         │
+    [최종 결과] ←────────┘
+```
+
+### 0.4 최적화 가이드
+
+**I/O 중복 방지:**
+- `apply_hard_filters`에서 `local_pdfs` 스캔 수행
+- `evaluate_paper_metrics`와 `rank_and_select_top_k`에 `local_pdfs` 파라미터로 전달
+- 제공하지 않으면 각 도구가 자동으로 스캔 (하위 호환성 유지)
+
+**GitHub URL 자동 처리:**
+- `evaluate_paper_metrics`가 자동으로 GitHub URL을 탐색
+- 별도로 `check_github_link` 도구를 호출할 필요 없음
+- 단, PDF 텍스트가 먼저 추출되어 있어야 함 (`extract_text` 또는 `extract_all` 실행 필요)
+
+**프로필 관리:**
+- 프로필은 한 번 설정하면 재사용 가능
+- `exclude_local_papers` 토글만 변경하고 싶을 때만 `update_user_profile` 호출
+
 ---
 
 ## 1. 개요
 
 ### 1.1 Tool 정체성
 
-| 항목 | 내용 |
-|------|------|
-| **이름** | `rank_and_filter_papers` |
-| **역할** | 게이트키퍼 (Gatekeeper) |
-| **위치** | `mcp/tools/rank_filter.py` |
+
+| 도구 이름 | 역할 |
+|----------|------|
+| `update_user_profile` | 사용자 프로필 업데이트 (관심사, 키워드, 제약조건) |
+| `apply_hard_filters` | 하드 필터링 (이미 읽음, 블랙리스트, 연도) |
+| `calculate_semantic_scores` | 시맨틱 점수 계산 (임베딩 + LLM 검증) |
+| `evaluate_paper_metrics` | 지표 점수 계산 (6차원 + GitHub URL 자동 탐색) |
+| `rank_and_select_top_k` | 최종 순위화 및 Top-K 선택 |
+
+**위치**: `mcp/tools/rank_filter.py`
 
 ### 1.2 한 줄 설명
 
-검색된 논문의 **메타데이터(제목, 저자, 초록)**를 사용자 프로필과 대조하여 필터링하고, 다차원 스코어링으로 **Top-K를 선별**하는 도구
+검색된 논문의 **메타데이터(제목, 저자, 초록)**를 사용자 프로필과 대조하여 필터링하고, 다차원 스코어링으로 **Top-K를 선별**하는 도구 집합
 
 ### 1.3 핵심 가치
 
@@ -27,7 +147,12 @@
 
 ```
 mcp/tools/
-├── rank_filter.py                 # 메인 Tool 클래스
+├── rank_filter.py                 # 5개 Tool 클래스
+│   ├── UpdateUserProfileTool
+│   ├── ApplyHardFiltersTool
+│   ├── CalculateSemanticScoresTool
+│   ├── EvaluatePaperMetricsTool
+│   └── RankAndSelectTopKTool
 │
 └── rank_filter_utils/             # 유틸리티 모듈
     ├── __init__.py                # re-export
@@ -35,7 +160,7 @@ mcp/tools/
     ├── path_resolver.py           # 경로 해석 유틸리티
     ├── loaders.py                 # 프로필, 히스토리, PDF 로더
     ├── filters.py                 # 필터링 로직
-    ├── scorers.py                 # 스코어링 로직
+    ├── scores.py                  # 스코어링 로직
     ├── rankers.py                 # 순위화 및 Contrastive 선택
     └── formatters.py              # 태깅, 결과 포맷, 저장
 ```
@@ -45,48 +170,84 @@ mcp/tools/
 | 모듈 | 담당 Phase | 주요 함수 |
 |------|-----------|----------|
 | `types.py` | - | `PaperInput`, `UserProfile`, `FilteredPaper` 등 |
-| `path_resolver.py` | 0 | `resolve_path()`, `ensure_directory()` |
-| `loaders.py` | 1 | `load_profile()`, `load_history()`, `scan_local_pdfs()` |
-| `filters.py` | 2 | `filter_papers()` |
-| `scorers.py` | 3-5 | `calculate_embedding_scores()`, `verify_with_llm_batch()`, `calculate_final_score()` |
-| `rankers.py` | 6-7 | `rank_and_select()`, `select_contrastive_paper()` |
-| `formatters.py` | 8-9 | `generate_tags()`, `save_and_format_result()` |
+| `path_resolver.py` | - | `resolve_path()`, `ensure_directory()` |
+| `loaders.py` | - | `load_profile()`, `load_history()`, `scan_local_pdfs()` |
+| `filters.py` | 필터링 | `filter_papers()` |
+| `scores.py` | 점수 계산 | `_calculate_embedding_scores()`, `_verify_with_llm()`, `_calculate_final_score()` |
+| `rankers.py` | 순위화 | `_rank_and_select()`, `_select_contrastive_paper()` |
+| `formatters.py` | 포맷팅 | `_generate_tags()`, `_save_and_format_result()` |
 
 ---
 
-## 3. Parameters 상세
+## 3. 도구별 파라미터 상세
 
-### 3.1 필수 파라미터
+### 3.1 공통 데이터 구조
 
-#### `papers`
-- **타입:** `Array[Object]`
-- **설명:** 검색 도구가 반환한 논문 리스트
+#### `PaperInput`
+- **타입:** `Object`
+- **필수 필드:**
+  - `paper_id` (string): 논문 식별자 (예: "2501.12345")
+  - `title` (string): 논문 제목
+  - `abstract` (string): 초록
+  - `authors` (array): 저자 리스트
+- **선택 필드:** 
+  - `published` (string): 출판일 (YYYY-MM-DD)
+  - `categories` (array): arXiv 카테고리
+  - `pdf_url` (string): PDF 다운로드 URL
+  - `github_url` (string): GitHub 저장소 URL (자동 탐색 가능)
+  - `affiliations` (array): 소속 기관
+  - `semantic_score` (float): 사전 계산된 시맨틱 점수
+  - `metrics_score` (float): 사전 계산된 지표 점수
 
-**필수 필드:**
-```json
-{
-  "paper_id": "2501.12345",
-  "title": "논문 제목",
-  "abstract": "초록 내용",
-  "authors": ["저자1", "저자2"]
-}
-```
+### 3.2 도구별 파라미터
 
-**선택 필드:** `published`, `categories`, `pdf_url`, `github_url`, `affiliations`
-
-### 3.2 선택 파라미터
-
+#### `update_user_profile`
 | 파라미터 | 타입 | 기본값 | 설명 |
 |----------|------|--------|------|
-| `top_k` | integer | 5 | 반환할 최대 논문 수 |
-| `profile_path` | string | `"config/profile.json"` | 사용자 프로필 경로 |
-| `purpose` | enum | `"general"` | 사용 목적 |
-| `ranking_mode` | enum | `"balanced"` | 순위 결정 기준 |
-| `include_contrastive` | boolean | `false` | 대조적 논문 포함 여부 |
-| `contrastive_type` | enum | `"method"` | 대조 기준 |
-| `history_path` | string | `"history/read_papers.json"` | 읽은 논문 기록 |
+| `profile_path` | string | `"users/profile.json"` | 프로필 파일 경로 (OUTPUT_DIR 기준) |
+| `interests` | object | - | 관심사 객체: `{primary, secondary, exploratory}` |
+| `keywords` | object | - | 키워드 객체: `{must_include, exclude: {hard, soft}}` |
+| `exclude_local_papers` | boolean | `false` | 로컬 PDF를 이미 읽음으로 처리할지 여부 |
+
+#### `apply_hard_filters`
+| 파라미터 | 타입 | 기본값 | 설명 |
+|----------|------|--------|------|
+| `papers` | array | **필수** | 입력 논문 리스트 |
+| `profile_path` | string | `"users/profile.json"` | 프로필 경로 |
+| `history_path` | string | `"history/read_papers.json"` | 읽은 논문 기록 경로 |
 | `local_pdf_dir` | string | `"pdf/"` | 로컬 PDF 디렉토리 |
+| `purpose` | string | `"general"` | 연구 목적 (필터 조정용) |
+
+#### `calculate_semantic_scores`
+| 파라미터 | 타입 | 기본값 | 설명 |
+|----------|------|--------|------|
+| `papers` | array | **필수** | 필터링된 논문 리스트 |
+| `profile_path` | string | `"users/profile.json"` | 프로필 경로 |
 | `enable_llm_verification` | boolean | `true` | LLM 검증 활성화 |
+
+#### `evaluate_paper_metrics`
+| 파라미터 | 타입 | 기본값 | 설명 |
+|----------|------|--------|------|
+| `papers` | array | **필수** | 필터링된 논문 리스트 |
+| `semantic_scores` | object | **필수** | `calculate_semantic_scores`의 결과 |
+| `profile_path` | string | `"users/profile.json"` | 프로필 경로 |
+| `local_pdf_dir` | string | `"pdf/"` | 로컬 PDF 디렉토리 (local_pdfs 미제공 시 사용) |
+| `local_pdfs` | array | - | **최적화**: 이전 단계에서 스캔한 로컬 PDF ID 리스트 |
+
+#### `rank_and_select_top_k`
+| 파라미터 | 타입 | 기본값 | 설명 |
+|----------|------|--------|------|
+| `papers` | array | **필수** | 필터링된 논문 리스트 |
+| `semantic_scores` | object | **필수** | `calculate_semantic_scores`의 결과 |
+| `metrics_scores` | object | **필수** | `evaluate_paper_metrics`의 결과 |
+| `top_k` | integer | 5 | 반환할 최대 논문 수 |
+| `purpose` | string | `"general"` | 연구 목적 (가중치 조정용) |
+| `ranking_mode` | string | `"balanced"` | 순위 결정 기준 |
+| `include_contrastive` | boolean | `false` | 대조적 논문 포함 여부 |
+| `contrastive_type` | string | `"method"` | 대조 기준 |
+| `local_pdf_dir` | string | `"pdf/"` | 로컬 PDF 디렉토리 (local_pdfs 미제공 시 사용) |
+| `local_pdfs` | array | - | **최적화**: 이전 단계에서 스캔한 로컬 PDF ID 리스트 |
+| `profile_path` | string | `"users/profile.json"` | 결과 저장용 프로필 경로 |
 
 ### 3.3 Purpose 선택 가이드
 

@@ -1,0 +1,32 @@
+{
+  "interests": {
+    "primary": [],
+    "secondary": [],
+    "exploratory": []
+  },
+  "keywords": {
+    "must_include": [
+      "transformer"
+    ],
+    "exclude": {
+      "hard": [
+        "medical"
+      ],
+      "soft": [
+        "attention"
+      ]
+    }
+  },
+  "preferred_authors": [],
+  "preferred_institutions": [],
+  "constraints": {
+    "min_year": 2000,
+    "require_code": false,
+    "exclude_local_papers": true
+  },
+  "purpose": "general",
+  "ranking_mode": "balanced",
+  "top_k": 10,
+  "include_contrastive": true,
+  "contrastive_type": "method"
+}
