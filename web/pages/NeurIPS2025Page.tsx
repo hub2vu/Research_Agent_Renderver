@@ -195,35 +195,30 @@ export default function NeurIPS2025Page() {
 
   // Handle PDF download
   const handleDownloadPdf = useCallback(async () => {
-    if (!selectedNode) return;
+  if (!selectedNode) return;
+  const paper = papers.get(selectedNode.id);
+  if (!paper) return;
 
-    const paper = papers.get(selectedNode.id);
-    if (!paper) return;
+  setDownloadingPdf(true); // 로딩 표시 시작
+  try {
+    // [수정됨] 기존 'neurips2025_download_pdf' 대신 'process_neurips_paper' 호출
+    const result = await executeTool('process_neurips_paper', {
+      paper_id: paper.paper_id,
+      out_dir: '/data/pdf/neurips2025' // 이전에 수정한 경로 유지
+    });
 
-    setDownloadingPdf(true);
-    try {
-      // 2. 잘못된 fetch 호출을 executeTool 사용으로 변경
-      // 기존: /api/tools/call (X), action: 'pdf' (X)
-      // 수정: neurips2025_download_pdf 도구 호출, mode: 'download' 명시
-      const result = await executeTool('neurips2025_download_pdf', {
-        paper_id: paper.paper_id,
-        mode: 'download',
-        out_dir: '/data/pdf/neurips2025'
-      });
-
-      if (!result.success) { // result.error 대신 result.success로 확인하는 것이 더 정확함 (mcp/server.py 응답 구조 따름)
-         alert(`Download failed: ${result.error}`);
-      } else {
-         // 결과 메시지 등을 보여줌
-         const msg = result.results?.[0]?.saved_path 
-            ? `Saved to: ${result.results[0].saved_path}` 
-            : 'Download complete';
-         alert(`PDF downloaded successfully!\n${msg}`);
-      }
-    } catch (err) {
-      alert(`Download error: ${err instanceof Error ? err.message : 'Unknown error'}`);
-    } finally {
-      setDownloadingPdf(false);
+    if (!result.success) {
+      alert(`Pipeline failed: ${result.error}`);
+    } else {
+      // 결과 보여주기
+      const info = result.result?.pipeline_results;
+      const refCount = info?.ref_count || 0;
+      alert(`Process Complete!\n\n- PDF Saved: ${info?.pdf_path}\n- References Found: ${refCount}`);
+    }
+  } catch (err) {
+    alert(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+  } finally {
+    setDownloadingPdf(false); // 로딩 표시 끝
     }
   }, [selectedNode, papers]);
 
