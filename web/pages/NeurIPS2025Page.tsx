@@ -11,7 +11,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import GraphCanvas from '../components/GraphCanvas';
 import SidePanel from '../components/SidePanel';
-import { GraphNode, GraphEdge } from '../lib/mcp';
+import { GraphNode, GraphEdge, executeTool } from '../lib/mcp';
 import { useNodeColors } from '../hooks/useNodeColors';
 
 interface NeurIPSPaper {
@@ -202,23 +202,23 @@ export default function NeurIPS2025Page() {
 
     setDownloadingPdf(true);
     try {
-      const res = await fetch('/api/tools/call', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          tool_name: 'neurips2025_download_pdf',
-          arguments: {
-            paper_id: paper.paper_id,
-            action: 'pdf'
-          }
-        }),
+      // 2. 잘못된 fetch 호출을 executeTool 사용으로 변경
+      // 기존: /api/tools/call (X), action: 'pdf' (X)
+      // 수정: neurips2025_download_pdf 도구 호출, mode: 'download' 명시
+      const result = await executeTool('neurips2025_download_pdf', {
+        paper_id: paper.paper_id,
+        mode: 'download',
+        out_dir: '/data/pdf/neurips2025'
       });
 
-      const result = await res.json();
-      if (result.error) {
-        alert(`Download failed: ${result.error}`);
+      if (!result.success) { // result.error 대신 result.success로 확인하는 것이 더 정확함 (mcp/server.py 응답 구조 따름)
+         alert(`Download failed: ${result.error}`);
       } else {
-        alert(`PDF downloaded successfully!\n${result.result || ''}`);
+         // 결과 메시지 등을 보여줌
+         const msg = result.results?.[0]?.saved_path 
+            ? `Saved to: ${result.results[0].saved_path}` 
+            : 'Download complete';
+         alert(`PDF downloaded successfully!\n${msg}`);
       }
     } catch (err) {
       alert(`Download error: ${err instanceof Error ? err.message : 'Unknown error'}`);
