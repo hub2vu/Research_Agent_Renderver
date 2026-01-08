@@ -12,7 +12,7 @@ from contextlib import asynccontextmanager
 from typing import Any, Dict
 
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 from .registry import (
     execute_tool,
@@ -205,7 +205,13 @@ async def web_search(query: str, max_results: int = 5):
 class ArxivSearchRequest(BaseModel):
     """Request body for arXiv search."""
     query: str
-    max_results: int = 50
+    max_results: int = 30
+    
+    @field_validator('max_results')
+    @classmethod
+    def limit_max_results(cls, v):
+        """Limit max_results to 30 to avoid arXiv API rate limiting."""
+        return min(v, 30)
 
 
 @app.post("/arxiv/search-for-ranking")
@@ -251,12 +257,18 @@ async def search_arxiv_for_ranking(request: ArxivSearchRequest):
 class PipelineRequest(BaseModel):
     """Request body for pipeline execution."""
     query: str
-    max_results: int = 50
+    max_results: int = 30
     purpose: str = None
     ranking_mode: str = None
     top_k: int = None
     include_contrastive: bool = None
     contrastive_type: str = None
+    
+    @field_validator('max_results')
+    @classmethod
+    def limit_max_results(cls, v):
+        """Limit max_results to 30 to avoid arXiv API rate limiting."""
+        return min(v, 30)
 
 
 @app.post("/rank-filter/execute-pipeline")
