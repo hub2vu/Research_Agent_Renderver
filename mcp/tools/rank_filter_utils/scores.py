@@ -3,7 +3,9 @@ Scoring utilities for rank and filter papers tool.
 """
 
 import json
+import math
 import os
+import re
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Set, Tuple
 
@@ -47,11 +49,12 @@ WEIGHTS: Dict[str, Dict[str, float]] = {
 
 # Try to import OpenAI for LLM verification
 try:
-    from openai import OpenAI
+    from openai import OpenAI, AsyncOpenAI
     HAS_OPENAI = True
 except ImportError:
     HAS_OPENAI = False
     OpenAI = None  # type: ignore
+    AsyncOpenAI = None  # type: ignore
 
 # Try to import sentence-transformers
 try:
@@ -68,6 +71,40 @@ try:
 except ImportError:
     HAS_SKLEARN = False
     cosine_similarity = None  # type: ignore
+
+# Try to import numpy for weighted average embeddings
+try:
+    import numpy as np
+    HAS_NUMPY = True
+except ImportError:
+    HAS_NUMPY = False
+    np = None  # type: ignore
+
+# Interest group weights for weighted average embedding
+INTEREST_WEIGHTS: Dict[str, float] = {
+    "primary": 1.0,
+    "secondary": 0.7,
+    "exploratory": 0.4
+}
+
+# Module-level model cache for singleton pattern
+_embedding_model_cache = None
+
+
+def _get_embedding_model():
+    """
+    Get or create the embedding model (singleton pattern).
+    
+    Returns the cached SentenceTransformer model, loading it only once.
+    Returns None if sentence-transformers is not available or loading fails.
+    """
+    global _embedding_model_cache
+    if _embedding_model_cache is None and HAS_SENTENCE_TRANSFORMERS:
+        try:
+            _embedding_model_cache = SentenceTransformer('all-MiniLM-L6-v2')
+        except Exception:
+            _embedding_model_cache = None
+    return _embedding_model_cache
 
 
 def _calculate_embedding_scores(
@@ -88,39 +125,38 @@ def _calculate_embedding_scores(
     Returns:
         Dictionary mapping paper_id to embedding score (0.0-1.0)
     """
-    # Try to use embedding model
-    if HAS_SENTENCE_TRANSFORMERS and HAS_SKLEARN:
+    # Try to use embedding model (singleton pattern - model loaded once)
+    model = _get_embedding_model()
+    if model is not None and HAS_SKLEARN and HAS_NUMPY:
         try:
-            model = SentenceTransformer('all-MiniLM-L6-v2')
+            # Build weighted average embedding from interest groups
+            # Each group (primary, secondary, exploratory) is encoded separately,
+            # then combined using weighted average for mathematically accurate representation
             
-            # Build interests text with weights
-            # primary: 1.0, secondary: 0.7, exploratory: 0.4
-            # Repeat keywords proportionally to reflect weights
-            interests_text_parts = []
+            # Get embedding dimension from a test encode
+            test_embedding = model.encode(["test"])
+            embedding_dim = test_embedding.shape[1]
             
-            # Primary interests (weight 1.0) - repeat 3 times to give highest weight
-            for interest in profile["interests"]["primary"]:
-                for _ in range(3):  # Repeat 3 times for weight 1.0
-                    interests_text_parts.append(interest)
+            weighted_sum = np.zeros(embedding_dim)
+            total_weight = 0.0
             
-            # Secondary interests (weight 0.7) - repeat 2 times
-            for interest in profile["interests"]["secondary"]:
-                for _ in range(2):  # Repeat 2 times for weight ~0.67
-                    interests_text_parts.append(interest)
+            for group_name, weight in INTEREST_WEIGHTS.items():
+                interests = profile["interests"].get(group_name, [])
+                if interests:
+                    # Encode all interests in this group
+                    group_embeddings = model.encode(interests)
+                    # Calculate mean embedding for this group
+                    group_mean = np.mean(group_embeddings, axis=0)
+                    # Add to weighted sum
+                    weighted_sum += weight * group_mean
+                    total_weight += weight
             
-            # Exploratory interests (weight 0.4) - repeat 1 time
-            for interest in profile["interests"]["exploratory"]:
-                interests_text_parts.append(interest)  # Repeat 1 time for weight 0.33
-            
-            # Combine interests into a single text
-            interests_text = " ".join(interests_text_parts)
-            
-            # If no interests, return zero scores
-            if not interests_text.strip():
+            # If no interests at all, return zero scores
+            if total_weight == 0.0:
                 return {paper["paper_id"]: 0.0 for paper in papers}
             
-            # Generate interests embedding
-            interests_embedding = model.encode([interests_text])[0]
+            # Calculate final weighted average embedding
+            interests_embedding = weighted_sum / total_weight
             
             # Generate paper embeddings (batch processing)
             paper_texts = []
@@ -262,7 +298,7 @@ def _classify_papers_by_score(
     return (high_group, mid_group, low_group)
 
 
-def _verify_with_llm(
+async def _verify_with_llm(
     papers: List[PaperInput],
     profile: UserProfile,
     batch_size: int = 5
@@ -279,7 +315,7 @@ def _verify_with_llm(
         Dictionary mapping paper_id to (llm_score, reason) tuple.
         If LLM verification fails for a paper, returns (0.0, "") for that paper.
     """
-    if not HAS_OPENAI:
+    if not HAS_OPENAI or AsyncOpenAI is None:
         # If OpenAI is not available, return empty results
         return {paper["paper_id"]: (0.0, "") for paper in papers}
     
@@ -291,7 +327,7 @@ def _verify_with_llm(
         return {paper["paper_id"]: (0.0, "") for paper in papers}
     
     try:
-        client = OpenAI(api_key=api_key)
+        client = AsyncOpenAI(api_key=api_key)
     except Exception:
         return {paper["paper_id"]: (0.0, "") for paper in papers}
     
@@ -328,8 +364,8 @@ def _verify_with_llm(
 """
         
         try:
-            # Call LLM
-            response = client.chat.completions.create(
+            # Call LLM (async)
+            response = await client.chat.completions.create(
                 model=model,
                 messages=[
                     {"role": "system", "content": "You are a research paper evaluation assistant. Always respond with valid JSON array."},
@@ -506,19 +542,20 @@ def _calculate_dimension_scores(
         scores["must_keywords"] = found_count / len(must_keywords)
     
     # 3. author_trust: Check if any preferred author is in authors list
+    # Uses word boundary regex to avoid false positives (e.g., "Lee" matching "Leeann")
     preferred_authors = profile["preferred_authors"]
     if not preferred_authors:
         scores["author_trust"] = 1.0  # No preferences = perfect score
     else:
-        # Normalize author names for comparison (case-insensitive)
-        paper_authors_lower = [a.lower().strip() for a in authors]
-        preferred_authors_lower = [a.lower().strip() for a in preferred_authors]
-        
-        # Check if any preferred author matches (exact or substring)
         found = False
-        for pref_author in preferred_authors_lower:
-            for paper_author in paper_authors_lower:
-                if pref_author in paper_author or paper_author in pref_author:
+        for pref_author in preferred_authors:
+            # Escape special regex characters and create word boundary pattern
+            pref_author_escaped = re.escape(pref_author.strip())
+            # Use word boundary \b for exact word matching (case-insensitive)
+            pattern = rf'\b{pref_author_escaped}\b'
+            
+            for paper_author in authors:
+                if re.search(pattern, paper_author, re.IGNORECASE):
                     found = True
                     break
             if found:
@@ -527,21 +564,22 @@ def _calculate_dimension_scores(
         scores["author_trust"] = 1.0 if found else 0.0
     
     # 4. institution_trust: Check preferred_institutions against affiliations
+    # Uses word boundary regex to avoid false positives
     preferred_institutions = profile["preferred_institutions"]
     if not preferred_institutions:
         scores["institution_trust"] = 1.0  # No preferences = perfect score
     elif not affiliations:
         scores["institution_trust"] = 0.0  # No affiliations = no trust
     else:
-        # Normalize for comparison (case-insensitive)
-        affiliations_lower = [aff.lower().strip() for aff in affiliations]
-        preferred_inst_lower = [inst.lower().strip() for inst in preferred_institutions]
-        
-        # Check if any preferred institution is found (substring match)
         found = False
-        for pref_inst in preferred_inst_lower:
-            for aff in affiliations_lower:
-                if pref_inst in aff or aff in pref_inst:
+        for pref_inst in preferred_institutions:
+            # Escape special regex characters and create word boundary pattern
+            pref_inst_escaped = re.escape(pref_inst.strip())
+            # Use word boundary \b for exact word matching (case-insensitive)
+            pattern = rf'\b{pref_inst_escaped}\b'
+            
+            for aff in affiliations:
+                if re.search(pattern, aff, re.IGNORECASE):
                     found = True
                     break
             if found:
@@ -549,9 +587,14 @@ def _calculate_dimension_scores(
         
         scores["institution_trust"] = 1.0 if found else 0.0
     
-    # 5. recency: Calculate based on published date
+    # 5. recency: Calculate based on published date using exponential decay
+    # Formula: score = exp(-λ * days) where λ is the decay rate
+    # λ is calibrated so that score ≈ 0.1 at 365 days: λ = -ln(0.1) / 365 ≈ 0.0063
+    RECENCY_DECAY_RATE = 0.0063  # Decay rate (λ)
+    RECENCY_MIN_SCORE = 0.05    # Minimum score floor for very old papers
+    
     if not published:
-        scores["recency"] = 0.1  # No date = very old
+        scores["recency"] = RECENCY_MIN_SCORE  # No date = assume very old
     else:
         try:
             # Parse date (YYYY-MM-DD format)
@@ -559,23 +602,18 @@ def _calculate_dimension_scores(
             now = datetime.now()
             time_diff = now - pub_date
             
-            days_diff = time_diff.days
+            days_diff = max(0, time_diff.days)  # Ensure non-negative
             
-            if days_diff <= 14:  # 2 weeks
-                scores["recency"] = 1.0
-            elif days_diff <= 30:  # 1 month
-                scores["recency"] = 0.85
-            elif days_diff <= 90:  # 3 months
-                scores["recency"] = 0.7
-            elif days_diff <= 180:  # 6 months
-                scores["recency"] = 0.5
-            elif days_diff <= 365:  # 1 year
-                scores["recency"] = 0.3
-            else:  # More than 1 year
-                scores["recency"] = 0.1
+            # Exponential decay: score = exp(-λ * days)
+            # This provides smooth, continuous decay instead of step function
+            recency_score = math.exp(-RECENCY_DECAY_RATE * days_diff)
+            
+            # Clamp to [RECENCY_MIN_SCORE, 1.0]
+            scores["recency"] = max(RECENCY_MIN_SCORE, min(1.0, recency_score))
+            
         except (ValueError, TypeError):
             # Invalid date format
-            scores["recency"] = 0.1
+            scores["recency"] = RECENCY_MIN_SCORE
     
     # 6. practicality: github_url + local_pdfs
     # Note: github_url is used for scoring (bonus points) only, not for filtering.

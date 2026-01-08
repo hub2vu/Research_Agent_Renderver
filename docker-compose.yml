@@ -10,6 +10,7 @@ services:
     volumes:
       - ./pdf:/data/pdf
       - ./output:/data/output
+      - ./tests:/app/tests
     environment:
       - PDF_DIR=/data/pdf
       - OUTPUT_DIR=/data/output

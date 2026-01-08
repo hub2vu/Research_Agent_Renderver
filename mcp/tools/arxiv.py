@@ -5,6 +5,7 @@ Provides tools for searching and fetching papers from arXiv.
 Uses the arxiv Python API.
 """
 
+import asyncio
 import os
 from typing import Any, Dict, List, Optional
 
@@ -70,6 +71,11 @@ class ArxivSearchTool(MCPTool):
                 tool_name=self.name
             )
 
+        # Limit max_results to 30 to avoid rate limiting
+        # arXiv API has rate limits and pagination causes multiple requests
+        # When max_results > 30, arxiv library uses pagination which triggers rate limits
+        max_results = min(max_results, 30)
+
         # Map sort option
         sort_map = {
             "relevance": arxiv.SortCriterion.Relevance,
@@ -77,6 +83,9 @@ class ArxivSearchTool(MCPTool):
             "submittedDate": arxiv.SortCriterion.SubmittedDate
         }
         sort_criterion = sort_map.get(sort_by, arxiv.SortCriterion.Relevance)
+
+        # Add delay before request to avoid rate limiting (arXiv recommends 3 seconds between requests)
+        await asyncio.sleep(3)
 
         try:
             search = arxiv.Search(
@@ -106,7 +115,15 @@ class ArxivSearchTool(MCPTool):
             }
 
         except Exception as e:
-            raise ExecutionError(f"arXiv search failed: {str(e)}", tool_name=self.name)
+            error_str = str(e)
+            # Check if it's a rate limit error
+            if "429" in error_str or "rate limit" in error_str.lower():
+                raise ExecutionError(
+                    f"arXiv API rate limit exceeded. Please wait a few minutes and try again. "
+                    f"Error: {error_str}",
+                    tool_name=self.name
+                )
+            raise ExecutionError(f"arXiv search failed: {error_str}", tool_name=self.name)
 
 
 class ArxivGetPaperTool(MCPTool):

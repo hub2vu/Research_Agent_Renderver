@@ -237,3 +237,137 @@ export async function processAllPdfs(): Promise<any> {
 
   return result.result;
 }
+
+// ==================== Rank Filter API ====================
+
+export interface PaperInput {
+  paper_id: string;
+  title: string;
+  abstract: string;
+  authors: string[];
+  published?: string;
+  categories?: string[];
+  pdf_url?: string;
+  github_url?: string | null;
+}
+
+export interface RankFilterPipelineParams {
+  query: string;
+  max_results?: number;
+  purpose?: string;
+  ranking_mode?: string;
+  top_k?: number;
+  include_contrastive?: boolean;
+  contrastive_type?: string;
+}
+
+export interface UserProfile {
+  interests: {
+    primary: string[];
+    secondary: string[];
+    exploratory: string[];
+  };
+  keywords: {
+    must_include: string[];
+    exclude: {
+      hard: string[];
+      soft: string[];
+    };
+  };
+  preferred_authors: string[];
+  preferred_institutions: string[];
+  constraints: {
+    min_year: number;
+    require_code: boolean;
+    exclude_local_papers: boolean;
+  };
+  purpose?: string;
+  ranking_mode?: string;
+  top_k?: number;
+  include_contrastive?: boolean;
+  contrastive_type?: string;
+}
+
+/**
+ * Search arXiv and convert results to PaperInput format
+ */
+export async function searchArxivForRanking(
+  query: string,
+  maxResults: number = 50
+): Promise<{
+  query: string;
+  total_results: number;
+  papers: PaperInput[];
+}> {
+  const response = await fetch(`${MCP_BASE_URL}/arxiv/search-for-ranking`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query, max_results: maxResults })
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to search arXiv: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Execute the full rank and filter pipeline
+ */
+export async function executeRankFilterPipeline(
+  params: RankFilterPipelineParams
+): Promise<any> {
+  const response = await fetch(`${MCP_BASE_URL}/rank-filter/execute-pipeline`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params)
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: response.statusText }));
+    throw new Error(error.detail || 'Failed to execute pipeline');
+  }
+
+  return response.json();
+}
+
+/**
+ * Get user profile
+ */
+export async function getUserProfile(
+  profilePath: string = 'users/profile.json'
+): Promise<UserProfile> {
+  const response = await fetch(`${MCP_BASE_URL}/rank-filter/profile?profile_path=${encodeURIComponent(profilePath)}`);
+
+  if (!response.ok) {
+    throw new Error(`Failed to get profile: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  return data.profile;
+}
+
+/**
+ * Update user profile
+ */
+export async function updateUserProfile(
+  profile: Partial<UserProfile>,
+  profilePath: string = 'users/profile.json'
+): Promise<any> {
+  const response = await fetch(`${MCP_BASE_URL}/rank-filter/profile`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      profile_path: profilePath,
+      ...profile
+    })
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: response.statusText }));
+    throw new Error(error.detail || 'Failed to update profile');
+  }
+
+  return response.json();
+}
