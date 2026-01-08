@@ -122,28 +122,10 @@ class NeuripsPipelineTool(MCPTool):
         else:
             results_summary["global_graph_error"] = global_graph_res.get("error")
 
-        # ---------------------------------------------------------
-        # 5단계: Reference Subgraph 생성 (folder_name 사용)
-        # ---------------------------------------------------------
-        graph_paper_id = folder_name if folder_name else paper_id
-        print(f"[Pipeline] 5. Building Reference Subgraph for {graph_paper_id}...")
-
-        ref_graph_res = await execute_tool(
-            "build_reference_subgraph",
-            paper_id=graph_paper_id,
-            depth=1,
-            existing_nodes=[]
-        )
-        
-        if ref_graph_res["success"]:
-            nodes = ref_graph_res["result"].get("new_nodes", [])
-            edges = ref_graph_res["result"].get("new_edges", [])
-            results_summary["reference_graph"] = {
-                "nodes_count": len(nodes),
-                "edges_count": len(edges)
-            }
-        else:
-            results_summary["reference_graph_error"] = ref_graph_res.get("error")
+        # NOTE: Step 5 (build_reference_subgraph) removed
+        # PaperGraphPage directly fetches /output/{paperId}/reference_titles.json
+        # The subgraph tool was causing UI state to switch to "paper" mode,
+        # which forced navigation away from Global Graph page.
 
         return {
             "message": "Pipeline completed successfully",
