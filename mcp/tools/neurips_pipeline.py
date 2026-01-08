@@ -77,28 +77,34 @@ class NeuripsPipelineTool(MCPTool):
         if not extract_res["success"]:
             return {"error": f"Extraction failed: {extract_res.get('error')}", "partial_result": results_summary}
 
-        extracted_text = extract_res["result"].get("text", "")
-        results_summary["text_extracted"] = bool(extracted_text)
+        # Get the output folder name from extract_all result
+        output_directory = extract_res["result"].get("output_directory", "")
+        folder_name = os.path.basename(output_directory) if output_directory else ""
+        results_summary["text_extracted"] = bool(folder_name)
+        results_summary["output_folder"] = folder_name
 
         # ---------------------------------------------------------
-        # 3단계: 레퍼런스 추출
+        # 3단계: 레퍼런스 추출 (reference_titles.json 생성)
         # ---------------------------------------------------------
-        print(f"[Pipeline] 3. Extracting references...")
-        
-        if extracted_text:
+        print(f"[Pipeline] 3. Extracting references from {folder_name}...")
+
+        if folder_name:
+            # Use extract_reference_titles (refer.py) to parse references from extracted_text.txt
+            # This creates reference_titles.json in the output folder
             ref_res = await execute_tool(
-                "extract_references",
-                text=extracted_text,
-                paper_id=paper_id
+                "extract_reference_titles",
+                filename=folder_name,
+                save_files=True
             )
-            
+
             if ref_res["success"]:
-                ref_count = len(ref_res["result"].get("references", []))
-                results_summary["references_found"] = ref_count
+                ref_count = ref_res["result"].get("titles_extracted", 0)
+                results_summary["ref_count"] = ref_count
+                results_summary["references_detected"] = ref_res["result"].get("references_detected", 0)
             else:
                 results_summary["ref_warning"] = f"Reference extraction failed: {ref_res.get('error')}"
         else:
-            results_summary["ref_warning"] = "No text extracted, skipping reference extraction."
+            results_summary["ref_warning"] = "No output folder found, skipping reference extraction."
 
         # ---------------------------------------------------------
         # 4단계: Global Graph 생성 (업데이트)
@@ -117,13 +123,14 @@ class NeuripsPipelineTool(MCPTool):
             results_summary["global_graph_error"] = global_graph_res.get("error")
 
         # ---------------------------------------------------------
-        # 5단계: Reference Subgraph 생성
+        # 5단계: Reference Subgraph 생성 (folder_name 사용)
         # ---------------------------------------------------------
-        print(f"[Pipeline] 5. Building Reference Subgraph for {paper_id}...")
-        
+        graph_paper_id = folder_name if folder_name else paper_id
+        print(f"[Pipeline] 5. Building Reference Subgraph for {graph_paper_id}...")
+
         ref_graph_res = await execute_tool(
             "build_reference_subgraph",
-            paper_id=paper_id,
+            paper_id=graph_paper_id,
             depth=1,
             existing_nodes=[]
         )
