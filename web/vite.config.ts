@@ -192,7 +192,7 @@ export default defineConfig({
           }
         });
 
-        // API: POST /api/chat - Forward chat to MCP server
+        // API: POST /api/chat - Forward chat to Agent server
         server.middlewares.use('/api/chat', async (req: IncomingMessage, res: ServerResponse, next) => {
           if (req.method === 'OPTIONS') {
             res.setHeader('Access-Control-Allow-Origin', '*');
@@ -216,9 +216,10 @@ export default defineConfig({
             const body = await readJsonBody(req);
             const message = body.message || '';
 
-            // Forward to MCP server's chat endpoint
-            const mcpUrl = process.env.MCP_SERVER_URL || 'http://mcp-server:8000';
-            const chatRes = await fetch(`${mcpUrl}/chat`, {
+            // [수정됨] Agent 서버(8001)로 요청 전달
+            const agentUrl = 'http://research-agent:8001';
+            
+            const chatRes = await fetch(`${agentUrl}/chat`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ message, history: body.history || [] })
@@ -228,20 +229,18 @@ export default defineConfig({
               const data = await chatRes.json();
               res.end(JSON.stringify(data));
             } else {
-              // Fallback response if MCP doesn't have chat endpoint
               res.end(JSON.stringify({
-                response: `Chat endpoint not available. To use the LLM agent, run:\n\ndocker compose run --rm agent\n\nYour message was: "${message}"`
+                response: `Agent server returned error: ${chatRes.statusText}`
               }));
             }
           } catch (err) {
             res.end(JSON.stringify({
-              response: `Chat service unavailable. Run the agent with:\n\ndocker compose run --rm agent`
+              response: `Chat service unavailable. Error: ${String(err)}`
             }));
           }
         });
 
         // API: GET /api/neurips/similarities - Get pre-computed similarities
-        // This returns edges based on embedding similarities (computed from embeddings.npy)
         server.middlewares.use('/api/neurips/similarities', (req: IncomingMessage, res: ServerResponse, next) => {
           if (req.method === 'OPTIONS') {
             res.setHeader('Access-Control-Allow-Origin', '*');
@@ -254,13 +253,11 @@ export default defineConfig({
           res.setHeader('Content-Type', 'application/json');
 
           try {
-            // Check if pre-computed similarities file exists
             const simPath = '/app/data/embeddings_Neu/similarities.json';
             if (fs.existsSync(simPath)) {
               const data = fs.readFileSync(simPath, 'utf-8');
               res.end(data);
             } else {
-              // Return empty - will be computed by Python script
               res.end(JSON.stringify({ edges: [], message: 'Run compute_similarities.py to generate' }));
             }
           } catch (err) {
@@ -282,11 +279,10 @@ export default defineConfig({
           res.setHeader('Content-Type', 'application/json');
 
           try {
-            // Parse k from query string (default: 15)
             const url = new URL(req.url || '', `http://${req.headers.host}`);
             const kParam = url.searchParams.get('k');
             const k = kParam ? parseInt(kParam, 10) : 15;
-            const validK = Math.max(5, Math.min(30, k)); // Clamp to 5-30
+            const validK = Math.max(5, Math.min(30, k));
 
             const clusterPath = `/app/data/embeddings_Neu/neurips_clusters_k${validK}.json`;
             if (fs.existsSync(clusterPath)) {
@@ -305,17 +301,13 @@ export default defineConfig({
     {
       name: 'serve-output-files',
       configureServer(server) {
-        // Middleware to serve files from /output directory
         server.middlewares.use('/output', (req, res, next) => {
           try {
-            // Decode URL and construct file path
             const decodedUrl = decodeURIComponent(req.url || '');
             const filePath = path.join('/app/output', decodedUrl);
 
             if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
               const ext = path.extname(filePath).toLowerCase();
-
-              // Set appropriate content type
               const contentTypes: Record<string, string> = {
                 '.json': 'application/json',
                 '.txt': 'text/plain',
@@ -328,7 +320,6 @@ export default defineConfig({
               res.setHeader('Access-Control-Allow-Origin', '*');
               fs.createReadStream(filePath).pipe(res);
             } else {
-              // File not found
               res.statusCode = 404;
               res.end(`File not found: ${decodedUrl}`);
             }
@@ -353,7 +344,6 @@ export default defineConfig({
       }
     },
     fs: {
-      // Allow serving files from output directory
       allow: ['.', '/app/output', '../output']
     }
   },

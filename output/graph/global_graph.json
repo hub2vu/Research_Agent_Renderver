@@ -39,7 +39,7 @@
   "meta": {
     "total_papers": 3,
     "total_edges": 2,
-    "similarity_threshold": 0.5,
+    "similarity_threshold": 0.55,
     "used_embeddings": true,
     "titles": {
       "10.48550_arxiv.2201.07207": "Language Models as Zero-Shot Planners: Extracting Actionable Knowledge for Embodied Agents",
