@@ -167,6 +167,41 @@ export default function PaperResultCard({ paper, onDownloadPdf }: PaperResultCar
               <div>Recency: {formatScore(paper.score.breakdown.recency)}%</div>
               <div>Practicality: {formatScore(paper.score.breakdown.practicality)}%</div>
             </div>
+            
+            {/* Low Score Warning */}
+            {paper.score.final < 0.3 && (
+              <div style={{
+                marginTop: '12px',
+                padding: '10px',
+                backgroundColor: '#f5656515',
+                border: '1px solid #f5656530',
+                borderRadius: '4px',
+                fontSize: '11px',
+                color: '#f56565',
+              }}>
+                <div style={{ fontWeight: 500, marginBottom: '6px' }}>
+                  ⚠️ Low Score - Improvement Tips:
+                </div>
+                <ul style={{ margin: 0, paddingLeft: '20px', lineHeight: 1.6 }}>
+                  {paper.score.breakdown.semantic_relevance < 0.3 && (
+                    <li>Set your research interests in Profile Settings (affects 30% of score)</li>
+                  )}
+                  {paper.score.breakdown.recency < 0.3 && (
+                    <li>This paper is older. Recent papers score higher in recency (20% of score)</li>
+                  )}
+                  {paper.score.breakdown.practicality < 0.2 && (
+                    <li>No code/GitHub URL found. Papers with code get bonus points (15% of score)</li>
+                  )}
+                  {paper.score.breakdown.author_trust === 0 && (
+                    <li>Author not in preferred list (if set, affects 15% of score)</li>
+                  )}
+                  {paper.score.breakdown.institution_trust === 0 && (
+                    <li>Institution not in preferred list (if set, affects 10% of score)</li>
+                  )}
+                </ul>
+              </div>
+            )}
+
             {paper.score.soft_penalty < 0 && (
               <div style={{ color: '#f56565', marginTop: '8px' }}>
                 Penalty: {formatScore(paper.score.soft_penalty)}%

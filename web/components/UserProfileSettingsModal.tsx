@@ -23,12 +23,43 @@ export default function UserProfileSettingsModal({
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Input values state to allow typing spaces and commas freely
+  const [inputValues, setInputValues] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (isOpen) {
       loadProfile();
     }
   }, [isOpen]);
+
+  // Helper function to parse comma-separated values
+  const parseCommaSeparated = (value: string): string[] => {
+    return value.split(',').map(s => s.trim()).filter(s => s);
+  };
+
+  // Handle input change - update both input value and profile
+  const handleInputChange = (key: string, value: string) => {
+    // Update input value (raw string)
+    setInputValues(prev => ({ ...prev, [key]: value }));
+    
+    // Parse and update profile
+    const parsed = parseCommaSeparated(value);
+    
+    if (key.startsWith('interests.')) {
+      const level = key.split('.')[1];
+      updateField(['interests', level], parsed);
+    } else if (key === 'keywords.must_include') {
+      updateField(['keywords', 'must_include'], parsed);
+    } else if (key === 'keywords.exclude.hard') {
+      updateField(['keywords', 'exclude', 'hard'], parsed);
+    } else if (key === 'keywords.exclude.soft') {
+      updateField(['keywords', 'exclude', 'soft'], parsed);
+    } else if (key === 'preferred_authors') {
+      updateField(['preferred_authors'], parsed.length > 0 ? parsed : []);
+    } else if (key === 'preferred_institutions') {
+      updateField(['preferred_institutions'], parsed.length > 0 ? parsed : []);
+    }
+  };
 
   const loadProfile = async () => {
     setLoading(true);
@@ -44,6 +75,18 @@ export default function UserProfileSettingsModal({
         cleanedProfile.preferred_institutions = undefined;
       }
       setProfile(cleanedProfile);
+      
+      // Initialize input values from profile
+      setInputValues({
+        'interests.primary': cleanedProfile.interests?.primary?.join(', ') || '',
+        'interests.secondary': cleanedProfile.interests?.secondary?.join(', ') || '',
+        'interests.exploratory': cleanedProfile.interests?.exploratory?.join(', ') || '',
+        'keywords.must_include': cleanedProfile.keywords?.must_include?.join(', ') || '',
+        'keywords.exclude.hard': cleanedProfile.keywords?.exclude?.hard?.join(', ') || '',
+        'keywords.exclude.soft': cleanedProfile.keywords?.exclude?.soft?.join(', ') || '',
+        'preferred_authors': cleanedProfile.preferred_authors?.join(', ') || '',
+        'preferred_institutions': cleanedProfile.preferred_institutions?.join(', ') || '',
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load profile');
       // Set defaults if profile doesn't exist
@@ -59,6 +102,17 @@ export default function UserProfileSettingsModal({
         preferred_authors: undefined,
         preferred_institutions: undefined,
         constraints: { min_year: 2000, require_code: false, exclude_local_papers: false },
+      });
+      // Initialize input values with defaults
+      setInputValues({
+        'interests.primary': '',
+        'interests.secondary': '',
+        'interests.exploratory': '',
+        'keywords.must_include': '',
+        'keywords.exclude.hard': '',
+        'keywords.exclude.soft': '',
+        'preferred_authors': '',
+        'preferred_institutions': '',
       });
     } finally {
       setLoading(false);
@@ -305,6 +359,41 @@ export default function UserProfileSettingsModal({
               {/* Interests */}
               <div style={{ marginBottom: '24px' }}>
                 <h3 style={{ color: '#fff', fontSize: '14px', marginBottom: '12px' }}>Interests</h3>
+                
+                {/* Info Box */}
+                <div style={{
+                  marginBottom: '12px',
+                  padding: '10px',
+                  backgroundColor: '#2d3748',
+                  borderRadius: '4px',
+                  fontSize: '11px',
+                  color: '#a0aec0',
+                  border: '1px solid #4a5568',
+                }}>
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '6px', 
+                    marginBottom: '6px',
+                    color: '#e2e8f0',
+                    fontWeight: 500,
+                  }}>
+                    <span>📊</span>
+                    <span>This affects 30% of your paper scores!</span>
+                  </div>
+                  <div style={{ lineHeight: 1.6 }}>
+                    • <strong>Primary:</strong> Main research topics (e.g., "transformer", "attention")
+                    <br />
+                    • <strong>Secondary:</strong> Related areas (e.g., "NLP", "computer vision")
+                    <br />
+                    • <strong>Exploratory:</strong> Areas you want to explore (e.g., "reinforcement learning")
+                    <br />
+                    <div style={{ marginTop: '6px', fontStyle: 'italic', color: '#718096' }}>
+                      ⚠️ Leaving interests empty will result in lower semantic scores (0-30% range)
+                    </div>
+                  </div>
+                </div>
+
                 {['primary', 'secondary', 'exploratory'].map((level) => (
                   <div key={level} style={{ marginBottom: '12px' }}>
                     <label style={{ display: 'block', color: '#a0aec0', fontSize: '12px', marginBottom: '4px', textTransform: 'capitalize' }}>
@@ -312,10 +401,12 @@ export default function UserProfileSettingsModal({
                     </label>
                     <input
                       type="text"
-                      value={(profile.interests?.[level as keyof typeof profile.interests] as string[])?.join(', ') || ''}
-                      onChange={(e) => {
-                        const values = e.target.value.split(',').map(s => s.trim()).filter(s => s);
-                        updateField(['interests', level], values);
+                      value={inputValues[`interests.${level}`] || ''}
+                      onChange={(e) => handleInputChange(`interests.${level}`, e.target.value)}
+                      onBlur={(e) => {
+                        // Format on blur: parse and rejoin with proper spacing
+                        const parsed = parseCommaSeparated(e.target.value);
+                        setInputValues(prev => ({ ...prev, [`interests.${level}`]: parsed.join(', ') }));
                       }}
                       placeholder={`Enter ${level} interests...`}
                       style={{
@@ -341,10 +432,11 @@ export default function UserProfileSettingsModal({
                   </label>
                   <input
                     type="text"
-                    value={profile.keywords?.must_include?.join(', ') || ''}
-                    onChange={(e) => {
-                      const values = e.target.value.split(',').map(s => s.trim()).filter(s => s);
-                      updateField(['keywords', 'must_include'], values);
+                    value={inputValues['keywords.must_include'] || ''}
+                    onChange={(e) => handleInputChange('keywords.must_include', e.target.value)}
+                    onBlur={(e) => {
+                      const parsed = parseCommaSeparated(e.target.value);
+                      setInputValues(prev => ({ ...prev, 'keywords.must_include': parsed.join(', ') }));
                     }}
                     placeholder="Enter must-include keywords..."
                     style={{
@@ -364,10 +456,11 @@ export default function UserProfileSettingsModal({
                   </label>
                   <input
                     type="text"
-                    value={profile.keywords?.exclude?.hard?.join(', ') || ''}
-                    onChange={(e) => {
-                      const values = e.target.value.split(',').map(s => s.trim()).filter(s => s);
-                      updateField(['keywords', 'exclude', 'hard'], values);
+                    value={inputValues['keywords.exclude.hard'] || ''}
+                    onChange={(e) => handleInputChange('keywords.exclude.hard', e.target.value)}
+                    onBlur={(e) => {
+                      const parsed = parseCommaSeparated(e.target.value);
+                      setInputValues(prev => ({ ...prev, 'keywords.exclude.hard': parsed.join(', ') }));
                     }}
                     placeholder="Enter hard exclude keywords..."
                     style={{
@@ -387,10 +480,11 @@ export default function UserProfileSettingsModal({
                   </label>
                   <input
                     type="text"
-                    value={profile.keywords?.exclude?.soft?.join(', ') || ''}
-                    onChange={(e) => {
-                      const values = e.target.value.split(',').map(s => s.trim()).filter(s => s);
-                      updateField(['keywords', 'exclude', 'soft'], values);
+                    value={inputValues['keywords.exclude.soft'] || ''}
+                    onChange={(e) => handleInputChange('keywords.exclude.soft', e.target.value)}
+                    onBlur={(e) => {
+                      const parsed = parseCommaSeparated(e.target.value);
+                      setInputValues(prev => ({ ...prev, 'keywords.exclude.soft': parsed.join(', ') }));
                     }}
                     placeholder="Enter soft exclude keywords..."
                     style={{
@@ -415,13 +509,11 @@ export default function UserProfileSettingsModal({
                   </label>
                   <input
                     type="text"
-                    value={profile.preferred_authors && profile.preferred_authors.length > 0 
-                      ? profile.preferred_authors.join(', ') 
-                      : ''}
-                    onChange={(e) => {
-                      const values = e.target.value.split(',').map(s => s.trim()).filter(s => s);
-                      // If empty, set to empty array (will be converted to undefined on save)
-                      updateField(['preferred_authors'], values.length > 0 ? values : []);
+                    value={inputValues['preferred_authors'] || ''}
+                    onChange={(e) => handleInputChange('preferred_authors', e.target.value)}
+                    onBlur={(e) => {
+                      const parsed = parseCommaSeparated(e.target.value);
+                      setInputValues(prev => ({ ...prev, 'preferred_authors': parsed.join(', ') }));
                     }}
                     placeholder="Enter preferred authors..."
                     style={{
@@ -441,13 +533,11 @@ export default function UserProfileSettingsModal({
                   </label>
                   <input
                     type="text"
-                    value={profile.preferred_institutions && profile.preferred_institutions.length > 0 
-                      ? profile.preferred_institutions.join(', ') 
-                      : ''}
-                    onChange={(e) => {
-                      const values = e.target.value.split(',').map(s => s.trim()).filter(s => s);
-                      // If empty, set to empty array (will be converted to undefined on save)
-                      updateField(['preferred_institutions'], values.length > 0 ? values : []);
+                    value={inputValues['preferred_institutions'] || ''}
+                    onChange={(e) => handleInputChange('preferred_institutions', e.target.value)}
+                    onBlur={(e) => {
+                      const parsed = parseCommaSeparated(e.target.value);
+                      setInputValues(prev => ({ ...prev, 'preferred_institutions': parsed.join(', ') }));
                     }}
                     placeholder="Enter preferred institutions..."
                     style={{
