@@ -49,11 +49,12 @@ WEIGHTS: Dict[str, Dict[str, float]] = {
 
 # Try to import OpenAI for LLM verification
 try:
-    from openai import OpenAI
+    from openai import OpenAI, AsyncOpenAI
     HAS_OPENAI = True
 except ImportError:
     HAS_OPENAI = False
     OpenAI = None  # type: ignore
+    AsyncOpenAI = None  # type: ignore
 
 # Try to import sentence-transformers
 try:
@@ -297,7 +298,7 @@ def _classify_papers_by_score(
     return (high_group, mid_group, low_group)
 
 
-def _verify_with_llm(
+async def _verify_with_llm(
     papers: List[PaperInput],
     profile: UserProfile,
     batch_size: int = 5
@@ -314,7 +315,7 @@ def _verify_with_llm(
         Dictionary mapping paper_id to (llm_score, reason) tuple.
         If LLM verification fails for a paper, returns (0.0, "") for that paper.
     """
-    if not HAS_OPENAI:
+    if not HAS_OPENAI or AsyncOpenAI is None:
         # If OpenAI is not available, return empty results
         return {paper["paper_id"]: (0.0, "") for paper in papers}
     
@@ -326,7 +327,7 @@ def _verify_with_llm(
         return {paper["paper_id"]: (0.0, "") for paper in papers}
     
     try:
-        client = OpenAI(api_key=api_key)
+        client = AsyncOpenAI(api_key=api_key)
     except Exception:
         return {paper["paper_id"]: (0.0, "") for paper in papers}
     
@@ -363,8 +364,8 @@ def _verify_with_llm(
 """
         
         try:
-            # Call LLM
-            response = client.chat.completions.create(
+            # Call LLM (async)
+            response = await client.chat.completions.create(
                 model=model,
                 messages=[
                     {"role": "system", "content": "You are a research paper evaluation assistant. Always respond with valid JSON array."},

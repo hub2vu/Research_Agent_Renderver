@@ -783,6 +783,21 @@ class RankAndSelectTopKTool(MCPTool):
             selected_ids = {p["paper_id"] for p in selected}
             remaining = [p for p in paper_inputs if p["paper_id"] not in selected_ids]
             contrastive_result = _select_contrastive_paper(selected, remaining, contrastive_type, final_scores)
+            
+            # Fallback: If contrastive paper not found, select one more from remaining
+            # to ensure we return top_k papers total
+            if not contrastive_result and len(selected) < top_k and remaining:
+                # Select the highest scoring paper from remaining
+                remaining_with_scores = []
+                for paper in remaining:
+                    pid = paper.get("paper_id", "")
+                    score_info = final_scores.get(pid, {})
+                    final_score = score_info.get("final_score", 0.0)
+                    remaining_with_scores.append((final_score, paper))
+                
+                if remaining_with_scores:
+                    remaining_with_scores.sort(key=lambda x: x[0], reverse=True)
+                    selected.append(remaining_with_scores[0][1])  # Add highest scoring remaining paper
 
         # Format ranked results
         ranked_results = []
