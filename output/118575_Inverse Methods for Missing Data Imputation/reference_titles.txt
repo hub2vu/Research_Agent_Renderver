@@ -1,0 +1,44 @@
+Rethinking the diffusion models for missing data imputation: A gradient flow perspective
+Remasker: Imputing tabular data with masked autoencoding
+Traffic data recovery from corrupted and incomplete observations via spatial-temporal trpca
+A flexible and robust tensor completion approach for traffic data recovery with low-rankness
+Hyperimpute: Generalized iterative imputation with automatic model selection
+Kingma and Jimmy Ba
+MIRACLE: causally-aware imputation via learning missing data mechanisms
+Algorithms for non-negative matrix factorization
+Propensity matters: Measuring and enhancing balancing for recommendation
+Relaxing the accurate imputation assumption in doubly robust learning for debiased collaborative filtering
+Debiased recommendation with noisy feedback
+Debiased collaborative filtering with kernel-based causal balancing
+Bidirectional stackable recurrent generative adversarial imputation network for specific emitter missing data imputation
+On the stationary distribution of iterative imputations
+Adversarial joint-learning recurrent neural network for incomplete time series classification
+K-nearest neighbor in missing data imputation
+Leveraging the exact likelihood of deep latent variable models
+MIWAE: deep generative modelling and imputation of incomplete data sets
+Spectral regularization algorithms for learning large incomplete matrices
+An experimental survey of missing data imputation algorithms
+Foundations of machine learning
+Missing data imputation using optimal transport
+Missdiff: Training diffusion models on tabular data with missing values
+Stochastic backpropagation and approximate inference in deep generative models
+Multiple imputation by chained equations (mice): implementation in stata
+Missing data imputation with adversarially-trained graph convolutional networks
+Sriperumbudur, Kenji Fukumizu, and Gert R
+Missforest—non-parametric missing value imputation for mixed-type data
+DTIN: dual transformer-based imputation nets for multivariate time series emitter missing data
+Csdi: Conditional score-based diffusion models for probabilistic time series imputation
+Optimal transport for treatment effect estimation
+Proximity matters: Local proximity enhanced balancing for treatment effect estimation
+Entire space counterfactual learning for reliable content recommendations
+Spot-i: Similarity preserved optimal transport for industrial iot data imputation
+Unbiased recommender learning from implicit feedback via weakly supervised learning
+Unbiased recommender learning from implicit feedback via weakly supervised learning
+Debiased recommendation via wasserstein causal balancing
+Optimal transport for time series imputation
+Lspt-d: Local similarity preserved transport for direct industrial data imputation
+Denoising diffusion straightforward models for energy conversion monitoring data imputation
+GAIN: missing data imputation using generative adversarial nets
+Learning individual models for imputation
+Missing data imputation: focusing on single imputation
+volume 202, pages 42159–42186
