@@ -852,6 +852,30 @@ class RankAndSelectTopKTool(MCPTool):
                 "contrastive_info": contrastive_info,
                 "original_data": contrastive_paper,
             }
+            
+            # Add contrastive paper to ranked_results as well
+            # This ensures we return top_k papers total (top_k-1 regular + 1 contrastive)
+            ranked_results.append({
+                "rank": len(ranked_results) + 1,
+                "paper_id": pid,
+                "title": contrastive_paper.get("title", ""),
+                "authors": contrastive_paper.get("authors", []),
+                "published": contrastive_paper.get("published"),
+                "score": {
+                    "final": score_info["final_score"],
+                    "breakdown": score_info["breakdown"],
+                    "soft_penalty": score_info["soft_penalty"],
+                    "penalty_keywords": score_info.get("penalty_keywords", []),
+                    "evaluation_method": score_info["evaluation_method"],
+                },
+                "tags": tags,
+                "local_status": {
+                    "already_downloaded": pid in local_pdfs_set,
+                    "local_path": f"pdf/{pid}.pdf" if pid in local_pdfs_set else None,
+                },
+                "original_data": contrastive_paper,
+                "contrastive_info": contrastive_info,  # Include contrastive_info in ranked_results too
+            })
 
         comparison_notes = _generate_comparison_notes(selected, final_scores, contrastive_result[0] if contrastive_result else None)
 
@@ -859,7 +883,7 @@ class RankAndSelectTopKTool(MCPTool):
             "input_count": len(papers),
             "filtered_count": 0,
             "scored_count": len(papers),
-            "output_count": len(ranked_results) + (1 if contrastive_formatted else 0),
+            "output_count": len(ranked_results),  # ranked_results already includes contrastive paper if found
             "purpose": purpose,
             "ranking_mode": ranking_mode,
             "profile_used": profile_path,
