@@ -13,7 +13,7 @@ from .types import PaperInput, UserProfile
 
 # Import NeurIPSAdapter for cluster map loading
 try:
-    from ...tools.neurips_adapter import NeurIPSAdapter
+    from ..neurips_adapter import NeurIPSAdapter
 except ImportError:
     # Fallback if import fails
     NeurIPSAdapter = None
