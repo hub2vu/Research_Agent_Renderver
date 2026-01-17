@@ -34,6 +34,7 @@ from .rank_filter_utils import (
     _generate_comparison_notes,
     _save_and_format_result,
 )
+from .rank_filter_utils.rankers import _is_neurips_data
 from .rank_filter_utils.path_resolver import resolve_path, ensure_directory
 
 
@@ -427,7 +428,8 @@ class CalculateSemanticScoresTool(MCPTool):
 
         llm_results: Dict[str, Tuple[float, str]] = {}
         if enable_llm_verification and mid_group:
-            llm_results = await _verify_with_llm(mid_group, profile, batch_size=5)
+            # Use token-efficient LLM verification (key sentences extraction)
+            llm_results = await _verify_with_llm(mid_group, profile, batch_size=5, use_key_sentences=True)
 
         merged = _merge_scores(
             embedding_scores,
@@ -524,6 +526,28 @@ class EvaluatePaperMetricsTool(MCPTool):
                 ),
                 required=False,
             ),
+            ToolParameter(
+                name="neurips_cluster_map",
+                type="object",
+                description=(
+                    "Optional: NeurIPS cluster mapping (paper_id -> cluster_id). "
+                    "If provided, enables cluster-based metrics calculation. "
+                    "Auto-loaded if papers are from NeurIPS dataset."
+                ),
+                required=False,
+                default=None,
+            ),
+            ToolParameter(
+                name="neurips_selected_clusters",
+                type="array",
+                items_type="integer",
+                description=(
+                    "Optional: List of cluster IDs that are already well-represented in results. "
+                    "Used for diversity calculation in NeurIPS metrics."
+                ),
+                required=False,
+                default=None,
+            ),
         ]
 
     @property
@@ -537,6 +561,8 @@ class EvaluatePaperMetricsTool(MCPTool):
         profile_path: str = "users/profile.json",
         local_pdf_dir: str = "pdf/",
         local_pdfs: Optional[List[str]] = None,
+        neurips_cluster_map: Optional[Dict[str, int]] = None,
+        neurips_selected_clusters: Optional[List[int]] = None,
     ) -> Dict[str, Any]:
         if not papers:
             return {"scores": {}}
@@ -561,7 +587,27 @@ class EvaluatePaperMetricsTool(MCPTool):
                     if github_url:
                         paper["github_url"] = github_url
 
+        # Load NeurIPS cluster data if not provided and papers are from NeurIPS
+        if neurips_cluster_map is None:
+            is_neurips = _is_neurips_data(paper_inputs)
+            if is_neurips:
+                try:
+                    from .rank_filter_utils.neurips_metrics import load_neurips_cluster_data
+                    neurips_cluster_map, cluster_sizes = load_neurips_cluster_data()
+                except Exception:
+                    neurips_cluster_map = None
+                    cluster_sizes = {}
+        else:
+            # If cluster_map provided, load cluster sizes
+            try:
+                from .rank_filter_utils.neurips_metrics import load_neurips_cluster_data
+                _, cluster_sizes = load_neurips_cluster_data()
+            except Exception:
+                cluster_sizes = {}
+        
         results: Dict[str, Dict[str, Any]] = {}
+        ranked_papers_so_far: List[PaperInput] = []  # For diversity calculation
+        
         for paper in paper_inputs:
             pid = paper.get("paper_id", "")
             sem = semantic_scores.get(pid, {})
@@ -569,12 +615,34 @@ class EvaluatePaperMetricsTool(MCPTool):
 
             breakdown = _calculate_dimension_scores(paper, profile, sem_score, local_pdfs_set)
             penalty, penalty_kws = _apply_soft_penalty(paper, profile)
+            
+            # Add NeurIPS-specific metrics if cluster data available
+            # Only calculates diversity_penalty (cluster-interest alignment removed for simplicity)
+            if neurips_cluster_map:
+                try:
+                    from .rank_filter_utils.neurips_metrics import _calculate_neurips_specific_metrics
+                    neurips_metrics = _calculate_neurips_specific_metrics(
+                        paper=paper,
+                        cluster_map=neurips_cluster_map,
+                        cluster_sizes=cluster_sizes,
+                        profile=profile,
+                        ranked_papers_so_far=ranked_papers_so_far
+                    )
+                    # Apply diversity penalty to soft_penalty
+                    diversity_penalty = neurips_metrics.get("diversity_penalty", 0.0)
+                    penalty += diversity_penalty
+                except Exception:
+                    # If NeurIPS metrics calculation fails, continue without them
+                    pass
 
             results[pid] = {
                 "breakdown": breakdown,
                 "soft_penalty": penalty,
                 "penalty_keywords": penalty_kws,
             }
+            
+            # Track for diversity calculation (simplified - just add to list)
+            ranked_papers_so_far.append(paper)
 
         return {"scores": results}
 
@@ -744,10 +812,10 @@ class RankAndSelectTopKTool(MCPTool):
         else:
             local_pdfs_set = scan_local_pdfs(local_pdf_dir)
         
-            paper_inputs: List[PaperInput] = [PaperInput(**p) for p in papers]
-            
+        paper_inputs: List[PaperInput] = [PaperInput(**p) for p in papers]
+        
         # Build final scores
-            final_scores: Dict[str, Dict[str, Any]] = {}
+        final_scores: Dict[str, Dict[str, Any]] = {}
         for p in paper_inputs:
             pid = p.get("paper_id", "")
             sem_info = semantic_scores.get(pid, {})
@@ -774,7 +842,25 @@ class RankAndSelectTopKTool(MCPTool):
             }
 
         # Rank and select
-        selected = _rank_and_select(paper_inputs, final_scores, top_k, ranking_mode, include_contrastive)
+        # Check if NeurIPS data and use cluster quota if available
+        is_neurips = _is_neurips_data(paper_inputs)
+        cluster_map: Optional[Dict[str, int]] = None
+        
+        if is_neurips:
+            # Try to load cluster map for NeurIPS
+            try:
+                from .rank_filter_utils.neurips_metrics import load_neurips_cluster_data
+                cluster_map, _ = load_neurips_cluster_data()
+            except Exception:
+                cluster_map = None
+        
+        if is_neurips and cluster_map:
+            # Use cluster quota ranking for NeurIPS
+            from .rank_filter_utils.rankers import _rank_with_cluster_quota
+            selected = _rank_with_cluster_quota(paper_inputs, final_scores, top_k, cluster_map)
+        else:
+            # Use standard ranking for arXiv or if cluster map unavailable
+            selected = _rank_and_select(paper_inputs, final_scores, top_k, ranking_mode, include_contrastive)
 
         # Optional contrastive
         contrastive_formatted = None
