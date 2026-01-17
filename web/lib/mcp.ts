@@ -371,3 +371,121 @@ export async function updateUserProfile(
 
   return response.json();
 }
+
+// ==================== NeurIPS Search & Rank API ====================
+
+/**
+ * Execute NeurIPS search and rank pipeline
+ */
+export async function executeNeurIPSSearchAndRank(
+  query: string,
+  profilePath: string = 'users/profile.json',
+  topK: number = 10
+): Promise<{
+  ranked_papers: Array<{
+    rank: number;
+    paper_id: string;
+    title: string;
+    authors: string[];
+    published?: string;
+    score: {
+      final: number;
+      breakdown: any;
+      soft_penalty: number;
+      penalty_keywords: string[];
+      evaluation_method: string;
+    };
+    tags: string[];
+    local_status: {
+      already_downloaded: boolean;
+      local_path: string | null;
+    };
+    original_data: any;
+    reasoning?: string;
+  }>;
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    // Step 1: Search NeurIPS papers
+    const searchResult = await executeTool('neurips_search', {
+      query,
+      max_results: 100,
+      profile_path: profilePath,
+    });
+
+    if (!searchResult.papers || searchResult.papers.length === 0) {
+      return {
+        ranked_papers: [],
+        success: true,
+      };
+    }
+
+    // Step 2: Apply hard filters
+    const filterResult = await executeTool('apply_hard_filters', {
+      papers: searchResult.papers,
+      profile_path: profilePath,
+    });
+
+    const passedPapers = filterResult.passed_papers || [];
+
+    if (passedPapers.length === 0) {
+      return {
+        ranked_papers: [],
+        success: true,
+      };
+    }
+
+    // Step 3: Calculate semantic scores
+    const semanticResult = await executeTool('calculate_semantic_scores', {
+      papers: passedPapers,
+      query,
+      profile_path: profilePath,
+    });
+
+    const semanticScores = semanticResult.scores || {};
+
+    // Step 4: Evaluate metrics (with NeurIPS cluster map)
+    // Load cluster map for k=15 (default)
+    let neuripsClusterMap: Record<string, number> = {};
+    try {
+      const clusterRes = await fetch('/api/neurips/clusters?k=15');
+      if (clusterRes.ok) {
+        const clusterData = await clusterRes.json();
+        neuripsClusterMap = clusterData.paper_id_to_cluster || {};
+      }
+    } catch (e) {
+      console.warn('Failed to load cluster map:', e);
+    }
+
+    const metricsResult = await executeTool('evaluate_paper_metrics', {
+      papers: passedPapers,
+      semantic_scores: semanticScores,
+      neurips_cluster_map: neuripsClusterMap,
+      profile_path: profilePath,
+    });
+
+    const metricsScores = metricsResult.scores || {};
+
+    // Step 5: Rank and select top K
+    const rankResult = await executeTool('rank_and_select_top_k', {
+      papers: passedPapers,
+      semantic_scores: semanticScores,
+      metrics_scores: metricsScores,
+      neurips_cluster_map: neuripsClusterMap,
+      top_k: topK,
+      profile_path: profilePath,
+    });
+
+    return {
+      ranked_papers: rankResult.ranked_papers || [],
+      success: true,
+    };
+  } catch (error) {
+    return {
+      ranked_papers: [],
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}

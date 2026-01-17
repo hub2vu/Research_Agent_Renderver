@@ -5,7 +5,6 @@ import PaperGraphPage from './pages/PaperGraphPage';
 import NeurIPS2025Page from './pages/NeurIPS2025Page';
 import NavBar from './components/NavBar';
 import LLMChatPopup from './components/LLMChatPopup';
-import RankFilterModal from './components/RankFilterModal';
 
 function PaperGraphWrapper() {
   const { paperId } = useParams<{ paperId: string }>();
@@ -14,13 +13,11 @@ function PaperGraphWrapper() {
 
 function AppContent() {
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [isRankFilterOpen, setIsRankFilterOpen] = useState(false);
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#0d1117' }}>
       <NavBar
         onOpenChat={() => setIsChatOpen(true)}
-        onOpenRankFilter={() => setIsRankFilterOpen(true)}
       />
 
       <Routes>
@@ -32,11 +29,6 @@ function AppContent() {
       <LLMChatPopup
         isOpen={isChatOpen}
         onClose={() => setIsChatOpen(false)}
-      />
-
-      <RankFilterModal
-        isOpen={isRankFilterOpen}
-        onClose={() => setIsRankFilterOpen(false)}
       />
     </div>
   );
