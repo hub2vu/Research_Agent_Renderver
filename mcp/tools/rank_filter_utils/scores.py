@@ -270,16 +270,24 @@ def _classify_papers_by_score(
     """
     Classify papers into three groups based on their scores.
     
+    Borderline thresholds are configurable via environment variables:
+    - LLM_BORDERLINE_MIN (default: 0.4): Minimum score for mid_group (borderline)
+    - LLM_BORDERLINE_MAX (default: 0.7): Minimum score for high_group
+    
     Args:
         papers: List of papers to classify
         scores: Dictionary mapping paper_id to score
         
     Returns:
         Tuple of (high_group, mid_group, low_group) where:
-        - high_group: papers with score >= 0.7
-        - mid_group: papers with 0.4 <= score < 0.7
-        - low_group: papers with score < 0.4
+        - high_group: papers with score >= LLM_BORDERLINE_MAX (default: 0.7)
+        - mid_group: papers with LLM_BORDERLINE_MIN <= score < LLM_BORDERLINE_MAX (default: 0.4-0.7)
+        - low_group: papers with score < LLM_BORDERLINE_MIN (default: < 0.4)
     """
+    # Get borderline thresholds from environment variables
+    borderline_min = float(os.getenv("LLM_BORDERLINE_MIN", "0.4"))
+    borderline_max = float(os.getenv("LLM_BORDERLINE_MAX", "0.7"))
+    
     high_group: List[PaperInput] = []
     mid_group: List[PaperInput] = []
     low_group: List[PaperInput] = []
@@ -288,9 +296,9 @@ def _classify_papers_by_score(
         paper_id = paper["paper_id"]
         score = scores.get(paper_id, 0.0)
         
-        if score >= 0.7:
+        if score >= borderline_max:
             high_group.append(paper)
-        elif score >= 0.4:
+        elif score >= borderline_min:
             mid_group.append(paper)
         else:
             low_group.append(paper)
