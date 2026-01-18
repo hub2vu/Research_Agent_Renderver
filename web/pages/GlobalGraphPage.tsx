@@ -409,6 +409,11 @@ export default function GlobalGraphPage() {
             <ArxivRankedList
               papers={searchResults}
               onPaperClick={handlePaperClick}
+              onClose={() => {
+                setSearchResults([]);
+                setSearchQuery('');
+                setHighlightedPaperIds(new Set());
+              }}
             />
           ) : !state.loading && !state.error && searchQuery.trim() && !isSearching ? (
             <div style={{

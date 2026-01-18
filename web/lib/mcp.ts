@@ -414,7 +414,15 @@ export async function executeNeurIPSSearchAndRank(
       profile_path: profilePath,
     });
 
-    if (!searchResult.papers || searchResult.papers.length === 0) {
+    if (!searchResult.success) {
+      return {
+        ranked_papers: [],
+        success: false,
+        error: searchResult.error || 'NeurIPS search failed',
+      };
+    }
+
+    if (!searchResult.result?.papers || searchResult.result.papers.length === 0) {
       return {
         ranked_papers: [],
         success: true,
@@ -423,11 +431,15 @@ export async function executeNeurIPSSearchAndRank(
 
     // Step 2: Apply hard filters
     const filterResult = await executeTool('apply_hard_filters', {
-      papers: searchResult.papers,
+      papers: searchResult.result.papers,
       profile_path: profilePath,
     });
 
-    const passedPapers = filterResult.passed_papers || [];
+    if (!filterResult.success) {
+      throw new Error(filterResult.error || 'Hard filters failed');
+    }
+
+    const passedPapers = filterResult.result?.passed_papers || [];
 
     if (passedPapers.length === 0) {
       return {
@@ -443,7 +455,11 @@ export async function executeNeurIPSSearchAndRank(
       profile_path: profilePath,
     });
 
-    const semanticScores = semanticResult.scores || {};
+    if (!semanticResult.success) {
+      throw new Error(semanticResult.error || 'Semantic scoring failed');
+    }
+
+    const semanticScores = semanticResult.result?.scores || {};
 
     // Step 4: Evaluate metrics (with NeurIPS cluster map)
     // Load cluster map for k=15 (default)
@@ -465,7 +481,11 @@ export async function executeNeurIPSSearchAndRank(
       profile_path: profilePath,
     });
 
-    const metricsScores = metricsResult.scores || {};
+    if (!metricsResult.success) {
+      throw new Error(metricsResult.error || 'Metrics evaluation failed');
+    }
+
+    const metricsScores = metricsResult.result?.scores || {};
 
     // Step 5: Rank and select top K
     const rankResult = await executeTool('rank_and_select_top_k', {
@@ -477,8 +497,12 @@ export async function executeNeurIPSSearchAndRank(
       profile_path: profilePath,
     });
 
+    if (!rankResult.success) {
+      throw new Error(rankResult.error || 'Ranking failed');
+    }
+
     return {
-      ranked_papers: rankResult.ranked_papers || [],
+      ranked_papers: rankResult.result?.ranked_papers || [],
       success: true,
     };
   } catch (error) {

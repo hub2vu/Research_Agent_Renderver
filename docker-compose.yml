@@ -11,6 +11,7 @@ services:
       - ./pdf:/data/pdf
       - ./output:/data/output
       - ./tests:/app/tests
+      - ./data:/app/data:ro
     environment:
       - PDF_DIR=/data/pdf
       - OUTPUT_DIR=/data/output

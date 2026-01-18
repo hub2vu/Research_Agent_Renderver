@@ -498,6 +498,11 @@ export default function NeurIPS2025Page() {
             papers={searchResults}
             onPaperClick={handlePaperClick}
             clusterMap={clusterMap}
+            onClose={() => {
+              setSearchResults([]);
+              setSearchQuery('');
+              setHighlightedPaperIds(new Set());
+            }}
           />
         ) : searchQuery.trim() && !isSearching ? (
           <div style={{
