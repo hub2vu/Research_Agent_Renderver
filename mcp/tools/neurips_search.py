@@ -25,7 +25,6 @@ except ImportError:
 
 from ..base import MCPTool, ToolParameter, ExecutionError
 from .rank_filter_utils import load_profile, PaperInput
-from .rank_filter_utils.cache import _generate_cache_key, load_cache, save_cache
 from .neurips_adapter import NeurIPSAdapter
 
 # Configure logging
@@ -459,13 +458,6 @@ class NeurIPSSearchTool(MCPTool):
                 default=0.7
             ),
             ToolParameter(
-                name="use_cache",
-                type="boolean",
-                description="Whether to use cache for results (default: True)",
-                required=False,
-                default=True
-            ),
-            ToolParameter(
                 name="metadata_path",
                 type="string",
                 description="Path to NeurIPS metadata file (optional, auto-detected if not provided)",
@@ -492,7 +484,6 @@ class NeurIPSSearchTool(MCPTool):
         profile_path: str = "users/profile.json",
         semantic_weight: float = 0.3,
         keyword_weight: float = 0.7,
-        use_cache: bool = True,
         metadata_path: Optional[str] = None,
         embeddings_path: Optional[str] = None,
     ) -> Dict[str, Any]:
@@ -513,16 +504,6 @@ class NeurIPSSearchTool(MCPTool):
                 f"Failed to load profile: {str(e)}",
                 tool_name=self.name
             )
-        
-        # Check cache
-        if use_cache:
-            cache_key = _generate_cache_key(query, profile)
-            cached_result = load_cache(cache_key)
-            if cached_result is not None:
-                return {
-                    **cached_result,
-                    "cached": True
-                }
         
         # Load NeurIPS metadata (using cache)
         neurips_metadata = _get_metadata_cache(metadata_path)
@@ -642,14 +623,6 @@ class NeurIPSSearchTool(MCPTool):
             "search_stats": search_stats,
             "cached": False
         }
-        
-        # Save to cache
-        if use_cache:
-            try:
-                save_cache(cache_key, result)
-            except Exception:
-                # Cache save failure shouldn't break the operation
-                pass
         
         return result
     
