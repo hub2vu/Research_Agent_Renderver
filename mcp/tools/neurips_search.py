@@ -956,18 +956,51 @@ class NeurIPSSearchTool(MCPTool):
         all_paper_ids = set(semantic_scores.keys()) | set(keyword_scores.keys())
         combined_scores: Dict[str, float] = {}
         
+        # Track exact matches for logging
+        exact_matches = []
+        
         for paper_id in all_paper_ids:
             sem_score = semantic_scores.get(paper_id, 0.0)
             kw_score = keyword_scores.get(paper_id, 0.0)
             
             # Basic weighted average
-            combined = (sem_score * semantic_weight + kw_score * keyword_weight)
+            combined_before_boost = (sem_score * semantic_weight + kw_score * keyword_weight)
+            combined = combined_before_boost
             
-            # Apply boost for exact matches (keyword_score >= 1.0)
+            # Apply stronger boost for exact matches (keyword_score >= 1.0)
             if kw_score >= 1.0:
-                combined = combined * exact_match_boost
-                combined = min(1.0, combined)  # Cap at 1.0
+                # Exact match: guarantee it's at the top regardless of semantic score
+                # First apply the multiplier boost
+                combined = min(1.0, combined * exact_match_boost)
+                # Additional: add a bonus to ensure it beats non-exact matches
+                combined = min(1.0, combined + 0.3)  # Bonus boost for exact matches
+                
+                exact_matches.append({
+                    'paper_id': paper_id,
+                    'sem_score': sem_score,
+                    'kw_score': kw_score,
+                    'before_boost': combined_before_boost,
+                    'after_boost': combined
+                })
+            elif kw_score >= 0.8:
+                # High keyword match: moderate boost
+                combined = min(1.0, combined * 1.3)
             
             combined_scores[paper_id] = combined
+        
+        # Log exact matches for debugging
+        if exact_matches:
+            logger.info(
+                f"✓ Found {len(exact_matches)} exact matches (keyword_score >= 1.0). "
+                f"Applied boost (×{exact_match_boost} + 0.3 bonus):"
+            )
+            for match in exact_matches[:5]:  # Log top 5 exact matches
+                logger.debug(
+                    f"  Paper {match['paper_id']}: "
+                    f"sem={match['sem_score']:.4f}, "
+                    f"kw={match['kw_score']:.4f}, "
+                    f"before={match['before_boost']:.4f}, "
+                    f"after={match['after_boost']:.4f}"
+                )
         
         return combined_scores
