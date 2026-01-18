@@ -306,6 +306,28 @@ export default function UserProfileSettingsModal({
                   />
                 </div>
 
+                <div style={{ marginBottom: '12px' }}>
+                  <label style={{ display: 'block', color: '#a0aec0', fontSize: '12px', marginBottom: '4px' }}>
+                    Minimum Year
+                  </label>
+                  <input
+                    type="number"
+                    min="1900"
+                    max={new Date().getFullYear()}
+                    value={profile.constraints?.min_year || 2000}
+                    onChange={(e) => updateField(['constraints', 'min_year'], parseInt(e.target.value, 10))}
+                    style={{
+                      width: '100%',
+                      padding: '8px',
+                      borderRadius: '4px',
+                      border: '1px solid #2d3748',
+                      backgroundColor: '#2d3748',
+                      color: '#fff',
+                      fontSize: '14px',
+                    }}
+                  />
+                </div>
+
                 <div style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <input
                     type="checkbox"
