@@ -822,6 +822,15 @@ class RankAndSelectTopKTool(MCPTool):
         
         paper_inputs: List[PaperInput] = [PaperInput(**p) for p in papers]
         
+        # Extract keyword_score and combined_score from papers (preserved from neurips_search)
+        keyword_scores: Dict[str, float] = {}
+        combined_scores: Dict[str, float] = {}
+        for p in papers:
+            pid = p.get("paper_id", "")
+            if pid:
+                keyword_scores[pid] = float(p.get("keyword_score", 0.0))
+                combined_scores[pid] = float(p.get("combined_score", 0.0))
+        
         # Build final scores
         final_scores: Dict[str, Dict[str, Any]] = {}
         for p in paper_inputs:
@@ -840,7 +849,28 @@ class RankAndSelectTopKTool(MCPTool):
                 penalty, _ = _apply_soft_penalty(p, profile)
                 soft_penalty = penalty
 
+            # Extract keyword_score for this paper and add to breakdown
+            kw_score = keyword_scores.get(pid, 0.0)
+            combined_score = combined_scores.get(pid, 0.0)
+            
+            # Add keyword_score to breakdown for UI display
+            breakdown["keyword_score"] = kw_score
+            
+            # Calculate initial final score
             final = _calculate_final_score(breakdown, soft_penalty, purpose, ranking_mode)
+            
+            # Boost exact matches (keyword_score >= 1.0) to ensure top ranking
+            if kw_score >= 1.0:
+                # For exact matches, prioritize the combined_score from neurips_search
+                # which already incorporates keyword and semantic scores with proper weighting
+                # Ensure it ranks at the top by setting minimum high score
+                if combined_score > 0:
+                    # Use combined_score as the base, ensure it's high enough
+                    final = max(final, combined_score, 0.9)
+                else:
+                    # Fallback: boost to very high score to ensure top ranking
+                    final = max(final, 0.95)
+            
             final_scores[pid] = {
                     "final_score": final,
                 "breakdown": breakdown,

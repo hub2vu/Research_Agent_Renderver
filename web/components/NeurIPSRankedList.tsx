@@ -380,6 +380,9 @@ function PaperItem({
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', color: '#a0aec0' }}>
               <div>Semantic: {formatScore(paper.score.breakdown.semantic_relevance)}%</div>
               <div>Keywords: {formatScore(paper.score.breakdown.must_keywords)}%</div>
+              {paper.score.breakdown.keyword_score !== undefined && (
+                <div>Title Match: {formatScore(paper.score.breakdown.keyword_score)}%</div>
+              )}
               <div>Author Trust: {formatScore(paper.score.breakdown.author_trust)}%</div>
               <div>Institution: {formatScore(paper.score.breakdown.institution_trust)}%</div>
               <div>Recency: {formatScore(paper.score.breakdown.recency)}%</div>
