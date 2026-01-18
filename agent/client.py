@@ -45,6 +45,11 @@ SYSTEM_PROMPT = """You are a research assistant with access to various tools for
 - PDF document analysis and extraction
 - arXiv paper search and download
 - Web search and research
+CRITICAL INSTRUCTION:
+- Do NOT explain what you are going to do.
+- Do NOT say "I will download...".
+- JUST CALL THE TOOLS DIRECTLY.
+- If the user asks for a report, call 'arxiv_download' -> 'extract_all' -> 'generate_report' in a sequence immediately.
 
 When the user asks you to do something:
 1. Analyze what tools you need
@@ -136,8 +141,23 @@ class AgentClient:
             return {"success": False, "error": str(e)}
 
     def _call_llm(self, messages: List[Dict], tools: List[Dict] = None) -> Any:
+
+        # 1. 청소 도구 (Helper)
+        def sanitize_utf8(text):
+            if isinstance(text, str):
+                return text.encode("utf-8", "replace").decode("utf-8")
+            return text
+
+        # 2. 메시지 청소 (여기서 clean_messages를 만듭니다)
+        clean_messages = []
+        for msg in messages:
+            clean_msg = {k: sanitize_utf8(v) for k, v in msg.items()}
+            clean_messages.append(clean_msg)
+
         """Call the LLM with messages and optional tools."""
-        kwargs = {"model": self.model, "messages": messages}
+
+        # 3. 중요!! 여기서 clean_messages를 사용해야 합니다.
+        kwargs = {"model": self.model, "messages": clean_messages}
 
         if tools:
             kwargs["tools"] = tools
