@@ -701,8 +701,19 @@ def _calculate_dimension_scores(
         scores["recency"] = RECENCY_MIN_SCORE  # No date = assume very old
     else:
         try:
-            # Parse date (YYYY-MM-DD format)
-            pub_date = datetime.strptime(published, "%Y-%m-%d")
+            # Parse date - handle both YYYY-MM-DD and ISO 8601 formats (e.g., "2025-06-27T10:15:33+00:00")
+            # Extract date part if timezone info is present
+            if 'T' in published:
+                # ISO 8601 format: extract date part before 'T'
+                pub_date_str = published.split('T')[0]
+            elif ' ' in published:
+                # Space-separated format: extract date part before space
+                pub_date_str = published.split(' ')[0]
+            else:
+                # Simple YYYY-MM-DD format
+                pub_date_str = published
+            
+            pub_date = datetime.strptime(pub_date_str, "%Y-%m-%d")
             now = datetime.now()
             time_diff = now - pub_date
             
