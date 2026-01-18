@@ -36,24 +36,105 @@ _embedding_model_cache = None
 _embeddings_array_cache = None
 _embeddings_path_cache = None
 _embeddings_validation_cache = None  # Cache for validation status
+_embeddings_dimension_cache = None  # Cache for embeddings dimension
 _metadata_cache = None
 _metadata_path_cache = None
+
+
+def _get_expected_model_for_dimension(dimension: int) -> str:
+    """
+    Get the expected model name for a given embedding dimension.
+    
+    Args:
+        dimension: Embedding dimension
+        
+    Returns:
+        Expected model name
+    """
+    model_map = {
+        384: 'all-MiniLM-L6-v2',
+        768: 'all-mpnet-base-v2',
+    }
+    return model_map.get(dimension, 'unknown')
 
 
 def _get_embedding_model():
     """
     Get or create the embedding model (singleton pattern).
     
+    Automatically selects the appropriate model based on embeddings.npy dimension:
+    - 384 dimensions: all-MiniLM-L6-v2 (default)
+    - 768 dimensions: all-mpnet-base-v2
+    
+    Can be overridden by NEURIPS_EMBEDDING_MODEL environment variable.
+    
     Returns the cached SentenceTransformer model, loading it only once.
     Returns None if sentence-transformers is not available or loading fails.
     """
-    global _embedding_model_cache
-    if _embedding_model_cache is None and HAS_SENTENCE_TRANSFORMERS:
-        try:
-            _embedding_model_cache = SentenceTransformer('all-MiniLM-L6-v2')
-        except Exception:
-            _embedding_model_cache = None
-    return _embedding_model_cache
+    global _embedding_model_cache, _embeddings_dimension_cache
+    
+    # Check if model is already cached
+    if _embedding_model_cache is not None:
+        return _embedding_model_cache
+    
+    if not HAS_SENTENCE_TRANSFORMERS:
+        return None
+    
+    # Check for environment variable override
+    model_name = os.getenv('NEURIPS_EMBEDDING_MODEL')
+    
+    # If no explicit model specified, try to detect from embeddings dimension
+    if model_name is None:
+        # Get embeddings dimension from cache or by loading embeddings
+        if _embeddings_dimension_cache is None:
+            embeddings_array = _get_embeddings_array()
+            if embeddings_array is not None and len(embeddings_array.shape) >= 2:
+                _embeddings_dimension_cache = embeddings_array.shape[1]
+                logger.info(f"Detected embeddings dimension: {_embeddings_dimension_cache}")
+        
+        # Select model based on dimension
+        if _embeddings_dimension_cache == 768:
+            model_name = 'all-mpnet-base-v2'
+            logger.info("Auto-selecting model: all-mpnet-base-v2 (768 dimensions)")
+        elif _embeddings_dimension_cache == 384:
+            model_name = 'all-MiniLM-L6-v2'
+            logger.info("Auto-selecting model: all-MiniLM-L6-v2 (384 dimensions)")
+        else:
+            # Default to all-MiniLM-L6-v2 if dimension is unknown
+            model_name = 'all-MiniLM-L6-v2'
+            logger.warning(
+                f"Unknown embeddings dimension ({_embeddings_dimension_cache}). "
+                f"Defaulting to all-MiniLM-L6-v2. "
+                f"Set NEURIPS_EMBEDDING_MODEL environment variable to specify model."
+            )
+    
+    # Load the model
+    try:
+        logger.info(f"Loading embedding model: {model_name}")
+        _embedding_model_cache = SentenceTransformer(model_name)
+        
+        # Verify model dimension matches embeddings dimension if known
+        if _embeddings_dimension_cache is not None:
+            test_embedding = _embedding_model_cache.encode(["test"])
+            model_dim = test_embedding.shape[0] if hasattr(test_embedding, 'shape') else len(test_embedding)
+            
+            if model_dim != _embeddings_dimension_cache:
+                logger.error(
+                    f"✗ Dimension mismatch: model {model_name} produces {model_dim}D embeddings, "
+                    f"but embeddings.npy has {_embeddings_dimension_cache}D. "
+                    f"This will cause cosine similarity to fail."
+                )
+                # Don't cache the model if dimension mismatch
+                _embedding_model_cache = None
+                return None
+            else:
+                logger.info(f"✓ Model dimension ({model_dim}D) matches embeddings dimension ({_embeddings_dimension_cache}D)")
+        
+        return _embedding_model_cache
+    except Exception as e:
+        logger.error(f"✗ Failed to load embedding model {model_name}: {type(e).__name__}: {e}")
+        _embedding_model_cache = None
+        return None
 
 
 def _get_embeddings_array(embeddings_path: Optional[str] = None) -> Optional[np.ndarray]:
@@ -130,12 +211,33 @@ def _get_embeddings_array(embeddings_path: Optional[str] = None) -> Optional[np.
         if len(embeddings_array.shape) == 1:
             embeddings_array = embeddings_array.reshape(1, -1)
         
+        # Cache dimension for model selection
+        embedding_dim = embeddings_array.shape[1] if len(embeddings_array.shape) >= 2 else None
+        global _embeddings_dimension_cache
+        _embeddings_dimension_cache = embedding_dim
+        
+        # Determine expected model based on dimension
+        expected_model = _get_expected_model_for_dimension(embedding_dim) if embedding_dim else 'unknown'
+        
         logger.info(
             f"✓ Successfully loaded embeddings.npy. "
-            f"Shape: {embeddings_array.shape}, "
+            f"Shape: {embeddings_array.shape} "
+            f"({embeddings_array.shape[0]} papers × {embedding_dim}D), "
             f"Dtype: {embeddings_array.dtype}, "
             f"Size: {embeddings_array.nbytes / (1024 * 1024):.2f} MB"
         )
+        
+        if embedding_dim and expected_model != 'unknown':
+            logger.info(
+                f"  Expected model for {embedding_dim}D embeddings: {expected_model}. "
+                f"Model will be auto-selected or use NEURIPS_EMBEDDING_MODEL env var."
+            )
+        elif embedding_dim:
+            logger.warning(
+                f"  Unknown embedding dimension ({embedding_dim}D). "
+                f"Supported dimensions: 384 (all-MiniLM-L6-v2), 768 (all-mpnet-base-v2). "
+                f"Set NEURIPS_EMBEDDING_MODEL environment variable to specify model."
+            )
         
         # Cache it
         _embeddings_array_cache = embeddings_array
@@ -603,6 +705,27 @@ class NeurIPSSearchTool(MCPTool):
             logger.debug(f"Computing query embedding for: '{query[:50]}...'")
             # Get query embedding
             query_embedding = model.encode([query])[0]
+            
+            # Validate dimensions before computing similarity
+            query_dim = query_embedding.shape[0] if hasattr(query_embedding, 'shape') else len(query_embedding)
+            embeddings_dim = embeddings_array.shape[1] if len(embeddings_array.shape) >= 2 else None
+            
+            logger.debug(
+                f"Query embedding dimension: {query_dim}D, "
+                f"Embeddings dimension: {embeddings_dim}D"
+            )
+            
+            # Check dimension mismatch
+            if embeddings_dim is not None and query_dim != embeddings_dim:
+                logger.error(
+                    f"✗ Dimension mismatch detected! "
+                    f"Query embedding ({query_dim}D) != paper embeddings ({embeddings_dim}D). "
+                    f"This will cause cosine similarity to fail. "
+                    f"Expected model for {embeddings_dim}D: {_get_expected_model_for_dimension(embeddings_dim)}. "
+                    f"Current model may be incorrect. "
+                    f"Falling back to on-the-fly embedding computation."
+                )
+                return await self._semantic_search_fallback(query, paper_inputs)
             
             logger.debug(
                 f"Computing cosine similarity: "
