@@ -254,35 +254,30 @@ export default function NeurIPS2025Page() {
 
   // Handle PDF download
   const handleDownloadPdf = useCallback(async () => {
-    if (!selectedNode) return;
+  if (!selectedNode) return;
+  const paper = papers.get(selectedNode.id);
+  if (!paper) return;
 
-    const paper = papers.get(selectedNode.id);
-    if (!paper) return;
+  setDownloadingPdf(true); // 로딩 표시 시작
+  try {
+    // [수정됨] 기존 'neurips2025_download_pdf' 대신 'process_neurips_paper' 호출
+    const result = await executeTool('process_neurips_paper', {
+      paper_id: paper.paper_id,
+      out_dir: '/data/pdf/neurips2025' // 이전에 수정한 경로 유지
+    });
 
-    setDownloadingPdf(true);
-    try {
-      const res = await fetch('/api/tools/call', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          tool_name: 'neurips2025_download_pdf',
-          arguments: {
-            paper_id: paper.paper_id,
-            action: 'pdf'
-          }
-        }),
-      });
-
-      const result = await res.json();
-      if (result.error) {
-        alert(`Download failed: ${result.error}`);
-      } else {
-        alert(`PDF downloaded successfully!\n${result.result || ''}`);
-      }
-    } catch (err) {
-      alert(`Download error: ${err instanceof Error ? err.message : 'Unknown error'}`);
-    } finally {
-      setDownloadingPdf(false);
+    if (!result.success) {
+      alert(`Pipeline failed: ${result.error}`);
+    } else {
+      // 결과 보여주기
+      const info = result.result?.pipeline_results;
+      const refCount = info?.ref_count || 0;
+      alert(`Process Complete!\n\n- PDF Saved: ${info?.pdf_path}\n- References Found: ${refCount}`);
+    }
+  } catch (err) {
+    alert(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+  } finally {
+    setDownloadingPdf(false); // 로딩 표시 끝
     }
   }, [selectedNode, papers]);
 

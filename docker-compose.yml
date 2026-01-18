@@ -11,7 +11,7 @@ services:
       - ./pdf:/data/pdf
       - ./output:/data/output
       - ./tests:/app/tests
-      - ./data:/app/data:ro
+      - ./data:/app/data
     environment:
       - PDF_DIR=/data/pdf
       - OUTPUT_DIR=/data/output
@@ -62,8 +62,10 @@ services:
     depends_on:
       mcp-server:
         condition: service_healthy
-    stdin_open: true
-    tty: true
+    ports:
+      - "8001:8001"
+    # [수정] command가 아니라 entrypoint로 변경하여 실행 방식을 강제 지정합니다.
+    entrypoint: ["uvicorn", "agent.server:app", "--host", "0.0.0.0", "--port", "8001"]
     restart: unless-stopped
 
   # Web UI - Graph visualization
