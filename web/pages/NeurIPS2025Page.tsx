@@ -220,7 +220,8 @@ export default function NeurIPS2025Page() {
       const result = await executeNeurIPSSearchAndRank(
         searchQuery.trim(),
         'users/profile.json',
-        10 // topK
+        10, // topK
+        numClusters // clusterK
       );
 
       if (result.success && result.ranked_papers) {

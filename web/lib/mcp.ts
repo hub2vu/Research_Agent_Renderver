@@ -380,7 +380,8 @@ export async function updateUserProfile(
 export async function executeNeurIPSSearchAndRank(
   query: string,
   profilePath: string = 'users/profile.json',
-  topK: number = 10
+  topK: number = 10,
+  clusterK?: number
 ): Promise<{
   ranked_papers: Array<{
     rank: number;
@@ -462,10 +463,11 @@ export async function executeNeurIPSSearchAndRank(
     const semanticScores = semanticResult.result?.scores || {};
 
     // Step 4: Evaluate metrics (with NeurIPS cluster map)
-    // Load cluster map for k=15 (default)
+    // Load cluster map with cluster_k parameter (default: 15)
+    const clusterKToUse = clusterK ?? 15;
     let neuripsClusterMap: Record<string, number> = {};
     try {
-      const clusterRes = await fetch('/api/neurips/clusters?k=15');
+      const clusterRes = await fetch(`/api/neurips/clusters?k=${clusterKToUse}`);
       if (clusterRes.ok) {
         const clusterData = await clusterRes.json();
         neuripsClusterMap = clusterData.paper_id_to_cluster || {};
@@ -495,6 +497,7 @@ export async function executeNeurIPSSearchAndRank(
       neurips_cluster_map: neuripsClusterMap,
       top_k: topK,
       profile_path: profilePath,
+      cluster_k: clusterKToUse,
     });
 
     if (!rankResult.success) {

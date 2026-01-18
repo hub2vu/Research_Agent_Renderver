@@ -772,6 +772,13 @@ class RankAndSelectTopKTool(MCPTool):
                 required=False,
                 default="users/profile.json",
             ),
+            ToolParameter(
+                name="cluster_k",
+                type="integer",
+                description="K value for NeurIPS clustering (default: 15, from env NEURIPS_CLUSTER_K)",
+                required=False,
+                default=None
+            ),
         ]
 
     @property
@@ -791,6 +798,7 @@ class RankAndSelectTopKTool(MCPTool):
         local_pdf_dir: str = "pdf/",
         local_pdfs: Optional[List[str]] = None,
         profile_path: str = "users/profile.json",
+        cluster_k: Optional[int] = None,
     ) -> Dict[str, Any]:
         if not papers:
             summary = {
@@ -850,7 +858,7 @@ class RankAndSelectTopKTool(MCPTool):
             # Try to load cluster map for NeurIPS
             try:
                 from .rank_filter_utils.neurips_metrics import load_neurips_cluster_data
-                cluster_map, _ = load_neurips_cluster_data()
+                cluster_map, _ = load_neurips_cluster_data(cluster_k=cluster_k)
             except Exception:
                 cluster_map = None
         
