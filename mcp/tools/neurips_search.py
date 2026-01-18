@@ -860,6 +860,38 @@ class NeurIPSSearchTool(MCPTool):
             )
             return {p.get("paper_id", ""): 0.0 for p in paper_inputs}
     
+    def _normalize_title_for_match(self, title: str) -> str:
+        """
+        Normalize title for exact match comparison.
+        Removes special characters, normalizes whitespace, and handles common variations.
+        """
+        import re
+        
+        # Convert to lowercase
+        normalized = title.lower()
+        
+        # Remove LaTeX commands and special formatting
+        normalized = re.sub(r'\\[a-z]+\{[^}]*\}', '', normalized)  # LaTeX commands
+        normalized = re.sub(r'\$[^$]*\$', '', normalized)  # Math mode
+        
+        # Normalize punctuation and special characters
+        # Replace various quote types with standard quotes
+        normalized = normalized.replace('"', '').replace("'", '').replace('`', '').replace("'", '')
+        
+        # Normalize common punctuation
+        normalized = normalized.replace(':', ' ').replace(';', ' ').replace(',', ' ')
+        normalized = normalized.replace('(', ' ').replace(')', ' ').replace('[', ' ').replace(']', ' ')
+        normalized = normalized.replace('{', ' ').replace('}', ' ')
+        
+        # Normalize whitespace (multiple spaces to single, trim)
+        normalized = re.sub(r'\s+', ' ', normalized)
+        normalized = normalized.strip()
+        
+        # Remove leading/trailing hyphens and underscores
+        normalized = normalized.strip('-_')
+        
+        return normalized
+    
     def _keyword_search(
         self,
         query: str,
@@ -883,29 +915,42 @@ class NeurIPSSearchTool(MCPTool):
         """
         query_lower = query.lower().strip()
         query_words = set(query_lower.split())
+        query_normalized = self._normalize_title_for_match(query)
         
         scores: Dict[str, float] = {}
+        exact_match_found = False
+        exact_match_paper_id = None
         
         for paper in paper_inputs:
             paper_id = paper.get("paper_id", "")
             title = paper.get("title", "").strip()
             title_lower = title.lower()
+            title_normalized = self._normalize_title_for_match(title)
             abstract = paper.get("abstract", "").lower()
             
             # 1. Exact title match (highest priority, maximum score)
-            if title_lower == query_lower:
+            # Try both exact and normalized comparison
+            if title_lower == query_lower or title_normalized == query_normalized:
                 scores[paper_id] = 1.0
+                exact_match_found = True
+                exact_match_paper_id = paper_id
+                logger.info(
+                    f"✓ Exact match found! Paper ID: {paper_id}, "
+                    f"Title: '{title[:80]}...', Query: '{query[:80]}...'"
+                )
+                # Don't continue here - we want to check all papers for logging
                 continue
             
             # 2. Title contains query or starts with query (high score with coverage)
-            if query_lower in title_lower or title_lower.startswith(query_lower):
+            normalized_match = query_normalized in title_normalized or title_normalized.startswith(query_normalized)
+            if query_lower in title_lower or title_lower.startswith(query_lower) or normalized_match:
                 # Calculate coverage: how much of query is covered by title
                 title_words = set(title_lower.split())
                 matched_words = query_words & title_words
                 coverage = len(matched_words) / len(query_words) if query_words else 0
                 
                 # Title contains full query: very high score
-                if query_lower in title_lower:
+                if query_lower in title_lower or query_normalized in title_normalized:
                     scores[paper_id] = min(1.0, 0.8 + coverage * 0.2)
                 else:
                     # Title starts with query
@@ -929,6 +974,16 @@ class NeurIPSSearchTool(MCPTool):
             score = min(0.5, score / 3.0)
             
             scores[paper_id] = score
+        
+        # Log if exact match was not found
+        if not exact_match_found:
+            top_scores = sorted([(pid, s) for pid, s in scores.items()], key=lambda x: x[1], reverse=True)[:3]
+            logger.warning(
+                f"⚠ No exact match found for query: '{query}'. "
+                f"Top keyword scores: {top_scores}"
+            )
+        else:
+            logger.info(f"✓ Exact match found: Paper {exact_match_paper_id}")
         
         return scores
     
