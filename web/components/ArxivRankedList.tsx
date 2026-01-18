@@ -4,7 +4,7 @@
  * Displays ranked search results for arXiv papers with full details.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { ScoredPaper } from './PaperResultCard';
 
 interface ArxivRankedListProps {
@@ -18,6 +18,69 @@ export default function ArxivRankedList({
   onPaperClick,
   onClose,
 }: ArxivRankedListProps) {
+  const [position, setPosition] = useState({ left: 16, top: null as number | null });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Calculate initial top position (bottom: 16px)
+    if (containerRef.current && position.top === null) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const windowHeight = window.innerHeight;
+      const initialTop = windowHeight - rect.height - 16;
+      setPosition({ left: 16, top: initialTop });
+    }
+  }, [papers.length]);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging) return;
+
+      const newLeft = e.clientX - dragOffset.x;
+      const newTop = e.clientY - dragOffset.y;
+
+      // Constrain to viewport bounds
+      const windowWidth = window.innerWidth;
+      const windowHeight = window.innerHeight;
+      const containerWidth = containerRef.current?.offsetWidth || 450;
+      const containerHeight = containerRef.current?.offsetHeight || 200;
+
+      const constrainedLeft = Math.max(0, Math.min(newLeft, windowWidth - containerWidth));
+      const constrainedTop = Math.max(0, Math.min(newTop, windowHeight - containerHeight));
+
+      setPosition({
+        left: constrainedLeft,
+        top: constrainedTop,
+      });
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, dragOffset]);
+
+  const handleHeaderMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!containerRef.current) return;
+    
+    const rect = containerRef.current.getBoundingClientRect();
+    setDragOffset({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
+    setIsDragging(true);
+  };
+
   const formatScore = (score: number) => {
     return (score * 100).toFixed(1);
   };
@@ -40,28 +103,37 @@ export default function ArxivRankedList({
   }
 
   return (
-    <div style={{
-      position: 'absolute',
-      bottom: '16px',
-      right: '16px',
-      zIndex: 5,
-      backgroundColor: 'rgba(255, 255, 255, 0.95)',
-      borderRadius: '8px',
-      width: '450px',
-      maxHeight: 'calc(100vh - 200px)',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-      display: 'flex',
-      flexDirection: 'column',
-    }}>
-      {/* Header with close button */}
-      <div style={{
-        padding: '12px 16px',
-        borderBottom: '1px solid #e2e8f0',
+    <div 
+      ref={containerRef}
+      style={{
+        position: 'absolute',
+        left: position.top === null ? '16px' : `${position.left}px`,
+        top: position.top === null ? undefined : `${position.top}px`,
+        bottom: position.top === null ? '16px' : undefined,
+        zIndex: isDragging ? 10 : 5,
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        borderRadius: '8px',
+        width: '450px',
+        maxHeight: 'calc(100vh - 200px)',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
         display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        flexShrink: 0,
-      }}>
+        flexDirection: 'column',
+        cursor: isDragging ? 'grabbing' : 'default',
+      }}
+    >
+      {/* Header with close button */}
+      <div 
+        onMouseDown={handleHeaderMouseDown}
+        style={{
+          padding: '12px 16px',
+          borderBottom: '1px solid #e2e8f0',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexShrink: 0,
+          cursor: 'grab',
+        }}
+      >
         <h3 style={{
           margin: 0,
           color: '#1a202c',
@@ -73,6 +145,7 @@ export default function ArxivRankedList({
         {onClose && (
           <button
             onClick={onClose}
+            onMouseDown={(e) => e.stopPropagation()}
             style={{
               background: 'none',
               border: 'none',
