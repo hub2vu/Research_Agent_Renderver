@@ -116,7 +116,14 @@ def _get_embedding_model():
         # Verify model dimension matches embeddings dimension if known
         if _embeddings_dimension_cache is not None:
             test_embedding = _embedding_model_cache.encode(["test"])
-            model_dim = test_embedding.shape[0] if hasattr(test_embedding, 'shape') else len(test_embedding)
+            # Fix: use shape[1] instead of shape[0] for embedding dimension
+            # model.encode(["test"]) returns (1, 768) for all-mpnet-base-v2
+            if hasattr(test_embedding, 'shape') and len(test_embedding.shape) >= 2:
+                model_dim = test_embedding.shape[1]  # Fix: shape[1] for embedding dimension
+            elif hasattr(test_embedding, 'shape'):
+                model_dim = test_embedding.shape[0]  # Fallback for 1D array
+            else:
+                model_dim = len(test_embedding)  # Fallback for list
             
             if model_dim != _embeddings_dimension_cache:
                 logger.error(
@@ -942,15 +949,18 @@ class NeurIPSSearchTool(MCPTool):
                 continue
             
             # 2. Title contains query or starts with query (high score with coverage)
+            # But NOT exact match (exact match already handled above with continue)
             normalized_match = query_normalized in title_normalized or title_normalized.startswith(query_normalized)
-            if query_lower in title_lower or title_lower.startswith(query_lower) or normalized_match:
+            if (query_lower in title_lower or title_lower.startswith(query_lower) or normalized_match) and title_lower != query_lower:
+                # Only check "contains" if it's NOT an exact match
                 # Calculate coverage: how much of query is covered by title
                 title_words = set(title_lower.split())
                 matched_words = query_words & title_words
                 coverage = len(matched_words) / len(query_words) if query_words else 0
                 
                 # Title contains full query: very high score
-                if query_lower in title_lower or query_normalized in title_normalized:
+                if (query_lower in title_lower or query_normalized in title_normalized) and title_lower != query_lower and title_normalized != query_normalized:
+                    # Ensure it's not exact match (exact match is already handled)
                     scores[paper_id] = min(1.0, 0.8 + coverage * 0.2)
                 else:
                     # Title starts with query
