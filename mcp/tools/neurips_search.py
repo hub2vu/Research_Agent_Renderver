@@ -338,16 +338,16 @@ class NeurIPSSearchTool(MCPTool):
             ToolParameter(
                 name="semantic_weight",
                 type="number",
-                description="Weight for semantic search in RRF (default: 1.0)",
+                description="Weight for semantic search in weighted average (default: 0.3)",
                 required=False,
-                default=1.0
+                default=0.3
             ),
             ToolParameter(
                 name="keyword_weight",
                 type="number",
-                description="Weight for keyword search in RRF (default: 1.0)",
+                description="Weight for keyword search in weighted average (default: 0.7)",
                 required=False,
-                default=1.0
+                default=0.7
             ),
             ToolParameter(
                 name="use_cache",
@@ -381,8 +381,8 @@ class NeurIPSSearchTool(MCPTool):
         query: str,
         max_results: int = 100,
         profile_path: str = "users/profile.json",
-        semantic_weight: float = 1.0,
-        keyword_weight: float = 1.0,
+        semantic_weight: float = 0.3,
+        keyword_weight: float = 0.7,
         use_cache: bool = True,
         metadata_path: Optional[str] = None,
         embeddings_path: Optional[str] = None,
@@ -488,19 +488,19 @@ class NeurIPSSearchTool(MCPTool):
             paper_inputs=paper_inputs_all
         )
         
-        # Combine with RRF
-        rrf_scores = self._apply_rrf(
+        # Combine with weighted average
+        combined_scores = self._combine_scores_weighted(
             semantic_scores,
             keyword_scores,
             semantic_weight=semantic_weight,
             keyword_weight=keyword_weight,
-            k=60  # RRF parameter
+            exact_match_boost=2.0
         )
         
         # Sort and select top N
         ranked_paper_ids = sorted(
-            rrf_scores.keys(),
-            key=lambda pid: rrf_scores[pid],
+            combined_scores.keys(),
+            key=lambda pid: combined_scores[pid],
             reverse=True
         )[:max_results]
         
@@ -515,15 +515,15 @@ class NeurIPSSearchTool(MCPTool):
                 # Add search scores for reference
                 paper["semantic_score"] = semantic_scores.get(pid, 0.0)
                 paper["keyword_score"] = keyword_scores.get(pid, 0.0)
-                paper["rrf_score"] = rrf_scores.get(pid, 0.0)
+                paper["combined_score"] = combined_scores.get(pid, 0.0)
                 selected_papers.append(paper)
         
         # Calculate statistics
         search_stats = {
             "semantic_matches": len([s for s in semantic_scores.values() if s > 0]),
             "keyword_matches": len([s for s in keyword_scores.values() if s > 0]),
-            "rrf_combined_count": len(rrf_scores),
-            "avg_rrf_score": float(np.mean(list(rrf_scores.values()))) if rrf_scores else 0.0
+            "combined_count": len(combined_scores),
+            "avg_combined_score": float(np.mean(list(combined_scores.values()))) if combined_scores else 0.0
         }
         
         result = {
@@ -743,95 +743,108 @@ class NeurIPSSearchTool(MCPTool):
         paper_inputs: List[PaperInput]
     ) -> Dict[str, float]:
         """
-        Perform keyword search on title and abstract.
+        Perform keyword search on title and abstract with hierarchical scoring.
+        
+        Scoring hierarchy:
+        1. Exact title match: 1.0
+        2. Title contains/starts with query: 0.8 + coverage
+        3. All words in title: 0.6-0.8
+        4. Partial word matching: max 0.5
         
         Args:
             query: Search query
             paper_inputs: List of papers to search
             
         Returns:
-            Dictionary mapping paper_id to keyword score
+            Dictionary mapping paper_id to keyword score (0.0-1.0)
         """
-        query_lower = query.lower()
+        query_lower = query.lower().strip()
         query_words = set(query_lower.split())
         
         scores: Dict[str, float] = {}
         
         for paper in paper_inputs:
             paper_id = paper.get("paper_id", "")
-            title = paper.get("title", "").lower()
+            title = paper.get("title", "").strip()
+            title_lower = title.lower()
             abstract = paper.get("abstract", "").lower()
             
-            # Calculate keyword matches
-            title_matches = sum(1 for word in query_words if word in title)
+            # 1. Exact title match (highest priority, maximum score)
+            if title_lower == query_lower:
+                scores[paper_id] = 1.0
+                continue
+            
+            # 2. Title contains query or starts with query (high score with coverage)
+            if query_lower in title_lower or title_lower.startswith(query_lower):
+                # Calculate coverage: how much of query is covered by title
+                title_words = set(title_lower.split())
+                matched_words = query_words & title_words
+                coverage = len(matched_words) / len(query_words) if query_words else 0
+                
+                # Title contains full query: very high score
+                if query_lower in title_lower:
+                    scores[paper_id] = min(1.0, 0.8 + coverage * 0.2)
+                else:
+                    # Title starts with query
+                    scores[paper_id] = 0.7 + coverage * 0.1
+                continue
+            
+            # 3. All query words are in title (moderate-high score)
+            title_matches = sum(1 for word in query_words if word in title_lower)
+            if title_matches == len(query_words) and query_words:
+                # All words matched in title
+                scores[paper_id] = 0.6 + (title_matches / max(len(query_words), 1)) * 0.2
+                continue
+            
+            # 4. Partial word matching (low score, max 0.5)
             abstract_matches = sum(1 for word in query_words if word in abstract)
             
             # Weighted score: title 3x, abstract 1x
             score = (title_matches * 3.0 + abstract_matches * 1.0) / max(len(query_words), 1)
             
-            # Normalize to 0.0-1.0
-            score = min(1.0, score / 3.0)  # Max possible score is 3.0 (all words in title)
+            # Normalize to 0.0-0.5 for partial matches
+            score = min(0.5, score / 3.0)
             
             scores[paper_id] = score
         
         return scores
     
-    def _apply_rrf(
+    def _combine_scores_weighted(
         self,
         semantic_scores: Dict[str, float],
         keyword_scores: Dict[str, float],
-        semantic_weight: float = 1.0,
-        keyword_weight: float = 1.0,
-        k: int = 60
+        semantic_weight: float = 0.3,
+        keyword_weight: float = 0.7,
+        exact_match_boost: float = 2.0
     ) -> Dict[str, float]:
         """
-        Apply Reciprocal Rank Fusion (RRF) to combine semantic and keyword search results.
+        Combine semantic and keyword scores using weighted average with exact match boost.
         
         Args:
             semantic_scores: Dictionary mapping paper_id to semantic score
             keyword_scores: Dictionary mapping paper_id to keyword score
-            semantic_weight: Weight for semantic search
-            keyword_weight: Weight for keyword search
-            k: RRF parameter (default: 60)
+            semantic_weight: Weight for semantic search (default: 0.3)
+            keyword_weight: Weight for keyword search (default: 0.7)
+            exact_match_boost: Multiplier for papers with keyword_score == 1.0 (default: 2.0)
             
         Returns:
-            Dictionary mapping paper_id to RRF score
+            Dictionary mapping paper_id to combined score (0.0-1.0)
         """
-        # Rank papers by each method
-        semantic_ranked = sorted(
-            semantic_scores.items(),
-            key=lambda x: x[1],
-            reverse=True
-        )
-        keyword_ranked = sorted(
-            keyword_scores.items(),
-            key=lambda x: x[1],
-            reverse=True
-        )
-        
-        # Create rank dictionaries (1-indexed)
-        semantic_ranks: Dict[str, int] = {}
-        for rank, (paper_id, _) in enumerate(semantic_ranked, start=1):
-            semantic_ranks[paper_id] = rank
-        
-        keyword_ranks: Dict[str, int] = {}
-        for rank, (paper_id, _) in enumerate(keyword_ranked, start=1):
-            keyword_ranks[paper_id] = rank
-        
-        # Calculate RRF scores
         all_paper_ids = set(semantic_scores.keys()) | set(keyword_scores.keys())
-        rrf_scores: Dict[str, float] = {}
+        combined_scores: Dict[str, float] = {}
         
         for paper_id in all_paper_ids:
-            sem_rank = semantic_ranks.get(paper_id, float('inf'))
-            kw_rank = keyword_ranks.get(paper_id, float('inf'))
+            sem_score = semantic_scores.get(paper_id, 0.0)
+            kw_score = keyword_scores.get(paper_id, 0.0)
             
-            # RRF formula with weights
-            rrf_score = (
-                semantic_weight / (k + sem_rank) +
-                keyword_weight / (k + kw_rank)
-            )
+            # Basic weighted average
+            combined = (sem_score * semantic_weight + kw_score * keyword_weight)
             
-            rrf_scores[paper_id] = rrf_score
+            # Apply boost for exact matches (keyword_score >= 1.0)
+            if kw_score >= 1.0:
+                combined = combined * exact_match_boost
+                combined = min(1.0, combined)  # Cap at 1.0
+            
+            combined_scores[paper_id] = combined
         
-        return rrf_scores
+        return combined_scores
