@@ -195,6 +195,7 @@ class UpdateUserProfileTool(MCPTool):
                 profile["keywords"]["exclude"]["hard"] = excl.get("hard", []) or []
                 profile["keywords"]["exclude"]["soft"] = excl.get("soft", []) or []
 
+        # Process exclude_local_papers from top-level first (has priority)
         if exclude_local_papers is not None:
             profile["constraints"]["exclude_local_papers"] = bool(exclude_local_papers)
 
@@ -229,12 +230,15 @@ class UpdateUserProfileTool(MCPTool):
             else:
                 profile["preferred_institutions"] = preferred_institutions
 
+        # Process constraints object (partial update)
+        # Note: exclude_local_papers in constraints is only applied if top-level exclude_local_papers was not provided
         if constraints is not None:
             if "min_year" in constraints:
                 profile["constraints"]["min_year"] = constraints["min_year"]
             if "require_code" in constraints:
                 profile["constraints"]["require_code"] = bool(constraints["require_code"])
-            if "exclude_local_papers" in constraints:
+            # Only update exclude_local_papers from constraints if top-level was not provided
+            if "exclude_local_papers" in constraints and exclude_local_papers is None:
                 profile["constraints"]["exclude_local_papers"] = bool(constraints["exclude_local_papers"])
 
         # Save

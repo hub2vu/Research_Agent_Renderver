@@ -119,25 +119,64 @@ export default function UserProfileSettingsModal({
     }
   };
 
+  // Helper function to remove undefined values from object recursively
+  const removeUndefined = (obj: any): any => {
+    if (obj === null || obj === undefined) {
+      return obj;
+    }
+    if (Array.isArray(obj)) {
+      return obj.map(removeUndefined);
+    }
+    if (typeof obj === 'object') {
+      const cleaned: any = {};
+      for (const [key, value] of Object.entries(obj)) {
+        if (value !== undefined) {
+          cleaned[key] = removeUndefined(value);
+        }
+      }
+      return cleaned;
+    }
+    return obj;
+  };
+
   const handleSave = async () => {
     setSaving(true);
     setError(null);
     try {
-      // Clean up empty arrays - convert to undefined so they're not saved
-      const cleanedProfile = { ...profile };
-      if (Array.isArray(cleanedProfile.preferred_authors) && cleanedProfile.preferred_authors.length === 0) {
-        cleanedProfile.preferred_authors = undefined;
-      }
-      if (Array.isArray(cleanedProfile.preferred_institutions) && cleanedProfile.preferred_institutions.length === 0) {
-        cleanedProfile.preferred_institutions = undefined;
+      // Deep clone profile to avoid mutating state
+      const cleanedProfile = JSON.parse(JSON.stringify(profile));
+      
+      // Extract exclude_local_papers from constraints and add as top-level field
+      // Backend accepts exclude_local_papers both as top-level and inside constraints
+      if (cleanedProfile.constraints?.exclude_local_papers !== undefined) {
+        cleanedProfile.exclude_local_papers = cleanedProfile.constraints.exclude_local_papers;
       }
       
-      await updateUserProfile(cleanedProfile);
+      // Ensure preferred_authors and preferred_institutions are arrays (not undefined)
+      // Backend needs to receive them even if empty to process updates correctly
+      if (!Array.isArray(cleanedProfile.preferred_authors)) {
+        cleanedProfile.preferred_authors = [];
+      }
+      if (!Array.isArray(cleanedProfile.preferred_institutions)) {
+        cleanedProfile.preferred_institutions = [];
+      }
+      
+      // Remove all undefined fields recursively to prevent them from being sent as null
+      // But keep empty arrays for preferred_authors and preferred_institutions
+      const profileToSend = removeUndefined(cleanedProfile);
+      
+      console.log('[UserProfileSettingsModal] Saving profile:', profileToSend);
+      
+      await updateUserProfile(profileToSend);
+      
+      console.log('[UserProfileSettingsModal] Profile saved successfully');
+      
       if (onSave) {
         onSave();
       }
       onClose();
     } catch (err) {
+      console.error('[UserProfileSettingsModal] Failed to save profile:', err);
       setError(err instanceof Error ? err.message : 'Failed to save profile');
     } finally {
       setSaving(false);
@@ -146,7 +185,8 @@ export default function UserProfileSettingsModal({
 
   const updateField = (path: string[], value: any) => {
     setProfile((prev) => {
-      const newProfile = { ...prev };
+      // Deep clone to ensure immutability
+      const newProfile = JSON.parse(JSON.stringify(prev));
       let current: any = newProfile;
       for (let i = 0; i < path.length - 1; i++) {
         if (!current[path[i]]) {
