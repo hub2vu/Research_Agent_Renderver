@@ -1,0 +1,612 @@
+{
+  "success": true,
+  "error": null,
+  "summary": {
+    "input_count": 30,
+    "filtered_count": 0,
+    "scored_count": 30,
+    "output_count": 10,
+    "purpose": "general",
+    "ranking_mode": "balanced",
+    "profile_used": "users/profile.json",
+    "llm_verification_used": false,
+    "llm_calls_made": 0
+  },
+  "ranked_papers": [
+    {
+      "rank": 1,
+      "paper_id": "2201.00978v1",
+      "title": "PyramidTNT: Improved Transformer-in-Transformer Baselines with Pyramid Architecture",
+      "authors": [
+        "Kai Han",
+        "Jianyuan Guo",
+        "Yehui Tang",
+        "Yunhe Wang"
+      ],
+      "published": "2022-01-04T04:56:57+00:00",
+      "score": {
+        "final": 0.36,
+        "breakdown": {
+          "semantic_relevance": 0.0,
+          "must_keywords": 1.0,
+          "author_trust": 1.0,
+          "institution_trust": 1.0,
+          "recency": 0.05,
+          "practicality": 0.0
+        },
+        "soft_penalty": -0.0,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_low"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR",
+        "PREFERRED_INSTITUTION",
+        "MUST_KEYWORD_MATCH",
+        "NO_CODE",
+        "OLDER_PAPER"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "2201.00978v1",
+        "title": "PyramidTNT: Improved Transformer-in-Transformer Baselines with Pyramid Architecture",
+        "abstract": "Transformer networks have achieved great progress for computer vision tasks. Transformer-in-Transformer (TNT) architecture utilizes inner transformer and outer transformer to extract both local and global representations. In this work, we present new TNT baselines by introducing two advanced designs: 1) pyramid architecture, and 2) convolutional stem. The new \"PyramidTNT\" significantly improves the original TNT by establishing hierarchical representations. PyramidTNT achieves better performances than the previous state-of-the-art vision transformers such as Swin Transformer. We hope this new baseline will be helpful to the further research and application of vision transformer. Code will be available at https://github.com/huawei-noah/CV-Backbones/tree/master/tnt_pytorch.",
+        "authors": [
+          "Kai Han",
+          "Jianyuan Guo",
+          "Yehui Tang",
+          "Yunhe Wang"
+        ],
+        "published": "2022-01-04T04:56:57+00:00",
+        "categories": [
+          "cs.CV"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2201.00978v1",
+        "github_url": null
+      }
+    },
+    {
+      "rank": 2,
+      "paper_id": "2104.11502v1",
+      "title": "Learning to Cluster Faces via Transformer",
+      "authors": [
+        "Jinxing Ye",
+        "Xioajiang Peng",
+        "Baigui Sun",
+        "Kai Wang",
+        "Xiuyu Sun",
+        "Hao Li",
+        "Hanqing Wu"
+      ],
+      "published": "2021-04-23T09:43:36+00:00",
+      "score": {
+        "final": 0.36,
+        "breakdown": {
+          "semantic_relevance": 0.0,
+          "must_keywords": 1.0,
+          "author_trust": 1.0,
+          "institution_trust": 1.0,
+          "recency": 0.05,
+          "practicality": 0.0
+        },
+        "soft_penalty": -0.0,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_low"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR",
+        "PREFERRED_INSTITUTION",
+        "MUST_KEYWORD_MATCH",
+        "NO_CODE",
+        "OLDER_PAPER"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "2104.11502v1",
+        "title": "Learning to Cluster Faces via Transformer",
+        "abstract": "Face clustering is a useful tool for applications like automatic face annotation and retrieval. The main challenge is that it is difficult to cluster images from the same identity with different face poses, occlusions, and image quality. Traditional clustering methods usually ignore the relationship between individual images and their neighbors which may contain useful context information. In this paper, we repurpose the well-known Transformer and introduce a Face Transformer for supervised face clustering. In Face Transformer, we decompose the face clustering into two steps: relation encoding and linkage predicting. Specifically, given a face image, a \\textbf{relation encoder} module aggregates local context information from its neighbors and a \\textbf{linkage predictor} module judges whether a pair of images belong to the same cluster or not. In the local linkage graph view, Face Transformer can generate more robust node and edge representations compared to existing methods. Experiments on both MS-Celeb-1M and DeepFashion show that our method achieves state-of-the-art performance, e.g., 91.12\\% in pairwise F-score on MS-Celeb-1M.",
+        "authors": [
+          "Jinxing Ye",
+          "Xioajiang Peng",
+          "Baigui Sun",
+          "Kai Wang",
+          "Xiuyu Sun",
+          "Hao Li",
+          "Hanqing Wu"
+        ],
+        "published": "2021-04-23T09:43:36+00:00",
+        "categories": [
+          "cs.CV"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2104.11502v1",
+        "github_url": null
+      }
+    },
+    {
+      "rank": 3,
+      "paper_id": "2305.14858v2",
+      "title": "Pre-RMSNorm and Pre-CRMSNorm Transformers: Equivalent and Efficient Pre-LN Transformers",
+      "authors": [
+        "Zixuan Jiang",
+        "Jiaqi Gu",
+        "Hanqing Zhu",
+        "David Z. Pan"
+      ],
+      "published": "2023-05-24T08:08:26+00:00",
+      "score": {
+        "final": 0.36,
+        "breakdown": {
+          "semantic_relevance": 0.0,
+          "must_keywords": 1.0,
+          "author_trust": 1.0,
+          "institution_trust": 1.0,
+          "recency": 0.05,
+          "practicality": 0.0
+        },
+        "soft_penalty": -0.0,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_low"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR",
+        "PREFERRED_INSTITUTION",
+        "MUST_KEYWORD_MATCH",
+        "NO_CODE",
+        "OLDER_PAPER"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "2305.14858v2",
+        "title": "Pre-RMSNorm and Pre-CRMSNorm Transformers: Equivalent and Efficient Pre-LN Transformers",
+        "abstract": "Transformers have achieved great success in machine learning applications. Normalization techniques, such as Layer Normalization (LayerNorm, LN) and Root Mean Square Normalization (RMSNorm), play a critical role in accelerating and stabilizing the training of Transformers. While LayerNorm recenters and rescales input vectors, RMSNorm only rescales the vectors by their RMS value. Despite being more computationally efficient, RMSNorm may compromise the representation ability of Transformers. There is currently no consensus regarding the preferred normalization technique, as some models employ LayerNorm while others utilize RMSNorm, especially in recent large language models. It is challenging to convert Transformers with one normalization to the other type. While there is an ongoing disagreement between the two normalization types, we propose a solution to unify two mainstream Transformer architectures, Pre-LN and Pre-RMSNorm Transformers. By removing the inherent redundant mean information in the main branch of Pre-LN Transformers, we can reduce LayerNorm to RMSNorm, achieving higher efficiency. We further propose the Compressed RMSNorm (CRMSNorm) and Pre-CRMSNorm Transformer based on a lossless compression of the zero-mean vectors. We formally establish the equivalence of Pre-LN, Pre-RMSNorm, and Pre-CRMSNorm Transformer variants in both training and inference. It implies that Pre-LN Transformers can be substituted with Pre-(C)RMSNorm counterparts at almost no cost, offering the same arithmetic functionality along with free efficiency improvement. Experiments demonstrate that we can reduce the training and inference time of Pre-LN Transformers by 1% - 10%.",
+        "authors": [
+          "Zixuan Jiang",
+          "Jiaqi Gu",
+          "Hanqing Zhu",
+          "David Z. Pan"
+        ],
+        "published": "2023-05-24T08:08:26+00:00",
+        "categories": [
+          "cs.LG",
+          "cs.AI",
+          "cs.NE"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2305.14858v2",
+        "github_url": null
+      }
+    },
+    {
+      "rank": 4,
+      "paper_id": "2308.16552v1",
+      "title": "Prompt-enhanced Hierarchical Transformer Elevating Cardiopulmonary Resuscitation Instruction via Temporal Action Segmentation",
+      "authors": [
+        "Yang Liu",
+        "Xiaoyun Zhong",
+        "Shiyao Zhai",
+        "Zhicheng Du",
+        "Zhenyuan Gao",
+        "Qiming Huang",
+        "Canyang Zhang",
+        "Bin Jiang",
+        "Vijay Kumar Pandey",
+        "Sanyang Han",
+        "Runming Wang",
+        "Yuxing Han",
+        "Peiwu Qin"
+      ],
+      "published": "2023-08-31T08:43:52+00:00",
+      "score": {
+        "final": 0.36,
+        "breakdown": {
+          "semantic_relevance": 0.0,
+          "must_keywords": 1.0,
+          "author_trust": 1.0,
+          "institution_trust": 1.0,
+          "recency": 0.05,
+          "practicality": 0.0
+        },
+        "soft_penalty": -0.0,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_low"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR",
+        "PREFERRED_INSTITUTION",
+        "MUST_KEYWORD_MATCH",
+        "NO_CODE",
+        "OLDER_PAPER"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "2308.16552v1",
+        "title": "Prompt-enhanced Hierarchical Transformer Elevating Cardiopulmonary Resuscitation Instruction via Temporal Action Segmentation",
+        "abstract": "The vast majority of people who suffer unexpected cardiac arrest are performed cardiopulmonary resuscitation (CPR) by passersby in a desperate attempt to restore life, but endeavors turn out to be fruitless on account of disqualification. Fortunately, many pieces of research manifest that disciplined training will help to elevate the success rate of resuscitation, which constantly desires a seamless combination of novel techniques to yield further advancement. To this end, we collect a custom CPR video dataset in which trainees make efforts to behave resuscitation on mannequins independently in adherence to approved guidelines, thereby devising an auxiliary toolbox to assist supervision and rectification of intermediate potential issues via modern deep learning methodologies. Our research empirically views this problem as a temporal action segmentation (TAS) task in computer vision, which aims to segment an untrimmed video at a frame-wise level. Here, we propose a Prompt-enhanced hierarchical Transformer (PhiTrans) that integrates three indispensable modules, including a textual prompt-based Video Features Extractor (VFE), a transformer-based Action Segmentation Executor (ASE), and a regression-based Prediction Refinement Calibrator (PRC). The backbone of the model preferentially derives from applications in three approved public datasets (GTEA, 50Salads, and Breakfast) collected for TAS tasks, which accounts for the excavation of the segmentation pipeline on the CPR dataset. In general, we unprecedentedly probe into a feasible pipeline that genuinely elevates the CPR instruction qualification via action segmentation in conjunction with cutting-edge deep learning techniques. Associated experiments advocate our implementation with multiple metrics surpassing 91.0%.",
+        "authors": [
+          "Yang Liu",
+          "Xiaoyun Zhong",
+          "Shiyao Zhai",
+          "Zhicheng Du",
+          "Zhenyuan Gao",
+          "Qiming Huang",
+          "Canyang Zhang",
+          "Bin Jiang",
+          "Vijay Kumar Pandey",
+          "Sanyang Han",
+          "Runming Wang",
+          "Yuxing Han",
+          "Peiwu Qin"
+        ],
+        "published": "2023-08-31T08:43:52+00:00",
+        "categories": [
+          "cs.CV"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2308.16552v1",
+        "github_url": null
+      }
+    },
+    {
+      "rank": 5,
+      "paper_id": "2505.11918v1",
+      "title": "Transformers as Unsupervised Learning Algorithms: A study on Gaussian Mixtures",
+      "authors": [
+        "Zhiheng Chen",
+        "Ruofan Wu",
+        "Guanhua Fang"
+      ],
+      "published": "2025-05-17T09:02:18+00:00",
+      "score": {
+        "final": 0.36,
+        "breakdown": {
+          "semantic_relevance": 0.0,
+          "must_keywords": 1.0,
+          "author_trust": 1.0,
+          "institution_trust": 1.0,
+          "recency": 0.05,
+          "practicality": 0.0
+        },
+        "soft_penalty": -0.0,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_low"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR",
+        "PREFERRED_INSTITUTION",
+        "MUST_KEYWORD_MATCH",
+        "NO_CODE",
+        "OLDER_PAPER"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "2505.11918v1",
+        "title": "Transformers as Unsupervised Learning Algorithms: A study on Gaussian Mixtures",
+        "abstract": "The transformer architecture has demonstrated remarkable capabilities in modern artificial intelligence, among which the capability of implicitly learning an internal model during inference time is widely believed to play a key role in the under standing of pre-trained large language models. However, most recent works have been focusing on studying supervised learning topics such as in-context learning, leaving the field of unsupervised learning largely unexplored. This paper investigates the capabilities of transformers in solving Gaussian Mixture Models (GMMs), a fundamental unsupervised learning problem through the lens of statistical estimation. We propose a transformer-based learning framework called TGMM that simultaneously learns to solve multiple GMM tasks using a shared transformer backbone. The learned models are empirically demonstrated to effectively mitigate the limitations of classical methods such as Expectation-Maximization (EM) or spectral algorithms, at the same time exhibit reasonable robustness to distribution shifts. Theoretically, we prove that transformers can approximate both the EM algorithm and a core component of spectral methods (cubic tensor power iterations). These results bridge the gap between practical success and theoretical understanding, positioning transformers as versatile tools for unsupervised learning.",
+        "authors": [
+          "Zhiheng Chen",
+          "Ruofan Wu",
+          "Guanhua Fang"
+        ],
+        "published": "2025-05-17T09:02:18+00:00",
+        "categories": [
+          "cs.LG",
+          "stat.ML"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2505.11918v1",
+        "github_url": null
+      }
+    },
+    {
+      "rank": 6,
+      "paper_id": "2407.00261v2",
+      "title": "Generative Iris Prior Embedded Transformer for Iris Restoration",
+      "authors": [
+        "Yubo Huang",
+        "Jia Wang",
+        "Peipei Li",
+        "Liuyu Xiang",
+        "Peigang Li",
+        "Zhaofeng He"
+      ],
+      "published": "2024-06-28T23:20:57+00:00",
+      "score": {
+        "final": 0.36,
+        "breakdown": {
+          "semantic_relevance": 0.0,
+          "must_keywords": 1.0,
+          "author_trust": 1.0,
+          "institution_trust": 1.0,
+          "recency": 0.05,
+          "practicality": 0.0
+        },
+        "soft_penalty": -0.0,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_low"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR",
+        "PREFERRED_INSTITUTION",
+        "MUST_KEYWORD_MATCH",
+        "NO_CODE",
+        "OLDER_PAPER"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "2407.00261v2",
+        "title": "Generative Iris Prior Embedded Transformer for Iris Restoration",
+        "abstract": "Iris restoration from complexly degraded iris images, aiming to improve iris recognition performance, is a challenging problem. Due to the complex degradation, directly training a convolutional neural network (CNN) without prior cannot yield satisfactory results. In this work, we propose a generative iris prior embedded Transformer model (Gformer), in which we build a hierarchical encoder-decoder network employing Transformer block and generative iris prior. First, we tame Transformer blocks to model long-range dependencies in target images. Second, we pretrain an iris generative adversarial network (GAN) to obtain the rich iris prior, and incorporate it into the iris restoration process with our iris feature modulator. Our experiments demonstrate that the proposed Gformer outperforms state-of-the-art methods. Besides, iris recognition performance has been significantly improved after applying Gformer.",
+        "authors": [
+          "Yubo Huang",
+          "Jia Wang",
+          "Peipei Li",
+          "Liuyu Xiang",
+          "Peigang Li",
+          "Zhaofeng He"
+        ],
+        "published": "2024-06-28T23:20:57+00:00",
+        "categories": [
+          "eess.IV",
+          "cs.CV"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2407.00261v2",
+        "github_url": null
+      }
+    },
+    {
+      "rank": 7,
+      "paper_id": "2302.14017v1",
+      "title": "Full Stack Optimization of Transformer Inference: a Survey",
+      "authors": [
+        "Sehoon Kim",
+        "Coleman Hooper",
+        "Thanakul Wattanawong",
+        "Minwoo Kang",
+        "Ruohan Yan",
+        "Hasan Genc",
+        "Grace Dinh",
+        "Qijing Huang",
+        "Kurt Keutzer",
+        "Michael W. Mahoney",
+        "Yakun Sophia Shao",
+        "Amir Gholami"
+      ],
+      "published": "2023-02-27T18:18:13+00:00",
+      "score": {
+        "final": 0.36,
+        "breakdown": {
+          "semantic_relevance": 0.0,
+          "must_keywords": 1.0,
+          "author_trust": 1.0,
+          "institution_trust": 1.0,
+          "recency": 0.05,
+          "practicality": 0.0
+        },
+        "soft_penalty": -0.0,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_low"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR",
+        "PREFERRED_INSTITUTION",
+        "MUST_KEYWORD_MATCH",
+        "NO_CODE",
+        "OLDER_PAPER"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "2302.14017v1",
+        "title": "Full Stack Optimization of Transformer Inference: a Survey",
+        "abstract": "Recent advances in state-of-the-art DNN architecture design have been moving toward Transformer models. These models achieve superior accuracy across a wide range of applications. This trend has been consistent over the past several years since Transformer models were originally introduced. However, the amount of compute and bandwidth required for inference of recent Transformer models is growing at a significant rate, and this has made their deployment in latency-sensitive applications challenging. As such, there has been an increased focus on making Transformer models more efficient, with methods that range from changing the architecture design, all the way to developing dedicated domain-specific accelerators. In this work, we survey different approaches for efficient Transformer inference, including: (i) analysis and profiling of the bottlenecks in existing Transformer architectures and their similarities and differences with previous convolutional models; (ii) implications of Transformer architecture on hardware, including the impact of non-linear operations such as Layer Normalization, Softmax, and GELU, as well as linear operations, on hardware design; (iii) approaches for optimizing a fixed Transformer architecture; (iv) challenges in finding the right mapping and scheduling of operations for Transformer models; and (v) approaches for optimizing Transformer models by adapting the architecture using neural architecture search. Finally, we perform a case study by applying the surveyed optimizations on Gemmini, the open-source, full-stack DNN accelerator generator, and we show how each of these approaches can yield improvements, compared to previous benchmark results on Gemmini. Among other things, we find that a full-stack co-design approach with the aforementioned methods can result in up to 88.7x speedup with a minimal performance degradation for Transformer inference.",
+        "authors": [
+          "Sehoon Kim",
+          "Coleman Hooper",
+          "Thanakul Wattanawong",
+          "Minwoo Kang",
+          "Ruohan Yan",
+          "Hasan Genc",
+          "Grace Dinh",
+          "Qijing Huang",
+          "Kurt Keutzer",
+          "Michael W. Mahoney",
+          "Yakun Sophia Shao",
+          "Amir Gholami"
+        ],
+        "published": "2023-02-27T18:18:13+00:00",
+        "categories": [
+          "cs.CL",
+          "cs.LG"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2302.14017v1",
+        "github_url": null
+      }
+    },
+    {
+      "rank": 8,
+      "paper_id": "2504.14092v1",
+      "title": "Retinex-guided Histogram Transformer for Mask-free Shadow Removal",
+      "authors": [
+        "Wei Dong",
+        "Han Zhou",
+        "Seyed Amirreza Mousavi",
+        "Jun Chen"
+      ],
+      "published": "2025-04-18T22:19:40+00:00",
+      "score": {
+        "final": 0.36,
+        "breakdown": {
+          "semantic_relevance": 0.0,
+          "must_keywords": 1.0,
+          "author_trust": 1.0,
+          "institution_trust": 1.0,
+          "recency": 0.05,
+          "practicality": 0.0
+        },
+        "soft_penalty": -0.0,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_low"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR",
+        "PREFERRED_INSTITUTION",
+        "MUST_KEYWORD_MATCH",
+        "NO_CODE",
+        "OLDER_PAPER"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "2504.14092v1",
+        "title": "Retinex-guided Histogram Transformer for Mask-free Shadow Removal",
+        "abstract": "While deep learning methods have achieved notable progress in shadow removal, many existing approaches rely on shadow masks that are difficult to obtain, limiting their generalization to real-world scenes. In this work, we propose ReHiT, an efficient mask-free shadow removal framework based on a hybrid CNN-Transformer architecture guided by Retinex theory. We first introduce a dual-branch pipeline to separately model reflectance and illumination components, and each is restored by our developed Illumination-Guided Hybrid CNN-Transformer (IG-HCT) module. Second, besides the CNN-based blocks that are capable of learning residual dense features and performing multi-scale semantic fusion, multi-scale semantic fusion, we develop the Illumination-Guided Histogram Transformer Block (IGHB) to effectively handle non-uniform illumination and spatially complex shadows. Extensive experiments on several benchmark datasets validate the effectiveness of our approach over existing mask-free methods. Trained solely on the NTIRE 2025 Shadow Removal Challenge dataset, our solution delivers competitive results with one of the smallest parameter sizes and fastest inference speeds among top-ranked entries, highlighting its applicability for real-world applications with limited computational resources. The code is available at https://github.com/dongw22/oath.",
+        "authors": [
+          "Wei Dong",
+          "Han Zhou",
+          "Seyed Amirreza Mousavi",
+          "Jun Chen"
+        ],
+        "published": "2025-04-18T22:19:40+00:00",
+        "categories": [
+          "cs.CV"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2504.14092v1",
+        "github_url": null
+      }
+    },
+    {
+      "rank": 9,
+      "paper_id": "2407.10949v2",
+      "title": "Representing Rule-based Chatbots with Transformers",
+      "authors": [
+        "Dan Friedman",
+        "Abhishek Panigrahi",
+        "Danqi Chen"
+      ],
+      "published": "2024-07-15T17:45:53+00:00",
+      "score": {
+        "final": 0.36,
+        "breakdown": {
+          "semantic_relevance": 0.0,
+          "must_keywords": 1.0,
+          "author_trust": 1.0,
+          "institution_trust": 1.0,
+          "recency": 0.05,
+          "practicality": 0.0
+        },
+        "soft_penalty": -0.0,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_low"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR",
+        "PREFERRED_INSTITUTION",
+        "MUST_KEYWORD_MATCH",
+        "NO_CODE",
+        "OLDER_PAPER"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "2407.10949v2",
+        "title": "Representing Rule-based Chatbots with Transformers",
+        "abstract": "What kind of internal mechanisms might Transformers use to conduct fluid, natural-sounding conversations? Prior work has illustrated by construction how Transformers can solve various synthetic tasks, such as sorting a list or recognizing formal languages, but it remains unclear how to extend this approach to a conversational setting. In this work, we propose using ELIZA, a classic rule-based chatbot, as a setting for formal, mechanistic analysis of Transformer-based chatbots. ELIZA allows us to formally model key aspects of conversation, including local pattern matching and long-term dialogue state tracking. We first present a theoretical construction of a Transformer that implements the ELIZA chatbot. Building on prior constructions, particularly those for simulating finite-state automata, we show how simpler mechanisms can be composed and extended to produce more sophisticated behavior. Next, we conduct a set of empirical analyses of Transformers trained on synthetically generated ELIZA conversations. Our analysis illustrates the kinds of mechanisms these models tend to prefer--for example, models favor an induction head mechanism over a more precise, position-based copying mechanism; and using intermediate generations to simulate recurrent data structures, akin to an implicit scratchpad or Chain-of-Thought. Overall, by drawing an explicit connection between neural chatbots and interpretable, symbolic mechanisms, our results provide a new framework for the mechanistic analysis of conversational agents.",
+        "authors": [
+          "Dan Friedman",
+          "Abhishek Panigrahi",
+          "Danqi Chen"
+        ],
+        "published": "2024-07-15T17:45:53+00:00",
+        "categories": [
+          "cs.CL",
+          "cs.AI",
+          "cs.LG"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2407.10949v2",
+        "github_url": null
+      }
+    },
+    {
+      "rank": 10,
+      "paper_id": "1803.01837v1",
+      "title": "ST-GAN: Spatial Transformer Generative Adversarial Networks for Image Compositing",
+      "authors": [
+        "Chen-Hsuan Lin",
+        "Ersin Yumer",
+        "Oliver Wang",
+        "Eli Shechtman",
+        "Simon Lucey"
+      ],
+      "published": "2018-03-05T18:59:01+00:00",
+      "score": {
+        "final": 0.36,
+        "breakdown": {
+          "semantic_relevance": 0.0,
+          "must_keywords": 1.0,
+          "author_trust": 1.0,
+          "institution_trust": 1.0,
+          "recency": 0.05,
+          "practicality": 0.0
+        },
+        "soft_penalty": -0.0,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_low"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR",
+        "PREFERRED_INSTITUTION",
+        "MUST_KEYWORD_MATCH",
+        "NO_CODE",
+        "OLDER_PAPER"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "1803.01837v1",
+        "title": "ST-GAN: Spatial Transformer Generative Adversarial Networks for Image Compositing",
+        "abstract": "We address the problem of finding realistic geometric corrections to a foreground object such that it appears natural when composited into a background image. To achieve this, we propose a novel Generative Adversarial Network (GAN) architecture that utilizes Spatial Transformer Networks (STNs) as the generator, which we call Spatial Transformer GANs (ST-GANs). ST-GANs seek image realism by operating in the geometric warp parameter space. In particular, we exploit an iterative STN warping scheme and propose a sequential training strategy that achieves better results compared to naive training of a single generator. One of the key advantages of ST-GAN is its applicability to high-resolution images indirectly since the predicted warp parameters are transferable between reference frames. We demonstrate our approach in two applications: (1) visualizing how indoor furniture (e.g. from product images) might be perceived in a room, (2) hallucinating how accessories like glasses would look when matched with real portraits.",
+        "authors": [
+          "Chen-Hsuan Lin",
+          "Ersin Yumer",
+          "Oliver Wang",
+          "Eli Shechtman",
+          "Simon Lucey"
+        ],
+        "published": "2018-03-05T18:59:01+00:00",
+        "categories": [
+          "cs.CV",
+          "cs.LG"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/1803.01837v1",
+        "github_url": null
+      }
+    }
+  ],
+  "filtered_papers": [],
+  "contrastive_paper": null,
+  "comparison_notes": [],
+  "output_path": "/data/output/rankings/2026-01-08_2026-01-08T15-28-46_ranked.json",
+  "generated_at": "2026-01-08T15:28:46.885764"
+}

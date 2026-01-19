@@ -20,6 +20,13 @@
       "cluster": 0,
       "authors": [],
       "year": null
+    },
+    {
+      "id": "119698_The Rise of Parameter Specialization for Knowledge Storage in Large Language Models",
+      "title": "The Rise of Parameter Specialization for Knowledge Storage in Large Language Models Yihuai Hong1,2∗",
+      "cluster": 0,
+      "authors": [],
+      "year": null
     }
   ],
   "edges": [
@@ -37,14 +44,15 @@
     }
   ],
   "meta": {
-    "total_papers": 3,
+    "total_papers": 4,
     "total_edges": 2,
-    "similarity_threshold": 0.5,
+    "similarity_threshold": 0.55,
     "used_embeddings": true,
     "titles": {
       "10.48550_arxiv.2201.07207": "Language Models as Zero-Shot Planners: Extracting Actionable Knowledge for Embodied Agents",
       "10.48550_arxiv.2210.03629": "REACT: SYNERGIZING REASONING AND ACTING IN LANGUAGE MODELS",
-      "10.48550_arxiv.2506.07976": "Thinking vs. Doing: Agents that Reason by Scaling Test-Time Interaction"
+      "10.48550_arxiv.2506.07976": "Thinking vs. Doing: Agents that Reason by Scaling Test-Time Interaction",
+      "119698_The Rise of Parameter Specialization for Knowledge Storage in Large Language Models": "The Rise of Parameter Specialization for Knowledge Storage in Large Language Models Yihuai Hong1,2∗"
     }
   }
 }

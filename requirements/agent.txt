@@ -6,3 +6,7 @@ openai>=1.0.0
 
 # HTTP Client
 requests>=2.31.0
+
+# Web Server dependencies
+fastapi>=0.100.0
+uvicorn>=0.23.0

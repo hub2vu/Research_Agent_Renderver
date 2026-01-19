@@ -1,0 +1,121 @@
+{
+  "success": true,
+  "error": null,
+  "summary": {
+    "input_count": 2,
+    "filtered_count": 0,
+    "scored_count": 2,
+    "output_count": 2,
+    "purpose": "general",
+    "ranking_mode": "balanced",
+    "profile_used": "users/profile.json",
+    "llm_verification_used": false,
+    "llm_calls_made": 0
+  },
+  "ranked_papers": [
+    {
+      "rank": 1,
+      "paper_id": "0107089v1",
+      "title": "Semiinfinite symmetric powers",
+      "authors": [
+        "M. Kapranov"
+      ],
+      "published": "2001-07-12T15:00:23+00:00",
+      "score": {
+        "final": 0.26,
+        "breakdown": {
+          "semantic_relevance": 0.0,
+          "must_keywords": 0.0,
+          "author_trust": 1.0,
+          "institution_trust": 1.0,
+          "recency": 0.05,
+          "practicality": 0.0
+        },
+        "soft_penalty": -0.0,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_low"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR",
+        "PREFERRED_INSTITUTION",
+        "NO_CODE",
+        "OLDER_PAPER"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "0107089v1",
+        "title": "Semiinfinite symmetric powers",
+        "abstract": "We develop a theory of measures, differential forms and Fourier tramsforms on some infinite-dimensional real vector spaces by generalizing the following two constructions:\n (a) The construction of the semiinfinite wedge power of a Tate vector space V. Recall that it is obtained as a certain double inductive limit of the exterior algebras of finite-dimensional subquotients of V.\n (b) The construction of the space of measures on a nonarchimedean local field K with maximal ideal M as a double projective limit of the spaces of measures (=functions) on finite subquotients M^i/M^j of K.",
+        "authors": [
+          "M. Kapranov"
+        ],
+        "published": "2001-07-12T15:00:23+00:00",
+        "categories": [
+          "math.QA"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/math/0107089v1",
+        "github_url": null
+      }
+    },
+    {
+      "rank": 2,
+      "paper_id": "2504.04225v1",
+      "title": "Resilience of Vision Transformers for Domain Generalisation in the Presence of Out-of-Distribution Noisy Images",
+      "authors": [
+        "Hamza Riaz",
+        "Alan F. Smeaton"
+      ],
+      "published": "2025-04-05T16:25:34+00:00",
+      "score": {
+        "final": 0.21,
+        "breakdown": {
+          "semantic_relevance": 0.0,
+          "must_keywords": 1.0,
+          "author_trust": 1.0,
+          "institution_trust": 1.0,
+          "recency": 0.05,
+          "practicality": 0.0
+        },
+        "soft_penalty": -0.15,
+        "penalty_keywords": [
+          "attention"
+        ],
+        "evaluation_method": "embedding_low"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR",
+        "PREFERRED_INSTITUTION",
+        "MUST_KEYWORD_MATCH",
+        "NO_CODE",
+        "OLDER_PAPER"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "2504.04225v1",
+        "title": "Resilience of Vision Transformers for Domain Generalisation in the Presence of Out-of-Distribution Noisy Images",
+        "abstract": "Modern AI models excel in controlled settings but often fail in real-world scenarios where data distributions shift unpredictably - a challenge known as domain generalisation (DG). This paper tackles this limitation by rigorously evaluating vision tramsformers, specifically the BEIT architecture which is a model pre-trained with masked image modelling (MIM), against synthetic out-of-distribution (OOD) benchmarks designed to mimic real-world noise and occlusions. We introduce a novel framework to generate OOD test cases by strategically masking object regions in images using grid patterns (25\\%, 50\\%, 75\\% occlusion) and leveraging cutting-edge zero-shot segmentation via Segment Anything and Grounding DINO to ensure precise object localisation. Experiments across three benchmarks (PACS, Office-Home, DomainNet) demonstrate BEIT's known robustness while maintaining 94\\% accuracy on PACS and 87\\% on Office-Home, despite significant occlusions, outperforming CNNs and other vision transformers by margins of up to 37\\%. Analysis of self-attention distances reveals that the BEIT dependence on global features correlates with its resilience. Furthermore, our synthetic benchmarks expose critical failure modes: performance degrades sharply when occlusions disrupt object shapes e.g. 68\\% drop for external grid masking vs. 22\\% for internal masking. This work provides two key advances (1) a scalable method to generate OOD benchmarks using controllable noise, and (2) empirical evidence that MIM and self-attention mechanism in vision transformers enhance DG by learning invariant features. These insights bridge the gap between lab-trained models and real-world deployment that offer a blueprint for building AI systems that generalise reliably under uncertainty.",
+        "authors": [
+          "Hamza Riaz",
+          "Alan F. Smeaton"
+        ],
+        "published": "2025-04-05T16:25:34+00:00",
+        "categories": [
+          "cs.CV"
+        ],
+        "pdf_url": "https://arxiv.org/pdf/2504.04225v1",
+        "github_url": null
+      }
+    }
+  ],
+  "filtered_papers": [],
+  "contrastive_paper": null,
+  "comparison_notes": [],
+  "output_path": "/data/output/rankings/2026-01-08_2026-01-08T15-21-26_ranked.json",
+  "generated_at": "2026-01-08T15:21:26.846358"
+}
