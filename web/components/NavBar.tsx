@@ -11,10 +11,9 @@ import { useNavigate, useLocation } from 'react-router-dom';
 
 interface NavBarProps {
   onOpenChat: () => void;
-  onOpenRankFilter?: () => void;
 }
 
-export default function NavBar({ onOpenChat, onOpenRankFilter }: NavBarProps) {
+export default function NavBar({ onOpenChat }: NavBarProps) {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -94,19 +93,6 @@ export default function NavBar({ onOpenChat, onOpenRankFilter }: NavBarProps) {
       </div>
 
       <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-        {onOpenRankFilter && (
-          <button
-            style={{
-              ...chatButtonStyle,
-              backgroundColor: '#ed8936',
-            }}
-            onClick={onOpenRankFilter}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#dd6b20'}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#ed8936'}
-          >
-            Rank & Filter
-          </button>
-        )}
         <button
           style={chatButtonStyle}
           onClick={onOpenChat}

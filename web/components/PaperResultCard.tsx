@@ -17,6 +17,7 @@ export interface ScoredPaper {
     breakdown: {
       semantic_relevance: number;
       must_keywords: number;
+      keyword_score?: number;  // Keyword match score from neurips_search (title/abstract matching)
       author_trust: number;
       institution_trust: number;
       recency: number;

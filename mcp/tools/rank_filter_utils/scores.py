@@ -270,16 +270,24 @@ def _classify_papers_by_score(
     """
     Classify papers into three groups based on their scores.
     
+    Borderline thresholds are configurable via environment variables:
+    - LLM_BORDERLINE_MIN (default: 0.4): Minimum score for mid_group (borderline)
+    - LLM_BORDERLINE_MAX (default: 0.7): Minimum score for high_group
+    
     Args:
         papers: List of papers to classify
         scores: Dictionary mapping paper_id to score
         
     Returns:
         Tuple of (high_group, mid_group, low_group) where:
-        - high_group: papers with score >= 0.7
-        - mid_group: papers with 0.4 <= score < 0.7
-        - low_group: papers with score < 0.4
+        - high_group: papers with score >= LLM_BORDERLINE_MAX (default: 0.7)
+        - mid_group: papers with LLM_BORDERLINE_MIN <= score < LLM_BORDERLINE_MAX (default: 0.4-0.7)
+        - low_group: papers with score < LLM_BORDERLINE_MIN (default: < 0.4)
     """
+    # Get borderline thresholds from environment variables
+    borderline_min = float(os.getenv("LLM_BORDERLINE_MIN", "0.4"))
+    borderline_max = float(os.getenv("LLM_BORDERLINE_MAX", "0.7"))
+    
     high_group: List[PaperInput] = []
     mid_group: List[PaperInput] = []
     low_group: List[PaperInput] = []
@@ -288,9 +296,9 @@ def _classify_papers_by_score(
         paper_id = paper["paper_id"]
         score = scores.get(paper_id, 0.0)
         
-        if score >= 0.7:
+        if score >= borderline_max:
             high_group.append(paper)
-        elif score >= 0.4:
+        elif score >= borderline_min:
             mid_group.append(paper)
         else:
             low_group.append(paper)
@@ -298,10 +306,89 @@ def _classify_papers_by_score(
     return (high_group, mid_group, low_group)
 
 
+def _extract_key_sentences(
+    abstract: str,
+    interests: Dict[str, List[str]],
+    max_sentences: int = 5,
+    max_length: int = 300
+) -> str:
+    """
+    Extract key sentences from abstract for token-efficient LLM prompts.
+    
+    Prioritizes sentences that:
+    1. Contain user interest keywords
+    2. Are at the beginning or end of abstract (high information density)
+    
+    Args:
+        abstract: Full abstract text
+        interests: User interests dictionary (primary, secondary, exploratory)
+        max_sentences: Maximum number of sentences to extract
+        max_length: Maximum total character length
+        
+    Returns:
+        Extracted key sentences as a string
+    """
+    if not abstract:
+        return ""
+    
+    # Collect all user interest keywords
+    all_keywords: Set[str] = set()
+    for group in interests.values():
+        all_keywords.update([kw.lower().strip() for kw in group if kw])
+    
+    # Split into sentences (simple approach: split by period, exclamation, question mark)
+    import re
+    sentences = re.split(r'[.!?]+', abstract)
+    sentences = [s.strip() for s in sentences if s.strip()]
+    
+    if not sentences:
+        # Fallback: return first part of abstract
+        return abstract[:max_length] + ("..." if len(abstract) > max_length else "")
+    
+    # Score sentences
+    scored_sentences = []
+    for idx, sent in enumerate(sentences):
+        score = 0.0
+        sent_lower = sent.lower()
+        
+        # Keyword matching score
+        for keyword in all_keywords:
+            if keyword in sent_lower:
+                score += 1.0
+        
+        # Position weight (first and last sentences are important)
+        if idx == 0:
+            score += 2.0  # First sentence
+        elif idx == len(sentences) - 1:
+            score += 2.0  # Last sentence
+        elif idx < 3:
+            score += 1.0  # Early sentences
+        
+        scored_sentences.append((score, idx, sent))
+    
+    # Sort by score (descending)
+    scored_sentences.sort(key=lambda x: x[0], reverse=True)
+    
+    # Select top sentences
+    selected = scored_sentences[:max_sentences]
+    # Sort back by original position
+    selected.sort(key=lambda x: x[1])
+    
+    # Combine selected sentences
+    result = ". ".join([s[2] for s in selected])
+    
+    # Truncate if too long
+    if len(result) > max_length:
+        result = result[:max_length].rsplit('.', 1)[0] + "..."
+    
+    return result
+
+
 async def _verify_with_llm(
     papers: List[PaperInput],
     profile: UserProfile,
-    batch_size: int = 5
+    batch_size: int = 5,
+    use_key_sentences: bool = True
 ) -> Dict[str, Tuple[float, str]]:
     """
     Verify paper relevance using LLM batch evaluation.
@@ -331,6 +418,14 @@ async def _verify_with_llm(
     except Exception:
         return {paper["paper_id"]: (0.0, "") for paper in papers}
     
+    # Get Borderline range from environment variables
+    borderline_min = float(os.getenv("LLM_BORDERLINE_MIN", "0.4"))
+    borderline_max = float(os.getenv("LLM_BORDERLINE_MAX", "0.7"))
+    
+    # Filter papers to only Borderline cases (if we have embedding scores)
+    # For now, we'll verify all papers in the batch, but this can be optimized
+    # by passing embedding_scores as a parameter
+    
     results: Dict[str, Tuple[float, str]] = {}
     
     # Split papers into batches
@@ -356,8 +451,17 @@ async def _verify_with_llm(
         for idx, paper in enumerate(batch, start=1):
             paper_id = paper.get("paper_id", "")
             title = paper.get("title", "")
-            abstract = paper.get("abstract", "")[:500]  # Limit abstract length
-            prompt += f"{idx}. [ID: {paper_id}] 제목: {title} / 초록: {abstract}\n\n"
+            
+            # Use key sentences extraction if enabled
+            if use_key_sentences:
+                abstract_text = _extract_key_sentences(
+                    paper.get("abstract", ""),
+                    profile.get("interests", {})
+                )
+            else:
+                abstract_text = paper.get("abstract", "")[:500]  # Fallback: limit length
+            
+            prompt += f"{idx}. [ID: {paper_id}] 제목: {title} / 초록: {abstract_text}\n\n"
         
         prompt += """응답 형식:
 [{{"paper_id": "...", "relevance": 0.75, "reason": "..."}}, ...]
@@ -597,8 +701,19 @@ def _calculate_dimension_scores(
         scores["recency"] = RECENCY_MIN_SCORE  # No date = assume very old
     else:
         try:
-            # Parse date (YYYY-MM-DD format)
-            pub_date = datetime.strptime(published, "%Y-%m-%d")
+            # Parse date - handle both YYYY-MM-DD and ISO 8601 formats (e.g., "2025-06-27T10:15:33+00:00")
+            # Extract date part if timezone info is present
+            if 'T' in published:
+                # ISO 8601 format: extract date part before 'T'
+                pub_date_str = published.split('T')[0]
+            elif ' ' in published:
+                # Space-separated format: extract date part before space
+                pub_date_str = published.split(' ')[0]
+            else:
+                # Simple YYYY-MM-DD format
+                pub_date_str = published
+            
+            pub_date = datetime.strptime(pub_date_str, "%Y-%m-%d")
             now = datetime.now()
             time_diff = now - pub_date
             

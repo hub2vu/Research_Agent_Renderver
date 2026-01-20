@@ -47,7 +47,7 @@ from .scores import (
 )
 
 # Rank and select exports
-from .rankers import _rank_and_select, _select_contrastive_paper
+from .rankers import _rank_and_select, _select_contrastive_paper, _is_neurips_data, _rank_with_cluster_quota
 
 # Formatter exports
 from .formatters import _generate_comparison_notes, _generate_tags, _save_and_format_result

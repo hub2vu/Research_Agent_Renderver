@@ -15,7 +15,10 @@ import { useNavigate } from 'react-router-dom';
 
 import GraphCanvas from '../components/GraphCanvas';
 import SidePanel from '../components/SidePanel';
-import { getGlobalGraph, rebuildGlobalGraph, GraphNode } from '../lib/mcp';
+import ArxivSearchSidebar from '../components/ArxivSearchSidebar';
+import ArxivRankedList from '../components/ArxivRankedList';
+import { getGlobalGraph, rebuildGlobalGraph, GraphNode, executeRankFilterPipeline } from '../lib/mcp';
+import { ScoredPaper } from '../components/PaperResultCard';
 import { useNodeColors } from '../hooks/useNodeColors';
 
 interface GlobalGraphState {
@@ -65,6 +68,14 @@ export default function GlobalGraphPage() {
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
   const [similarityThreshold, setSimilarityThreshold] = useState(0.7);
   const [useEmbeddings, setUseEmbeddings] = useState(true);
+
+  // Search & Ranking state
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchResults, setSearchResults] = useState<ScoredPaper[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [highlightedPaperIds, setHighlightedPaperIds] = useState<Set<string>>(new Set());
+  const [focusNodeId, setFocusNodeId] = useState<string | undefined>(undefined);
+  const [searchError, setSearchError] = useState<string | null>(null);
 
   // ui_state.json 폴링용
   const lastTimestampRef = useRef<number>(0);
@@ -236,6 +247,70 @@ export default function GlobalGraphPage() {
     [navigate]
   );
 
+  // Handle search
+  const handleSearch = useCallback(async () => {
+    if (!searchQuery.trim()) {
+      return;
+    }
+
+    setIsSearching(true);
+    setSearchError(null);
+    setSearchResults([]);
+    setHighlightedPaperIds(new Set());
+
+    try {
+      const result = await executeRankFilterPipeline({
+        query: searchQuery.trim(),
+        max_results: 50,
+        top_k: 10,
+      });
+
+      if (result.success && result.ranked_papers) {
+        setSearchResults(result.ranked_papers);
+        
+        // Update highlighted paper IDs (convert arxiv IDs to match graph node IDs)
+        const highlightedSet = new Set<string>();
+        result.ranked_papers.forEach(paper => {
+          // Try to match with existing nodes
+          const matchingNode = state.nodes.find(n => {
+            const nodeId = String(n.id || '');
+            const paperId = String(paper.paper_id || '');
+            return nodeId === paperId || nodeId.includes(paperId) || paperId.includes(nodeId);
+          });
+          if (matchingNode) {
+            highlightedSet.add(matchingNode.id);
+          } else {
+            // Also add original paper_id in case format differs
+            highlightedSet.add(paper.paper_id);
+          }
+        });
+        setHighlightedPaperIds(highlightedSet);
+      } else {
+        throw new Error(result.error || 'Search failed');
+      }
+    } catch (err) {
+      setSearchError(err instanceof Error ? err.message : 'Failed to search papers');
+    } finally {
+      setIsSearching(false);
+    }
+  }, [searchQuery, state.nodes]);
+
+  // Handle paper click from list
+  const handlePaperClick = useCallback((paperId: string) => {
+    // Find the corresponding node
+    const node = state.nodes.find(n => {
+      const nodeId = String(n.id || '');
+      const pId = String(paperId || '');
+      return nodeId === pId || nodeId.includes(pId) || pId.includes(nodeId);
+    });
+    if (node) {
+      setSelectedNode(node);
+      setFocusNodeId(node.id);
+      // Clear focus after animation
+      setTimeout(() => setFocusNodeId(undefined), 700);
+    }
+  }, [state.nodes]);
+
   /* ----------------------------- UI ----------------------------- */
 
   const selectedKey = selectedNode ? getStableKey(selectedNode as any) : '';
@@ -302,6 +377,83 @@ export default function GlobalGraphPage() {
         </header>
 
         <div style={{ flex: 1, position: 'relative' }}>
+          {/* Search Sidebar */}
+          {!state.loading && !state.error && (
+            <ArxivSearchSidebar
+              searchQuery={searchQuery}
+              onSearchQueryChange={setSearchQuery}
+              onSearch={handleSearch}
+              isSearching={isSearching}
+            />
+          )}
+
+          {/* Search Results List */}
+          {!state.loading && !state.error && isSearching ? (
+            <div style={{
+              position: 'absolute',
+              bottom: '16px',
+              right: '16px',
+              zIndex: 5,
+              backgroundColor: 'rgba(255, 255, 255, 0.95)',
+              padding: '16px',
+              borderRadius: '8px',
+              width: '400px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              color: '#718096',
+              fontSize: '14px',
+              textAlign: 'center',
+            }}>
+              Searching arXiv and ranking papers...
+            </div>
+          ) : !state.loading && !state.error && searchResults.length > 0 ? (
+            <ArxivRankedList
+              papers={searchResults}
+              onPaperClick={handlePaperClick}
+              onClose={() => {
+                setSearchResults([]);
+                setSearchQuery('');
+                setHighlightedPaperIds(new Set());
+              }}
+            />
+          ) : !state.loading && !state.error && searchQuery.trim() && !isSearching ? (
+            <div style={{
+              position: 'absolute',
+              bottom: '16px',
+              right: '16px',
+              zIndex: 5,
+              backgroundColor: 'rgba(255, 255, 255, 0.95)',
+              padding: '16px',
+              borderRadius: '8px',
+              width: '400px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              color: '#718096',
+              fontSize: '14px',
+              textAlign: 'center',
+            }}>
+              No papers found. Try a different search query.
+            </div>
+          ) : null}
+
+          {/* Error Message */}
+          {searchError && (
+            <div style={{
+              position: 'absolute',
+              bottom: '80px',
+              right: '16px',
+              zIndex: 6,
+              backgroundColor: '#f56565',
+              padding: '12px 16px',
+              borderRadius: '8px',
+              width: '400px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+              color: '#fff',
+              fontSize: '13px',
+            }}>
+              <div style={{ fontWeight: 600, marginBottom: '4px' }}>Error</div>
+              <div>{searchError}</div>
+            </div>
+          )}
+
           {!state.loading && !state.error && (
             <GraphCanvas
               nodes={state.nodes}
@@ -311,6 +463,8 @@ export default function GlobalGraphPage() {
               onNodeClick={handleNodeClick}
               onNodeDoubleClick={handleNodeDoubleClick}
               nodeColorMap={nodeColorMap} // ✅ GraphCanvas는 stableKey 우선 조회
+              highlightedNodeIds={Array.from(highlightedPaperIds)}
+              focusNodeId={focusNodeId}
             />
           )}
         </div>

@@ -25,6 +25,116 @@ except ImportError:
     cosine_similarity = None  # type: ignore
 
 
+def _is_neurips_data(papers: List[PaperInput]) -> bool:
+    """
+    Check if papers are from NeurIPS dataset.
+    
+    Args:
+        papers: List of papers to check
+        
+    Returns:
+        True if papers are from NeurIPS, False otherwise
+    """
+    if not papers:
+        return False
+    
+    # Check first paper's categories
+    first_paper = papers[0]
+    categories = first_paper.get("categories", [])
+    return "NeurIPS 2025" in categories
+
+
+def _rank_with_cluster_quota(
+    papers: List[PaperInput],
+    scores: Dict[str, Dict],  # paper_id -> {final_score, breakdown, ...}
+    top_k: int,
+    cluster_map: Dict[str, int],
+    quota_penalty_ratio: float = 0.75
+) -> List[PaperInput]:
+    """
+    Rank papers using cluster quota system with soft penalty (NeurIPS-specific).
+    
+    Instead of hard quota that completely excludes papers beyond the quota,
+    applies a soft penalty (score reduction) to papers from clusters that exceed
+    the recommended quota. This allows excellent papers from popular clusters
+    to still be selected while maintaining diversity.
+    
+    Algorithm:
+    1. Sort all papers by initial final_score
+    2. Count cluster distribution in top candidates (estimate based on initial ranking)
+    3. Apply soft penalty (score reduction) to papers from clusters exceeding quota
+    4. Re-sort by adjusted scores and select top_k
+    
+    Args:
+        papers: List of papers to rank
+        scores: Dictionary mapping paper_id to score information
+        top_k: Number of papers to select
+        cluster_map: Dictionary mapping paper_id to cluster_id
+        quota_penalty_ratio: Score multiplier for papers exceeding quota (default: 0.75, i.e., 25% reduction)
+        
+    Returns:
+        List of selected papers in ranked order
+    """
+    import math
+    
+    if top_k <= 0:
+        return []
+    
+    # Calculate max papers per cluster (20% of top_k)
+    max_per_cluster = math.ceil(top_k * 0.2)
+    
+    # Step 1: Prepare papers with initial scores
+    papers_with_scores = []
+    for paper in papers:
+        paper_id = paper.get("paper_id", "")
+        score_info = scores.get(paper_id, {})
+        final_score = float(score_info.get("final_score", 0.0))
+        papers_with_scores.append((final_score, paper))
+    
+    # Step 2: Sort by initial score to estimate cluster distribution
+    papers_with_scores.sort(key=lambda x: x[0], reverse=True)
+    
+    # Step 3: Count cluster distribution in top candidates (estimate based on initial ranking)
+    # This estimates which clusters are over-represented in top candidates
+    cluster_score_counts: Dict[int, int] = {}
+    for idx, (final_score, paper) in enumerate(papers_with_scores):
+        # Only consider top 2x candidates for estimation (more accurate than full list)
+        if idx >= top_k * 2:
+            break
+        paper_id = paper.get("paper_id", "")
+        cluster_id = cluster_map.get(paper_id)
+        if cluster_id is not None:
+            cluster_score_counts[cluster_id] = cluster_score_counts.get(cluster_id, 0) + 1
+    
+    # Step 4: Apply soft penalty to papers from clusters exceeding quota
+    papers_with_adjusted_scores = []
+    for final_score, paper in papers_with_scores:
+        paper_id = paper.get("paper_id", "")
+        cluster_id = cluster_map.get(paper_id)
+        
+        adjusted_score = final_score
+        
+        if cluster_id is not None:
+            cluster_count = cluster_score_counts.get(cluster_id, 0)
+            # If this cluster already has more papers than quota in top candidates, apply penalty
+            if cluster_count > max_per_cluster:
+                adjusted_score = final_score * quota_penalty_ratio
+        
+        papers_with_adjusted_scores.append((adjusted_score, final_score, paper))
+    
+    # Step 5: Sort by adjusted score (with fallback to original score for ties)
+    papers_with_adjusted_scores.sort(key=lambda x: (x[0], x[1]), reverse=True)
+    
+    # Step 6: Select top_k papers
+    selected: List[PaperInput] = []
+    for adjusted_score, original_score, paper in papers_with_adjusted_scores:
+        if len(selected) >= top_k:
+            break
+        selected.append(paper)
+    
+    return selected
+
+
 def _rank_and_select(
     papers: List[PaperInput],
     scores: Dict[str, Dict],  # paper_id -> {final_score, breakdown, ...}
