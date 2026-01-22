@@ -37,12 +37,28 @@
       "type": "similarity"
     },
     {
-      "source": "10.48550_arxiv.2210.03629",
-      "target": "10.48550_arxiv.2506.07976",
-      "weight": 0.5511950254440308,
-      "type": "similarity"
+      "id": "1706.03762",
+      "title": "1706.03762",
+      "cluster": 0,
+      "authors": [],
+      "year": null
+    },
+    {
+      "id": "1809.04281",
+      "title": "MUSIC TRANSFORMER: GENERATING MUSIC WITH LONG-TERM STRUCTURE Cheng-Zhi Anna Huang∗Ashish Vaswani",
+      "cluster": 0,
+      "authors": [],
+      "year": null
+    },
+    {
+      "id": "SpaceTimePilot",
+      "title": "SpaceTimePilot: Generative Rendering of Dynamic Scenes Across Space and Time Zhening Huang1,2",
+      "cluster": 0,
+      "authors": [],
+      "year": null
     }
   ],
+  "edges": [],
   "meta": {
     "total_papers": 4,
     "total_edges": 2,

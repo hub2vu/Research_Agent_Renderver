@@ -13,6 +13,7 @@
 import React, { useMemo } from 'react';
 import { GraphNode } from '../lib/mcp';
 import PaperCard from './PaperCard';
+import ReportViewer from './ReportViewer';
 
 /* ----------------------- Helper: stable key ---------------------- */
 
@@ -299,7 +300,7 @@ export default function SidePanel({
           </div>
 
           <div style={{ marginTop: 8, fontSize: 11, color: '#a0aec0' }}>
-            
+
           </div>
 
           <div style={{ marginTop: 6, fontSize: 11, color: '#a0aec0' }}>
@@ -364,10 +365,12 @@ export default function SidePanel({
             </a>
           )}
         </div>
+        <ReportViewer paperId={selectedNode.id} />
 
         {/* Extra content (for custom pages like NeurIPS) */}
         {extraContent}
       </div>
+
 
       {/* Loading indicator */}
       {isLoading && (

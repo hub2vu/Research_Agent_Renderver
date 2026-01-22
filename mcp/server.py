@@ -12,6 +12,10 @@ from contextlib import asynccontextmanager
 from typing import Any, Dict
 
 from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from pathlib import Path
 from pydantic import BaseModel, field_validator
 
 from .registry import (
@@ -23,8 +27,7 @@ from .registry import (
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -46,17 +49,26 @@ app = FastAPI(
     title="MCP Research Agent Server",
     description="Model Context Protocol server for research tools",
     version="1.0.0",
-    lifespan=lifespan
+    lifespan=lifespan,
+)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 모든 주소(localhost:3000 등) 허용
+    allow_credentials=True,
+    allow_methods=["*"],  # GET, POST 등 모든 방식 허용
+    allow_headers=["*"],
 )
 
 
 class ToolRequest(BaseModel):
     """Request body for tool execution."""
+
     arguments: Dict[str, Any] = {}
 
 
 class ToolResponse(BaseModel):
     """Response from tool execution."""
+
     success: bool
     tool: str
     result: Any = None
@@ -65,6 +77,7 @@ class ToolResponse(BaseModel):
 
 
 # ============== API Endpoints ==============
+
 
 @app.get("/")
 async def root():
@@ -77,8 +90,8 @@ async def root():
             "list_tools": "/tools",
             "tool_schema": "/tools/schema",
             "execute": "/tools/{tool_name}/execute",
-            "health": "/health"
-        }
+            "health": "/health",
+        },
     }
 
 
@@ -104,13 +117,13 @@ async def list_tools():
                         "name": p.name,
                         "type": p.type,
                         "description": p.description,
-                        "required": p.required
+                        "required": p.required,
                     }
                     for p in tool.parameters
-                ]
+                ],
             }
             for name, tool in tools.items()
-        ]
+        ],
     }
 
 
@@ -138,10 +151,10 @@ async def get_tool_info(tool_name: str):
                 "type": p.type,
                 "description": p.description,
                 "required": p.required,
-                "default": p.default
+                "default": p.default,
             }
             for p in tool.parameters
-        ]
+        ],
     }
 
 
@@ -154,6 +167,7 @@ async def execute_tool_endpoint(tool_name: str, request: ToolRequest):
 
 # ============== Convenience Endpoints ==============
 # These provide direct access to common tools
+
 
 @app.get("/pdf/list")
 async def list_pdfs():
@@ -200,270 +214,93 @@ async def web_search(query: str, max_results: int = 5):
     return result["result"]
 
 
-# ============== Rank Filter Endpoints ==============
-
-class ArxivSearchRequest(BaseModel):
-    """Request body for arXiv search."""
-    query: str
-    max_results: int = 30
-    
-    @field_validator('max_results')
-    @classmethod
-    def limit_max_results(cls, v):
-        """Limit max_results to 30 to avoid arXiv API rate limiting."""
-        return min(v, 30)
+#  [추가] 파일 저장 경로 정의
+OUTPUT_DIR = Path(os.getenv("OUTPUT_DIR", "/data/output"))
 
 
-@app.post("/arxiv/search-for-ranking")
-async def search_arxiv_for_ranking(request: ArxivSearchRequest):
+#  [추가] 웹사이트가 리포트를 달라고 할 때 처리하는 함수
+@app.get("/reports/{paper_id}")
+async def get_report_content(paper_id: str):
     """
-    Search arXiv and convert results to PaperInput format.
-    Returns papers with abstract (from summary) and proper paper_id extraction.
+    웹 프론트엔드용 리포트 조회 API
+    (ID가 달라도 폴더를 끝까지 찾아내는 강력한 탐색 모드)
     """
-    # Search arXiv
-    search_result = await execute_tool("arxiv_search", query=request.query, max_results=request.max_results)
-    if not search_result["success"]:
-        raise HTTPException(status_code=500, detail=search_result.get("error"))
-    
-    papers_data = search_result["result"].get("papers", [])
-    
-    # Convert to PaperInput format
-    paper_inputs = []
-    for paper in papers_data:
-        # Extract paper_id from entry_id (e.g., "http://arxiv.org/abs/2501.12345" -> "2501.12345")
-        entry_id = paper.get("id", "")
-        paper_id = entry_id.split("/")[-1] if "/" in entry_id else entry_id
-        
-        # Convert summary to abstract
-        paper_input = {
-            "paper_id": paper_id,
-            "title": paper.get("title", ""),
-            "abstract": paper.get("summary", ""),  # summary -> abstract
-            "authors": paper.get("authors", []),
-            "published": paper.get("published"),  # Already in YYYY-MM-DD format
-            "categories": paper.get("categories", []),
-            "pdf_url": paper.get("pdf_url"),
-            "github_url": None,  # Default to None
-        }
-        paper_inputs.append(paper_input)
-    
-    return {
-        "query": request.query,
-        "total_results": len(paper_inputs),
-        "papers": paper_inputs
-    }
+    logger.info(f"🔍 [API Request] 리포트 요청 ID: {paper_id}")
 
+    # 1. [1차 시도] 정확한 폴더 찾기
+    target_dir = OUTPUT_DIR / paper_id
 
-class PipelineRequest(BaseModel):
-    """Request body for pipeline execution."""
-    query: str
-    max_results: int = 30
-    purpose: str = None
-    ranking_mode: str = None
-    top_k: int = None
-    include_contrastive: bool = None
-    contrastive_type: str = None
-    
-    @field_validator('max_results')
-    @classmethod
-    def limit_max_results(cls, v):
-        """Limit max_results to 30 to avoid arXiv API rate limiting."""
-        return min(v, 30)
+    # 2. [2차 시도] 정확한 폴더가 없으면, '유사한' 폴더 찾기 (탐정 모드 🕵️‍♂️)
+    if not target_dir.exists():
+        # ID에서 핵심 숫자만 추출 (예: 10.48550_arxiv.1809.04281 -> 1809.04281)
+        core_id = paper_id
+        if "arxiv." in paper_id:
+            core_id = paper_id.split("arxiv.")[-1]
 
+        logger.info(
+            f"⚠️ 정확한 폴더 없음. 핵심 ID '{core_id}'가 포함된 폴더를 검색합니다..."
+        )
 
-@app.post("/rank-filter/execute-pipeline")
-async def execute_rank_filter_pipeline(request: PipelineRequest):
-    """
-    Execute the full rank and filter pipeline:
-    1. Search arXiv
-    2. Convert to PaperInput
-    3. Load profile (with purpose, ranking_mode, etc.)
-    4. Apply hard filters
-    5. Calculate semantic scores
-    6. Evaluate paper metrics
-    7. Rank and select top-k
-    """
-    from .tools.rank_filter_utils.loaders import load_profile
-    from .tools.rank_filter_utils.path_resolver import resolve_path
-    
-    try:
-        # Step 1: Search arXiv and convert to PaperInput
-        search_request = ArxivSearchRequest(query=request.query, max_results=request.max_results)
-        search_result = await search_arxiv_for_ranking(search_request)
-        papers = search_result["papers"]
-        
-        if not papers:
-            return {
-                "success": True,
-                "summary": {
-                    "input_count": 0,
-                    "filtered_count": 0,
-                    "scored_count": 0,
-                    "output_count": 0,
+        # output 폴더 안의 모든 하위 폴더를 하나씩 검사
+        found = False
+        try:
+            for folder in OUTPUT_DIR.iterdir():
+                if folder.is_dir():
+                    # 요청 ID가 폴더명에 포함되거나, 폴더명이 요청 ID에 포함되면 '찾았다!' 처리
+                    if core_id in folder.name or folder.name in paper_id:
+                        target_dir = folder
+                        found = True
+                        logger.info(f"✅ 유사 폴더 발견: {target_dir}")
+                        break
+        except Exception as e:
+            logger.error(f"폴더 검색 중 에러 발생: {e}")
+
+        if not found:
+            logger.error(
+                f"❌ 실패: {paper_id} 또는 {core_id}와 일치하는 폴더가 없습니다."
+            )
+            return JSONResponse(
+                status_code=404,
+                content={
+                    "error": "Folder not found",
+                    "detail": f"Could not find folder for {paper_id}",
                 },
-                "ranked_papers": [],
-                "filtered_papers": [],
-            }
-        
-        # Step 2: Load profile
-        profile_path = "users/profile.json"
-        profile = load_profile(profile_path, tool_name="execute_pipeline")
-        
-        # Override profile values with request parameters if provided
-        purpose = request.purpose if request.purpose is not None else profile.get("purpose", "general")
-        ranking_mode = request.ranking_mode if request.ranking_mode is not None else profile.get("ranking_mode", "balanced")
-        top_k = request.top_k if request.top_k is not None else profile.get("top_k", 5)
-        include_contrastive = request.include_contrastive if request.include_contrastive is not None else profile.get("include_contrastive", False)
-        contrastive_type = request.contrastive_type if request.contrastive_type is not None else profile.get("contrastive_type", "method")
-        
-        # Step 3: Apply hard filters
-        filter_result = await execute_tool(
-            "apply_hard_filters",
-            papers=papers,
-            profile_path=profile_path,
-            purpose=purpose
+            )
+
+    # 3. 파일 찾기 (.md 우선, 없으면 .txt)
+    md_file = target_dir / "summary_report.md"
+    txt_file = target_dir / "summary_report.txt"
+
+    final_file = None
+    if md_file.exists():
+        final_file = md_file
+    elif txt_file.exists():
+        final_file = txt_file
+
+    # 4. 내용 읽어서 리턴
+    if final_file:
+        try:
+            with open(final_file, "r", encoding="utf-8") as f:
+                content = f.read()
+            logger.info(f"📤 리포트 전송 완료: {final_file.name}")
+            return {"content": content}
+        except Exception as e:
+            return JSONResponse(
+                status_code=500, content={"error": f"Read error: {str(e)}"}
+            )
+    else:
+        logger.warning(f"❌ 폴더는 찾았으나 리포트 파일이 없음: {target_dir}")
+        return JSONResponse(
+            status_code=404,
+            content={
+                "error": "Report file missing",
+                "detail": "Folder exists but summary_report.md or .txt is missing.",
+            },
         )
-        if not filter_result["success"]:
-            raise HTTPException(status_code=500, detail=f"Filtering failed: {filter_result.get('error')}")
-        
-        passed_papers = filter_result["result"].get("passed_papers", [])
-        filtered_papers = filter_result["result"].get("filtered_papers", [])
-        
-        if not passed_papers:
-            return {
-                "success": True,
-                "summary": {
-                    "input_count": len(papers),
-                    "filtered_count": len(filtered_papers),
-                    "scored_count": 0,
-                    "output_count": 0,
-                    "purpose": purpose,
-                    "ranking_mode": ranking_mode,
-                },
-                "ranked_papers": [],
-                "filtered_papers": filtered_papers,
-            }
-        
-        # Step 4: Calculate semantic scores
-        semantic_result = await execute_tool(
-            "calculate_semantic_scores",
-            papers=passed_papers,
-            profile_path=profile_path,
-            enable_llm_verification=True
-        )
-        if not semantic_result["success"]:
-            raise HTTPException(status_code=500, detail=f"Semantic scoring failed: {semantic_result.get('error')}")
-        
-        semantic_scores = semantic_result["result"].get("scores", {})
-        
-        # Step 5: Evaluate paper metrics
-        metrics_result = await execute_tool(
-            "evaluate_paper_metrics",
-            papers=passed_papers,
-            semantic_scores=semantic_scores,
-            profile_path=profile_path
-        )
-        if not metrics_result["success"]:
-            raise HTTPException(status_code=500, detail=f"Metrics evaluation failed: {metrics_result.get('error')}")
-        
-        metrics_scores = metrics_result["result"].get("scores", {})
-        
-        # Step 6: Rank and select top-k
-        rank_result = await execute_tool(
-            "rank_and_select_top_k",
-            papers=passed_papers,
-            semantic_scores=semantic_scores,
-            metrics_scores=metrics_scores,
-            top_k=top_k,
-            purpose=purpose,
-            ranking_mode=ranking_mode,
-            include_contrastive=include_contrastive,
-            contrastive_type=contrastive_type,
-            profile_path=profile_path
-        )
-        if not rank_result["success"]:
-            raise HTTPException(status_code=500, detail=f"Ranking failed: {rank_result.get('error')}")
-        
-        return rank_result["result"]
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Pipeline execution failed: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Pipeline execution failed: {str(e)}")
-
-
-@app.get("/rank-filter/profile")
-async def get_user_profile(profile_path: str = "users/profile.json"):
-    """Get user profile."""
-    from .tools.rank_filter_utils.loaders import load_profile
-    
-    try:
-        profile = load_profile(profile_path, tool_name="get_profile")
-        return {
-            "success": True,
-            "profile": profile,
-            "profile_path": profile_path
-        }
-    except Exception as e:
-        logger.error(f"Failed to load profile: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to load profile: {str(e)}")
-
-
-class ProfileUpdateRequest(BaseModel):
-    """Request body for profile update."""
-    profile_path: str = "users/profile.json"
-    interests: Dict[str, Any] = None
-    keywords: Dict[str, Any] = None
-    exclude_local_papers: bool = None
-    purpose: str = None
-    ranking_mode: str = None
-    top_k: int = None
-    include_contrastive: bool = None
-    contrastive_type: str = None
-    preferred_authors: list = None
-    preferred_institutions: list = None
-    constraints: Dict[str, Any] = None
-
-
-@app.post("/rank-filter/profile")
-async def update_user_profile(request: ProfileUpdateRequest):
-    """Update user profile."""
-    update_args = {
-        "profile_path": request.profile_path
-    }
-    
-    if request.interests is not None:
-        update_args["interests"] = request.interests
-    if request.keywords is not None:
-        update_args["keywords"] = request.keywords
-    if request.exclude_local_papers is not None:
-        update_args["exclude_local_papers"] = request.exclude_local_papers
-    if request.purpose is not None:
-        update_args["purpose"] = request.purpose
-    if request.ranking_mode is not None:
-        update_args["ranking_mode"] = request.ranking_mode
-    if request.top_k is not None:
-        update_args["top_k"] = request.top_k
-    if request.include_contrastive is not None:
-        update_args["include_contrastive"] = request.include_contrastive
-    if request.contrastive_type is not None:
-        update_args["contrastive_type"] = request.contrastive_type
-    if request.preferred_authors is not None:
-        update_args["preferred_authors"] = request.preferred_authors
-    if request.preferred_institutions is not None:
-        update_args["preferred_institutions"] = request.preferred_institutions
-    if request.constraints is not None:
-        update_args["constraints"] = request.constraints
-    
-    result = await execute_tool("update_user_profile", **update_args)
-    if not result["success"]:
-        raise HTTPException(status_code=500, detail=result.get("error"))
-    
-    return result["result"]
 
 
 # ============== Main ==============
+
 
 def main():
     """Run the MCP server."""

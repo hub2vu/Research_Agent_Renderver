@@ -32,20 +32,24 @@ load_dotenv()
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
 # Configuration
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 MCP_SERVER_URL = os.getenv("MCP_SERVER_URL", "http://mcp-server:8000")
 
 SYSTEM_PROMPT = """You are a research assistant with access to various tools for:
 - PDF document analysis and extraction
 - arXiv paper search and download
 - Web search and research
+CRITICAL INSTRUCTION:
+- Do NOT explain what you are going to do.
+- Do NOT say "I will download...".
+- JUST CALL THE TOOLS DIRECTLY.
+- If the user asks for a report, call 'arxiv_download' -> 'extract_all' -> 'generate_report' in a sequence immediately.
 
 When the user asks you to do something:
 1. Analyze what tools you need
@@ -86,21 +90,17 @@ class AgentClient:
         self.memory = Memory(system_prompt=SYSTEM_PROMPT)
         self.tools_schema = self._fetch_tools_schema()
         self.planner = Planner(self.tools_schema)
-        self.executor = Executor(
-            tool_caller=self._call_mcp_tool,
-            memory=self.memory
-        )
+        self.executor = Executor(tool_caller=self._call_mcp_tool, memory=self.memory)
 
     def _fetch_tools_schema(self) -> List[Dict]:
         """Fetch available tools from MCP server."""
         try:
-            response = requests.get(
-                f"{self.mcp_url}/tools/schema",
-                timeout=10
-            )
+            response = requests.get(f"{self.mcp_url}/tools/schema", timeout=10)
             if response.status_code == 200:
                 data = response.json()
-                logger.info(f"Loaded {len(data.get('tools', []))} tools from MCP server")
+                logger.info(
+                    f"Loaded {len(data.get('tools', []))} tools from MCP server"
+                )
                 return data.get("tools", [])
             else:
                 logger.warning(f"Failed to fetch tools: {response.status_code}")
@@ -113,16 +113,14 @@ class AgentClient:
             return []
 
     async def _call_mcp_tool(
-        self,
-        tool_name: str,
-        arguments: Dict[str, Any]
+        self, tool_name: str, arguments: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Call an MCP tool via HTTP API."""
         try:
             response = requests.post(
                 f"{self.mcp_url}/tools/{tool_name}/execute",
                 json={"arguments": arguments},
-                timeout=120
+                timeout=120,
             )
 
             if response.status_code == 200:
@@ -130,35 +128,37 @@ class AgentClient:
             else:
                 return {
                     "success": False,
-                    "error": f"HTTP {response.status_code}: {response.text}"
+                    "error": f"HTTP {response.status_code}: {response.text}",
                 }
 
         except requests.exceptions.ConnectionError:
             return {
                 "success": False,
-                "error": f"Cannot connect to MCP server at {self.mcp_url}"
+                "error": f"Cannot connect to MCP server at {self.mcp_url}",
             }
         except requests.exceptions.Timeout:
-            return {
-                "success": False,
-                "error": "Request timed out"
-            }
+            return {"success": False, "error": "Request timed out"}
         except Exception as e:
-            return {
-                "success": False,
-                "error": str(e)
-            }
+            return {"success": False, "error": str(e)}
 
-    def _call_llm(
-        self,
-        messages: List[Dict],
-        tools: List[Dict] = None
-    ) -> Any:
+    def _call_llm(self, messages: List[Dict], tools: List[Dict] = None) -> Any:
+
+        # 1. 청소 도구 (Helper)
+        def sanitize_utf8(text):
+            if isinstance(text, str):
+                return text.encode("utf-8", "replace").decode("utf-8")
+            return text
+
+        # 2. 메시지 청소 (여기서 clean_messages를 만듭니다)
+        clean_messages = []
+        for msg in messages:
+            clean_msg = {k: sanitize_utf8(v) for k, v in msg.items()}
+            clean_messages.append(clean_msg)
+
         """Call the LLM with messages and optional tools."""
-        kwargs = {
-            "model": self.model,
-            "messages": messages
-        }
+
+        # 3. 중요!! 여기서 clean_messages를 사용해야 합니다.
+        kwargs = {"model": self.model, "messages": clean_messages}
 
         if tools:
             kwargs["tools"] = tools
@@ -184,21 +184,23 @@ class AgentClient:
             # Check for tool calls
             if response.tool_calls:
                 # Add assistant's response to context
-                messages.append({
-                    "role": "assistant",
-                    "content": response.content,
-                    "tool_calls": [
-                        {
-                            "id": tc.id,
-                            "type": "function",
-                            "function": {
-                                "name": tc.function.name,
-                                "arguments": tc.function.arguments
+                messages.append(
+                    {
+                        "role": "assistant",
+                        "content": response.content,
+                        "tool_calls": [
+                            {
+                                "id": tc.id,
+                                "type": "function",
+                                "function": {
+                                    "name": tc.function.name,
+                                    "arguments": tc.function.arguments,
+                                },
                             }
-                        }
-                        for tc in response.tool_calls
-                    ]
-                })
+                            for tc in response.tool_calls
+                        ],
+                    }
+                )
 
                 # Execute each tool call
                 for tool_call in response.tool_calls:
@@ -210,11 +212,13 @@ class AgentClient:
                     result = await self._call_mcp_tool(tool_name, arguments)
 
                     # Add tool result to context
-                    messages.append({
-                        "role": "tool",
-                        "tool_call_id": tool_call.id,
-                        "content": json.dumps(result, ensure_ascii=False)
-                    })
+                    messages.append(
+                        {
+                            "role": "tool",
+                            "tool_call_id": tool_call.id,
+                            "content": json.dumps(result, ensure_ascii=False),
+                        }
+                    )
 
             else:
                 # No more tool calls - return the response
