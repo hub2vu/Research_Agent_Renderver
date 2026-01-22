@@ -16,6 +16,7 @@ from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pathlib import Path
+from pydantic import BaseModel, field_validator
 
 from .registry import (
     execute_tool,

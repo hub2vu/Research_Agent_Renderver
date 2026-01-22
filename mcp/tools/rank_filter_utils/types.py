@@ -17,6 +17,8 @@ class PaperInput(TypedDict, total=False):
     categories: List[str]  # Optional: arXiv categories
     pdf_url: str  # Optional: PDF download link
     github_url: str  # Optional: GitHub repository link
+    semantic_score: float  # Optional: Semantic relevance score
+    metrics_score: float  # Optional: Metrics-based score
     affiliations: List[str]  # Optional: Author affiliations
 
 
@@ -45,15 +47,21 @@ class UserProfileConstraints(TypedDict):
     """User constraints structure."""
     min_year: int  # Minimum publication year
     require_code: bool  # Code availability required
+    exclude_local_papers: bool  # Exclude papers that are already downloaded locally
 
 
-class UserProfile(TypedDict):
+class UserProfile(TypedDict, total=False):
     """User profile structure from profile.json."""
     interests: UserProfileInterests
     keywords: UserProfileKeywords
     preferred_authors: List[str]
     preferred_institutions: List[str]
     constraints: UserProfileConstraints
+    purpose: str  # Research purpose: "general", "literature_review", "implementation", "idea_generation"
+    ranking_mode: str  # Ranking mode: "balanced", "novelty", "practicality", "diversity"
+    top_k: int  # Number of papers to return
+    include_contrastive: bool  # Whether to include contrastive paper
+    contrastive_type: str  # Contrastive type: "method", "assumption", "domain"
 
 
 # Score Types

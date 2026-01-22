@@ -22,6 +22,21 @@
       "year": null
     },
     {
+      "id": "119698_The Rise of Parameter Specialization for Knowledge Storage in Large Language Models",
+      "title": "The Rise of Parameter Specialization for Knowledge Storage in Large Language Models Yihuai Hong1,2∗",
+      "cluster": 0,
+      "authors": [],
+      "year": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "10.48550_arxiv.2201.07207",
+      "target": "10.48550_arxiv.2210.03629",
+      "weight": 0.6313140392303467,
+      "type": "similarity"
+    },
+    {
       "id": "1706.03762",
       "title": "1706.03762",
       "cluster": 0,
@@ -45,17 +60,15 @@
   ],
   "edges": [],
   "meta": {
-    "total_papers": 6,
-    "total_edges": 0,
-    "similarity_threshold": 0.7,
+    "total_papers": 4,
+    "total_edges": 2,
+    "similarity_threshold": 0.55,
     "used_embeddings": true,
     "titles": {
       "10.48550_arxiv.2201.07207": "Language Models as Zero-Shot Planners: Extracting Actionable Knowledge for Embodied Agents",
       "10.48550_arxiv.2210.03629": "REACT: SYNERGIZING REASONING AND ACTING IN LANGUAGE MODELS",
       "10.48550_arxiv.2506.07976": "Thinking vs. Doing: Agents that Reason by Scaling Test-Time Interaction",
-      "1706.03762": "1706.03762",
-      "1809.04281": "MUSIC TRANSFORMER: GENERATING MUSIC WITH LONG-TERM STRUCTURE Cheng-Zhi Anna Huang∗Ashish Vaswani",
-      "SpaceTimePilot": "SpaceTimePilot: Generative Rendering of Dynamic Scenes Across Space and Time Zhening Huang1,2"
+      "119698_The Rise of Parameter Specialization for Knowledge Storage in Large Language Models": "The Rise of Parameter Specialization for Knowledge Storage in Large Language Models Yihuai Hong1,2∗"
     }
   }
 }

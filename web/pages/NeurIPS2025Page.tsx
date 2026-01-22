@@ -11,7 +11,10 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import GraphCanvas from '../components/GraphCanvas';
 import SidePanel from '../components/SidePanel';
-import { GraphNode, GraphEdge } from '../lib/mcp';
+import NeurIPSSearchSidebar from '../components/NeurIPSSearchSidebar';
+import NeurIPSRankedList from '../components/NeurIPSRankedList';
+import { GraphNode, GraphEdge, executeNeurIPSSearchAndRank, getUserProfile } from '../lib/mcp';
+import { ScoredPaper } from '../components/PaperResultCard';
 import { useNodeColors } from '../hooks/useNodeColors';
 
 interface NeurIPSPaper {
@@ -85,6 +88,14 @@ export default function NeurIPS2025Page() {
   // ✅ 클러스터 인력 강도
   const [clusterStrength, setClusterStrength] = useState<number>(0.15);
 
+  // Search & Ranking state
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchResults, setSearchResults] = useState<ScoredPaper[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [highlightedPaperIds, setHighlightedPaperIds] = useState<Set<string>>(new Set());
+  const [focusNodeId, setFocusNodeId] = useState<string | undefined>(undefined);
+  const [clusterMap, setClusterMap] = useState<Record<string, number>>({});
+
   const {
     nodeColorMap,
     setNodeColor: handleNodeColorChange,
@@ -107,12 +118,13 @@ export default function NeurIPS2025Page() {
       const papersData = await papersRes.json();
 
       // Parse clusters
-      let clusterMap: Record<string, number> = {};
+      let localClusterMap: Record<string, number> = {};
       let actualK = k;
       if (clustersRes.ok) {
         const clusterData: ClusterData = await clustersRes.json();
-        clusterMap = clusterData.paper_id_to_cluster || {};
+        localClusterMap = clusterData.paper_id_to_cluster || {};
         actualK = clusterData.k || k;
+        setClusterMap(localClusterMap);
       }
 
       // Generate cluster centers
@@ -126,7 +138,7 @@ export default function NeurIPS2025Page() {
 
       // Create nodes with cluster info and paper name as title
       const nodes: GraphNode[] = paperList.map((p, idx) => {
-        const clusterId = clusterMap[p.paper_id] ?? 0;
+        const clusterId = localClusterMap[p.paper_id] ?? 0;
         const center = centers[String(clusterId)];
 
         return {
@@ -193,37 +205,79 @@ export default function NeurIPS2025Page() {
     setSelectedNode(node);
   }, []);
 
-  // Handle PDF download
-  const handleDownloadPdf = useCallback(async () => {
-    if (!selectedNode) return;
+  // Handle search
+  const handleSearch = useCallback(async () => {
+    if (!searchQuery.trim()) {
+      return;
+    }
 
-    const paper = papers.get(selectedNode.id);
-    if (!paper) return;
+    setIsSearching(true);
+    setError(null);
+    setSearchResults([]);
+    setHighlightedPaperIds(new Set());
 
-    setDownloadingPdf(true);
     try {
-      const res = await fetch('/api/tools/call', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          tool_name: 'neurips2025_download_pdf',
-          arguments: {
-            paper_id: paper.paper_id,
-            action: 'pdf'
-          }
-        }),
-      });
+      const result = await executeNeurIPSSearchAndRank(
+        searchQuery.trim(),
+        'users/profile.json',
+        10, // topK
+        numClusters // clusterK
+      );
 
-      const result = await res.json();
-      if (result.error) {
-        alert(`Download failed: ${result.error}`);
+      if (result.success && result.ranked_papers) {
+        setSearchResults(result.ranked_papers);
+        
+        // Update highlighted paper IDs
+        const highlightedSet = new Set(result.ranked_papers.map(p => p.paper_id));
+        setHighlightedPaperIds(highlightedSet);
       } else {
-        alert(`PDF downloaded successfully!\n${result.result || ''}`);
+        throw new Error(result.error || 'Search failed');
       }
     } catch (err) {
-      alert(`Download error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      setError(err instanceof Error ? err.message : 'Failed to search papers');
     } finally {
-      setDownloadingPdf(false);
+      setIsSearching(false);
+    }
+  }, [searchQuery]);
+
+  // Handle paper click from list
+  const handlePaperClick = useCallback((paperId: string) => {
+    // Find the corresponding node
+    const node = graphState.nodes.find(n => n.id === paperId);
+    if (node) {
+      setSelectedNode(node);
+      setFocusNodeId(paperId);
+      // Clear focus after animation
+      setTimeout(() => setFocusNodeId(undefined), 700);
+    }
+  }, [graphState.nodes]);
+
+  // Handle PDF download
+  const handleDownloadPdf = useCallback(async () => {
+  if (!selectedNode) return;
+  const paper = papers.get(selectedNode.id);
+  if (!paper) return;
+
+  setDownloadingPdf(true); // 로딩 표시 시작
+  try {
+    // [수정됨] 기존 'neurips2025_download_pdf' 대신 'process_neurips_paper' 호출
+    const result = await executeTool('process_neurips_paper', {
+      paper_id: paper.paper_id,
+      out_dir: '/data/pdf/neurips2025' // 이전에 수정한 경로 유지
+    });
+
+    if (!result.success) {
+      alert(`Pipeline failed: ${result.error}`);
+    } else {
+      // 결과 보여주기
+      const info = result.result?.pipeline_results;
+      const refCount = info?.ref_count || 0;
+      alert(`Process Complete!\n\n- PDF Saved: ${info?.pdf_path}\n- References Found: ${refCount}`);
+    }
+  } catch (err) {
+    alert(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+  } finally {
+    setDownloadingPdf(false); // 로딩 표시 끝
     }
   }, [selectedNode, papers]);
 
@@ -409,6 +463,82 @@ export default function NeurIPS2025Page() {
           </div>
         </div>
 
+        {/* Search Sidebar */}
+        <NeurIPSSearchSidebar
+          searchQuery={searchQuery}
+          onSearchQueryChange={setSearchQuery}
+          onSearch={handleSearch}
+          isSearching={isSearching}
+        />
+
+        {/* Search Results List */}
+        {isSearching ? (
+          <div style={{
+            position: 'absolute',
+            bottom: '16px',
+            right: '16px',
+            zIndex: 5,
+            backgroundColor: 'rgba(26, 32, 44, 0.95)',
+            padding: '16px',
+            borderRadius: '8px',
+            width: '400px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+            color: '#a0aec0',
+            fontSize: '14px',
+            textAlign: 'center',
+          }}>
+            Searching and ranking papers...
+          </div>
+        ) : searchResults.length > 0 ? (
+          <NeurIPSRankedList
+            papers={searchResults}
+            onPaperClick={handlePaperClick}
+            clusterMap={clusterMap}
+            onClose={() => {
+              setSearchResults([]);
+              setSearchQuery('');
+              setHighlightedPaperIds(new Set());
+            }}
+          />
+        ) : searchQuery.trim() && !isSearching ? (
+          <div style={{
+            position: 'absolute',
+            bottom: '16px',
+            right: '16px',
+            zIndex: 5,
+            backgroundColor: 'rgba(26, 32, 44, 0.95)',
+            padding: '16px',
+            borderRadius: '8px',
+            width: '400px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+            color: '#a0aec0',
+            fontSize: '14px',
+            textAlign: 'center',
+          }}>
+            No papers found. Try a different search query.
+          </div>
+        ) : null}
+
+        {/* Error Message */}
+        {error && (
+          <div style={{
+            position: 'absolute',
+            bottom: '80px',
+            right: '16px',
+            zIndex: 6,
+            backgroundColor: '#f56565',
+            padding: '12px 16px',
+            borderRadius: '8px',
+            width: '400px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+            color: '#fff',
+            fontSize: '13px',
+          }}>
+            <div style={{ fontWeight: 600, marginBottom: '4px' }}>Error</div>
+            <div>{error}</div>
+          </div>
+        )}
+
         <GraphCanvas
           nodes={graphState.nodes}
           edges={filteredEdges}
@@ -417,6 +547,8 @@ export default function NeurIPS2025Page() {
           nodeColorMap={nodeColorMap}
           clusterCenters={clusterCenters}
           clusterStrength={clusterStrength}
+          highlightedNodeIds={Array.from(highlightedPaperIds)}
+          focusNodeId={focusNodeId}
           mode="global"
         />
 

@@ -182,6 +182,108 @@ export default function PaperCard({ node, compact = false }: PaperCardProps) {
           </p>
         </div>
       )}
+
+      {/* Search Result Metadata (reasoning, tags, pdf_url) */}
+      {(node as any).scoredPaper && (
+        <>
+          {/* Reasoning */}
+          {(node as any).scoredPaper.reasoning && (
+            <div style={{ marginTop: '12px' }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '11px',
+                  color: '#a0aec0',
+                  marginBottom: '4px',
+                  textTransform: 'uppercase'
+                }}
+              >
+                💡 Why Selected
+              </label>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: '12px',
+                  color: '#4a5568',
+                  fontStyle: 'italic',
+                  padding: '8px',
+                  backgroundColor: '#edf2f7',
+                  borderRadius: '4px',
+                }}
+              >
+                {(node as any).scoredPaper.reasoning}
+              </p>
+            </div>
+          )}
+
+          {/* Tags */}
+          {(node as any).scoredPaper.tags && (node as any).scoredPaper.tags.length > 0 && (
+            <div style={{ marginTop: '12px' }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '11px',
+                  color: '#a0aec0',
+                  marginBottom: '4px',
+                  textTransform: 'uppercase'
+                }}
+              >
+                Tags
+              </label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                {(node as any).scoredPaper.tags.map((tag: string, idx: number) => {
+                  const getTagColor = (tag: string) => {
+                    if (tag.includes('HIGH_MATCH') || tag.includes('PREFERRED') || tag.includes('CODE_AVAILABLE')) {
+                      return '#48bb78';
+                    }
+                    if (tag.includes('PENALTY') || tag.includes('NO_CODE') || tag.includes('OLDER')) {
+                      return '#f56565';
+                    }
+                    return '#4299e1';
+                  };
+                  return (
+                    <span
+                      key={idx}
+                      style={{
+                        backgroundColor: getTagColor(tag),
+                        color: '#fff',
+                        padding: '2px 8px',
+                        borderRadius: '4px',
+                        fontSize: '11px',
+                      }}
+                    >
+                      {tag.replace(/_/g, ' ')}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* PDF Download Link */}
+          {(node as any).scoredPaper.original_data?.pdf_url && (
+            <div style={{ marginTop: '12px' }}>
+              <a
+                href={(node as any).scoredPaper.original_data.pdf_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-block',
+                  padding: '8px 16px',
+                  backgroundColor: '#4299e1',
+                  color: '#fff',
+                  borderRadius: '4px',
+                  textDecoration: 'none',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                }}
+              >
+                📄 Download PDF
+              </a>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

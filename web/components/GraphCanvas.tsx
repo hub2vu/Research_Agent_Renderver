@@ -28,6 +28,12 @@ interface GraphCanvasProps {
   // Cluster force strength (0-1, default 0.15)
   clusterStrength?: number;
 
+  // Highlighted node IDs (for search results)
+  highlightedNodeIds?: string[];
+
+  // Node ID to focus on (triggers zoom & pan)
+  focusNodeId?: string;
+
   onNodeClick?: (node: GraphNode) => void;
   onNodeDoubleClick?: (node: GraphNode) => void;
 }
@@ -57,6 +63,8 @@ export default function GraphCanvas({
   nodeColorMap,
   clusterCenters,
   clusterStrength = 0.15,
+  highlightedNodeIds = [],
+  focusNodeId,
   onNodeClick,
   onNodeDoubleClick
 }: GraphCanvasProps) {
@@ -168,16 +176,31 @@ export default function GraphCanvas({
     const sel = nodeSelectionRef.current;
     if (!sel) return;
 
+    const highlightedSet = new Set(highlightedNodeIds || []);
+
     sel.select('circle')
       .attr('r', (d: any) => {
         if (isCenterNode(d)) return 20;
         if (d.id === selectedNodeId) return 18;
+        if (highlightedSet.has(d.id)) return 16;
         return 12;
       })
       .attr('fill', (d: any) => getNodeFill(d))
-      .attr('stroke', (d: any) => (d.id === selectedNodeId ? '#000' : '#fff'))
-      .attr('stroke-width', 2);
-  }, [selectedNodeId, isCenterNode, getNodeFill]);
+      .attr('stroke', (d: any) => {
+        if (d.id === selectedNodeId) return '#000';
+        if (highlightedSet.has(d.id)) return '#4a90d9';
+        return '#fff';
+      })
+      .attr('stroke-width', (d: any) => {
+        if (highlightedSet.has(d.id)) return 3;
+        return 2;
+      })
+      .attr('opacity', (d: any) => {
+        if (highlightedSet.size === 0) return 1;
+        if (highlightedSet.has(d.id) || d.id === selectedNodeId || isCenterNode(d)) return 1;
+        return 0.3;
+      });
+  }, [selectedNodeId, highlightedNodeIds, isCenterNode, getNodeFill]);
 
   /* -------------------------- Main D3 --------------------------- */
   // ✅ Rebuild only when topology/layout changes (NOT on select/color changes)
@@ -299,15 +322,30 @@ export default function GraphCanvas({
 
     nodeSelectionRef.current = node as any;
 
+    const highlightedSet = new Set(highlightedNodeIds || []);
+
     node.append('circle')
       .attr('r', (d: any) => {
         if (isCenterNode(d)) return 20;
         if (d.id === selectedNodeId) return 18;
+        if (highlightedSet.has(d.id)) return 16;
         return 12;
       })
       .attr('fill', (d: any) => getNodeFill(d))
-      .attr('stroke', (d: any) => (d.id === selectedNodeId ? '#000' : '#fff'))
-      .attr('stroke-width', 2);
+      .attr('stroke', (d: any) => {
+        if (d.id === selectedNodeId) return '#000';
+        if (highlightedSet.has(d.id)) return '#4a90d9';
+        return '#fff';
+      })
+      .attr('stroke-width', (d: any) => {
+        if (highlightedSet.has(d.id)) return 3;
+        return 2;
+      })
+      .attr('opacity', (d: any) => {
+        if (highlightedSet.size === 0) return 1;
+        if (highlightedSet.has(d.id) || d.id === selectedNodeId || isCenterNode(d)) return 1;
+        return 0.3;
+      });
 
     node.append('text')
       .attr('dy', 25)
@@ -357,7 +395,8 @@ export default function GraphCanvas({
     getNodeFill,
     nodeKey,
     clusterCenters,
-    clusterStrength
+    clusterStrength,
+    highlightedNodeIds
     // ❌ selectedNodeId/nodeColorMap 제외: 튐 방지 핵심
   ]);
 
@@ -371,7 +410,7 @@ export default function GraphCanvas({
   // 색 변경 → 스타일만 (simulation 재시작 X)
   useEffect(() => {
     updateNodeStyles();
-  }, [nodeColorMap, updateNodeStyles]);
+  }, [nodeColorMap, highlightedNodeIds, updateNodeStyles]);
 
   /* ---------------- Auto-Zoom to Center (paper) ---------------- */
   useEffect(() => {
@@ -400,6 +439,33 @@ export default function GraphCanvas({
     zoomTransformRef.current = t; // keep in sync
     svg.transition().duration(450).call((zoom as any).transform, t);
   }, [centerId, mode, width, height]);
+
+  /* ---------------- Focus Node (for search results) ---------------- */
+  useEffect(() => {
+    if (
+      !focusNodeId ||
+      !simulationRef.current ||
+      !zoomBehaviorRef.current ||
+      !zoomSelectionRef.current
+    ) {
+      return;
+    }
+
+    const sim = simulationRef.current;
+    const svg = zoomSelectionRef.current;
+    const zoom = zoomBehaviorRef.current;
+
+    const targetNode: any = (sim.nodes() as any[]).find((n) => n.id === focusNodeId);
+    if (!targetNode || targetNode.x == null || targetNode.y == null) return;
+
+    const k = 2.0; // Zoom in
+    const tx = width / 2 - targetNode.x * k;
+    const ty = height / 2 - targetNode.y * k;
+    const t = d3.zoomIdentity.translate(tx, ty).scale(k);
+
+    zoomTransformRef.current = t;
+    svg.transition().duration(600).call((zoom as any).transform, t);
+  }, [focusNodeId, width, height]);
 
   /* --------------------------- Render --------------------------- */
 

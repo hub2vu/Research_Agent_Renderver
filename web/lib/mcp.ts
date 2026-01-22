@@ -237,3 +237,282 @@ export async function processAllPdfs(): Promise<any> {
 
   return result.result;
 }
+
+// ==================== Rank Filter API ====================
+
+export interface PaperInput {
+  paper_id: string;
+  title: string;
+  abstract: string;
+  authors: string[];
+  published?: string;
+  categories?: string[];
+  pdf_url?: string;
+  github_url?: string | null;
+}
+
+export interface RankFilterPipelineParams {
+  query: string;
+  max_results?: number;
+  purpose?: string;
+  ranking_mode?: string;
+  top_k?: number;
+  include_contrastive?: boolean;
+  contrastive_type?: string;
+}
+
+export interface UserProfile {
+  interests: {
+    primary: string[];
+    secondary: string[];
+    exploratory: string[];
+  };
+  keywords: {
+    must_include: string[];
+    exclude: {
+      hard: string[];
+      soft: string[];
+    };
+  };
+  preferred_authors: string[];
+  preferred_institutions: string[];
+  constraints: {
+    min_year: number;
+    require_code: boolean;
+    exclude_local_papers: boolean;
+  };
+  purpose?: string;
+  ranking_mode?: string;
+  top_k?: number;
+  include_contrastive?: boolean;
+  contrastive_type?: string;
+}
+
+/**
+ * Search arXiv and convert results to PaperInput format
+ */
+export async function searchArxivForRanking(
+  query: string,
+  maxResults: number = 50
+): Promise<{
+  query: string;
+  total_results: number;
+  papers: PaperInput[];
+}> {
+  const response = await fetch(`${MCP_BASE_URL}/arxiv/search-for-ranking`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query, max_results: maxResults })
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to search arXiv: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Execute the full rank and filter pipeline
+ */
+export async function executeRankFilterPipeline(
+  params: RankFilterPipelineParams
+): Promise<any> {
+  const response = await fetch(`${MCP_BASE_URL}/rank-filter/execute-pipeline`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params)
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: response.statusText }));
+    throw new Error(error.detail || 'Failed to execute pipeline');
+  }
+
+  return response.json();
+}
+
+/**
+ * Get user profile
+ */
+export async function getUserProfile(
+  profilePath: string = 'users/profile.json'
+): Promise<UserProfile> {
+  const response = await fetch(`${MCP_BASE_URL}/rank-filter/profile?profile_path=${encodeURIComponent(profilePath)}`);
+
+  if (!response.ok) {
+    throw new Error(`Failed to get profile: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  return data.profile;
+}
+
+/**
+ * Update user profile
+ */
+export async function updateUserProfile(
+  profile: Partial<UserProfile>,
+  profilePath: string = 'users/profile.json'
+): Promise<any> {
+  const response = await fetch(`${MCP_BASE_URL}/rank-filter/profile`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      profile_path: profilePath,
+      ...profile
+    })
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: response.statusText }));
+    throw new Error(error.detail || 'Failed to update profile');
+  }
+
+  return response.json();
+}
+
+// ==================== NeurIPS Search & Rank API ====================
+
+/**
+ * Execute NeurIPS search and rank pipeline
+ */
+export async function executeNeurIPSSearchAndRank(
+  query: string,
+  profilePath: string = 'users/profile.json',
+  topK: number = 10,
+  clusterK?: number
+): Promise<{
+  ranked_papers: Array<{
+    rank: number;
+    paper_id: string;
+    title: string;
+    authors: string[];
+    published?: string;
+    score: {
+      final: number;
+      breakdown: any;
+      soft_penalty: number;
+      penalty_keywords: string[];
+      evaluation_method: string;
+    };
+    tags: string[];
+    local_status: {
+      already_downloaded: boolean;
+      local_path: string | null;
+    };
+    original_data: any;
+    reasoning?: string;
+  }>;
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    // Step 1: Search NeurIPS papers
+    const searchResult = await executeTool('neurips_search', {
+      query,
+      max_results: 100,
+      profile_path: profilePath,
+    });
+
+    if (!searchResult.success) {
+      return {
+        ranked_papers: [],
+        success: false,
+        error: searchResult.error || 'NeurIPS search failed',
+      };
+    }
+
+    if (!searchResult.result?.papers || searchResult.result.papers.length === 0) {
+      return {
+        ranked_papers: [],
+        success: true,
+      };
+    }
+
+    // Step 2: Apply hard filters
+    const filterResult = await executeTool('apply_hard_filters', {
+      papers: searchResult.result.papers,
+      profile_path: profilePath,
+    });
+
+    if (!filterResult.success) {
+      throw new Error(filterResult.error || 'Hard filters failed');
+    }
+
+    const passedPapers = filterResult.result?.passed_papers || [];
+
+    if (passedPapers.length === 0) {
+      return {
+        ranked_papers: [],
+        success: true,
+      };
+    }
+
+    // Step 3: Calculate semantic scores
+    const semanticResult = await executeTool('calculate_semantic_scores', {
+      papers: passedPapers,
+      query,
+      profile_path: profilePath,
+    });
+
+    if (!semanticResult.success) {
+      throw new Error(semanticResult.error || 'Semantic scoring failed');
+    }
+
+    const semanticScores = semanticResult.result?.scores || {};
+
+    // Step 4: Evaluate metrics (with NeurIPS cluster map)
+    // Load cluster map with cluster_k parameter (default: 15)
+    const clusterKToUse = clusterK ?? 15;
+    let neuripsClusterMap: Record<string, number> = {};
+    try {
+      const clusterRes = await fetch(`/api/neurips/clusters?k=${clusterKToUse}`);
+      if (clusterRes.ok) {
+        const clusterData = await clusterRes.json();
+        neuripsClusterMap = clusterData.paper_id_to_cluster || {};
+      }
+    } catch (e) {
+      console.warn('Failed to load cluster map:', e);
+    }
+
+    const metricsResult = await executeTool('evaluate_paper_metrics', {
+      papers: passedPapers,
+      semantic_scores: semanticScores,
+      neurips_cluster_map: neuripsClusterMap,
+      profile_path: profilePath,
+    });
+
+    if (!metricsResult.success) {
+      throw new Error(metricsResult.error || 'Metrics evaluation failed');
+    }
+
+    const metricsScores = metricsResult.result?.scores || {};
+
+    // Step 5: Rank and select top K
+    const rankResult = await executeTool('rank_and_select_top_k', {
+      papers: passedPapers,
+      semantic_scores: semanticScores,
+      metrics_scores: metricsScores,
+      neurips_cluster_map: neuripsClusterMap,
+      top_k: topK,
+      profile_path: profilePath,
+      cluster_k: clusterKToUse,
+    });
+
+    if (!rankResult.success) {
+      throw new Error(rankResult.error || 'Ranking failed');
+    }
+
+    return {
+      ranked_papers: rankResult.result?.ranked_papers || [],
+      success: true,
+    };
+  } catch (error) {
+    return {
+      ranked_papers: [],
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}

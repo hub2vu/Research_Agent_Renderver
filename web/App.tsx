@@ -16,7 +16,9 @@ function AppContent() {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#0d1117' }}>
-      <NavBar onOpenChat={() => setIsChatOpen(true)} />
+      <NavBar
+        onOpenChat={() => setIsChatOpen(true)}
+      />
 
       <Routes>
         <Route path="/" element={<GlobalGraphPage />} />

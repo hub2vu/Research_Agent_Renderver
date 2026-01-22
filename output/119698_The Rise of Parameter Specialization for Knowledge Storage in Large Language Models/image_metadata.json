@@ -1,0 +1,23 @@
+{
+  "filename": "119698_The Rise of Parameter Specialization for Knowledge Storage in Large Language Models.pdf",
+  "total_pages": 26,
+  "images": [
+    {
+      "page_number": 6,
+      "image_index": 1,
+      "filename": "page6_img1.png",
+      "path": "/data/output/119698_The Rise of Parameter Specialization for Knowledge Storage in Large Language Models/images/page6_img1.png",
+      "format": "png",
+      "size_bytes": 4149
+    },
+    {
+      "page_number": 18,
+      "image_index": 1,
+      "filename": "page18_img1.png",
+      "path": "/data/output/119698_The Rise of Parameter Specialization for Knowledge Storage in Large Language Models/images/page18_img1.png",
+      "format": "png",
+      "size_bytes": 4149
+    }
+  ],
+  "total_images_extracted": 2
+}
