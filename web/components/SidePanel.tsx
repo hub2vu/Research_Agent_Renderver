@@ -22,6 +22,10 @@ function nodeKeyOf(node: any): string {
   return String(node?.stableKey ?? node?.id ?? '');
 }
 
+function stripNotePrefix(id: string): string {
+  return String(id ?? '').replace(/^(paper:|ref:)/i, '');
+}
+
 /* ----------------------- Helper: arXiv link ---------------------- */
 
 function extractArxivId(raw: string): string | null {
@@ -126,7 +130,11 @@ export default function SidePanel({
 
   // ✅ stableKey 우선 키
   const selectedKey = useMemo(() => nodeKeyOf(selectedNode as any), [selectedNode]);
-  const noteId = useMemo(() => encodeURIComponent(selectedKey || selectedNode.id), [selectedKey, selectedNode.id]);
+  const noteId = useMemo(() => {
+    const raw = selectedKey || selectedNode.id;
+    const cleaned = stripNotePrefix(raw);
+    return encodeURIComponent(cleaned);
+  }, [selectedKey, selectedNode.id]);
   const currentColor = useMemo(() => {
     // 1) 상위에서 직접 주는 값이 있으면 그거 우선
     if (isHexColor(nodeColor)) return nodeColor;

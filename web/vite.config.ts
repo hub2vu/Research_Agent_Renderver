@@ -314,6 +314,7 @@ export default defineConfig({
                 '.png': 'image/png',
                 '.jpg': 'image/jpeg',
                 '.jpeg': 'image/jpeg',
+                '.pdf': 'application/pdf'
               };
 
               res.setHeader('Content-Type', contentTypes[ext] || 'application/octet-stream');
@@ -328,6 +329,28 @@ export default defineConfig({
           }
         });
       }
+        },
+    {
+      name: 'serve-pdf-files',
+      configureServer(server) {
+        server.middlewares.use('/pdf', (req, res, next) => {
+          try {
+            const decodedUrl = decodeURIComponent(req.url || '');
+            const filePath = path.join('/app/pdf', decodedUrl);
+
+            if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+              res.setHeader('Content-Type', 'application/pdf');
+              res.setHeader('Access-Control-Allow-Origin', '*');
+              fs.createReadStream(filePath).pipe(res);
+            } else {
+              res.statusCode = 404;
+              res.end(`File not found: ${decodedUrl}`);
+            }
+          } catch (err) {
+            next(err);
+          }
+        });
+      }  
     }
   ],
   root: '.',
@@ -344,7 +367,7 @@ export default defineConfig({
       }
     },
     fs: {
-      allow: ['.', '/app/output', '../output']
+      allow: ['.', '/app/output', '../output', '/app/pdf', '../pdf']
     }
   },
   resolve: {

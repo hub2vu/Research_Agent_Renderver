@@ -12,10 +12,7 @@ function PaperGraphWrapper() {
   return <PaperGraphPage paperId={paperId || ''} />;
 }
 
-function NotePageWrapper() {
-  const { noteId } = useParams<{ noteId: string }>();
-  return <NotePage noteId={noteId || ''} />;
-}
+
 
 function AppContent() {
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -30,7 +27,7 @@ function AppContent() {
         <Route path="/" element={<GlobalGraphPage />} />
         <Route path="/paper/:paperId" element={<PaperGraphWrapper />} />
         <Route path="/neurips2025" element={<NeurIPS2025Page />} />
-        <Route path="/note/:noteId" element={<NotePage />} />
+        <Route path="/note/:paperId" element={<NotePage />} />
       </Routes>
 
       <LLMChatPopup
