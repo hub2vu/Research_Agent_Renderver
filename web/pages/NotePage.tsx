@@ -313,15 +313,22 @@ export default function NotePage(props: { noteId?: string } = {}) {
         return;
       }
 
-      const sections: Array<{ title: string; page: number; level: number }> = result.result?.sections || [];
-      if (sections.length === 0) {
+      const sections = Array.isArray(result.result?.sections) ? result.result.sections : [];
+      const headings = sections.length > 0
+        ? sections.map((section: { title?: string }) => String(section.title || '').trim()).filter(Boolean)
+        : String(result.result?.text ?? '')
+          .split('\n')
+          .map((line) => line.trim())
+          .filter((line) => line.length > 0);
+
+      if (headings.length === 0) {
         alert('추출된 소목차가 없습니다.');
         return;
       }
 
-      const newNotes: NoteItem[] = sections.map(sec => ({
+      const newNotes: NoteItem[] = headings.map(title => ({
         id: generateId(),
-        title: sec.title,
+        title,
         content: '',
         isOpen: true,
       }));
@@ -531,6 +538,7 @@ export default function NotePage(props: { noteId?: string } = {}) {
                 border: '1px solid #e2e8f0',
                 borderRadius: 10,
                 overflow: 'hidden',
+                flexShrink: 0,
               }}
             >
               {/* Note header */}

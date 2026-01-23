@@ -377,8 +377,9 @@ class ExtractChapterHeadingsTool(MCPTool):
                     {"level": int(it["level"]), "title": it["text"], "page": int(it["page"]) + 1}
                     for it in structured
                 ]
-                used_method = "layout"
 
+                used_method = "layout"
+            headings_text = "\n".join(section["title"] for section in sections if section.get("title"))
             doc.close()
 
             with open(out_path, "w", encoding="utf-8") as f:
@@ -452,6 +453,7 @@ class ExtractPaperSectionsTool(MCPTool):
         )
 
     async def execute(self, paper_id: str, **kwargs: Any) -> Dict[str, Any]:
+        headings_text = ""
         try:
             pdf_path = self._find_pdf(paper_id)
             doc = fitz.open(pdf_path)
@@ -466,6 +468,7 @@ class ExtractPaperSectionsTool(MCPTool):
                     "paper_id": paper_id,
                     "total_sections": 0,
                     "sections": [],
+                    "text": "",
                     "note": "No text spans found in PDF.",
                 }
 
@@ -493,6 +496,7 @@ class ExtractPaperSectionsTool(MCPTool):
                 {"level": int(it["level"]), "title": it["text"], "page": int(it["page"]) + 1}
                 for it in structured
             ]
+            headings_text = "\n".join(section["title"] for section in sections if section.get("title"))
 
             doc.close()
 
@@ -501,6 +505,7 @@ class ExtractPaperSectionsTool(MCPTool):
                 "paper_id": paper_id,
                 "total_sections": len(sections),
                 "sections": sections,
+                "text": headings_text,
             }
 
         except ExecutionError:
