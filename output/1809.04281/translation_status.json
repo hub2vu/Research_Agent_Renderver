@@ -1,0 +1,11 @@
+{
+  "status": "completed",
+  "paper_id": "1809.04281",
+  "source_language": "English",
+  "target_language": "Korean",
+  "total_chunks": 13,
+  "completed_chunks": 13,
+  "started_at": "2026-01-23T12:31:44.059871",
+  "completed_at": "2026-01-23T12:36:13.102974",
+  "error": null
+}
