@@ -300,39 +300,70 @@ export default function NotePage(props: { noteId?: string } = {}) {
     setNotes(prev => prev.map(n => n.id === noteId ? { ...n, content } : n));
   }, []);
 
-  // Extract chapter headings and create notes
+  // Extract chapter headings via LLM chat and create notes
   const extractHeadings = useCallback(async () => {
     const id = usedId || stripPrefixes(paperId);
     if (!id) return;
 
     setExtracting(true);
     try {
-      const result = await executeTool('extract_paper_sections', { paper_id: id });
-      if (!result.success) {
-        alert(`소목차 추출 실패: ${result.error || 'Unknown error'}`);
+      // 1. Fetch extracted_text.txt for the paper
+      const textUrl = `/output/${id}/extracted_text.txt`;
+      const textRes = await fetch(textUrl);
+      if (!textRes.ok) {
+        alert(`텍스트 파일을 불러올 수 없습니다: ${textUrl}`);
+        return;
+      }
+      const extractedText = await textRes.text();
+      if (!extractedText.trim()) {
+        alert('추출된 텍스트가 비어 있습니다.');
         return;
       }
 
-      const sections = Array.isArray(result.result?.sections) ? result.result.sections : [];
-      const headings = sections.length > 0
-        ? sections.map((section: { title?: string }) => String(section.title || '').trim()).filter(Boolean)
-        : String(result.result?.text ?? '')
-          .split('\n')
-          .map((line) => line.trim())
-          .filter((line) => line.length > 0);
+      // 2. Send to LLM chat to extract subtitles
+      const prompt = `다음 논문 텍스트에서 소목차(section/subsection headings)를 추출해주세요.
+규칙:
+- 한 줄에 하나의 소목차만 출력
+- 번호가 있으면 번호 포함 (예: "1. Introduction", "2.1 Background")
+- 소목차 외의 설명이나 부연은 절대 추가하지 마세요
+- 목차 제목만 순서대로 나열해주세요
+
+논문 텍스트:
+${extractedText.slice(0, 15000)}`;
+
+      const chatRes = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: prompt, history: [] }),
+      });
+
+      if (!chatRes.ok) {
+        alert(`LLM 채팅 요청 실패: HTTP ${chatRes.status}`);
+        return;
+      }
+
+      const chatData = await chatRes.json();
+      const responseText = chatData.response || '';
+
+      // 3. Parse each line as a subtitle
+      const headings = responseText
+        .split('\n')
+        .map((line: string) => line.trim())
+        .filter((line: string) => line.length > 0);
 
       if (headings.length === 0) {
         alert('추출된 소목차가 없습니다.');
         return;
       }
 
-      const newNotes: NoteItem[] = headings.map(title => ({
+      // 4. Create notes from extracted subtitles
+      const newNotes: NoteItem[] = headings.map((title: string) => ({
         id: generateId(),
         title,
         content: '',
         isOpen: true,
       }));
-      setNotes(prev => [...prev, ...newNotes]);
+      setNotes(newNotes);
     } catch (e) {
       alert(`소목차 추출 에러: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
@@ -340,16 +371,23 @@ export default function NotePage(props: { noteId?: string } = {}) {
     }
   }, [usedId, paperId]);
 
-  // Translate a specific note's section
+  // Translate a specific note's section using extracted_text.txt
   const translateSection = useCallback(async (noteId: string, sectionTitle: string) => {
     const id = usedId || stripPrefixes(paperId);
     if (!id) return;
 
     setTranslatingNoteId(noteId);
     try {
+      // Find the next note's title for boundary detection
+      const noteIndex = notes.findIndex(n => n.id === noteId);
+      const nextSectionTitle = noteIndex >= 0 && noteIndex < notes.length - 1
+        ? notes[noteIndex + 1].title
+        : '';
+
       const result = await executeTool('translate_section', {
         paper_id: id,
         section_title: sectionTitle,
+        next_section_title: nextSectionTitle,
         target_language: 'Korean',
       });
       if (!result.success) {
@@ -364,7 +402,7 @@ export default function NotePage(props: { noteId?: string } = {}) {
     } finally {
       setTranslatingNoteId(null);
     }
-  }, [usedId, paperId, updateNoteContent]);
+  }, [usedId, paperId, notes, updateNoteContent]);
 
   return (
     <div ref={containerRef} style={{ display: 'flex', height: '100vh', backgroundColor: '#f5f5f5' }}>

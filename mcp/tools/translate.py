@@ -568,7 +568,7 @@ class TranslateSectionTool(MCPTool):
     def description(self) -> str:
         return (
             "Translate a specific section of a paper. Extracts text between the given "
-            "section heading and the next heading, then translates it."
+            "section heading and the next heading from extracted_text.txt, then translates it."
         )
 
     @property
@@ -585,6 +585,13 @@ class TranslateSectionTool(MCPTool):
                 type="string",
                 description="The section heading title to translate",
                 required=True,
+            ),
+            ToolParameter(
+                name="next_section_title",
+                type="string",
+                description="The next section heading title (used as end boundary). Empty string means end of document.",
+                required=False,
+                default="",
             ),
             ToolParameter(
                 name="target_language",
@@ -606,152 +613,64 @@ class TranslateSectionTool(MCPTool):
     def category(self) -> str:
         return "translation"
 
-    def _find_pdf(self, paper_id: str) -> Path:
-        """Find PDF file using same resolution logic as frontend."""
-        PDF_DIR = Path(os.getenv("PDF_DIR", "/data/pdf"))
-        candidates = [
-            OUTPUT_DIR / paper_id / "paper.pdf",
-            OUTPUT_DIR / paper_id / f"{paper_id}.pdf",
-            OUTPUT_DIR / paper_id / "main.pdf",
-            PDF_DIR / f"{paper_id}.pdf",
-            PDF_DIR / "neurips2025" / f"{paper_id}.pdf",
-        ]
-        for p in candidates:
-            if p.exists():
-                return p
-        raise ExecutionError(
-            f"PDF not found for paper_id={paper_id}.",
-            tool_name=self.name,
-        )
+    def _extract_section_from_text(self, full_text: str, section_title: str, next_section_title: str) -> str:
+        """Extract text between section_title and next_section_title from extracted text."""
+        lines = full_text.split('\n')
 
-    def _extract_section_text(self, pdf_path: Path, section_title: str) -> str:
-        """Extract text from a specific section of the PDF."""
-        try:
-            import fitz
-        except ImportError:
-            raise ExecutionError(
-                "PyMuPDF (fitz) is required for section extraction.",
-                tool_name=self.name,
-            )
+        # Normalize titles for matching
+        def normalize(s: str) -> str:
+            return re.sub(r"\s+", " ", s).strip().lower()
 
-        doc = fitz.open(pdf_path)
-        num_pages = len(doc)
+        norm_target = normalize(section_title)
+        norm_next = normalize(next_section_title) if next_section_title else ""
 
-        # First pass: find all headings and their positions
-        from collections import Counter as _Counter
-
-        all_spans = []
-        for pno in range(num_pages):
-            page = doc.load_page(pno)
-            blocks = page.get_text("dict").get("blocks", [])
-            for block in blocks:
-                if "lines" not in block:
-                    continue
-                for line in block["lines"]:
-                    for span in line.get("spans", []):
-                        text = (span.get("text") or "").strip()
-                        if not text:
-                            continue
-                        all_spans.append({
-                            "page": pno,
-                            "text": text,
-                            "size": round(float(span.get("size") or 0.0), 2),
-                            "font": span.get("font") or "",
-                            "flags": int(span.get("flags") or 0),
-                            "bbox": tuple(span.get("bbox") or (0, 0, 0, 0)),
-                            "page_height": float(page.rect.height),
-                        })
-
-        if not all_spans:
-            doc.close()
-            raise ExecutionError("No text found in PDF.", tool_name=self.name)
-
-        size_counts = _Counter(round(float(s["size"]), 1) for s in all_spans)
-        body_size = float(size_counts.most_common(1)[0][0])
-
-        # Find heading spans
-        heading_spans = []
-        for s in all_spans:
-            size = float(s["size"])
-            font_lower = (s.get("font") or "").lower()
-            flags = int(s.get("flags") or 0)
-            is_bold = ("bold" in font_lower) or (flags & 2) or (flags & 16)
-            is_larger = size >= (body_size + 1.0)
-            text = s["text"]
-            if (is_larger or is_bold) and len(text) < 100 and not text.strip().endswith("."):
-                heading_spans.append(s)
-
-        # Find the target section and the next section
-        target_page = None
-        target_y = None
-        next_page = None
-        next_y = None
-
-        normalized_target = re.sub(r"\s+", " ", section_title).strip().lower()
-
-        for i, h in enumerate(heading_spans):
-            normalized_h = re.sub(r"\s+", " ", h["text"]).strip().lower()
-            if normalized_target in normalized_h or normalized_h in normalized_target:
-                target_page = h["page"]
-                target_y = h["bbox"][3]  # bottom of heading
-                # Find next heading
-                for j in range(i + 1, len(heading_spans)):
-                    nh = heading_spans[j]
-                    if nh["page"] > target_page or (nh["page"] == target_page and nh["bbox"][1] > target_y):
-                        next_page = nh["page"]
-                        next_y = nh["bbox"][1]  # top of next heading
-                        break
+        # Find the start line (line containing section_title)
+        start_idx = None
+        for i, line in enumerate(lines):
+            norm_line = normalize(line)
+            if norm_target and (norm_target in norm_line or norm_line in norm_target):
+                start_idx = i
                 break
 
-        if target_page is None:
-            doc.close()
-            raise ExecutionError(
-                f"Section '{section_title}' not found in PDF.",
-                tool_name=self.name,
-            )
-
-        # Extract text between target heading and next heading
-        section_text_parts = []
-        done = False
-        end_page = num_pages if next_page is None else next_page + 1
-        for pno in range(target_page, end_page):
-            if done:
-                break
-            page = doc.load_page(pno)
-            blocks = page.get_text("dict").get("blocks", [])
-            for block in blocks:
-                if done:
+        if start_idx is None:
+            # Try fuzzy match: check if most words of the title appear in the line
+            target_words = set(norm_target.split())
+            for i, line in enumerate(lines):
+                norm_line = normalize(line)
+                line_words = set(norm_line.split())
+                if len(target_words) > 0 and len(target_words & line_words) >= len(target_words) * 0.7:
+                    start_idx = i
                     break
-                if "lines" not in block:
-                    continue
-                for line in block["lines"]:
-                    if done:
+
+        if start_idx is None:
+            raise ExecutionError(
+                f"Section '{section_title}' not found in extracted text.",
+                tool_name=self.name,
+            )
+
+        # Find the end line (line containing next_section_title)
+        end_idx = len(lines)
+        if norm_next:
+            for i in range(start_idx + 1, len(lines)):
+                norm_line = normalize(lines[i])
+                if norm_next in norm_line or norm_line in norm_next:
+                    end_idx = i
+                    break
+            else:
+                # Try fuzzy match for next section
+                next_words = set(norm_next.split())
+                for i in range(start_idx + 1, len(lines)):
+                    norm_line = normalize(lines[i])
+                    line_words = set(norm_line.split())
+                    if len(next_words) > 0 and len(next_words & line_words) >= len(next_words) * 0.7:
+                        end_idx = i
                         break
-                    for span in line.get("spans", []):
-                        text = (span.get("text") or "").strip()
-                        if not text:
-                            continue
-                        bbox = span.get("bbox", (0, 0, 0, 0))
-                        span_y_top = bbox[1]
 
-                        # Skip if before target heading
-                        if pno == target_page and span_y_top < target_y:
-                            continue
-                        # Stop if past next heading
-                        if next_page is not None and pno == next_page and span_y_top >= next_y:
-                            done = True
-                            break
-                        if next_page is not None and pno > next_page:
-                            done = True
-                            break
+        # Extract text between start (exclusive of heading line) and end
+        section_lines = lines[start_idx + 1:end_idx]
+        section_text = '\n'.join(section_lines).strip()
 
-                        section_text_parts.append(text)
-
-        doc.close()
-
-        # Rebuild section text
-        section_text = " ".join(section_text_parts)
-        if not section_text.strip():
+        if not section_text:
             raise ExecutionError(
                 f"No text content found for section '{section_title}'.",
                 tool_name=self.name,
@@ -763,6 +682,7 @@ class TranslateSectionTool(MCPTool):
         self,
         paper_id: str,
         section_title: str,
+        next_section_title: str = "",
         target_language: str = "Korean",
         source_language: str = "English",
         **kwargs,
@@ -778,9 +698,30 @@ class TranslateSectionTool(MCPTool):
                 tool_name=self.name,
             )
 
-        # Find and extract section text
-        pdf_path = self._find_pdf(paper_id)
-        section_text = self._extract_section_text(pdf_path, section_title)
+        # Read extracted_text.txt
+        paper_dir = OUTPUT_DIR / paper_id
+        text_file = paper_dir / "extracted_text.txt"
+
+        if not text_file.exists():
+            json_file = paper_dir / "extracted_text.json"
+            if json_file.exists():
+                with open(json_file, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    full_text = data.get("full_text", "")
+            else:
+                raise ExecutionError(
+                    f"텍스트 파일을 찾을 수 없습니다: {text_file}",
+                    tool_name=self.name,
+                )
+        else:
+            with open(text_file, "r", encoding="utf-8") as f:
+                full_text = f.read()
+
+        if isinstance(full_text, str):
+            full_text = full_text.encode("utf-8", "replace").decode("utf-8")
+
+        # Extract section text between titles
+        section_text = self._extract_section_from_text(full_text, section_title, next_section_title)
 
         # Translate the section
         client = openai.OpenAI(api_key=API_KEY)
