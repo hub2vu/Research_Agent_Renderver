@@ -304,8 +304,8 @@ export default defineConfig({
         server.middlewares.use('/output', (req, res, next) => {
           try {
             const decodedUrl = decodeURIComponent(req.url || '');
-            const filePath = path.join('/app/output', decodedUrl);
-
+            const safeUrl = decodedUrl.replace(/^\/+/, '');
+            const filePath = path.join('/app/output', safeUrl);
             if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
               const ext = path.extname(filePath).toLowerCase();
               const contentTypes: Record<string, string> = {
@@ -336,7 +336,8 @@ export default defineConfig({
         server.middlewares.use('/pdf', (req, res, next) => {
           try {
             const decodedUrl = decodeURIComponent(req.url || '');
-            const filePath = path.join('/app/pdf', decodedUrl);
+            const safeUrl = decodedUrl.replace(/^\/+/, '');
+            const filePath = path.join('/app/pdf', safeUrl);
 
             if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
               res.setHeader('Content-Type', 'application/pdf');

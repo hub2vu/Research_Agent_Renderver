@@ -1,20 +1,26 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import * as pdfjsLib from 'pdfjs-dist';
+import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
+import workerSrc from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 
-// pdfjs worker (pdfjs-dist v4 계열: build/*.mjs)
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url
-).toString();
+// Vite 호환 worker 설정
+GlobalWorkerOptions.workerSrc = workerSrc;
 
-type PdfDoc = any;
+type PdfDoc = {
+  numPages: number;
+  getPage: (pageNumber: number) => Promise<any>;
+  destroy?: () => Promise<void> | void;
+};
 
 type PdfLoadResult = {
   usedId: string;
   url: string;
   doc: PdfDoc;
 };
+
+function stripPrefixes(id: string): string {
+  return String(id ?? '').replace(/^(paper:|ref:)/i, '').trim();
+}
 
 function normalizeArxivToDoiLike(id: string): string {
   if (id.startsWith('10.48550_arxiv.')) return id;
@@ -23,14 +29,9 @@ function normalizeArxivToDoiLike(id: string): string {
   return id;
 }
 
-function stripPrefixes(id: string): string {
-  // 그래프에서 "paper:xxxx" 같이 붙는 케이스 제거
-  return id.replace(/^(paper:|ref:)/i, '').trim();
-}
-
-async function resolveAndLoadPdf(paperId: string): Promise<PdfLoadResult> {
-  const raw = stripPrefixes(paperId);
-  const candidates = [raw, normalizeArxivToDoiLike(raw)].filter((v, i, a) => a.indexOf(v) === i);
+async function resolveAndLoadPdf(paperIdRaw: string): Promise<PdfLoadResult> {
+  const cleaned = stripPrefixes(paperIdRaw);
+  const candidates = [cleaned, normalizeArxivToDoiLike(cleaned)].filter((v, i, a) => a.indexOf(v) === i);
 
   const tried: string[] = [];
   const errors: string[] = [];
@@ -47,8 +48,8 @@ async function resolveAndLoadPdf(paperId: string): Promise<PdfLoadResult> {
     for (const url of urlCandidates) {
       tried.push(url);
       try {
-        const loadingTask = (pdfjsLib as any).getDocument(url);
-        const doc = await loadingTask.promise;
+        const loadingTask: any = getDocument(url);
+        const doc: PdfDoc = await loadingTask.promise;
         return { usedId: id, url, doc };
       } catch (err) {
         errors.push(`${url} (${String(err)})`);
@@ -65,17 +66,19 @@ async function resolveAndLoadPdf(paperId: string): Promise<PdfLoadResult> {
       '- noteId(paperId)가 폴더명/파일명과 정확히 일치하는지 확인',
       '',
       `시도한 후보 URL: ${tried.join(' | ')}`,
-      errors.length > 0 ? '' : '',
-      errors.length > 0 ? `에러 로그:\n${errors.join('\n')}` : ''
+      errors.length ? '' : '',
+      errors.length ? `에러 로그:\n${errors.join('\n')}` : ''
     ].join('\n')
   );
 }
 
 export default function NotePage(props: { noteId?: string } = {}) {
   const params = useParams();
-  // 라우트: /note/:noteId
-  const rawFromRoute = (params as any).noteId as string | undefined;
-  const paperId = decodeURIComponent(props.noteId ?? rawFromRoute ?? '').trim();
+
+  // 라우트가 /note/:noteId 인 경우 noteId가 들어옴 (paperId로도 올 수 있어 fallback)
+  const rawFromRoute = (params as any).noteId ?? (params as any).paperId;
+  const raw = props.noteId ?? rawFromRoute ?? '';
+  const paperId = decodeURIComponent(String(raw));
 
   const navigate = useNavigate();
 
@@ -90,7 +93,7 @@ export default function NotePage(props: { noteId?: string } = {}) {
   const canvasRefs = useRef<Array<HTMLCanvasElement | null>>([]);
 
   // 노트(우측) - 로컬 저장(즉시 저장)
-  const noteStorageKey = useMemo(() => `note:${usedId || paperId}`, [usedId, paperId]);
+  const noteStorageKey = useMemo(() => `note:${usedId || stripPrefixes(paperId)}`, [usedId, paperId]);
   const [note, setNote] = useState<string>(() => {
     try {
       return localStorage.getItem(noteStorageKey) ?? '';
@@ -117,28 +120,36 @@ export default function NotePage(props: { noteId?: string } = {}) {
   }, [note, noteStorageKey]);
 
   const load = useCallback(async () => {
-    if (!paperId) return;
+    const cleaned = stripPrefixes(paperId);
 
     setLoading(true);
     setError(null);
 
-    // 이전 문서 정리
+    // paperId가 비어있으면 무한로딩 방지
+    if (!cleaned) {
+      setError('noteId(paperId)가 비어 있습니다. 라우트 파라미터(/note/:noteId)를 확인하세요.');
+      setLoading(false);
+      return;
+    }
+
+    // 이전 doc 정리
     try {
-      if (pdfDoc && typeof pdfDoc.destroy === 'function') pdfDoc.destroy();
+      if (pdfDoc?.destroy) await pdfDoc.destroy();
     } catch {
       // ignore
     }
+
     setPdfDoc(null);
     setPageCount(0);
     setPdfUrl('');
     setUsedId('');
 
     try {
-      const res = await resolveAndLoadPdf(paperId);
+      const res = await resolveAndLoadPdf(cleaned);
       setUsedId(res.usedId);
       setPdfUrl(res.url);
       setPdfDoc(res.doc);
-      setPageCount(res.doc?.numPages ?? 0);
+      setPageCount(res.doc.numPages);
       setLoading(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -148,13 +159,12 @@ export default function NotePage(props: { noteId?: string } = {}) {
 
   useEffect(() => {
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paperId]);
+  }, [load]);
 
   useEffect(() => {
     return () => {
       try {
-        if (pdfDoc && typeof pdfDoc.destroy === 'function') pdfDoc.destroy();
+        if (pdfDoc?.destroy) pdfDoc.destroy();
       } catch {
         // ignore
       }
@@ -182,18 +192,20 @@ export default function NotePage(props: { noteId?: string } = {}) {
         if (!ctx) continue;
 
         const outputScale = window.devicePixelRatio || 1;
-        canvas.width = viewport.width * outputScale;
-        canvas.height = viewport.height * outputScale;
-        canvas.style.width = `${viewport.width}px`;
-        canvas.style.height = `${viewport.height}px`;
 
-        const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : undefined;
+        canvas.width = Math.floor(viewport.width * outputScale);
+        canvas.height = Math.floor(viewport.height * outputScale);
+        canvas.style.width = `${Math.floor(viewport.width)}px`;
+        canvas.style.height = `${Math.floor(viewport.height)}px`;
+
+        const transform =
+          outputScale !== 1 ? ([outputScale, 0, 0, outputScale, 0, 0] as [number, number, number, number, number, number]) : undefined;
 
         await page.render({ canvasContext: ctx, viewport, transform }).promise;
       }
     };
 
-    renderPages();
+    renderPages().catch(() => {});
 
     return () => {
       cancelled = true;
@@ -233,7 +245,7 @@ export default function NotePage(props: { noteId?: string } = {}) {
 
           <div style={{ fontSize: 12, color: '#718096', textAlign: 'right' }}>
             <div>noteId: {paperId}</div>
-            {usedId && <div>folder used: {usedId}</div>}
+            {usedId && <div>usedId: {usedId}</div>}
             {pdfUrl && <div>pdf source: {pdfUrl}</div>}
             {pageCount > 0 && <div>pages: {pageCount}</div>}
           </div>
