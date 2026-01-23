@@ -14,6 +14,7 @@ import React, { useMemo, useState } from 'react';
 import { GraphNode } from '../lib/mcp';
 import PaperCard from './PaperCard';
 import ReportViewer from './ReportViewer';
+import { useNavigate } from 'react-router-dom';
 
 /* ----------------------- Helper: stable key ---------------------- */
 
@@ -119,12 +120,13 @@ export default function SidePanel({
 }: SidePanelProps) {
   if (!selectedNode) return null;
 
+  const navigate = useNavigate();
   const selectedIsCenter = Boolean((selectedNode as any).is_center || (selectedNode as any).isCenter);
   const arxivUrl = getArxivAbsUrlFromNode(selectedNode);
 
   // ✅ stableKey 우선 키
   const selectedKey = useMemo(() => nodeKeyOf(selectedNode as any), [selectedNode]);
-
+  const noteId = useMemo(() => encodeURIComponent(selectedKey || selectedNode.id), [selectedKey, selectedNode.id]);
   const currentColor = useMemo(() => {
     // 1) 상위에서 직접 주는 값이 있으면 그거 우선
     if (isHexColor(nodeColor)) return nodeColor;
@@ -199,12 +201,28 @@ export default function SidePanel({
 
       {/* Content */}
       <div style={{ padding: '16px', overflowY: 'auto', flex: 1 }}>
+
         <PaperCard node={selectedNode} />
 
         <ReportViewer key={selectedNode.id} paperId={selectedNode.id} />
 
         {/* -------- Actions -------- */}
         <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+
+          <button
+            onClick={() => navigate(`/note/${noteId}`)}
+            style={{
+              padding: '10px 16px',
+              backgroundColor: '#111827',
+              color: '#fff',
+              border: '1px solid #e2e8f0',
+              borderRadius: '6px',
+              cursor: 'pointer'
+            }}
+          >
+            Open Note ✎
+          </button>
+
           {mode === 'global' && onNavigate && (
             <button
               onClick={() => onNavigate(selectedNode)}

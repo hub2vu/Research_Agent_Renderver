@@ -242,6 +242,7 @@ export default function PaperGraphPage() {
   const handleBackToGlobal = useCallback(() => {
     navigate('/');
   }, [navigate]);
+  const handleOpenNote = () => navigate(`/note/${paperId}`);
 
   /* ----------------------------- UI ----------------------------- */
 
@@ -274,6 +275,21 @@ export default function PaperGraphPage() {
             >
               ← Back
             </button>
+
+            <button
+              onClick={handleOpenNote}
+              style={{
+                padding: '6px 12px',
+                borderRadius: '6px',
+                backgroundColor: '#e6fffa',
+                border: 'none',
+                cursor: 'pointer',
+                marginRight: '12px'
+              }}
+            >
+              ✎ Note
+            </button>
+
             <span style={{ fontWeight: 600 }}>Paper Reference Graph</span>
           </div>
           <div style={{ fontSize: '12px', color: '#718096' }}>
