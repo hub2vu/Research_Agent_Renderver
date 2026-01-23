@@ -80,7 +80,9 @@ export default function NeurIPS2025Page() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
-
+  //  토글
+  const [showControls, setShowControls] = useState(true);
+  const [showSearchUI, setShowSearchUI] = useState(true);
   // ✅ 유사도 기준(슬라이더)
   const [minSim, setMinSim] = useState<number>(0.75);
 
@@ -390,121 +392,214 @@ export default function NeurIPS2025Page() {
     <div style={{ display: 'flex', height: 'calc(100vh - 60px)' }}>
       <div style={{ flex: 1, position: 'relative' }}>
 
-        {/* ✅ Control Panel: Clusters + Similarity */}
-        <div style={{
-          position: 'absolute',
-          top: '16px',
-          left: '16px',
-          zIndex: 5,
-          backgroundColor: 'rgba(26, 32, 44, 0.95)',
-          padding: '12px 14px',
-          borderRadius: '8px',
-          fontSize: '12px',
-          color: '#a0aec0',
-          width: '260px',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
-        }}>
-          <div style={{ display: 'flex', gap: '6px', marginBottom: '12px' }}>
+        {/* ✅ Control Panel: toggle */}
+        {showControls ? (
+          <div style={{
+            position: 'absolute',
+            top: '16px',
+            left: '16px',
+            zIndex: 5,
+            backgroundColor: 'rgba(26, 32, 44, 0.95)',
+            padding: '12px 14px',
+            borderRadius: '8px',
+            fontSize: '12px',
+            color: '#a0aec0',
+            width: '260px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+          }}>
+            {/* 헤더 + Hide 버튼 */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '10px'
+            }}>
+              <div style={{ fontWeight: 700, color: '#e2e8f0' }}>Controls</div>
+              <button
+                onClick={() => setShowControls(false)}
+                style={{
+                  border: '1px solid #718096',
+                  background: 'transparent',
+                  color: '#e2e8f0',
+                  borderRadius: '6px',
+                  padding: '4px 8px',
+                  cursor: 'pointer',
+                  fontSize: '11px'
+                }}
+              >
+                Hide
+              </button>
+            </div>
+
+            {/* Node/List 토글 */}
+            <div style={{ display: 'flex', gap: '6px', marginBottom: '12px' }}>
+              <button
+                onClick={() => setViewMode('graph')}
+                style={{
+                  padding: '6px 10px',
+                  borderRadius: '6px',
+                  border: '1px solid #718096',
+                  background: viewMode === 'graph' ? '#edf2f7' : 'transparent',
+                  color: viewMode === 'graph' ? '#1a202c' : '#a0aec0',
+                  cursor: 'pointer',
+                  fontSize: '12px'
+                }}
+              >
+                Node
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                style={{
+                  padding: '6px 10px',
+                  borderRadius: '6px',
+                  border: '1px solid #718096',
+                  background: viewMode === 'list' ? '#edf2f7' : 'transparent',
+                  color: viewMode === 'list' ? '#1a202c' : '#a0aec0',
+                  cursor: 'pointer',
+                  fontSize: '12px'
+                }}
+              >
+                List
+              </button>
+            </div>
+
+            {/* Cluster Count (k) Slider */}
+            <div style={{ marginBottom: '14px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                <span>Clusters (k)</span>
+                <span style={{ color: '#e2e8f0', fontWeight: 500 }}>{numClusters}</span>
+              </div>
+              <input
+                type="range"
+                min={5}
+                max={30}
+                step={1}
+                value={numClusters}
+                onChange={(e) => setNumClusters(parseInt(e.target.value, 10))}
+                style={{ width: '100%' }}
+              />
+              <div style={{ marginTop: '4px', color: '#718096', fontSize: '11px' }}>
+                Adjust number of topic clusters.
+              </div>
+            </div>
+
+            {/* Cluster Strength Slider */}
+            <div style={{ marginBottom: '14px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                <span>Cluster strength</span>
+                <span style={{ color: '#e2e8f0', fontWeight: 500 }}>{clusterStrength.toFixed(2)}</span>
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.01}
+                value={clusterStrength}
+                onChange={(e) => setClusterStrength(parseFloat(e.target.value))}
+                style={{ width: '100%' }}
+              />
+              <div style={{ marginTop: '4px', color: '#718096', fontSize: '11px' }}>
+                How strongly nodes attract to cluster centers.
+              </div>
+            </div>
+
+            {/* Similarity Threshold Slider */}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                <span>Min similarity</span>
+                <span style={{ color: '#e2e8f0' }}>{minSim.toFixed(2)}</span>
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.01}
+                value={minSim}
+                onChange={(e) => setMinSim(parseFloat(e.target.value))}
+                style={{ width: '100%' }}
+              />
+              <div style={{ marginTop: '4px', color: '#718096', fontSize: '11px' }}>
+                Increase to reduce links (stricter).
+              </div>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => setShowControls(true)}
+            style={{
+              position: 'absolute',
+              top: '16px',
+              left: '16px',
+              zIndex: 6,
+              border: '1px solid #718096',
+              backgroundColor: 'rgba(26, 32, 44, 0.95)',
+              color: '#e2e8f0',
+              borderRadius: '8px',
+              padding: '8px 10px',
+              cursor: 'pointer',
+              fontSize: '12px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+            }}
+          >
+            Show Controls
+          </button>
+        )}
+
+
+        {/* Search Sidebar: toggle */}
+        {showSearchUI ? (
+          <>
             <button
-              onClick={() => setViewMode('graph')}
+              onClick={() => setShowSearchUI(false)}
               style={{
-                padding: '6px 10px',
-                borderRadius: '6px',
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                zIndex: 6,
                 border: '1px solid #718096',
-                background: viewMode === 'graph' ? '#edf2f7' : 'transparent',
-                color: viewMode === 'graph' ? '#1a202c' : '#a0aec0',
+                backgroundColor: 'rgba(26, 32, 44, 0.95)',
+                color: '#e2e8f0',
+                borderRadius: '8px',
+                padding: '8px 10px',
                 cursor: 'pointer',
-                fontSize: '12px'
+                fontSize: '12px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
               }}
             >
-              Node
+              Hide Search
             </button>
-            <button
-              onClick={() => setViewMode('list')}
-              style={{
-                padding: '6px 10px',
-                borderRadius: '6px',
-                border: '1px solid #718096',
-                background: viewMode === 'list' ? '#edf2f7' : 'transparent',
-                color: viewMode === 'list' ? '#1a202c' : '#a0aec0',
-                cursor: 'pointer',
-                fontSize: '12px'
-              }}
-            >
-              List
-            </button>
-          </div>
-          {/* Cluster Count (k) Slider */}
-          <div style={{ marginBottom: '14px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-              <span>Clusters (k)</span>
-              <span style={{ color: '#e2e8f0', fontWeight: 500 }}>{numClusters}</span>
-            </div>
-            <input
-              type="range"
-              min={5}
-              max={30}
-              step={1}
-              value={numClusters}
-              onChange={(e) => setNumClusters(parseInt(e.target.value, 10))}
-              style={{ width: '100%' }}
-            />
-            <div style={{ marginTop: '4px', color: '#718096', fontSize: '11px' }}>
-              Adjust number of topic clusters.
-            </div>
-          </div>
 
-          {/* Cluster Strength Slider */}
-          <div style={{ marginBottom: '14px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-              <span>Cluster strength</span>
-              <span style={{ color: '#e2e8f0', fontWeight: 500 }}>{clusterStrength.toFixed(2)}</span>
-            </div>
-            <input
-              type="range"
-              min={0}
-              max={1}
-              step={0.01}
-              value={clusterStrength}
-              onChange={(e) => setClusterStrength(parseFloat(e.target.value))}
-              style={{ width: '100%' }}
+            <NeurIPSSearchSidebar
+              searchQuery={searchQuery}
+              onSearchQueryChange={setSearchQuery}
+              onSearch={handleSearch}
+              isSearching={isSearching}
             />
-            <div style={{ marginTop: '4px', color: '#718096', fontSize: '11px' }}>
-              How strongly nodes attract to cluster centers.
-            </div>
-          </div>
-
-          {/* Similarity Threshold Slider */}
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-              <span>Min similarity</span>
-              <span style={{ color: '#e2e8f0' }}>{minSim.toFixed(2)}</span>
-            </div>
-            <input
-              type="range"
-              min={0}
-              max={1}
-              step={0.01}
-              value={minSim}
-              onChange={(e) => setMinSim(parseFloat(e.target.value))}
-              style={{ width: '100%' }}
-            />
-            <div style={{ marginTop: '4px', color: '#718096', fontSize: '11px' }}>
-              Increase to reduce links (stricter).
-            </div>
-          </div>
-        </div>
-
-        {/* Search Sidebar */}
-        <NeurIPSSearchSidebar
-          searchQuery={searchQuery}
-          onSearchQueryChange={setSearchQuery}
-          onSearch={handleSearch}
-          isSearching={isSearching}
-        />
+          </>
+        ) : (
+          <button
+            onClick={() => setShowSearchUI(true)}
+            style={{
+              position: 'absolute',
+              top: '16px',
+              right: '16px',
+              zIndex: 6,
+              border: '1px solid #718096',
+              backgroundColor: 'rgba(26, 32, 44, 0.95)',
+              color: '#e2e8f0',
+              borderRadius: '8px',
+              padding: '8px 10px',
+              cursor: 'pointer',
+              fontSize: '12px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+            }}
+          >
+            Show Search
+          </button>
+        )}
 
         {/* Search Results List */}
-        {isSearching ? (
+        {showSearchUI && (isSearching ? (
           <div style={{
             position: 'absolute',
             bottom: '16px',
@@ -549,7 +644,7 @@ export default function NeurIPS2025Page() {
           }}>
             No papers found. Try a different search query.
           </div>
-        ) : null}
+        ) : null)}
 
         {/* Error Message */}
         {error && (
