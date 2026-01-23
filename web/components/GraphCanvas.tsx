@@ -28,12 +28,6 @@ interface GraphCanvasProps {
   // Cluster force strength (0-1, default 0.15)
   clusterStrength?: number;
 
-  // Highlighted node IDs (for search results)
-  highlightedNodeIds?: string[];
-
-  // Node ID to focus on (triggers zoom & pan)
-  focusNodeId?: string;
-
   onNodeClick?: (node: GraphNode) => void;
   onNodeDoubleClick?: (node: GraphNode) => void;
 }
@@ -63,8 +57,6 @@ export default function GraphCanvas({
   nodeColorMap,
   clusterCenters,
   clusterStrength = 0.15,
-  highlightedNodeIds = [],
-  focusNodeId,
   onNodeClick,
   onNodeDoubleClick
 }: GraphCanvasProps) {
@@ -72,6 +64,20 @@ export default function GraphCanvas({
   const containerRef = useRef<HTMLDivElement>(null);
 
   const simulationRef = useRef<d3.Simulation<any, any> | null>(null);
+  //노드 움직임 타이머
+  const stopTimerRef = useRef<number | null>(null);
+  const scheduleStop = useCallback(() => {
+    const sim = simulationRef.current;
+    if (!sim) return;
+
+    if (stopTimerRef.current) window.clearTimeout(stopTimerRef.current);
+
+    stopTimerRef.current = window.setTimeout(() => {
+      sim.alphaTarget(0);
+      sim.stop();
+      stopTimerRef.current = null;
+    }, 3000);
+  }, []);
 
   // zoom behavior + last transform
   const zoomBehaviorRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
@@ -176,31 +182,16 @@ export default function GraphCanvas({
     const sel = nodeSelectionRef.current;
     if (!sel) return;
 
-    const highlightedSet = new Set(highlightedNodeIds || []);
-
     sel.select('circle')
       .attr('r', (d: any) => {
         if (isCenterNode(d)) return 20;
         if (d.id === selectedNodeId) return 18;
-        if (highlightedSet.has(d.id)) return 16;
         return 12;
       })
       .attr('fill', (d: any) => getNodeFill(d))
-      .attr('stroke', (d: any) => {
-        if (d.id === selectedNodeId) return '#000';
-        if (highlightedSet.has(d.id)) return '#4a90d9';
-        return '#fff';
-      })
-      .attr('stroke-width', (d: any) => {
-        if (highlightedSet.has(d.id)) return 3;
-        return 2;
-      })
-      .attr('opacity', (d: any) => {
-        if (highlightedSet.size === 0) return 1;
-        if (highlightedSet.has(d.id) || d.id === selectedNodeId || isCenterNode(d)) return 1;
-        return 0.3;
-      });
-  }, [selectedNodeId, highlightedNodeIds, isCenterNode, getNodeFill]);
+      .attr('stroke', (d: any) => (d.id === selectedNodeId ? '#000' : '#fff'))
+      .attr('stroke-width', 2);
+  }, [selectedNodeId, isCenterNode, getNodeFill]);
 
   /* -------------------------- Main D3 --------------------------- */
   // ✅ Rebuild only when topology/layout changes (NOT on select/color changes)
@@ -271,7 +262,10 @@ export default function GraphCanvas({
     }
 
     simulationRef.current = simulation;
+    
 
+    // ✅ rebuild(=nodes/edges/mode/size/cluster 변경 등) 이후 3초 뒤 정지
+    scheduleStop();
     // pin center in paper mode
     if (mode === 'paper' && centerId) {
       const centerNode = graphNodes.find((nn: any) => nn.id === centerId);
@@ -303,49 +297,51 @@ export default function GraphCanvas({
       .call(
         d3.drag<any, any>()
           .on('start', (event, d) => {
-            if (!event.active) simulation.alphaTarget(0.3).restart();
+            // ✅ 드래그가 그래프 전체를 흔들지 않게: 시뮬레이션 정지
+            simulation.alphaTarget(0);
+            simulation.stop();
+
             d.fx = d.x;
             d.fy = d.y;
           })
           .on('drag', (event, d) => {
             d.fx = event.x;
             d.fy = event.y;
+
+            // ✅ tick이 안 돌기 때문에, 드래그 중에는 화면을 직접 갱신
+            node.attr('transform', (n: any) => `translate(${n.x},${n.y})`);
+            link
+              .attr('x1', (e: any) => (e.source as any).x)
+              .attr('y1', (e: any) => (e.source as any).y)
+              .attr('x2', (e: any) => (e.target as any).x)
+              .attr('y2', (e: any) => (e.target as any).y);
           })
           .on('end', (event, d) => {
-            if (!event.active) simulation.alphaTarget(0);
+            // ✅ 중심 노드는 기존 정책 유지
             if (mode !== 'paper' || d.id !== centerId) {
+              // 옵션 A: 드래그 놓으면 “고정 해제”
               d.fx = null;
               d.fy = null;
+
+              // 옵션 B(완전 고정 원하면): 아래 2줄로 바꾸면 드롭 위치에 계속 고정됨
+              // d.fx = d.x;
+              // d.fy = d.y;
             }
           })
       );
 
-    nodeSelectionRef.current = node as any;
 
-    const highlightedSet = new Set(highlightedNodeIds || []);
+    nodeSelectionRef.current = node as any;
 
     node.append('circle')
       .attr('r', (d: any) => {
         if (isCenterNode(d)) return 20;
         if (d.id === selectedNodeId) return 18;
-        if (highlightedSet.has(d.id)) return 16;
         return 12;
       })
       .attr('fill', (d: any) => getNodeFill(d))
-      .attr('stroke', (d: any) => {
-        if (d.id === selectedNodeId) return '#000';
-        if (highlightedSet.has(d.id)) return '#4a90d9';
-        return '#fff';
-      })
-      .attr('stroke-width', (d: any) => {
-        if (highlightedSet.has(d.id)) return 3;
-        return 2;
-      })
-      .attr('opacity', (d: any) => {
-        if (highlightedSet.size === 0) return 1;
-        if (highlightedSet.has(d.id) || d.id === selectedNodeId || isCenterNode(d)) return 1;
-        return 0.3;
-      });
+      .attr('stroke', (d: any) => (d.id === selectedNodeId ? '#000' : '#fff'))
+      .attr('stroke-width', 2);
 
     node.append('text')
       .attr('dy', 25)
@@ -378,6 +374,7 @@ export default function GraphCanvas({
     });
 
     return () => {
+      if (stopTimerRef.current) window.clearTimeout(stopTimerRef.current);
       simulation.stop();
     };
   }, [
@@ -395,8 +392,7 @@ export default function GraphCanvas({
     getNodeFill,
     nodeKey,
     clusterCenters,
-    clusterStrength,
-    highlightedNodeIds
+    clusterStrength
     // ❌ selectedNodeId/nodeColorMap 제외: 튐 방지 핵심
   ]);
 
@@ -410,7 +406,7 @@ export default function GraphCanvas({
   // 색 변경 → 스타일만 (simulation 재시작 X)
   useEffect(() => {
     updateNodeStyles();
-  }, [nodeColorMap, highlightedNodeIds, updateNodeStyles]);
+  }, [nodeColorMap, updateNodeStyles]);
 
   /* ---------------- Auto-Zoom to Center (paper) ---------------- */
   useEffect(() => {
@@ -439,33 +435,6 @@ export default function GraphCanvas({
     zoomTransformRef.current = t; // keep in sync
     svg.transition().duration(450).call((zoom as any).transform, t);
   }, [centerId, mode, width, height]);
-
-  /* ---------------- Focus Node (for search results) ---------------- */
-  useEffect(() => {
-    if (
-      !focusNodeId ||
-      !simulationRef.current ||
-      !zoomBehaviorRef.current ||
-      !zoomSelectionRef.current
-    ) {
-      return;
-    }
-
-    const sim = simulationRef.current;
-    const svg = zoomSelectionRef.current;
-    const zoom = zoomBehaviorRef.current;
-
-    const targetNode: any = (sim.nodes() as any[]).find((n) => n.id === focusNodeId);
-    if (!targetNode || targetNode.x == null || targetNode.y == null) return;
-
-    const k = 2.0; // Zoom in
-    const tx = width / 2 - targetNode.x * k;
-    const ty = height / 2 - targetNode.y * k;
-    const t = d3.zoomIdentity.translate(tx, ty).scale(k);
-
-    zoomTransformRef.current = t;
-    svg.transition().duration(600).call((zoom as any).transform, t);
-  }, [focusNodeId, width, height]);
 
   /* --------------------------- Render --------------------------- */
 
