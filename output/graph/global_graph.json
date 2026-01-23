@@ -78,11 +78,96 @@
       "year": null
     }
   ],
-  "edges": [],
+  "edges": [
+    {
+      "source": "10.48550_arxiv.2201.07207",
+      "target": "10.48550_arxiv.2210.03629",
+      "weight": 0.6313140392303467,
+      "type": "similarity"
+    },
+    {
+      "source": "10.48550_arxiv.2201.07207",
+      "target": "10.48550_arxiv.2506.07976",
+      "weight": 0.46228349208831787,
+      "type": "similarity"
+    },
+    {
+      "source": "10.48550_arxiv.2201.07207",
+      "target": "119698_The Rise of Parameter Specialization for Knowledge Storage in Large Language Models",
+      "weight": 0.4371035695075989,
+      "type": "similarity"
+    },
+    {
+      "source": "10.48550_arxiv.2201.07207",
+      "target": "120272_metaTextGrad_ Automatically optimizing language model optimizers",
+      "weight": 0.5292994976043701,
+      "type": "similarity"
+    },
+    {
+      "source": "10.48550_arxiv.2210.03629",
+      "target": "10.48550_arxiv.2506.07976",
+      "weight": 0.5511950254440308,
+      "type": "similarity"
+    },
+    {
+      "source": "10.48550_arxiv.2210.03629",
+      "target": "119698_The Rise of Parameter Specialization for Knowledge Storage in Large Language Models",
+      "weight": 0.5119104385375977,
+      "type": "similarity"
+    },
+    {
+      "source": "10.48550_arxiv.2210.03629",
+      "target": "120272_metaTextGrad_ Automatically optimizing language model optimizers",
+      "weight": 0.5392121076583862,
+      "type": "similarity"
+    },
+    {
+      "source": "10.48550_arxiv.2210.03629",
+      "target": "1706.03762",
+      "weight": 0.4852225184440613,
+      "type": "similarity"
+    },
+    {
+      "source": "117038_GoRA_ Gradient-driven Adaptive Low Rank Adaptation",
+      "target": "119698_The Rise of Parameter Specialization for Knowledge Storage in Large Language Models",
+      "weight": 0.5681643486022949,
+      "type": "similarity"
+    },
+    {
+      "source": "117038_GoRA_ Gradient-driven Adaptive Low Rank Adaptation",
+      "target": "120272_metaTextGrad_ Automatically optimizing language model optimizers",
+      "weight": 0.5112696290016174,
+      "type": "similarity"
+    },
+    {
+      "source": "117038_GoRA_ Gradient-driven Adaptive Low Rank Adaptation",
+      "target": "1706.03762",
+      "weight": 0.42816996574401855,
+      "type": "similarity"
+    },
+    {
+      "source": "119698_The Rise of Parameter Specialization for Knowledge Storage in Large Language Models",
+      "target": "120272_metaTextGrad_ Automatically optimizing language model optimizers",
+      "weight": 0.5411215424537659,
+      "type": "similarity"
+    },
+    {
+      "source": "119698_The Rise of Parameter Specialization for Knowledge Storage in Large Language Models",
+      "target": "1706.03762",
+      "weight": 0.4062662422657013,
+      "type": "similarity"
+    },
+    {
+      "source": "1706.03762",
+      "target": "1809.04281",
+      "weight": 0.5406745076179504,
+      "type": "similarity"
+    }
+  ],
   "meta": {
     "total_papers": 11,
-    "total_edges": 0,
-    "similarity_threshold": 0.75,
+    "total_edges": 14,
+    "similarity_threshold": 0.4,
     "used_embeddings": true,
     "titles": {
       "10.48550_arxiv.2201.07207": "Language Models as Zero-Shot Planners: Extracting Actionable Knowledge for Embodied Agents",

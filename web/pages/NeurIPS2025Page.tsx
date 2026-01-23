@@ -13,6 +13,7 @@ import GraphCanvas from '../components/GraphCanvas';
 import SidePanel from '../components/SidePanel';
 import NeurIPSSearchSidebar from '../components/NeurIPSSearchSidebar';
 import NeurIPSRankedList from '../components/NeurIPSRankedList';
+import PaperListView from '../components/PaperListView';
 import { GraphNode, GraphEdge, executeNeurIPSSearchAndRank, getUserProfile,  executeTool } from '../lib/mcp';
 import { ScoredPaper } from '../components/PaperResultCard';
 import { useNodeColors } from '../hooks/useNodeColors';
@@ -68,6 +69,7 @@ function generateClusterCenters(k: number): ClusterCenters {
 }
 
 export default function NeurIPS2025Page() {
+  const [viewMode, setViewMode] = useState<'graph' | 'list'>('graph');
   const [graphState, setGraphState] = useState<NeurIPSGraphState>({
     nodes: [],
   });
@@ -402,6 +404,36 @@ export default function NeurIPS2025Page() {
           width: '260px',
           boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
         }}>
+          <div style={{ display: 'flex', gap: '6px', marginBottom: '12px' }}>
+            <button
+              onClick={() => setViewMode('graph')}
+              style={{
+                padding: '6px 10px',
+                borderRadius: '6px',
+                border: '1px solid #718096',
+                background: viewMode === 'graph' ? '#edf2f7' : 'transparent',
+                color: viewMode === 'graph' ? '#1a202c' : '#a0aec0',
+                cursor: 'pointer',
+                fontSize: '12px'
+              }}
+            >
+              Node
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              style={{
+                padding: '6px 10px',
+                borderRadius: '6px',
+                border: '1px solid #718096',
+                background: viewMode === 'list' ? '#edf2f7' : 'transparent',
+                color: viewMode === 'list' ? '#1a202c' : '#a0aec0',
+                cursor: 'pointer',
+                fontSize: '12px'
+              }}
+            >
+              List
+            </button>
+          </div>
           {/* Cluster Count (k) Slider */}
           <div style={{ marginBottom: '14px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
@@ -539,18 +571,34 @@ export default function NeurIPS2025Page() {
           </div>
         )}
 
-        <GraphCanvas
-          nodes={graphState.nodes}
-          edges={filteredEdges}
-          onNodeClick={handleNodeClick}
-          selectedNodeId={selectedNode?.id}
-          nodeColorMap={nodeColorMap}
-          clusterCenters={clusterCenters}
-          clusterStrength={clusterStrength}
-          highlightedNodeIds={Array.from(highlightedPaperIds)}
-          focusNodeId={focusNodeId}
-          mode="global"
-        />
+        {viewMode === 'graph' && (
+          <GraphCanvas
+            nodes={graphState.nodes}
+            edges={filteredEdges as any}
+            onNodeClick={handleNodeClick}
+            selectedNodeId={selectedNode?.id}
+            nodeColorMap={nodeColorMap}
+            clusterCenters={clusterCenters}
+            clusterStrength={clusterStrength}
+            highlightedNodeIds={Array.from(highlightedPaperIds)}
+            focusNodeId={focusNodeId}
+            mode="global"
+          />
+        )}
+
+        {viewMode === 'list' && (
+          <div style={{ position: 'absolute', inset: 0, paddingTop: '60px' }}>
+            <PaperListView
+              nodes={graphState.nodes as any}
+              edges={filteredEdges as any}
+              groupBy={(n) => (n.cluster ?? 0)}
+              groupTitle={(k) => `Cluster ${k}`}
+              // NeurIPS 리스트에서 제목 클릭 시: paper page로 이동(원하면 NeurIPS 전용 라우팅으로 변경 가능)
+              onOpenPaper={(paperId) => window.location.href = `/paper/${encodeURIComponent(paperId)}`}
+              initialPrefetchCount={80}
+            />
+          </div>
+        )}
 
         {/* Stats overlay */}
         <div style={{
@@ -567,6 +615,7 @@ export default function NeurIPS2025Page() {
         </div>
       </div>
 
+      {viewMode === 'graph' && (
       <SidePanel
         selectedNode={selectedNode ? {
           ...selectedNode,
@@ -584,6 +633,7 @@ export default function NeurIPS2025Page() {
         nodeColor={selectedNode?.stableKey ? nodeColorMap[selectedNode.stableKey] : undefined}
         extraContent={renderNeurIPSDetails()}
       />
+    )}
     </div>
   );
 }

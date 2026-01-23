@@ -13,6 +13,11 @@ export interface GraphNode {
   id: string;
   title: string;
   paper_id?: string;
+  label?: string;
+  stableKey?: string;
+  type?: string;
+  x?: number;
+  y?: number;
   authors?: string[];
   abstract?: string;
   year?: number;
@@ -25,7 +30,7 @@ export interface GraphEdge {
   source: string;
   target: string;
   weight?: number;
-  type: 'references' | 'similarity';
+  type?: 'references' | 'similarity' | string;
 }
 
 export interface GraphData {
@@ -83,7 +88,18 @@ export async function executeTool(
 
   return response.json();
 }
+// ==================== Report API (tools/report.py) ====================
+export async function getReport(paperId: string): Promise<{ found: boolean; content?: string; message?: string }> {
+  const result = await executeTool('get_report', { paper_id: paperId });
+  if (!result.success) throw new Error(result.error || 'get_report failed');
+  return result.result as any;
+}
 
+export async function generateReport(paperId: string): Promise<any> {
+  const result = await executeTool('generate_report', { paper_id: paperId });
+  if (!result.success) throw new Error(result.error || 'generate_report failed');
+  return result.result;
+}
 // ==================== Graph B (Global) API ====================
 
 /**

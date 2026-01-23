@@ -17,6 +17,7 @@ import GraphCanvas from '../components/GraphCanvas';
 import SidePanel from '../components/SidePanel';
 import ArxivSearchSidebar from '../components/ArxivSearchSidebar';
 import ArxivRankedList from '../components/ArxivRankedList';
+import PaperListView from '../components/PaperListView';
 import { getGlobalGraph, rebuildGlobalGraph, GraphNode, executeRankFilterPipeline } from '../lib/mcp';
 import { ScoredPaper } from '../components/PaperResultCard';
 import { useNodeColors } from '../hooks/useNodeColors';
@@ -56,6 +57,7 @@ function getStableKey(node: any): string {
 
 export default function GlobalGraphPage() {
   const navigate = useNavigate();
+  const [viewMode, setViewMode] = useState<'graph' | 'list'>('graph');
 
   const [state, setState] = useState<GlobalGraphState>({
     nodes: [],
@@ -317,6 +319,34 @@ export default function GlobalGraphPage() {
 
   return (
     <div style={{ display: 'flex', height: '100vh', backgroundColor: '#f5f5f5' }}>
+      <div style={{ display: 'flex', gap: '6px' }}>
+        <button
+          onClick={() => setViewMode('graph')}
+          style={{
+            padding: '8px 12px',
+            borderRadius: '6px',
+            border: '1px solid #cbd5e0',
+            backgroundColor: viewMode === 'graph' ? '#2d3748' : '#fff',
+            color: viewMode === 'graph' ? '#fff' : '#2d3748',
+            cursor: 'pointer'
+          }}
+        >
+          Node
+        </button>
+        <button
+          onClick={() => setViewMode('list')}
+          style={{
+            padding: '8px 12px',
+            borderRadius: '6px',
+            border: '1px solid #cbd5e0',
+            backgroundColor: viewMode === 'list' ? '#2d3748' : '#fff',
+            color: viewMode === 'list' ? '#fff' : '#2d3748',
+            cursor: 'pointer'
+          }}
+        >
+          List
+        </button>
+      </div>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         <header
           style={{
@@ -454,7 +484,7 @@ export default function GlobalGraphPage() {
             </div>
           )}
 
-          {!state.loading && !state.error && (
+          {!state.loading && !state.error && viewMode === 'graph' && (
             <GraphCanvas
               nodes={state.nodes}
               edges={state.edges as any}
@@ -462,9 +492,21 @@ export default function GlobalGraphPage() {
               selectedNodeId={selectedNode?.id}
               onNodeClick={handleNodeClick}
               onNodeDoubleClick={handleNodeDoubleClick}
-              nodeColorMap={nodeColorMap} // ✅ GraphCanvas는 stableKey 우선 조회
+              nodeColorMap={nodeColorMap}
               highlightedNodeIds={Array.from(highlightedPaperIds)}
               focusNodeId={focusNodeId}
+            />
+          )}
+
+          {!state.loading && !state.error && viewMode === 'list' && (
+            <PaperListView
+              nodes={state.nodes as any}
+              edges={state.edges as any}
+              // Global은 cluster가 있으면 그걸 쓰고, 없으면 "0"으로 묶임(컴포넌트 기본 로직)
+              groupBy={(n) => (n.cluster ?? '0')}
+              groupTitle={(k) => `Category ${k}`}
+              onOpenPaper={(paperId) => navigate(`/paper/${encodeURIComponent(paperId)}`)}
+              initialPrefetchCount={60}
             />
           )}
         </div>
@@ -487,6 +529,7 @@ export default function GlobalGraphPage() {
         )}
       </div>
 
+      {viewMode === 'graph' && (
       <SidePanel
         selectedNode={selectedNode}
         mode="global"
@@ -513,6 +556,7 @@ export default function GlobalGraphPage() {
           handleNodeColorReset(k);
         }}
       />
+      )}
     </div>
   );
 }
