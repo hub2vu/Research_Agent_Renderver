@@ -555,3 +555,280 @@ class GetTranslationTool(MCPTool):
             "error": None,
             "message": "Translation not found. Run translate_paper first.",
         }
+
+
+class TranslateSectionTool(MCPTool):
+    """Translate a specific section of a paper identified by its heading title."""
+
+    @property
+    def name(self) -> str:
+        return "translate_section"
+
+    @property
+    def description(self) -> str:
+        return (
+            "Translate a specific section of a paper. Extracts text between the given "
+            "section heading and the next heading, then translates it."
+        )
+
+    @property
+    def parameters(self) -> List[ToolParameter]:
+        return [
+            ToolParameter(
+                name="paper_id",
+                type="string",
+                description="Paper ID (e.g., '1809.04281')",
+                required=True,
+            ),
+            ToolParameter(
+                name="section_title",
+                type="string",
+                description="The section heading title to translate",
+                required=True,
+            ),
+            ToolParameter(
+                name="target_language",
+                type="string",
+                description="Target language (default: 'Korean')",
+                required=False,
+                default="Korean",
+            ),
+            ToolParameter(
+                name="source_language",
+                type="string",
+                description="Source language (default: 'English')",
+                required=False,
+                default="English",
+            ),
+        ]
+
+    @property
+    def category(self) -> str:
+        return "translation"
+
+    def _find_pdf(self, paper_id: str) -> Path:
+        """Find PDF file using same resolution logic as frontend."""
+        PDF_DIR = Path(os.getenv("PDF_DIR", "/data/pdf"))
+        candidates = [
+            OUTPUT_DIR / paper_id / "paper.pdf",
+            OUTPUT_DIR / paper_id / f"{paper_id}.pdf",
+            OUTPUT_DIR / paper_id / "main.pdf",
+            PDF_DIR / f"{paper_id}.pdf",
+            PDF_DIR / "neurips2025" / f"{paper_id}.pdf",
+        ]
+        for p in candidates:
+            if p.exists():
+                return p
+        raise ExecutionError(
+            f"PDF not found for paper_id={paper_id}.",
+            tool_name=self.name,
+        )
+
+    def _extract_section_text(self, pdf_path: Path, section_title: str) -> str:
+        """Extract text from a specific section of the PDF."""
+        try:
+            import fitz
+        except ImportError:
+            raise ExecutionError(
+                "PyMuPDF (fitz) is required for section extraction.",
+                tool_name=self.name,
+            )
+
+        doc = fitz.open(pdf_path)
+        num_pages = len(doc)
+
+        # First pass: find all headings and their positions
+        from collections import Counter as _Counter
+
+        all_spans = []
+        for pno in range(num_pages):
+            page = doc.load_page(pno)
+            blocks = page.get_text("dict").get("blocks", [])
+            for block in blocks:
+                if "lines" not in block:
+                    continue
+                for line in block["lines"]:
+                    for span in line.get("spans", []):
+                        text = (span.get("text") or "").strip()
+                        if not text:
+                            continue
+                        all_spans.append({
+                            "page": pno,
+                            "text": text,
+                            "size": round(float(span.get("size") or 0.0), 2),
+                            "font": span.get("font") or "",
+                            "flags": int(span.get("flags") or 0),
+                            "bbox": tuple(span.get("bbox") or (0, 0, 0, 0)),
+                            "page_height": float(page.rect.height),
+                        })
+
+        if not all_spans:
+            doc.close()
+            raise ExecutionError("No text found in PDF.", tool_name=self.name)
+
+        size_counts = _Counter(round(float(s["size"]), 1) for s in all_spans)
+        body_size = float(size_counts.most_common(1)[0][0])
+
+        # Find heading spans
+        heading_spans = []
+        for s in all_spans:
+            size = float(s["size"])
+            font_lower = (s.get("font") or "").lower()
+            flags = int(s.get("flags") or 0)
+            is_bold = ("bold" in font_lower) or (flags & 2) or (flags & 16)
+            is_larger = size >= (body_size + 1.0)
+            text = s["text"]
+            if (is_larger or is_bold) and len(text) < 100 and not text.strip().endswith("."):
+                heading_spans.append(s)
+
+        # Find the target section and the next section
+        target_page = None
+        target_y = None
+        next_page = None
+        next_y = None
+
+        normalized_target = re.sub(r"\s+", " ", section_title).strip().lower()
+
+        for i, h in enumerate(heading_spans):
+            normalized_h = re.sub(r"\s+", " ", h["text"]).strip().lower()
+            if normalized_target in normalized_h or normalized_h in normalized_target:
+                target_page = h["page"]
+                target_y = h["bbox"][3]  # bottom of heading
+                # Find next heading
+                for j in range(i + 1, len(heading_spans)):
+                    nh = heading_spans[j]
+                    if nh["page"] > target_page or (nh["page"] == target_page and nh["bbox"][1] > target_y):
+                        next_page = nh["page"]
+                        next_y = nh["bbox"][1]  # top of next heading
+                        break
+                break
+
+        if target_page is None:
+            doc.close()
+            raise ExecutionError(
+                f"Section '{section_title}' not found in PDF.",
+                tool_name=self.name,
+            )
+
+        # Extract text between target heading and next heading
+        section_text_parts = []
+        done = False
+        end_page = num_pages if next_page is None else next_page + 1
+        for pno in range(target_page, end_page):
+            if done:
+                break
+            page = doc.load_page(pno)
+            blocks = page.get_text("dict").get("blocks", [])
+            for block in blocks:
+                if done:
+                    break
+                if "lines" not in block:
+                    continue
+                for line in block["lines"]:
+                    if done:
+                        break
+                    for span in line.get("spans", []):
+                        text = (span.get("text") or "").strip()
+                        if not text:
+                            continue
+                        bbox = span.get("bbox", (0, 0, 0, 0))
+                        span_y_top = bbox[1]
+
+                        # Skip if before target heading
+                        if pno == target_page and span_y_top < target_y:
+                            continue
+                        # Stop if past next heading
+                        if next_page is not None and pno == next_page and span_y_top >= next_y:
+                            done = True
+                            break
+                        if next_page is not None and pno > next_page:
+                            done = True
+                            break
+
+                        section_text_parts.append(text)
+
+        doc.close()
+
+        # Rebuild section text
+        section_text = " ".join(section_text_parts)
+        if not section_text.strip():
+            raise ExecutionError(
+                f"No text content found for section '{section_title}'.",
+                tool_name=self.name,
+            )
+
+        return section_text
+
+    async def execute(
+        self,
+        paper_id: str,
+        section_title: str,
+        target_language: str = "Korean",
+        source_language: str = "English",
+        **kwargs,
+    ) -> Dict[str, Any]:
+        if not HAS_OPENAI:
+            raise ExecutionError(
+                "서버에 'openai' 패키지가 없습니다. (pip install openai 필요)",
+                tool_name=self.name,
+            )
+        if not API_KEY:
+            raise ExecutionError(
+                "환경변수 OPENAI_API_KEY가 설정되지 않았습니다.",
+                tool_name=self.name,
+            )
+
+        # Find and extract section text
+        pdf_path = self._find_pdf(paper_id)
+        section_text = self._extract_section_text(pdf_path, section_title)
+
+        # Translate the section
+        client = openai.OpenAI(api_key=API_KEY)
+
+        chunks = _split_into_chunks(section_text, max_chunk_size=5000)
+        translated_chunks = []
+
+        for i, chunk in enumerate(chunks):
+            prev_context = ""
+            if translated_chunks:
+                prev_context = "\n\n".join(translated_chunks[-2:])
+
+            system_prompt = f"""You are a professional academic translator.
+Translate the given text from {source_language} to {target_language} accurately and naturally.
+
+CRITICAL RULES:
+1. Translate accurately without paraphrasing or simplifying
+2. Keep all mathematical expressions, citations unchanged
+3. Do NOT translate LaTeX formulas ($...$, $$...$$)
+4. Maintain original structure and formatting
+5. Do NOT add explanations or interpretations"""
+
+            user_prompt = f"""[Context: Previous Paragraphs]
+{prev_context if prev_context else "(No previous context)"}
+
+[Task]
+Translate the following text from {source_language} to {target_language}.
+
+[Text to Translate]
+{chunk}"""
+
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ]
+
+            translated_chunk = await _translate_with_retry(client, messages)
+            translated_chunks.append(translated_chunk)
+
+            if i < len(chunks) - 1:
+                time.sleep(0.5)
+
+        translated_text = "\n\n".join(translated_chunks)
+
+        return {
+            "status": "success",
+            "paper_id": paper_id,
+            "section_title": section_title,
+            "target_language": target_language,
+            "translated_text": translated_text,
+        }

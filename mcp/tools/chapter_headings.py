@@ -399,3 +399,111 @@ class ExtractChapterHeadingsTool(MCPTool):
             raise
         except Exception as e:
             raise ExecutionError(f"Failed to extract chapter headings: {str(e)}", tool_name=self.name)
+
+
+class ExtractPaperSectionsTool(MCPTool):
+    """
+    MCP Tool: Extract all section headings from a research paper PDF.
+    Unlike ExtractChapterHeadingsTool, this works on the entire document
+    without requiring a chapter number.
+    """
+
+    @property
+    def name(self) -> str:
+        return "extract_paper_sections"
+
+    @property
+    def description(self) -> str:
+        return (
+            "Extract all section headings from a research paper PDF using layout analysis "
+            "(font size/bold/bbox heuristics). Returns section titles with page numbers."
+        )
+
+    @property
+    def category(self) -> str:
+        return "pdf"
+
+    @property
+    def parameters(self) -> List[ToolParameter]:
+        return [
+            ToolParameter(
+                name="paper_id",
+                type="string",
+                description="Paper ID used in the output directory (e.g., '1809.04281' or '10.48550_arxiv.1809.04281')",
+                required=True,
+            ),
+        ]
+
+    def _find_pdf(self, paper_id: str) -> Path:
+        """Find PDF file using same resolution logic as frontend."""
+        candidates = [
+            OUTPUT_DIR / paper_id / "paper.pdf",
+            OUTPUT_DIR / paper_id / f"{paper_id}.pdf",
+            OUTPUT_DIR / paper_id / "main.pdf",
+            PDF_DIR / f"{paper_id}.pdf",
+            PDF_DIR / "neurips2025" / f"{paper_id}.pdf",
+        ]
+        for p in candidates:
+            if p.exists():
+                return p
+        raise ExecutionError(
+            f"PDF not found for paper_id={paper_id}. Tried: {[str(c) for c in candidates]}",
+            tool_name=self.name,
+        )
+
+    async def execute(self, paper_id: str, **kwargs: Any) -> Dict[str, Any]:
+        try:
+            pdf_path = self._find_pdf(paper_id)
+            doc = fitz.open(pdf_path)
+
+            num_pages = len(doc)
+            raw_spans = list(_iter_spans(doc, 0, num_pages))
+
+            if not raw_spans:
+                doc.close()
+                return {
+                    "status": "success",
+                    "paper_id": paper_id,
+                    "total_sections": 0,
+                    "sections": [],
+                    "note": "No text spans found in PDF.",
+                }
+
+            size_counts = Counter(round(float(s["size"]), 1) for s in raw_spans)
+            body_size = float(size_counts.most_common(1)[0][0])
+
+            candidates = [s for s in raw_spans if _is_heading_candidate(s, body_size)]
+            merged = _merge_heading_spans(candidates)
+
+            cleaned: List[Dict[str, Any]] = []
+            seen: set = set()
+            for m in merged:
+                t = re.sub(r"\s+", " ", m["text"]).strip()
+                if len(t) < 3:
+                    continue
+                key = (t, m["page"])
+                if key in seen:
+                    continue
+                seen.add(key)
+                m["text"] = t
+                cleaned.append(m)
+
+            structured = _cluster_sizes_to_levels(cleaned)
+            sections = [
+                {"level": int(it["level"]), "title": it["text"], "page": int(it["page"]) + 1}
+                for it in structured
+            ]
+
+            doc.close()
+
+            return {
+                "status": "success",
+                "paper_id": paper_id,
+                "total_sections": len(sections),
+                "sections": sections,
+            }
+
+        except ExecutionError:
+            raise
+        except Exception as e:
+            raise ExecutionError(f"Failed to extract paper sections: {str(e)}", tool_name=self.name)
