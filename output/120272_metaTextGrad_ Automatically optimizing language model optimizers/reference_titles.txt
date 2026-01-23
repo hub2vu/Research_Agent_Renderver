@@ -1,0 +1,34 @@
+differentiation
+Judging llm-as-a-judge with mt-bench and chatbot arena
+Large language models as optimizers
+Joshi, Hanna Moazam, Heather Miller, Matei Zaharia, and Christopher Potts
+Self-refine: Iterative refinement with self-feedback
+Can large language models be trusted for evaluation? scalable meta-evaluation of llms as evaluators via agent debate
+Optimizing instructions and demonstrations for multi-stage language model programs
+Re3: Generating longer stories with recursive reprompting and revision
+Attention satisfies: A constraint-satisfaction lens on factual errors of language models
+Automated design of agentic systems
+Influence of initialization on the performance of metaheuristic optimizers
+On the importance of initialization and momentum in deep learning
+Challenging BIG-bench tasks and whether chain-of-thought can solve them
+Beyond the imitation game: Quantifying and extrapolating the capabilities of language models
+Measuring massive multitask language understanding
+In First Conference on Language Modeling
+Chain-of-thought prompting elicits reasoning in large language models
+Chi, Sharan Narang, Aakanksha Chowdhery, and Denny Zhou
+Ziegler, Ryan Lowe, Chelsea Voss, Alec Radford, Dario Amodei, and Paul Christiano
+The physical basis of imrt and inverse planning
+Non-determinism in gpt-4 is caused by sparse moe
+Can generalist foundation models outcompete special-purpose tuning? case study in medicine
+Merge, ensemble, and cooperate! a survey on collaborative strategies in the era of large language models
+Logan IV, Eric Wallace, and Sameer Singh
+Knowprompt: Knowledge-aware prompt-tuning with synergistic optimization for relation extraction
+Large language models are human-level prompt engineers
+Prompt engineering a prompt engineer
+gradient descent
+Trace is the next autodiff: Generative optimization with rich feedback, execution traces, and llms
+Alyahya, Dylan R
+Model-agnostic meta-learning for fast adaptation of deep networks
+Rapid learning or feature reuse? towards understanding the effectiveness of maml
+Model-agnostic meta-learning for fast adaptation of deep networks
+Evolutionary Principles in Self-Referential Learning

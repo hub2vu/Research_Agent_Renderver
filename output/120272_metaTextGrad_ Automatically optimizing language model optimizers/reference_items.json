@@ -1,0 +1,317 @@
+[
+  {
+    "ref_no": 1,
+    "title": "differentiation",
+    "ids": {
+      "arxiv": "2406.07496"
+    },
+    "graph_id": "10.48550_arxiv.2406.07496",
+    "raw_text": "Mert Yuksekgonul, Federico Bianchi, Joseph Boen, Sheng Liu, Zhi Huang, Carlos Guestrin, and James Zou. Textgrad: Automatic\" differentiation\" via text. arXiv preprint arXiv:2406.07496,"
+  },
+  {
+    "ref_no": 2,
+    "title": "Judging llm-as-a-judge with mt-bench and chatbot arena",
+    "ids": {
+      "year": "2024"
+    },
+    "graph_id": "",
+    "raw_text": "Lianmin Zheng, Wei-Lin Chiang, Ying Sheng, Siyuan Zhuang, Zhanghao Wu, Yonghao Zhuang, Zi Lin, Zhuohan Li, Dacheng Li, Eric Xing, et al. Judging llm-as-a-judge with mt-bench and chatbot arena. Advance..."
+  },
+  {
+    "ref_no": 3,
+    "title": "Large language models as optimizers",
+    "ids": {
+      "year": "2024"
+    },
+    "graph_id": "",
+    "raw_text": "Chengrun Yang, Xuezhi Wang, Yifeng Lu, Hanxiao Liu, Quoc V Le, Denny Zhou, and Xinyun Chen. Large language models as optimizers. In The Twelfth International Conference on Learning Representations, 20..."
+  },
+  {
+    "ref_no": 4,
+    "title": "Joshi, Hanna Moazam, Heather Miller, Matei Zaharia, and Christopher Potts",
+    "ids": {
+      "year": "2024"
+    },
+    "graph_id": "",
+    "raw_text": "Omar Khattab, Arnav Singhvi, Paridhi Maheshwari, Zhiyuan Zhang, Keshav Santhanam, Sri Vardhamanan A, Saiful Haq, Ashutosh Sharma, Thomas T. Joshi, Hanna Moazam, Heather Miller, Matei Zaharia, and Chri..."
+  },
+  {
+    "ref_no": 5,
+    "title": "Self-refine: Iterative refinement with self-feedback",
+    "ids": {
+      "year": "2024"
+    },
+    "graph_id": "",
+    "raw_text": "Aman Madaan, Niket Tandon, Prakhar Gupta, Skyler Hallinan, Luyu Gao, Sarah Wiegreffe, Uri Alon, Nouha Dziri, Shrimai Prabhumoye, Yiming Yang, et al. Self-refine: Iterative refinement with self-feedbac..."
+  },
+  {
+    "ref_no": 6,
+    "title": "Can large language models be trusted for evaluation? scalable meta-evaluation of llms as evaluators via agent debate",
+    "ids": {
+      "arxiv": "2401.16788",
+      "year": "2024"
+    },
+    "graph_id": "10.48550_arxiv.2401.16788",
+    "raw_text": "Steffi Chern, Ethan Chern, Graham Neubig, and Pengfei Liu. Can large language models be trusted for evaluation? scalable meta-evaluation of llms as evaluators via agent debate. arXiv preprint arXiv:24..."
+  },
+  {
+    "ref_no": 7,
+    "title": "Optimizing instructions and demonstrations for multi-stage language model programs",
+    "ids": {
+      "year": "2024"
+    },
+    "graph_id": "",
+    "raw_text": "Krista Opsahl-Ong, Michael J Ryan, Josh Purtell, David Broman, Christopher Potts, Matei Zaharia, and Omar Khattab. Optimizing instructions and demonstrations for multi-stage language model programs, 2..."
+  },
+  {
+    "ref_no": 8,
+    "title": "Re3: Generating longer stories with recursive reprompting and revision",
+    "ids": {
+      "year": "2022"
+    },
+    "graph_id": "",
+    "raw_text": "Kevin Yang, Yuandong Tian, Nanyun Peng, and Dan Klein. Re3: Generating longer stories with recursive reprompting and revision. In Proceedings of the 2022 Conference on Empirical Methods in Natural Lan..."
+  },
+  {
+    "ref_no": 9,
+    "title": "Attention satisfies: A constraint-satisfaction lens on factual errors of language models",
+    "ids": {
+      "year": "2024"
+    },
+    "graph_id": "",
+    "raw_text": "Mert Yuksekgonul, Varun Chandrasekaran, Erik Jones, Suriya Gunasekar, Ranjita Naik, Hamid Palangi, Ece Kamar, and Besmira Nushi. Attention satisfies: A constraint-satisfaction lens on factual errors o..."
+  },
+  {
+    "ref_no": 10,
+    "title": "Automated design of agentic systems",
+    "ids": {
+      "arxiv": "2408.08435",
+      "year": "2024"
+    },
+    "graph_id": "10.48550_arxiv.2408.08435",
+    "raw_text": "Shengran Hu, Cong Lu, and Jeff Clune. Automated design of agentic systems. arXiv preprint arXiv:2408.08435, 2024."
+  },
+  {
+    "ref_no": 11,
+    "title": "Influence of initialization on the performance of metaheuristic optimizers",
+    "ids": {
+      "year": "2020"
+    },
+    "graph_id": "",
+    "raw_text": "Qian Li, San-Yang Liu, and Xin-She Yang. Influence of initialization on the performance of metaheuristic optimizers. Applied Soft Computing, 91:106193, 2020."
+  },
+  {
+    "ref_no": 12,
+    "title": "On the importance of initialization and momentum in deep learning",
+    "ids": {
+      "year": "2013"
+    },
+    "graph_id": "",
+    "raw_text": "Ilya Sutskever, James Martens, George Dahl, and Geoffrey Hinton. On the importance of initialization and momentum in deep learning. In International conference on machine learning, pages 1139–1147. PM..."
+  },
+  {
+    "ref_no": 13,
+    "title": "Challenging BIG-bench tasks and whether chain-of-thought can solve them",
+    "ids": {
+      "year": "2023"
+    },
+    "graph_id": "",
+    "raw_text": "Mirac Suzgun, Nathan Scales, Nathanael Schärli, Sebastian Gehrmann, Yi Tay, Hyung Won Chung, Aakanksha Chowdhery, Quoc Le, Ed Chi, Denny Zhou, and Jason Wei. Challenging BIG-bench tasks and whether ch..."
+  },
+  {
+    "ref_no": 14,
+    "title": "Beyond the imitation game: Quantifying and extrapolating the capabilities of language models",
+    "ids": {
+      "year": "2023"
+    },
+    "graph_id": "",
+    "raw_text": "Aarohi Srivastava, Abhinav Rastogi, and Abhishek Rao et al. Beyond the imitation game: Quantifying and extrapolating the capabilities of language models. Transactions on Machine Learning Research, 202..."
+  },
+  {
+    "ref_no": 15,
+    "title": "Measuring massive multitask language understanding",
+    "ids": {
+      "year": "2021"
+    },
+    "graph_id": "",
+    "raw_text": "Dan Hendrycks, Collin Burns, Steven Basart, Andy Zou, Mantas Mazeika, Dawn Song, and Jacob Steinhardt. Measuring massive multitask language understanding. In International Conference on Learning Repre..."
+  },
+  {
+    "ref_no": 16,
+    "title": "In First Conference on Language Modeling",
+    "ids": {
+      "year": "2024"
+    },
+    "graph_id": "",
+    "raw_text": "David Rein, Betty Li Hou, Asa Cooper Stickland, Jackson Petty, Richard Yuanzhe Pang, Julien Dirani, Julian Michael, and Samuel R. Bowman. GPQA: A graduate-level google-proof q&a benchmark. In First Co..."
+  },
+  {
+    "ref_no": 17,
+    "title": "Chain-of-thought prompting elicits reasoning in large language models",
+    "ids": {
+      "year": "2022"
+    },
+    "graph_id": "",
+    "raw_text": "Jason Wei, Xuezhi Wang, Dale Schuurmans, Maarten Bosma, Fei Xia, Ed Chi, Quoc V Le, Denny Zhou, et al. Chain-of-thought prompting elicits reasoning in large language models. Advances in neural informa..."
+  },
+  {
+    "ref_no": 18,
+    "title": "Chi, Sharan Narang, Aakanksha Chowdhery, and Denny Zhou",
+    "ids": {
+      "year": "2023"
+    },
+    "graph_id": "",
+    "raw_text": "Xuezhi Wang, Jason Wei, Dale Schuurmans, Quoc V Le, Ed H. Chi, Sharan Narang, Aakanksha Chowdhery, and Denny Zhou. Self-consistency improves chain of thought reasoning in language models. In The Eleve..."
+  },
+  {
+    "ref_no": 19,
+    "title": "Ziegler, Ryan Lowe, Chelsea Voss, Alec Radford, Dario Amodei, and Paul Christiano",
+    "ids": {
+      "year": "2020"
+    },
+    "graph_id": "",
+    "raw_text": "Nisan Stiennon, Long Ouyang, Jeff Wu, Daniel M. Ziegler, Ryan Lowe, Chelsea Voss, Alec Radford, Dario Amodei, and Paul Christiano. Learning to summarize from human feedback. In Proceedings of the 34th..."
+  },
+  {
+    "ref_no": 20,
+    "title": "The physical basis of imrt and inverse planning",
+    "ids": {
+      "year": "2003"
+    },
+    "graph_id": "",
+    "raw_text": "Steve Webb. The physical basis of imrt and inverse planning. The British journal of radiology, 76(910):678–689, 2003."
+  },
+  {
+    "ref_no": 21,
+    "title": "Non-determinism in gpt-4 is caused by sparse moe",
+    "ids": {
+      "url": "https://152334h.github.io/blog/non-determinism-in-gpt-4/",
+      "year": "2023"
+    },
+    "graph_id": "",
+    "raw_text": "Sherman Chann. Non-determinism in gpt-4 is caused by sparse moe. https://152334h.github.io/blog/non-determinism-in-gpt-4/, 8 2023."
+  },
+  {
+    "ref_no": 22,
+    "title": "Can generalist foundation models outcompete special-purpose tuning? case study in medicine",
+    "ids": {
+      "arxiv": "2311.16452"
+    },
+    "graph_id": "10.48550_arxiv.2311.16452",
+    "raw_text": "Harsha Nori, Yin Tat Lee, Sheng Zhang, Dean Carignan, Richard Edgar, Nicolo Fusi, Nicholas King, Jonathan Larson, Yuanzhi Li, Weishung Liu, et al. Can generalist foundation models outcompete special-p..."
+  },
+  {
+    "ref_no": 23,
+    "title": "Merge, ensemble, and cooperate! a survey on collaborative strategies in the era of large language models",
+    "ids": {
+      "year": "2024"
+    },
+    "graph_id": "",
+    "raw_text": "Jinliang Lu, Ziliang Pang, Min Xiao, Yaochen Zhu, Rui Xia, and Jiajun Zhang. Merge, ensemble, and cooperate! a survey on collaborative strategies in the era of large language models, 2024."
+  },
+  {
+    "ref_no": 24,
+    "title": "Logan IV, Eric Wallace, and Sameer Singh",
+    "ids": {
+      "year": "2020"
+    },
+    "graph_id": "",
+    "raw_text": "Taylor Shin, Yasaman Razeghi, Robert L. Logan IV, Eric Wallace, and Sameer Singh. AutoPrompt: Eliciting Knowledge from Language Models with Automatically Generated Prompts. In Proceedings of the 2020 ..."
+  },
+  {
+    "ref_no": 25,
+    "title": "Knowprompt: Knowledge-aware prompt-tuning with synergistic optimization for relation extraction",
+    "ids": {
+      "year": "2022"
+    },
+    "graph_id": "",
+    "raw_text": "Xiang Chen, Ningyu Zhang, Xin Xie, Shumin Deng, Yunzhi Yao, Chuanqi Tan, Fei Huang, Luo Si, and Huajun Chen. Knowprompt: Knowledge-aware prompt-tuning with synergistic optimization for relation extrac..."
+  },
+  {
+    "ref_no": 26,
+    "title": "Large language models are human-level prompt engineers",
+    "ids": {
+      "year": "2023"
+    },
+    "graph_id": "",
+    "raw_text": "Yongchao Zhou, Andrei Ioan Muresanu, Ziwen Han, Keiran Paster, Silviu Pitis, Harris Chan, and Jimmy Ba. Large language models are human-level prompt engineers. In The Eleventh International Conference..."
+  },
+  {
+    "ref_no": 27,
+    "title": "Prompt engineering a prompt engineer",
+    "ids": {
+      "arxiv": "2311.05661",
+      "year": "2023"
+    },
+    "graph_id": "10.48550_arxiv.2311.05661",
+    "raw_text": "Qinyuan Ye, Maxamed Axmed, Reid Pryzant, and Fereshte Khani. Prompt engineering a prompt engineer. arXiv preprint arXiv:2311.05661, 2023."
+  },
+  {
+    "ref_no": 28,
+    "title": "gradient descent",
+    "ids": {
+      "year": "2023"
+    },
+    "graph_id": "",
+    "raw_text": "Reid Pryzant, Dan Iter, Jerry Li, Yin Lee, Chenguang Zhu, and Michael Zeng. Automatic prompt optimization with “gradient descent” and beam search. In Houda Bouamor, Juan Pino, and Kalika Bali, editors..."
+  },
+  {
+    "ref_no": 29,
+    "title": "Trace is the next autodiff: Generative optimization with rich feedback, execution traces, and llms",
+    "ids": {},
+    "graph_id": "",
+    "raw_text": "Ching-An Cheng, Allen Nie, and Adith Swaminathan. Trace is the next autodiff: Generative optimization with rich feedback, execution traces, and llms. In A. Globerson, L. Mackey, D. Belgrave, A. Fan, U..."
+  },
+  {
+    "ref_no": 30,
+    "title": "Alyahya, Dylan R",
+    "ids": {
+      "year": "2024"
+    },
+    "graph_id": "",
+    "raw_text": "Wenyi Wang, Hisham A. Alyahya, Dylan R. Ashley, Oleg Serikov, Dmitrii Khizbullin, Francesco Faccio, and Jürgen Schmidhuber. How to correctly do semantic backpropagation on languagebased agentic system..."
+  },
+  {
+    "ref_no": 31,
+    "title": "Model-agnostic meta-learning for fast adaptation of deep networks",
+    "ids": {
+      "year": "2017"
+    },
+    "graph_id": "",
+    "raw_text": "Chelsea Finn, Pieter Abbeel, and Sergey Levine. Model-agnostic meta-learning for fast adaptation of deep networks. In Proceedings of the 34th International Conference on Machine Learning - Volume 70, ..."
+  },
+  {
+    "ref_no": 32,
+    "title": "",
+    "ids": {},
+    "graph_id": "",
+    "raw_text": "Alex Nichol, Joshua Achiam, and John Schulman. On first-order meta-learning algorithms,"
+  },
+  {
+    "ref_no": 33,
+    "title": "Rapid learning or feature reuse? towards understanding the effectiveness of maml",
+    "ids": {
+      "year": "2020"
+    },
+    "graph_id": "",
+    "raw_text": "Aniruddh Raghu, Maithra Raghu, Samy Bengio, and Oriol Vinyals. Rapid learning or feature reuse? towards understanding the effectiveness of maml. In International Conference on Learning Representations..."
+  },
+  {
+    "ref_no": 34,
+    "title": "Model-agnostic meta-learning for fast adaptation of deep networks",
+    "ids": {
+      "year": "2017"
+    },
+    "graph_id": "",
+    "raw_text": "Chelsea Finn, Pieter Abbeel, and Sergey Levine. Model-agnostic meta-learning for fast adaptation of deep networks. In Proceedings of the 34th International Conference on Machine Learning, 2017."
+  },
+  {
+    "ref_no": 35,
+    "title": "Evolutionary Principles in Self-Referential Learning",
+    "ids": {
+      "year": "1987"
+    },
+    "graph_id": "",
+    "raw_text": "Jürgen Schmidhuber. Evolutionary Principles in Self-Referential Learning. PhD thesis, Technical University of Munich, 1987. A Implementation Details In this section, we provide the implementation of t..."
+  }
+]

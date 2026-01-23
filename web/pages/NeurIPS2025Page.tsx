@@ -13,7 +13,7 @@ import GraphCanvas from '../components/GraphCanvas';
 import SidePanel from '../components/SidePanel';
 import NeurIPSSearchSidebar from '../components/NeurIPSSearchSidebar';
 import NeurIPSRankedList from '../components/NeurIPSRankedList';
-import { GraphNode, GraphEdge, executeNeurIPSSearchAndRank, getUserProfile } from '../lib/mcp';
+import { GraphNode, GraphEdge, executeNeurIPSSearchAndRank, getUserProfile,  executeTool } from '../lib/mcp';
 import { ScoredPaper } from '../components/PaperResultCard';
 import { useNodeColors } from '../hooks/useNodeColors';
 
