@@ -10,7 +10,7 @@
  * - Keep backward compatibility with existing props
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { GraphNode } from '../lib/mcp';
 import PaperCard from './PaperCard';
 import ReportViewer from './ReportViewer';
@@ -142,7 +142,7 @@ export default function SidePanel({
   }, [nodeColor, nodeColorMap, selectedKey, selectedNode.id]);
 
   const canEditColor = Boolean(onNodeColorChange || onNodeColorReset);
-
+  const [showNodeColor, setShowNodeColor] = useState(true);
   const emitColorChange = (color: string) => {
     if (!onNodeColorChange) return;
     if (!isHexColor(color)) return;
@@ -201,112 +201,7 @@ export default function SidePanel({
       <div style={{ padding: '16px', overflowY: 'auto', flex: 1 }}>
         <PaperCard node={selectedNode} />
 
-        {/* -------- Node Color Controls -------- */}
-        <div
-          style={{
-            marginTop: '14px',
-            paddingTop: '14px',
-            borderTop: '1px solid #edf2f7'
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <div style={{ fontSize: '12px', color: '#718096', fontWeight: 600 }}>
-              Node color
-            </div>
-            {!canEditColor && (
-              <div style={{ fontSize: '11px', color: '#a0aec0' }}>
-                (connect callbacks)
-              </div>
-            )}
-          </div>
-
-          <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <input
-              type="color"
-              value={currentColor}
-              disabled={!onNodeColorChange}
-              onChange={(e) => emitColorChange(e.target.value)}
-              style={{
-                width: 42,
-                height: 34,
-                padding: 0,
-                border: 'none',
-                background: 'transparent',
-                cursor: onNodeColorChange ? 'pointer' : 'not-allowed'
-              }}
-              aria-label="Pick node color"
-            />
-
-            <input
-              type="text"
-              value={currentColor}
-              disabled={!onNodeColorChange}
-              onChange={(e) => {
-                const v = e.target.value.trim();
-                // 타이핑 중엔 무시, 유효한 hex일 때만 반영
-                if (isHexColor(v)) emitColorChange(v);
-              }}
-              style={{
-                flex: 1,
-                padding: '8px 10px',
-                border: '1px solid #e2e8f0',
-                borderRadius: 6,
-                fontSize: 12,
-                color: '#2d3748'
-              }}
-              placeholder="#RRGGBB"
-            />
-
-            <button
-              disabled={!onNodeColorReset}
-              onClick={emitColorReset}
-              style={{
-                padding: '8px 10px',
-                borderRadius: 6,
-                border: '1px solid #e2e8f0',
-                background: '#f7fafc',
-                cursor: onNodeColorReset ? 'pointer' : 'not-allowed',
-                fontSize: 12,
-                color: '#4a5568',
-                opacity: onNodeColorReset ? 1 : 0.6
-              }}
-            >
-              Reset
-            </button>
-          </div>
-
-          <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
-            {PRESET_COLORS.map((c) => (
-              <button
-                key={c}
-                disabled={!onNodeColorChange}
-                onClick={() => emitColorChange(c)}
-                style={{
-                  width: 22,
-                  height: 22,
-                  borderRadius: 999,
-                  border:
-                    c.toLowerCase() === currentColor.toLowerCase()
-                      ? '2px solid #2d3748'
-                      : '1px solid #e2e8f0',
-                  background: c,
-                  cursor: onNodeColorChange ? 'pointer' : 'not-allowed',
-                  opacity: onNodeColorChange ? 1 : 0.6
-                }}
-                aria-label={`Set color ${c}`}
-                title={c}
-              />
-            ))}
-          </div>
-
-          <div style={{ marginTop: 8, fontSize: 11, color: '#a0aec0' }}>
-
-          </div>
-
-          <div style={{ marginTop: 6, fontSize: 11, color: '#a0aec0' }}>
-            Key: <code>{selectedKey}</code>
-          </div>
-        </div>
+        <ReportViewer key={selectedNode.id} paperId={selectedNode.id} />
 
         {/* -------- Actions -------- */}
         <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -365,14 +260,147 @@ export default function SidePanel({
             </a>
           )}
         </div>
-        <ReportViewer paperId={selectedNode.id} />
+        
 
         {/* Extra content (for custom pages like NeurIPS) */}
         {extraContent}
+        {/* -------- Node Color Controls (맨 아래) -------- */}
+        <div
+          style={{
+            marginTop: '16px',
+            paddingTop: '14px',
+            borderTop: '1px solid #edf2f7'
+          }}
+        >
+          {/* 헤더: 토글 버튼(왼쪽) + 섹션명 */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <button
+                onClick={() => setShowNodeColor(v => !v)}
+                aria-label={showNodeColor ? 'Collapse node color section' : 'Expand node color section'}
+                title={showNodeColor ? 'Collapse' : 'Expand'}
+                style={{
+                  width: 22,
+                  height: 22,
+                  borderRadius: 6,
+                  border: '1px solid #e2e8f0',
+                  background: '#f7fafc',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  lineHeight: 1,
+                  fontSize: 12,
+                  color: '#2d3748'
+                }}
+              >
+                {showNodeColor ? '▾' : '▸'}
+              </button>
+
+              <div style={{ fontSize: '12px', color: '#718096', fontWeight: 600 }}>
+                Node color
+              </div>
+            </div>
+
+            {!canEditColor && (
+              <div style={{ fontSize: '11px', color: '#a0aec0' }}>
+                (connect callbacks)
+              </div>
+            )}
+          </div>
+
+          {/* 본문: showNodeColor일 때만 표시 */}
+          {showNodeColor && (
+            <>
+              <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input
+                  type="color"
+                  value={currentColor}
+                  disabled={!onNodeColorChange}
+                  onChange={(e) => emitColorChange(e.target.value)}
+                  style={{
+                    width: 42,
+                    height: 34,
+                    padding: 0,
+                    border: 'none',
+                    background: 'transparent',
+                    cursor: onNodeColorChange ? 'pointer' : 'not-allowed'
+                  }}
+                  aria-label="Pick node color"
+                />
+
+                <input
+                  type="text"
+                  value={currentColor}
+                  disabled={!onNodeColorChange}
+                  onChange={(e) => {
+                    const v = e.target.value.trim();
+                    if (isHexColor(v)) emitColorChange(v);
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: '8px 10px',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: 6,
+                    fontSize: 12,
+                    color: '#2d3748'
+                  }}
+                  placeholder="#RRGGBB"
+                />
+
+                <button
+                  disabled={!onNodeColorReset}
+                  onClick={emitColorReset}
+                  style={{
+                    padding: '8px 10px',
+                    borderRadius: 6,
+                    border: '1px solid #e2e8f0',
+                    background: '#f7fafc',
+                    cursor: onNodeColorReset ? 'pointer' : 'not-allowed',
+                    fontSize: 12,
+                    color: '#4a5568',
+                    opacity: onNodeColorReset ? 1 : 0.6
+                  }}
+                >
+                  Reset
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
+                {PRESET_COLORS.map((c) => (
+                  <button
+                    key={c}
+                    disabled={!onNodeColorChange}
+                    onClick={() => emitColorChange(c)}
+                    style={{
+                      width: 22,
+                      height: 22,
+                      borderRadius: 999,
+                      border:
+                        c.toLowerCase() === currentColor.toLowerCase()
+                          ? '2px solid #2d3748'
+                          : '1px solid #e2e8f0',
+                      background: c,
+                      cursor: onNodeColorChange ? 'pointer' : 'not-allowed',
+                      opacity: onNodeColorChange ? 1 : 0.6
+                    }}
+                    aria-label={`Set color ${c}`}
+                    title={c}
+                  />
+                ))}
+              </div>
+
+              <div style={{ marginTop: 6, fontSize: 11, color: '#a0aec0' }}>
+                Key: <code>{selectedKey}</code>
+              </div>
+            </>
+          )}
+        </div>
+
       </div>
 
 
-      {/* Loading indicator */}
+      {/* Loading indicator (footer 위로 올려서 토글이 맨 아래에 위치) */}
       {isLoading && (
         <div
           style={{
@@ -386,6 +414,9 @@ export default function SidePanel({
           Processing...
         </div>
       )}
+
+
+
     </div>
   );
 }

@@ -100,6 +100,31 @@ export async function generateReport(paperId: string): Promise<any> {
   if (!result.success) throw new Error(result.error || 'generate_report failed');
   return result.result;
 }
+
+/**
+ * get_report -> 없으면 generate_report(오직 이때만) -> get_report 재시도
+ * ReportViewer 토글에서 "자동 생성" 동작을 위한 헬퍼
+ */
+export async function getOrCreateReport(
+  paperId: string
+): Promise<{ content: string }> {
+  const first = await getReport(paperId);
+  if (first.found) {
+    return { content: first.content || '' };
+  }
+
+  // ✅ report txt가 없는 경우에만 생성 메카니즘 작동
+  await generateReport(paperId);
+
+  const second = await getReport(paperId);
+  if (second.found) {
+    return { content: second.content || '' };
+  }
+
+  throw new Error(second.message || 'Report still not found after generation');
+}
+
+
 // ==================== Graph B (Global) API ====================
 
 /**

@@ -4,8 +4,8 @@
  * Fetches and displays the plain text report for a specific paper.
  */
 
-import React, { useState } from 'react';
-
+import React, { useEffect, useState } from 'react';
+import { getOrCreateReport } from '../lib/mcp';
 interface ReportViewerProps {
     paperId: string;
 }
@@ -16,11 +16,20 @@ export default function ReportViewer({ paperId }: ReportViewerProps) {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    // ✅ paperId가 바뀌면 이전 논문 리포트가 남아있는 문제를 방지
+    // (새 논문 클릭 시 "이전 reportContent 재사용"을 막기 위해 reset)
+    useEffect(() => {
+        setIsOpen(false);
+        setReportContent(null);
+        setError(null);
+        setIsLoading(false);
+    }, [paperId]);
+
     const handleToggle = async () => {
         // 1. 닫혀있으면 -> 연다 (데이터 없으면 가져오기)
         if (!isOpen) {
             if (!reportContent) {
-                await fetchReport();
+                await fetchOrCreateReport();
             }
             setIsOpen(true);
         }
@@ -30,25 +39,15 @@ export default function ReportViewer({ paperId }: ReportViewerProps) {
         }
     };
 
-    const fetchReport = async () => {
+    const fetchOrCreateReport = async () => {
         setIsLoading(true);
         setError(null);
         try {
-            // ✅ 백엔드 API 호출 (서버 주소에 맞게 수정 필요, 예: /api/reports/...)
-            // setupProxy.js를 쓰고 있다면 상대 경로 '/api/reports' 사용
-            // 직접 호출이라면 'http://localhost:8000/reports' 등 사용
-            const res = await fetch(`http://localhost:8000/reports/${paperId}`);
-
-            if (res.status === 404) {
-                throw new Error("리포트가 아직 생성되지 않았습니다. 에이전트에게 요청해주세요.");
-            }
-            if (!res.ok) {
-                throw new Error("리포트를 불러오는데 실패했습니다.");
-            }
-
-            const data = await res.json();
-            // 백엔드가 { "markdown": "내용..." } 또는 { "content": "내용..." } 줄 경우 대비
-            setReportContent(data.markdown || data.content || data);
+            // ✅ MCP tools/report.py 기반:
+            // - summary_report.txt 있으면: get_report로 바로 로드
+            // - 없으면: generate_report(오직 이 경우에만) → get_report 재시도
+            const result = await getOrCreateReport(paperId);
+            setReportContent(result.content);
         } catch (err: any) {
             console.error(err);
             setError(err.message || "Error loading report");
