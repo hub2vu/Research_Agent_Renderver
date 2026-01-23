@@ -1,0 +1,57 @@
+Llama 2: Open foundation and fine-tuned chat models
+The llama 3 herd of models
+Code llama: Open foundation models for code
+Mixed precision training
+A study of bfloat16 for deep learning training
+Adam: A method for stochastic optimization
+Lora: Low-rank adaptation of large language models
+Lora learns less and forgets less
+A closer look at the limitations of instruction tuning
+A rank stabilization scaling factor for fine-tuning with lora
+Relora: High-rank training through low-rank updates
+Melora: mini-ensemble low-rank adapters for parameterefficient fine-tuning
+Adaptive budget allocation for parameter-efficient fine-tuning
+Delving deep into rectifiers: Surpassing human-level performance on imagenet classification
+Pissa: Principal singular values and singular vectors adaptation of large language models
+Milora: Harnessing minor singular components for parameter-efficient llm finetuning
+Lora-ga: Low-rank adaptation with gradient approximation
+Flora: Low-rank adapters are secretly gradient compressors
+Galore: Memory-efficient llm training by gradient low-rank projection
+Periodiclora: Breaking the low-rank bottleneck in lora optimization
+Structure-aware low-rank adaptation for parameter-efficient fine-tuning
+Increlora: Incremental parameter allocation method for parameter-efficient fine-tuning
+Pytorch fsdp: experiences on scaling fully sharded data parallel
+Zero: Memory optimizations toward training trillion parameter models
+Understanding the difficulty of training deep feedforward neural networks
+Olora: Orthonormal low-rank adaptation of large language models
+One initialization to rule them all: Fine-tuning via explained variance adaptation
+A note on lora
+Lora-fa: Memory-efficient low-rank adaptation for large language models fine-tuning
+Platon: Pruning large transformer models with upper confidence bound of weight importance
+Exploring the limits of transfer learning with a unified text-to-text transformer
+In International Conference on Learning Representations
+Judging llm-as-a-judge with mt-bench and chatbot arena
+Training verifiers to solve math word problems
+Evaluating large language models trained on code
+Learning transferable visual models from natural language supervision
+3d object representations for finegrained categorization
+Describing textures in the wild
+Eurosat: A novel dataset and deep learning benchmark for land use and land cover classification
+Detection of traffic signs in real-world images: The german traffic sign detection benchmark
+Remote sensing image scene classification: Benchmark and state of the art
+Sun database: Large-scale scene recognition from abbey to zoo
+Reading digits in natural images with unsupervised feature learning
+Dora: Weight-decomposed low-rank adaptation
+Lora+ efficient low rank adaptation of large models
+Metamath: Bootstrap your own mathematical questions for large language models
+Opencodeinterpreter: Integrating code generation with execution and refinement
+Wizardlm: Empowering large pre-trained language models to follow complex instructions
+Decoupled weight decay regularization
+Gpt-4 technical report
+Gemini 1.5: Unlocking multimodal understanding across millions of tokens of context
+Lora-pro: Are low-rank adapters properly optimized? In International Conference on Learning Representations
+Training deep nets with sublinear memory cost
+Liger kernel: Efficient triton kernels for llm training
+Flashattention: Fast and memory-efficient exact attention with io-awareness
+Flashattention-2: Faster attention with better parallelism and work partitioning
+Adalomo: Low-memory optimization with adaptive learning rate
