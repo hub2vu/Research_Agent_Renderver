@@ -79,6 +79,7 @@ services:
       - ./web:/app
       - web_node_modules:/app/node_modules
       - ./output:/app/output  # writable for node_colors.json
+      - ./pdf:/app/pdf:ro     # PDF files for paper viewer
       - ./data:/app/data:ro   # NeurIPS data
     environment:
       - MCP_SERVER_URL=http://mcp-server:8000

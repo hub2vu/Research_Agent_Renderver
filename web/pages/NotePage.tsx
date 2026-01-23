@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
 import workerSrc from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
@@ -75,8 +75,7 @@ async function resolveAndLoadPdf(paperIdRaw: string): Promise<PdfLoadResult> {
 export default function NotePage(props: { noteId?: string } = {}) {
   const params = useParams();
 
-  // 라우트가 /note/:noteId 인 경우 noteId가 들어옴 (paperId로도 올 수 있어 fallback)
-  const rawFromRoute = (params as any).noteId ?? (params as any).paperId;
+  const rawFromRoute = (params as any).paperId ?? '';
   const raw = props.noteId ?? rawFromRoute ?? '';
   const paperId = decodeURIComponent(String(raw));
 
@@ -91,6 +90,7 @@ export default function NotePage(props: { noteId?: string } = {}) {
   const [pageCount, setPageCount] = useState<number>(0);
 
   const canvasRefs = useRef<Array<HTMLCanvasElement | null>>([]);
+  const pdfDocRef = useRef<PdfDoc | null>(null);
 
   // 노트(우측) - 로컬 저장(즉시 저장)
   const noteStorageKey = useMemo(() => `note:${usedId || stripPrefixes(paperId)}`, [usedId, paperId]);
@@ -119,57 +119,64 @@ export default function NotePage(props: { noteId?: string } = {}) {
     }
   }, [note, noteStorageKey]);
 
-  const load = useCallback(async () => {
+  useEffect(() => {
     const cleaned = stripPrefixes(paperId);
 
-    setLoading(true);
-    setError(null);
-
-    // paperId가 비어있으면 무한로딩 방지
     if (!cleaned) {
-      setError('noteId(paperId)가 비어 있습니다. 라우트 파라미터(/note/:noteId)를 확인하세요.');
+      setError('paperId가 비어 있습니다. 라우트 파라미터(/note/:paperId)를 확인하세요.');
       setLoading(false);
       return;
     }
 
-    // 이전 doc 정리
-    try {
-      if (pdfDoc?.destroy) await pdfDoc.destroy();
-    } catch {
-      // ignore
-    }
+    let cancelled = false;
 
-    setPdfDoc(null);
-    setPageCount(0);
-    setPdfUrl('');
-    setUsedId('');
+    const load = async () => {
+      setLoading(true);
+      setError(null);
 
-    try {
-      const res = await resolveAndLoadPdf(cleaned);
-      setUsedId(res.usedId);
-      setPdfUrl(res.url);
-      setPdfDoc(res.doc);
-      setPageCount(res.doc.numPages);
-      setLoading(false);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-      setLoading(false);
-    }
-  }, [paperId, pdfDoc]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  useEffect(() => {
-    return () => {
+      // 이전 doc 정리
       try {
-        if (pdfDoc?.destroy) pdfDoc.destroy();
+        if (pdfDocRef.current?.destroy) await pdfDocRef.current.destroy();
+      } catch {
+        // ignore
+      }
+      pdfDocRef.current = null;
+      setPdfDoc(null);
+      setPageCount(0);
+      setPdfUrl('');
+      setUsedId('');
+
+      try {
+        const res = await resolveAndLoadPdf(cleaned);
+        if (cancelled) {
+          try { if (res.doc.destroy) await res.doc.destroy(); } catch {}
+          return;
+        }
+        pdfDocRef.current = res.doc;
+        setUsedId(res.usedId);
+        setPdfUrl(res.url);
+        setPdfDoc(res.doc);
+        setPageCount(res.doc.numPages);
+      } catch (e) {
+        if (!cancelled) {
+          setError(e instanceof Error ? e.message : String(e));
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    load();
+
+    return () => {
+      cancelled = true;
+      try {
+        if (pdfDocRef.current?.destroy) pdfDocRef.current.destroy();
       } catch {
         // ignore
       }
     };
-  }, [pdfDoc]);
+  }, [paperId]);
 
   const pages = useMemo(() => Array.from({ length: pageCount }, (_, i) => i + 1), [pageCount]);
 
