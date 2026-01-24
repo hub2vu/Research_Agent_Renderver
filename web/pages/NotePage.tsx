@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom';
 import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
 import workerSrc from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+import ReactMarkdown from 'react-markdown';
 import { executeTool } from '../lib/mcp';
 
 // Vite 호환 worker 설정
@@ -112,6 +113,21 @@ export default function NotePage(props: { noteId?: string } = {}) {
   // Notes state
   const notesStorageKey = useMemo(() => `notes:${usedId || stripPrefixes(paperId)}`, [usedId, paperId]);
   const [notes, setNotes] = useState<NoteItem[]>([]);
+
+  // Edit mode state: tracks which notes are in edit mode (default: preview)
+  const [editingNoteIds, setEditingNoteIds] = useState<Set<string>>(new Set());
+
+  const toggleEditMode = useCallback((noteId: string) => {
+    setEditingNoteIds(prev => {
+      const next = new Set(prev);
+      if (next.has(noteId)) {
+        next.delete(noteId);
+      } else {
+        next.add(noteId);
+      }
+      return next;
+    });
+  }, []);
 
   // Loading states for extraction, translation, and analysis
   const [extracting, setExtracting] = useState(false);
@@ -438,6 +454,26 @@ ${extractedText.slice(0, 15000)}`;
 
   return (
     <div ref={containerRef} style={{ display: 'flex', height: '100vh', backgroundColor: '#f5f5f5' }}>
+      <style>{`
+        .markdown-preview h1 { font-size: 1.4em; font-weight: 700; margin: 0.6em 0 0.3em; color: #1a202c; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.2em; }
+        .markdown-preview h2 { font-size: 1.2em; font-weight: 700; margin: 0.5em 0 0.3em; color: #2d3748; }
+        .markdown-preview h3 { font-size: 1.1em; font-weight: 600; margin: 0.4em 0 0.2em; color: #2d3748; }
+        .markdown-preview h4, .markdown-preview h5, .markdown-preview h6 { font-size: 1em; font-weight: 600; margin: 0.3em 0 0.2em; color: #4a5568; }
+        .markdown-preview p { margin: 0.4em 0; }
+        .markdown-preview strong { font-weight: 700; }
+        .markdown-preview em { font-style: italic; }
+        .markdown-preview code { background: #edf2f7; padding: 2px 5px; border-radius: 3px; font-family: 'Courier New', monospace; font-size: 0.9em; color: #d53f8c; }
+        .markdown-preview pre { background: #2d3748; color: #e2e8f0; padding: 12px; border-radius: 6px; overflow-x: auto; margin: 0.5em 0; }
+        .markdown-preview pre code { background: none; color: inherit; padding: 0; font-size: 0.85em; }
+        .markdown-preview ul, .markdown-preview ol { margin: 0.4em 0; padding-left: 1.5em; }
+        .markdown-preview li { margin: 0.2em 0; }
+        .markdown-preview blockquote { border-left: 3px solid #cbd5e0; margin: 0.5em 0; padding: 0.3em 0.8em; color: #4a5568; background: #f7fafc; border-radius: 0 4px 4px 0; }
+        .markdown-preview hr { border: none; border-top: 1px solid #e2e8f0; margin: 0.8em 0; }
+        .markdown-preview a { color: #3182ce; text-decoration: underline; }
+        .markdown-preview table { border-collapse: collapse; width: 100%; margin: 0.5em 0; }
+        .markdown-preview th, .markdown-preview td { border: 1px solid #e2e8f0; padding: 6px 10px; text-align: left; font-size: 0.9em; }
+        .markdown-preview th { background: #f7fafc; font-weight: 600; }
+      `}</style>
       {/* Left: PDF paper view */}
       <div style={{ width: `${panelRatio * 100}%`, display: 'flex', flexDirection: 'column', minWidth: 300 }}>
         <header
@@ -697,6 +733,25 @@ ${extractedText.slice(0, 15000)}`;
                   {translatingNoteId === note.id ? '번역 중...' : 'Translate'}
                 </button>
 
+                {/* Edit/Preview toggle button */}
+                <button
+                  onClick={() => toggleEditMode(note.id)}
+                  style={{
+                    padding: '3px 8px',
+                    borderRadius: 4,
+                    border: '1px solid #e2e8f0',
+                    backgroundColor: editingNoteIds.has(note.id) ? '#fed7e2' : '#e2e8f0',
+                    color: editingNoteIds.has(note.id) ? '#97266d' : '#4a5568',
+                    cursor: 'pointer',
+                    fontSize: 11,
+                    fontWeight: 600,
+                    flexShrink: 0,
+                  }}
+                  title={editingNoteIds.has(note.id) ? '미리보기 모드로 전환' : '편집 모드로 전환'}
+                >
+                  {editingNoteIds.has(note.id) ? 'Preview' : 'Edit'}
+                </button>
+
                 {/* Delete button */}
                 <button
                   onClick={() => deleteNote(note.id)}
@@ -719,23 +774,50 @@ ${extractedText.slice(0, 15000)}`;
               {/* Note content (collapsible) */}
               {note.isOpen && (
                 <div style={{ padding: 10 }}>
-                  <textarea
-                    value={note.content}
-                    onChange={(e) => updateNoteContent(note.id, e.target.value)}
-                    placeholder="여기에 내용을 작성하세요..."
-                    style={{
-                      width: '100%',
-                      minHeight: 100,
-                      resize: 'vertical',
-                      borderRadius: 6,
-                      border: '1px solid #e2e8f0',
-                      padding: 10,
-                      fontSize: 13,
-                      lineHeight: 1.6,
-                      outline: 'none',
-                      fontFamily: 'inherit',
-                    }}
-                  />
+                  {editingNoteIds.has(note.id) ? (
+                    <textarea
+                      value={note.content}
+                      onChange={(e) => updateNoteContent(note.id, e.target.value)}
+                      placeholder="마크다운으로 작성하세요... (# 제목, **굵게**, *기울임*, `코드` 등)"
+                      style={{
+                        width: '100%',
+                        minHeight: 100,
+                        resize: 'vertical',
+                        borderRadius: 6,
+                        border: '1px solid #e2e8f0',
+                        padding: 10,
+                        fontSize: 13,
+                        lineHeight: 1.6,
+                        outline: 'none',
+                        fontFamily: 'monospace',
+                      }}
+                    />
+                  ) : (
+                    <div
+                      onClick={() => toggleEditMode(note.id)}
+                      style={{
+                        minHeight: 60,
+                        borderRadius: 6,
+                        border: '1px solid #e2e8f0',
+                        padding: 10,
+                        fontSize: 13,
+                        lineHeight: 1.6,
+                        cursor: 'pointer',
+                        backgroundColor: '#fafafa',
+                      }}
+                      title="클릭하여 편집"
+                    >
+                      {note.content.trim() ? (
+                        <div className="markdown-preview">
+                          <ReactMarkdown>{note.content}</ReactMarkdown>
+                        </div>
+                      ) : (
+                        <div style={{ color: '#a0aec0', fontStyle: 'italic' }}>
+                          클릭하여 내용을 작성하세요...
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
