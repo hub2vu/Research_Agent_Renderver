@@ -113,9 +113,10 @@ export default function NotePage(props: { noteId?: string } = {}) {
   const notesStorageKey = useMemo(() => `notes:${usedId || stripPrefixes(paperId)}`, [usedId, paperId]);
   const [notes, setNotes] = useState<NoteItem[]>([]);
 
-  // Loading states for extraction and translation
+  // Loading states for extraction, translation, and analysis
   const [extracting, setExtracting] = useState(false);
   const [translatingNoteId, setTranslatingNoteId] = useState<string | null>(null);
+  const [analyzingNoteId, setAnalyzingNoteId] = useState<string | null>(null);
 
   // Load notes from localStorage
   useEffect(() => {
@@ -404,6 +405,37 @@ ${extractedText.slice(0, 15000)}`;
     }
   }, [usedId, paperId, notes, updateNoteContent]);
 
+  // Analyze a specific note's section using page_analyzer
+  const analyzeSection = useCallback(async (noteId: string, sectionTitle: string) => {
+    const id = usedId || stripPrefixes(paperId);
+    if (!id) return;
+
+    setAnalyzingNoteId(noteId);
+    try {
+      const noteIndex = notes.findIndex(n => n.id === noteId);
+      const nextSectionTitle = noteIndex >= 0 && noteIndex < notes.length - 1
+        ? notes[noteIndex + 1].title
+        : '';
+
+      const result = await executeTool('analyze_section', {
+        paper_id: id,
+        section_title: sectionTitle,
+        next_section_title: nextSectionTitle,
+      });
+      if (!result.success) {
+        alert(`분석 실패: ${result.error || 'Unknown error'}`);
+        return;
+      }
+
+      const analysisText = result.result?.analysis_text || '';
+      updateNoteContent(noteId, analysisText);
+    } catch (e) {
+      alert(`분석 에러: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setAnalyzingNoteId(null);
+    }
+  }, [usedId, paperId, notes, updateNoteContent]);
+
   return (
     <div ref={containerRef} style={{ display: 'flex', height: '100vh', backgroundColor: '#f5f5f5' }}>
       {/* Left: PDF paper view */}
@@ -624,6 +656,26 @@ ${extractedText.slice(0, 15000)}`;
                   }}
                   placeholder="제목 입력..."
                 />
+
+                {/* Analysis button */}
+                <button
+                  onClick={() => analyzeSection(note.id, note.title)}
+                  disabled={analyzingNoteId === note.id || !note.title.trim()}
+                  style={{
+                    padding: '3px 8px',
+                    borderRadius: 4,
+                    border: '1px solid #e2e8f0',
+                    backgroundColor: analyzingNoteId === note.id ? '#edf2f7' : '#e9d8fd',
+                    color: analyzingNoteId === note.id ? '#a0aec0' : '#553c9a',
+                    cursor: analyzingNoteId === note.id ? 'not-allowed' : 'pointer',
+                    fontSize: 11,
+                    fontWeight: 600,
+                    flexShrink: 0,
+                  }}
+                  title="이 섹션을 분석하여 해설합니다"
+                >
+                  {analyzingNoteId === note.id ? '분석 중...' : 'Analysis'}
+                </button>
 
                 {/* Translate button */}
                 <button

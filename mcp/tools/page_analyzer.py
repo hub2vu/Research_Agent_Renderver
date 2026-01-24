@@ -1,9 +1,12 @@
 import os
 import logging
 import json
-from typing import Dict, Any
+import re
+from typing import Any, Dict, List
 from pathlib import Path
 from openai import AsyncOpenAI
+
+from ..base import MCPTool, ToolParameter, ExecutionError
 
 # PDF 라이브러리
 try:
@@ -143,3 +146,179 @@ def get_page_text_smart(paper_dir: Path, page_num: int) -> str:
             pass
 
     return None
+
+
+# ==================== Section Analysis Tool ====================
+
+OUTPUT_DIR = Path(os.getenv("OUTPUT_DIR", "/data/output"))
+
+
+class AnalyzeSectionTool(MCPTool):
+    """Analyze a specific section of a paper identified by its heading title."""
+
+    @property
+    def name(self) -> str:
+        return "analyze_section"
+
+    @property
+    def description(self) -> str:
+        return (
+            "Analyze a specific section of a paper. Extracts text between the given "
+            "section heading and the next heading from extracted_text.txt, then provides "
+            "a detailed interpretation and explanation in Korean."
+        )
+
+    @property
+    def parameters(self) -> List[ToolParameter]:
+        return [
+            ToolParameter(
+                name="paper_id",
+                type="string",
+                description="Paper ID (e.g., '1809.04281')",
+                required=True,
+            ),
+            ToolParameter(
+                name="section_title",
+                type="string",
+                description="The section heading title to analyze",
+                required=True,
+            ),
+            ToolParameter(
+                name="next_section_title",
+                type="string",
+                description="The next section heading title (used as end boundary). Empty string means end of document.",
+                required=False,
+                default="",
+            ),
+        ]
+
+    @property
+    def category(self) -> str:
+        return "analysis"
+
+    def _extract_section_from_text(self, full_text: str, section_title: str, next_section_title: str) -> str:
+        """Extract text between section_title and next_section_title from extracted text."""
+        lines = full_text.split('\n')
+
+        def normalize(s: str) -> str:
+            return re.sub(r"\s+", " ", s).strip().lower()
+
+        norm_target = normalize(section_title)
+        norm_next = normalize(next_section_title) if next_section_title else ""
+
+        # Find the start line
+        start_idx = None
+        for i, line in enumerate(lines):
+            norm_line = normalize(line)
+            if norm_target and (norm_target in norm_line or norm_line in norm_target):
+                start_idx = i
+                break
+
+        if start_idx is None:
+            target_words = set(norm_target.split())
+            for i, line in enumerate(lines):
+                norm_line = normalize(line)
+                line_words = set(norm_line.split())
+                if len(target_words) > 0 and len(target_words & line_words) >= len(target_words) * 0.7:
+                    start_idx = i
+                    break
+
+        if start_idx is None:
+            raise ExecutionError(
+                f"Section '{section_title}' not found in extracted text.",
+                tool_name=self.name,
+            )
+
+        # Find the end line
+        end_idx = len(lines)
+        if norm_next:
+            for i in range(start_idx + 1, len(lines)):
+                norm_line = normalize(lines[i])
+                if norm_next in norm_line or norm_line in norm_next:
+                    end_idx = i
+                    break
+            else:
+                next_words = set(norm_next.split())
+                for i in range(start_idx + 1, len(lines)):
+                    norm_line = normalize(lines[i])
+                    line_words = set(norm_line.split())
+                    if len(next_words) > 0 and len(next_words & line_words) >= len(next_words) * 0.7:
+                        end_idx = i
+                        break
+
+        section_lines = lines[start_idx + 1:end_idx]
+        section_text = '\n'.join(section_lines).strip()
+
+        if not section_text:
+            raise ExecutionError(
+                f"No text content found for section '{section_title}'.",
+                tool_name=self.name,
+            )
+
+        return section_text
+
+    async def execute(
+        self,
+        paper_id: str,
+        section_title: str,
+        next_section_title: str = "",
+        **kwargs,
+    ) -> Dict[str, Any]:
+        # Read extracted_text.txt
+        paper_dir = OUTPUT_DIR / paper_id
+        text_file = paper_dir / "extracted_text.txt"
+
+        if not text_file.exists():
+            json_file = paper_dir / "extracted_text.json"
+            if json_file.exists():
+                with open(json_file, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    full_text = data.get("full_text", "")
+            else:
+                raise ExecutionError(
+                    f"텍스트 파일을 찾을 수 없습니다: {text_file}",
+                    tool_name=self.name,
+                )
+        else:
+            with open(text_file, "r", encoding="utf-8") as f:
+                full_text = f.read()
+
+        if isinstance(full_text, str):
+            full_text = full_text.encode("utf-8", "replace").decode("utf-8")
+
+        # Extract section text
+        section_text = self._extract_section_from_text(full_text, section_title, next_section_title)
+
+        # Analyze the section using LLM
+        prompt = f"""당신은 노련한 AI 연구원으로서, 동료에게 논문 내용을 쉽게 설명해주는 역할을 맡았습니다.
+아래 제공된 논문의 '{section_title}' 섹션 내용을 읽고, 한국어로 명확하게 '해설'해 주세요.
+
+[분석할 섹션 내용]:
+{section_text[:6000]}
+
+**반드시 지켜야 할 지침:**
+1. **단순 번역 금지**: 영어를 한국어로 그대로 옮기지 마십시오. 내용을 완전히 소화한 뒤, 당신의 언어로 다시 서술하세요.
+2. **구조화된 출력**: 결과물은 반드시 아래 형식을 따르세요.
+   - **3줄 핵심 요약**: 이 섹션에서 가장 중요한 내용을 3문장으로 요약.
+   - **상세 해설**: 문단별 번역이 아니라, 논리적 흐름에 따라 이야기를 풀어서 설명.
+   - **주요 개념/용어**: 본문에 등장한 어려운 전문 용어나 개념이 있다면, 초보자도 이해할 수 있게 풀이.
+3. **톤앤매너**: 전문적이지만 이해하기 쉽게, 친절한 어조로 작성하세요.
+"""
+
+        response = await aclient.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": "You are a helpful and expert research assistant."},
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.3,
+        )
+
+        analysis_text = response.choices[0].message.content
+
+        return {
+            "status": "success",
+            "paper_id": paper_id,
+            "section_title": section_title,
+            "analysis_text": analysis_text,
+        }
