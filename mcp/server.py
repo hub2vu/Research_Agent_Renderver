@@ -16,8 +16,9 @@ from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pathlib import Path
-from pydantic import BaseModel, field_validator
 
+# 새로 만든 도구 임포트
+from .tools.page_analyzer import interpret_paper_page
 from .registry import (
     execute_tool,
     get_all_tools,
@@ -81,7 +82,6 @@ class ToolResponse(BaseModel):
 
 @app.get("/")
 async def root():
-    """API root - service info."""
     return {
         "service": "MCP Research Agent Server",
         "version": "1.0.0",
@@ -97,13 +97,11 @@ async def root():
 
 @app.get("/health")
 async def health():
-    """Health check endpoint."""
     return {"status": "healthy", "tools_loaded": len(list_tool_names())}
 
 
 @app.get("/tools")
 async def list_tools():
-    """List all available tools."""
     tools = get_all_tools()
     return {
         "total": len(tools),
@@ -129,13 +127,11 @@ async def list_tools():
 
 @app.get("/tools/schema")
 async def get_tools_schema():
-    """Get tools in OpenAI function calling format."""
     return {"tools": get_openai_tools_schema()}
 
 
 @app.get("/tools/{tool_name}")
 async def get_tool_info(tool_name: str):
-    """Get information about a specific tool."""
     tools = get_all_tools()
     if tool_name not in tools:
         raise HTTPException(status_code=404, detail=f"Tool not found: {tool_name}")
@@ -160,7 +156,6 @@ async def get_tool_info(tool_name: str):
 
 @app.post("/tools/{tool_name}/execute", response_model=ToolResponse)
 async def execute_tool_endpoint(tool_name: str, request: ToolRequest):
-    """Execute a specific tool with given arguments."""
     result = await execute_tool(tool_name, **request.arguments)
     return ToolResponse(**result)
 
@@ -171,7 +166,6 @@ async def execute_tool_endpoint(tool_name: str, request: ToolRequest):
 
 @app.get("/pdf/list")
 async def list_pdfs():
-    """List all PDF files."""
     result = await execute_tool("list_pdfs")
     if not result["success"]:
         raise HTTPException(status_code=500, detail=result.get("error"))
@@ -180,7 +174,6 @@ async def list_pdfs():
 
 @app.post("/pdf/extract")
 async def extract_pdf(filename: str):
-    """Extract text and images from a PDF."""
     result = await execute_tool("extract_all", filename=filename)
     if not result["success"]:
         raise HTTPException(status_code=500, detail=result.get("error"))
@@ -189,7 +182,6 @@ async def extract_pdf(filename: str):
 
 @app.get("/pdf/process-all")
 async def process_all_pdfs():
-    """Process all PDFs in the directory."""
     result = await execute_tool("process_all_pdfs")
     if not result["success"]:
         raise HTTPException(status_code=500, detail=result.get("error"))
@@ -198,7 +190,6 @@ async def process_all_pdfs():
 
 @app.get("/arxiv/search")
 async def search_arxiv(query: str, max_results: int = 10):
-    """Search arXiv for papers."""
     result = await execute_tool("arxiv_search", query=query, max_results=max_results)
     if not result["success"]:
         raise HTTPException(status_code=500, detail=result.get("error"))
@@ -207,32 +198,23 @@ async def search_arxiv(query: str, max_results: int = 10):
 
 @app.get("/web/search")
 async def web_search(query: str, max_results: int = 5):
-    """Search the web."""
     result = await execute_tool("web_search", query=query, max_results=max_results)
     if not result["success"]:
         raise HTTPException(status_code=500, detail=result.get("error"))
     return result["result"]
 
 
-#  [추가] 파일 저장 경로 정의
+# [파일 저장 경로 정의]
 OUTPUT_DIR = Path(os.getenv("OUTPUT_DIR", "/data/output"))
 
 
-#  [추가] 웹사이트가 리포트를 달라고 할 때 처리하는 함수
+# [리포트 조회 기능]
 @app.get("/reports/{paper_id}")
 async def get_report_content(paper_id: str):
-    """
-    웹 프론트엔드용 리포트 조회 API
-    (ID가 달라도 폴더를 끝까지 찾아내는 강력한 탐색 모드)
-    """
     logger.info(f"🔍 [API Request] 리포트 요청 ID: {paper_id}")
-
-    # 1. [1차 시도] 정확한 폴더 찾기
     target_dir = OUTPUT_DIR / paper_id
 
-    # 2. [2차 시도] 정확한 폴더가 없으면, '유사한' 폴더 찾기 (탐정 모드 🕵️‍♂️)
     if not target_dir.exists():
-        # ID에서 핵심 숫자만 추출 (예: 10.48550_arxiv.1809.04281 -> 1809.04281)
         core_id = paper_id
         if "arxiv." in paper_id:
             core_id = paper_id.split("arxiv.")[-1]
@@ -241,12 +223,10 @@ async def get_report_content(paper_id: str):
             f"⚠️ 정확한 폴더 없음. 핵심 ID '{core_id}'가 포함된 폴더를 검색합니다..."
         )
 
-        # output 폴더 안의 모든 하위 폴더를 하나씩 검사
         found = False
         try:
             for folder in OUTPUT_DIR.iterdir():
                 if folder.is_dir():
-                    # 요청 ID가 폴더명에 포함되거나, 폴더명이 요청 ID에 포함되면 '찾았다!' 처리
                     if core_id in folder.name or folder.name in paper_id:
                         target_dir = folder
                         found = True
@@ -256,9 +236,6 @@ async def get_report_content(paper_id: str):
             logger.error(f"폴더 검색 중 에러 발생: {e}")
 
         if not found:
-            logger.error(
-                f"❌ 실패: {paper_id} 또는 {core_id}와 일치하는 폴더가 없습니다."
-            )
             return JSONResponse(
                 status_code=404,
                 content={
@@ -267,29 +244,24 @@ async def get_report_content(paper_id: str):
                 },
             )
 
-    # 3. 파일 찾기 (.md 우선, 없으면 .txt)
     md_file = target_dir / "summary_report.md"
     txt_file = target_dir / "summary_report.txt"
-
     final_file = None
     if md_file.exists():
         final_file = md_file
     elif txt_file.exists():
         final_file = txt_file
 
-    # 4. 내용 읽어서 리턴
     if final_file:
         try:
             with open(final_file, "r", encoding="utf-8") as f:
                 content = f.read()
-            logger.info(f"📤 리포트 전송 완료: {final_file.name}")
             return {"content": content}
         except Exception as e:
             return JSONResponse(
                 status_code=500, content={"error": f"Read error: {str(e)}"}
             )
     else:
-        logger.warning(f"❌ 폴더는 찾았으나 리포트 파일이 없음: {target_dir}")
         return JSONResponse(
             status_code=404,
             content={
@@ -299,7 +271,27 @@ async def get_report_content(paper_id: str):
         )
 
 
-# ============== Main ==============
+class InterpretRequest(BaseModel):
+    paper_id: str
+    page_num: int
+
+
+@app.post("/paper/interpret")
+async def interpret_page_endpoint(request: InterpretRequest):
+    """
+    특정 페이지 해석 요청 API
+    """
+    logger.info(f"🧠 해석 요청: {request.paper_id} - Page {request.page_num}")
+
+    try:
+        result = await interpret_paper_page(request.paper_id, request.page_num)
+        return {"success": True, "result": result}
+    except Exception as e:
+        logger.error(f"해석 실패: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============== Main (실행 코드는 파일 맨 끝에 딱 한 번만!) ==============
 
 
 def main():
@@ -308,7 +300,6 @@ def main():
 
     host = os.getenv("MCP_HOST", "0.0.0.0")
     port = int(os.getenv("MCP_PORT", "8000"))
-
     logger.info(f"Starting MCP server on {host}:{port}")
     uvicorn.run(app, host=host, port=port)
 
