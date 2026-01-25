@@ -614,57 +614,135 @@ class TranslateSectionTool(MCPTool):
         return "translation"
 
     def _extract_section_from_text(self, full_text: str, section_title: str, next_section_title: str) -> str:
-        """Extract text between section_title and next_section_title from extracted text."""
+        """Extract text between section_title and next_section_title from extracted text.
+
+        Improved matching logic:
+        1. Normalize by removing extra whitespace and converting to lowercase
+        2. Strip section numbers and punctuation for more flexible matching
+        3. Try multiple matching strategies: exact, contains, word overlap
+        4. Handle multi-line section titles by checking consecutive lines
+        """
         lines = full_text.split('\n')
 
-        # Normalize titles for matching
         def normalize(s: str) -> str:
+            """Basic normalization: whitespace and lowercase."""
             return re.sub(r"\s+", " ", s).strip().lower()
+
+        def strip_section_number(s: str) -> str:
+            """Remove leading section numbers like '1.', '2.1', 'A.', etc."""
+            # Remove patterns like "1.", "1.2.", "A.", "A.1.", etc. at the start
+            s = re.sub(r"^[\d]+\.[\d.]*\s*", "", s)
+            s = re.sub(r"^[A-Za-z]\.[\d.]*\s*", "", s)
+            # Also remove standalone numbers at start
+            s = re.sub(r"^\d+\s+", "", s)
+            return s.strip()
+
+        def normalize_for_match(s: str) -> str:
+            """Aggressive normalization for matching."""
+            s = normalize(s)
+            s = strip_section_number(s)
+            # Remove common punctuation
+            s = re.sub(r"[:\-–—]", " ", s)
+            s = re.sub(r"\s+", " ", s).strip()
+            return s
+
+        def get_core_words(s: str) -> set:
+            """Extract meaningful words (length > 2)."""
+            norm = normalize_for_match(s)
+            return {w for w in norm.split() if len(w) > 2}
+
+        def match_score(title: str, line: str) -> float:
+            """Calculate match score between title and line."""
+            norm_title = normalize_for_match(title)
+            norm_line = normalize_for_match(line)
+
+            # Exact match
+            if norm_title == norm_line:
+                return 1.0
+
+            # Contains match
+            if norm_title in norm_line or norm_line in norm_title:
+                return 0.9
+
+            # Word overlap
+            title_words = get_core_words(title)
+            line_words = get_core_words(line)
+
+            if not title_words:
+                return 0.0
+
+            overlap = len(title_words & line_words)
+            return overlap / len(title_words)
 
         norm_target = normalize(section_title)
         norm_next = normalize(next_section_title) if next_section_title else ""
 
-        # Find the start line (line containing section_title)
+        # Find the start line with multiple strategies
         start_idx = None
+        best_score = 0.0
+
         for i, line in enumerate(lines):
-            norm_line = normalize(line)
-            if norm_target and (norm_target in norm_line or norm_line in norm_target):
+            # Skip very short lines (likely not section headers)
+            if len(line.strip()) < 3:
+                continue
+
+            score = match_score(section_title, line)
+
+            # Also check combined lines (section title might span 2 lines)
+            if i + 1 < len(lines):
+                combined = line + " " + lines[i + 1]
+                combined_score = match_score(section_title, combined)
+                score = max(score, combined_score)
+
+            if score > best_score and score >= 0.5:  # Lowered threshold to 50%
+                best_score = score
                 start_idx = i
+
+            # Early exit for high-confidence matches
+            if score >= 0.9:
                 break
 
         if start_idx is None:
-            # Try fuzzy match: check if most words of the title appear in the line
-            target_words = set(norm_target.split())
-            for i, line in enumerate(lines):
-                norm_line = normalize(line)
-                line_words = set(norm_line.split())
-                if len(target_words) > 0 and len(target_words & line_words) >= len(target_words) * 0.7:
-                    start_idx = i
-                    break
+            # Last resort: search for key distinctive words in the title
+            target_words = get_core_words(section_title)
+            if target_words:
+                # Find the longest/most distinctive word
+                longest_word = max(target_words, key=len)
+                if len(longest_word) >= 4:
+                    for i, line in enumerate(lines):
+                        if longest_word in normalize(line):
+                            start_idx = i
+                            break
 
         if start_idx is None:
             raise ExecutionError(
-                f"Section '{section_title}' not found in extracted text.",
+                f"Section '{section_title}' not found in extracted text. "
+                f"Try using a different section title that matches the PDF text more closely.",
                 tool_name=self.name,
             )
 
-        # Find the end line (line containing next_section_title)
+        # Find the end line
         end_idx = len(lines)
         if norm_next:
+            best_end_score = 0.0
             for i in range(start_idx + 1, len(lines)):
-                norm_line = normalize(lines[i])
-                if norm_next in norm_line or norm_line in norm_next:
+                line = lines[i]
+                if len(line.strip()) < 3:
+                    continue
+
+                score = match_score(next_section_title, line)
+
+                if i + 1 < len(lines):
+                    combined = line + " " + lines[i + 1]
+                    combined_score = match_score(next_section_title, combined)
+                    score = max(score, combined_score)
+
+                if score > best_end_score and score >= 0.5:
+                    best_end_score = score
                     end_idx = i
+
+                if score >= 0.9:
                     break
-            else:
-                # Try fuzzy match for next section
-                next_words = set(norm_next.split())
-                for i in range(start_idx + 1, len(lines)):
-                    norm_line = normalize(lines[i])
-                    line_words = set(norm_line.split())
-                    if len(next_words) > 0 and len(next_words & line_words) >= len(next_words) * 0.7:
-                        end_idx = i
-                        break
 
         # Extract text between start (exclusive of heading line) and end
         section_lines = lines[start_idx + 1:end_idx]
@@ -672,7 +750,8 @@ class TranslateSectionTool(MCPTool):
 
         if not section_text:
             raise ExecutionError(
-                f"No text content found for section '{section_title}'.",
+                f"No text content found for section '{section_title}'. "
+                f"The section may be empty or the title matching may need adjustment.",
                 tool_name=self.name,
             )
 

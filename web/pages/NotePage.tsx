@@ -129,10 +129,11 @@ export default function NotePage(props: { noteId?: string } = {}) {
     });
   }, []);
 
-  // Loading states for extraction, translation, and analysis
+  // Loading states for extraction, translation, analysis, and prompt
   const [extracting, setExtracting] = useState(false);
   const [translatingNoteId, setTranslatingNoteId] = useState<string | null>(null);
   const [analyzingNoteId, setAnalyzingNoteId] = useState<string | null>(null);
+  const [promptingNoteId, setPromptingNoteId] = useState<string | null>(null);
 
   // Load notes from localStorage
   useEffect(() => {
@@ -452,6 +453,47 @@ ${extractedText.slice(0, 15000)}`;
     }
   }, [usedId, paperId, notes, updateNoteContent]);
 
+  // Execute prompt: send note content to LLM and append result to note
+  const executePrompt = useCallback(async (noteId: string, noteContent: string) => {
+    if (!noteContent.trim()) {
+      alert('노트에 내용이 없습니다. 프롬프트로 사용할 내용을 먼저 작성해주세요.');
+      return;
+    }
+
+    setPromptingNoteId(noteId);
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: noteContent,
+          history: [],
+        }),
+      });
+
+      if (!response.ok) {
+        alert(`LLM 요청 실패: HTTP ${response.status}`);
+        return;
+      }
+
+      const data = await response.json();
+      const llmResponse = data.response || '';
+
+      if (!llmResponse) {
+        alert('LLM 응답이 비어 있습니다.');
+        return;
+      }
+
+      // Append LLM response to the note content
+      const newContent = noteContent + '\n\n---\n\n**LLM 응답:**\n\n' + llmResponse;
+      updateNoteContent(noteId, newContent);
+    } catch (e) {
+      alert(`프롬프트 실행 에러: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setPromptingNoteId(null);
+    }
+  }, [updateNoteContent]);
+
   return (
     <div ref={containerRef} style={{ display: 'flex', height: '100vh', backgroundColor: '#f5f5f5' }}>
       <style>{`
@@ -693,6 +735,26 @@ ${extractedText.slice(0, 15000)}`;
                   placeholder="제목 입력..."
                 />
 
+                {/* Prompt button */}
+                <button
+                  onClick={() => executePrompt(note.id, note.content)}
+                  disabled={promptingNoteId === note.id || !note.content.trim()}
+                  style={{
+                    padding: '3px 8px',
+                    borderRadius: 4,
+                    border: '1px solid #e2e8f0',
+                    backgroundColor: promptingNoteId === note.id ? '#edf2f7' : '#c6f6d5',
+                    color: promptingNoteId === note.id ? '#a0aec0' : '#22543d',
+                    cursor: promptingNoteId === note.id ? 'not-allowed' : 'pointer',
+                    fontSize: 11,
+                    fontWeight: 600,
+                    flexShrink: 0,
+                  }}
+                  title="노트 내용을 프롬프트로 LLM에 전송하고 결과를 노트에 출력합니다"
+                >
+                  {promptingNoteId === note.id ? '처리 중...' : 'Prompt'}
+                </button>
+
                 {/* Analysis button */}
                 <button
                   onClick={() => analyzeSection(note.id, note.title)}
@@ -775,24 +837,64 @@ ${extractedText.slice(0, 15000)}`;
               {note.isOpen && (
                 <div style={{ padding: 10 }}>
                   {editingNoteIds.has(note.id) ? (
-                    <textarea
-                      value={note.content}
-                      onChange={(e) => updateNoteContent(note.id, e.target.value)}
-                      placeholder="마크다운으로 작성하세요... (# 제목, **굵게**, *기울임*, `코드` 등)"
-                      style={{
-                        width: '100%',
-                        minHeight: 100,
-                        resize: 'vertical',
-                        borderRadius: 6,
-                        border: '1px solid #e2e8f0',
-                        padding: 10,
-                        fontSize: 13,
-                        lineHeight: 1.6,
-                        outline: 'none',
-                        fontFamily: 'monospace',
-                      }}
-                    />
+                    /* Edit Mode: Split View (Left: Editor, Right: Live Preview) */
+                    <div style={{ display: 'flex', gap: 10, minHeight: 150 }}>
+                      {/* Left: Editor */}
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ fontSize: 10, color: '#718096', marginBottom: 4, fontWeight: 600 }}>
+                          편집 (마크다운)
+                        </div>
+                        <textarea
+                          value={note.content}
+                          onChange={(e) => updateNoteContent(note.id, e.target.value)}
+                          placeholder="마크다운으로 작성하세요... (# 제목, **굵게**, *기울임*, `코드` 등)"
+                          style={{
+                            flex: 1,
+                            width: '100%',
+                            minHeight: 120,
+                            resize: 'vertical',
+                            borderRadius: 6,
+                            border: '1px solid #e2e8f0',
+                            padding: 10,
+                            fontSize: 13,
+                            lineHeight: 1.6,
+                            outline: 'none',
+                            fontFamily: 'monospace',
+                          }}
+                        />
+                      </div>
+                      {/* Right: Live Preview */}
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ fontSize: 10, color: '#718096', marginBottom: 4, fontWeight: 600 }}>
+                          실시간 미리보기
+                        </div>
+                        <div
+                          style={{
+                            flex: 1,
+                            borderRadius: 6,
+                            border: '1px solid #e2e8f0',
+                            padding: 10,
+                            fontSize: 13,
+                            lineHeight: 1.6,
+                            backgroundColor: '#fafafa',
+                            overflowY: 'auto',
+                            minHeight: 120,
+                          }}
+                        >
+                          {note.content.trim() ? (
+                            <div className="markdown-preview">
+                              <ReactMarkdown>{note.content}</ReactMarkdown>
+                            </div>
+                          ) : (
+                            <div style={{ color: '#a0aec0', fontStyle: 'italic' }}>
+                              미리보기가 여기에 표시됩니다...
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   ) : (
+                    /* Preview Mode: Full width rendered markdown */
                     <div
                       onClick={() => toggleEditMode(note.id)}
                       style={{
