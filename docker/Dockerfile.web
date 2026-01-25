@@ -10,4 +10,6 @@ RUN npm install
 COPY web/ ./
 
 EXPOSE 3000
-CMD ["npm", "run", "dev"]
+COPY docker/entrypoint-web.sh /usr/local/bin/entrypoint-web
+RUN chmod +x /usr/local/bin/entrypoint-web
+CMD ["/usr/local/bin/entrypoint-web"]

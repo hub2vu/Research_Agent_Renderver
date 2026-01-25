@@ -375,6 +375,6 @@ export default defineConfig({
     extensions: ['.tsx', '.ts', '.jsx', '.js']
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', 'react-router-dom', 'd3']
+    include: ['react', 'react-dom', 'react-router-dom', 'd3', 'react-markdown']
   }
 });
