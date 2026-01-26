@@ -362,6 +362,201 @@ export default function NotePage(props: { noteId?: string } = {}) {
     return null;
   }, []);
 
+  // Find section boundary for a note title by searching in extracted text
+  // Only finds startIndex - endIndex is calculated from note order
+  const findBoundaryForNote = useCallback(async (noteId: string, title: string) => {
+    const id = usedId || stripPrefixes(paperId);
+    if (!id || !title.trim()) return;
+
+    try {
+      const textData = await loadExtractedText(id);
+      if (!textData) return;
+
+      const { text: fullText, sourceFile } = textData;
+      
+      // Normalize title for searching
+      const normalizedTitle = title.trim().toLowerCase();
+      
+      // Strategy 1: Exact match (case insensitive)
+      let startIndex = fullText.toLowerCase().indexOf(normalizedTitle);
+      
+      // Strategy 2: Try without leading number and dots
+      if (startIndex === -1) {
+        const titleWithoutNum = title.replace(/^[\d.]+\s*/, '').trim().toLowerCase();
+        if (titleWithoutNum.length > 3) {
+          startIndex = fullText.toLowerCase().indexOf(titleWithoutNum);
+        }
+      }
+      
+      // Strategy 3: Try searching for section number pattern at line start
+      if (startIndex === -1) {
+        const numMatch = title.match(/^([\d.]+)/);
+        if (numMatch) {
+          const sectionNum = numMatch[1];
+          const patterns = [
+            new RegExp(`^${sectionNum.replace(/\./g, '\\.')}\\s+`, 'gm'),
+            new RegExp(`^${sectionNum.replace(/\./g, '\\.')}[\\s\\n]`, 'gm'),
+          ];
+          for (const pattern of patterns) {
+            const match = pattern.exec(fullText);
+            if (match) {
+              startIndex = match.index;
+              break;
+            }
+          }
+        }
+      }
+
+      if (startIndex === -1) {
+        console.log(`Could not find boundary for: ${title}`);
+        return;
+      }
+
+      // Update with startIndex only - endIndex will be recalculated based on note order
+      setNotes(prev => {
+        const updated = prev.map(n => 
+          n.id === noteId 
+            ? { 
+                ...n, 
+                sectionBoundary: { 
+                  startIndex, 
+                  endIndex: fullText.length, // Temporary, will be recalculated
+                  sourceFile 
+                } 
+              } 
+            : n
+        );
+        return updated;
+      });
+      
+      console.log(`Found startIndex for "${title}": ${startIndex}`);
+      
+      // Auto-recalculate boundaries after a short delay
+      setTimeout(() => recalculateBoundaries(), 200);
+    } catch (e) {
+      console.error('Error finding boundary:', e);
+    }
+  }, [usedId, paperId, loadExtractedText]);
+
+  // Recalculate endIndex for all notes based on their order
+  // Each note's endIndex = next note's startIndex (if available)
+  const recalculateBoundaries = useCallback(async () => {
+    const id = usedId || stripPrefixes(paperId);
+    if (!id) return;
+
+    const textData = await loadExtractedText(id);
+    const textLength = textData?.text.length || 100000;
+
+    setNotes(prev => {
+      // Sort notes by startIndex to get proper order
+      const notesWithBoundary = prev.filter(n => n.sectionBoundary?.startIndex !== undefined);
+      const sortedByStart = [...notesWithBoundary].sort((a, b) => 
+        (a.sectionBoundary?.startIndex || 0) - (b.sectionBoundary?.startIndex || 0)
+      );
+
+      return prev.map(note => {
+        if (!note.sectionBoundary) return note;
+
+        // Find position in sorted list
+        const idx = sortedByStart.findIndex(n => n.id === note.id);
+        if (idx === -1) return note;
+
+        // endIndex = next note's startIndex, or text length if last
+        const nextNote = sortedByStart[idx + 1];
+        const endIndex = nextNote?.sectionBoundary?.startIndex || textLength;
+
+        return {
+          ...note,
+          sectionBoundary: {
+            ...note.sectionBoundary,
+            endIndex
+          }
+        };
+      });
+    });
+  }, [usedId, paperId, loadExtractedText]);
+
+  // Drag and drop state
+  const [draggedNoteId, setDraggedNoteId] = useState<string | null>(null);
+
+  // Hover insert state
+  const [hoveredInsertIndex, setHoveredInsertIndex] = useState<number | null>(null);
+
+  // Add note at specific index
+  const addNoteAt = useCallback((index: number) => {
+    const newNote: NoteItem = {
+      id: generateId(),
+      title: '',
+      content: '',
+      isOpen: true,
+    };
+    setNotes(prev => {
+      const newNotes = [...prev];
+      newNotes.splice(index, 0, newNote);
+      return newNotes;
+    });
+    setHoveredInsertIndex(null);
+  }, []);
+
+  // Handle note drag start
+  const handleNoteDragStart = useCallback((e: React.DragEvent, noteId: string) => {
+    setDraggedNoteId(noteId);
+    e.dataTransfer.effectAllowed = 'move';
+  }, []);
+
+  // Handle drag over
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  }, []);
+
+  // Handle drop - reorder notes
+  const handleDrop = useCallback((e: React.DragEvent, targetNoteId: string) => {
+    e.preventDefault();
+    if (!draggedNoteId || draggedNoteId === targetNoteId) return;
+
+    setNotes(prev => {
+      const draggedIndex = prev.findIndex(n => n.id === draggedNoteId);
+      const targetIndex = prev.findIndex(n => n.id === targetNoteId);
+      if (draggedIndex === -1 || targetIndex === -1) return prev;
+
+      const newNotes = [...prev];
+      const [removed] = newNotes.splice(draggedIndex, 1);
+      newNotes.splice(targetIndex, 0, removed);
+      return newNotes;
+    });
+
+    setDraggedNoteId(null);
+    
+    // Recalculate boundaries after reorder
+    setTimeout(() => recalculateBoundaries(), 100);
+  }, [draggedNoteId, recalculateBoundaries]);
+
+  const handleDragEnd = useCallback(() => {
+    setDraggedNoteId(null);
+  }, []);
+
+  // Auto-find boundary when note title is edited (with debounce)
+  const [pendingBoundarySearch, setPendingBoundarySearch] = useState<{noteId: string; title: string} | null>(null);
+  
+  useEffect(() => {
+    if (!pendingBoundarySearch) return;
+    
+    const timer = setTimeout(() => {
+      findBoundaryForNote(pendingBoundarySearch.noteId, pendingBoundarySearch.title);
+      setPendingBoundarySearch(null);
+    }, 1000); // 1 second debounce
+    
+    return () => clearTimeout(timer);
+  }, [pendingBoundarySearch, findBoundaryForNote]);
+
+  // Enhanced title update that triggers boundary search
+  const updateNoteTitleWithBoundary = useCallback((noteId: string, title: string) => {
+    updateNoteTitle(noteId, title);
+    // Schedule boundary search (debounced)
+    setPendingBoundarySearch({ noteId, title });
+  }, [updateNoteTitle]);
+
   // Extract section headings using regex patterns with boundary information
   const extractHeadings = useCallback(async () => {
     const id = usedId || stripPrefixes(paperId);
@@ -476,9 +671,35 @@ export default function NotePage(props: { noteId?: string } = {}) {
         }
       }
 
-      // Pattern 4: Appendix sections - e.g., "A. Details", "B Implementation"
-      const pattern4 = /^([A-Z]\.?\d*\.?)\s+([A-Z][A-Za-z\s\-:,]+?)(?=\n)/gm;
+      // Pattern 4: "N.N Title" format (space separated, no trailing dot) - e.g., "2.1 Evaluated Environment"
+      const pattern4 = /^(\d+\.\d+)\s+([A-Z][A-Za-z\s\-:,]+?)(?=\n)/gm;
       while ((match = pattern4.exec(extractedText)) !== null) {
+        const numPart = match[1];
+        const parts = numPart.split('.');
+        
+        // Validate: main section 1-15, subsection 1-10 (stricter to avoid table values like 7.36)
+        const mainNum = parseInt(parts[0], 10);
+        const subNum = parseInt(parts[1], 10);
+        if (isNaN(mainNum) || isNaN(subNum) || mainNum > 15 || mainNum < 1 || subNum > 10 || subNum < 1) {
+          continue;
+        }
+        
+        const title = `${match[1]} ${match[2].trim()}`;
+        if (match[2].trim().length >= 3 && title.length <= 80) {
+          const isDuplicate = sections.some(s => Math.abs(s.startIndex - match!.index) < 10);
+          if (!isDuplicate) {
+            sections.push({
+              title,
+              startIndex: match.index,
+              matchLength: match[0].length
+            });
+          }
+        }
+      }
+
+      // Pattern 5: Appendix sections - e.g., "A. Details", "B Implementation"
+      const pattern5 = /^([A-Z]\.?\d*\.?)\s+([A-Z][A-Za-z\s\-:,]+?)(?=\n)/gm;
+      while ((match = pattern5.exec(extractedText)) !== null) {
         // Only match single letters (A, B, C...) not words
         if (match[1].length <= 3) {
           const title = `${match[1]} ${match[2].trim()}`;
@@ -893,17 +1114,58 @@ ${extractedText.slice(0, 50000)}`;
             </div>
           )}
 
-          {notes.map((note) => (
-            <div
-              key={note.id}
-              style={{
-                backgroundColor: '#fff',
-                border: '1px solid #e2e8f0',
-                borderRadius: 10,
-                overflow: 'hidden',
-                flexShrink: 0,
-              }}
-            >
+          {notes.map((note, noteIndex) => (
+            <React.Fragment key={note.id}>
+              {/* Hover insert zone before each note */}
+              <div
+                onMouseEnter={() => setHoveredInsertIndex(noteIndex)}
+                onMouseLeave={() => setHoveredInsertIndex(null)}
+                style={{
+                  height: hoveredInsertIndex === noteIndex ? 32 : 8,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'height 0.15s ease',
+                  marginTop: noteIndex === 0 ? 0 : -4,
+                  marginBottom: -4,
+                }}
+              >
+                {hoveredInsertIndex === noteIndex && (
+                  <button
+                    onClick={() => addNoteAt(noteIndex)}
+                    style={{
+                      padding: '2px 20px',
+                      borderRadius: 12,
+                      border: '1px dashed #cbd5e0',
+                      backgroundColor: '#f7fafc',
+                      color: '#718096',
+                      cursor: 'pointer',
+                      fontSize: 14,
+                      fontWeight: 600,
+                      transition: 'all 0.15s ease',
+                    }}
+                    title="여기에 노트 추가"
+                  >
+                    +
+                  </button>
+                )}
+              </div>
+
+              <div
+                draggable
+                onDragStart={(e) => handleNoteDragStart(e, note.id)}
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDrop(e, note.id)}
+                onDragEnd={handleDragEnd}
+                style={{
+                  backgroundColor: '#fff',
+                  border: draggedNoteId === note.id ? '2px dashed #4299e1' : '1px solid #e2e8f0',
+                  borderRadius: 10,
+                  overflow: 'hidden',
+                  flexShrink: 0,
+                  opacity: draggedNoteId === note.id ? 0.5 : 1,
+                }}
+              >
               {/* Note header */}
               <div
                 style={{
@@ -915,6 +1177,20 @@ ${extractedText.slice(0, 50000)}`;
                   gap: 8,
                 }}
               >
+                {/* Drag handle */}
+                <span
+                  style={{
+                    cursor: 'grab',
+                    color: '#a0aec0',
+                    fontSize: 14,
+                    userSelect: 'none',
+                    flexShrink: 0,
+                  }}
+                  title="드래그하여 순서 변경"
+                >
+                  ⋮⋮
+                </span>
+
                 {/* Toggle button */}
                 <button
                   onClick={() => toggleNote(note.id)}
@@ -936,7 +1212,7 @@ ${extractedText.slice(0, 50000)}`;
                 <input
                   type="text"
                   value={note.title}
-                  onChange={(e) => updateNoteTitle(note.id, e.target.value)}
+                  onChange={(e) => updateNoteTitleWithBoundary(note.id, e.target.value)}
                   style={{
                     flex: 1,
                     border: 'none',
@@ -949,6 +1225,38 @@ ${extractedText.slice(0, 50000)}`;
                   }}
                   placeholder="제목 입력..."
                 />
+
+                {/* Boundary indicator and search button */}
+                <button
+                  onClick={() => {
+                    if (note.sectionBoundary) {
+                      // Reset boundary when clicking ✓
+                      setNotes(prev => prev.map(n => 
+                        n.id === note.id ? { ...n, sectionBoundary: undefined } : n
+                      ));
+                    } else {
+                      // Find boundary when clicking 🔍
+                      findBoundaryForNote(note.id, note.title);
+                    }
+                  }}
+                  disabled={!note.title.trim()}
+                  style={{
+                    padding: '2px 6px',
+                    borderRadius: 4,
+                    border: 'none',
+                    backgroundColor: note.sectionBoundary ? '#c6f6d5' : '#fed7d7',
+                    color: note.sectionBoundary ? '#22543d' : '#c53030',
+                    cursor: note.title.trim() ? 'pointer' : 'not-allowed',
+                    fontSize: 10,
+                    fontWeight: 600,
+                    flexShrink: 0,
+                  }}
+                  title={note.sectionBoundary 
+                    ? `✅ 위치 계산 완료 (${note.sectionBoundary.startIndex}~${note.sectionBoundary.endIndex}자)\n클릭하여 초기화` 
+                    : '🔍 클릭하여 섹션 위치 검색'}
+                >
+                  {note.sectionBoundary ? '✓' : '🔍'}
+                </button>
 
                 {/* Prompt button */}
                 <button
@@ -1138,7 +1446,44 @@ ${extractedText.slice(0, 50000)}`;
                 </div>
               )}
             </div>
+            </React.Fragment>
           ))}
+
+          {/* Hover insert zone after last note */}
+          {notes.length > 0 && (
+            <div
+              onMouseEnter={() => setHoveredInsertIndex(notes.length)}
+              onMouseLeave={() => setHoveredInsertIndex(null)}
+              style={{
+                height: hoveredInsertIndex === notes.length ? 32 : 8,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'height 0.15s ease',
+                marginTop: -4,
+              }}
+            >
+              {hoveredInsertIndex === notes.length && (
+                <button
+                  onClick={() => addNoteAt(notes.length)}
+                  style={{
+                    padding: '2px 20px',
+                    borderRadius: 12,
+                    border: '1px dashed #cbd5e0',
+                    backgroundColor: '#f7fafc',
+                    color: '#718096',
+                    cursor: 'pointer',
+                    fontSize: 14,
+                    fontWeight: 600,
+                    transition: 'all 0.15s ease',
+                  }}
+                  title="여기에 노트 추가"
+                >
+                  +
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Add note button at the bottom */}
           {notes.length > 0 && (
