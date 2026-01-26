@@ -373,42 +373,97 @@ export default function NotePage(props: { noteId?: string } = {}) {
       if (!textData) return;
 
       const { text: fullText, sourceFile } = textData;
+      const fullTextLower = fullText.toLowerCase();
       
       // Normalize title for searching
-      const normalizedTitle = title.trim().toLowerCase();
+      const normalizedTitle = title.trim();
+      const normalizedTitleLower = normalizedTitle.toLowerCase();
+      
+      let startIndex = -1;
       
       // Strategy 1: Exact match (case insensitive)
-      let startIndex = fullText.toLowerCase().indexOf(normalizedTitle);
+      startIndex = fullTextLower.indexOf(normalizedTitleLower);
+      console.log(`Strategy 1 (exact): "${normalizedTitle}" → ${startIndex}`);
       
-      // Strategy 2: Try without leading number and dots
+      // Strategy 2: Match at line start with regex
       if (startIndex === -1) {
-        const titleWithoutNum = title.replace(/^[\d.]+\s*/, '').trim().toLowerCase();
-        if (titleWithoutNum.length > 3) {
-          startIndex = fullText.toLowerCase().indexOf(titleWithoutNum);
+        const escapedTitle = normalizedTitle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const lineStartPattern = new RegExp(`^${escapedTitle}`, 'gim');
+        const match = lineStartPattern.exec(fullText);
+        if (match) {
+          startIndex = match.index;
+          console.log(`Strategy 2 (line start): found at ${startIndex}`);
         }
       }
       
-      // Strategy 3: Try searching for section number pattern at line start
+      // Strategy 3: Search for section number at line start (e.g., "2.1" or "2.1.")
       if (startIndex === -1) {
-        const numMatch = title.match(/^([\d.]+)/);
+        const numMatch = normalizedTitle.match(/^(\d+(?:\.\d+)*)/);
         if (numMatch) {
           const sectionNum = numMatch[1];
+          const escapedNum = sectionNum.replace(/\./g, '\\.');
+          // Try multiple patterns for section numbers
           const patterns = [
-            new RegExp(`^${sectionNum.replace(/\./g, '\\.')}\\s+`, 'gm'),
-            new RegExp(`^${sectionNum.replace(/\./g, '\\.')}[\\s\\n]`, 'gm'),
+            new RegExp(`^${escapedNum}\\s+[A-Z]`, 'gm'),  // "2.1 Title"
+            new RegExp(`^${escapedNum}\\.\\s+[A-Z]`, 'gm'), // "2.1. Title"
+            new RegExp(`^${escapedNum}\\n[A-Z]`, 'gm'),  // "2.1\nTitle"
+            new RegExp(`^${escapedNum}[\\s\\n]`, 'gm'),   // "2.1 " or "2.1\n"
           ];
           for (const pattern of patterns) {
             const match = pattern.exec(fullText);
             if (match) {
               startIndex = match.index;
+              console.log(`Strategy 3 (section num "${sectionNum}"): found at ${startIndex}`);
               break;
             }
           }
         }
       }
+      
+      // Strategy 4: Search for title text without number prefix
+      if (startIndex === -1) {
+        const titleWithoutNum = normalizedTitle.replace(/^[\d.]+\s*/, '').trim();
+        if (titleWithoutNum.length >= 3) {
+          // Try exact match first
+          let idx = fullTextLower.indexOf(titleWithoutNum.toLowerCase());
+          if (idx !== -1) {
+            startIndex = idx;
+            console.log(`Strategy 4 (without num "${titleWithoutNum}"): found at ${startIndex}`);
+          } else {
+            // Try matching at line start
+            const escapedText = titleWithoutNum.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const pattern = new RegExp(`^${escapedText}`, 'gim');
+            const match = pattern.exec(fullText);
+            if (match) {
+              startIndex = match.index;
+              console.log(`Strategy 4b (line start without num): found at ${startIndex}`);
+            }
+          }
+        }
+      }
+      
+      // Strategy 5: Fuzzy search - find line containing all words
+      if (startIndex === -1) {
+        const words = normalizedTitleLower.split(/\s+/).filter(w => w.length > 2);
+        if (words.length > 0) {
+          const lines = fullText.split('\n');
+          let charOffset = 0;
+          for (const line of lines) {
+            const lineLower = line.toLowerCase();
+            const allWordsFound = words.every(word => lineLower.includes(word));
+            if (allWordsFound && line.trim().length < 100) { // Short lines are likely headings
+              startIndex = charOffset;
+              console.log(`Strategy 5 (fuzzy): found at ${startIndex} in line: "${line.trim()}"`);
+              break;
+            }
+            charOffset += line.length + 1; // +1 for newline
+          }
+        }
+      }
 
       if (startIndex === -1) {
-        console.log(`Could not find boundary for: ${title}`);
+        console.log(`Could not find boundary for: "${normalizedTitle}"`);
+        alert(`"${normalizedTitle}" 섹션을 텍스트에서 찾을 수 없습니다.\n제목을 정확히 입력해주세요.`);
         return;
       }
 
@@ -429,7 +484,7 @@ export default function NotePage(props: { noteId?: string } = {}) {
         return updated;
       });
       
-      console.log(`Found startIndex for "${title}": ${startIndex}`);
+      console.log(`✅ Found startIndex for "${normalizedTitle}": ${startIndex}`);
       
       // Auto-recalculate boundaries after a short delay
       setTimeout(() => recalculateBoundaries(), 200);
