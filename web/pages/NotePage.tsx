@@ -438,8 +438,8 @@ export default function NotePage(props: { noteId?: string } = {}) {
     }
   }, [usedId, paperId, loadExtractedText]);
 
-  // Recalculate endIndex for all notes based on their order
-  // Each note's endIndex = next note's startIndex (if available)
+  // Recalculate endIndex for all notes based on their UI order (not sorted by startIndex)
+  // Each note's endIndex = next note's startIndex in UI order
   const recalculateBoundaries = useCallback(async () => {
     const id = usedId || stripPrefixes(paperId);
     if (!id) return;
@@ -448,22 +448,22 @@ export default function NotePage(props: { noteId?: string } = {}) {
     const textLength = textData?.text.length || 100000;
 
     setNotes(prev => {
-      // Sort notes by startIndex to get proper order
-      const notesWithBoundary = prev.filter(n => n.sectionBoundary?.startIndex !== undefined);
-      const sortedByStart = [...notesWithBoundary].sort((a, b) => 
-        (a.sectionBoundary?.startIndex || 0) - (b.sectionBoundary?.startIndex || 0)
-      );
-
-      return prev.map(note => {
+      // Use UI order directly - do NOT sort by startIndex
+      // This allows users to manually arrange notes in any order they want
+      return prev.map((note, index) => {
         if (!note.sectionBoundary) return note;
 
-        // Find position in sorted list
-        const idx = sortedByStart.findIndex(n => n.id === note.id);
-        if (idx === -1) return note;
+        // Find next note with boundary in UI order
+        let nextNoteWithBoundary = null;
+        for (let i = index + 1; i < prev.length; i++) {
+          if (prev[i].sectionBoundary?.startIndex !== undefined) {
+            nextNoteWithBoundary = prev[i];
+            break;
+          }
+        }
 
-        // endIndex = next note's startIndex, or text length if last
-        const nextNote = sortedByStart[idx + 1];
-        const endIndex = nextNote?.sectionBoundary?.startIndex || textLength;
+        // endIndex = next note's startIndex in UI order, or text length if no next note
+        const endIndex = nextNoteWithBoundary?.sectionBoundary?.startIndex || textLength;
 
         return {
           ...note,
@@ -1120,34 +1120,47 @@ ${extractedText.slice(0, 50000)}`;
               <div
                 onMouseEnter={() => setHoveredInsertIndex(noteIndex)}
                 onMouseLeave={() => setHoveredInsertIndex(null)}
+                onClick={() => addNoteAt(noteIndex)}
                 style={{
-                  height: hoveredInsertIndex === noteIndex ? 32 : 8,
+                  height: hoveredInsertIndex === noteIndex ? 40 : 16,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  transition: 'height 0.15s ease',
-                  marginTop: noteIndex === 0 ? 0 : -4,
-                  marginBottom: -4,
+                  transition: 'all 0.2s ease',
+                  cursor: 'pointer',
+                  backgroundColor: hoveredInsertIndex === noteIndex ? '#f0f9ff' : 'transparent',
+                  borderRadius: 8,
+                  margin: '4px 0',
                 }}
               >
-                {hoveredInsertIndex === noteIndex && (
-                  <button
-                    onClick={() => addNoteAt(noteIndex)}
+                {hoveredInsertIndex === noteIndex ? (
+                  <div
                     style={{
-                      padding: '2px 20px',
+                      padding: '4px 24px',
                       borderRadius: 12,
-                      border: '1px dashed #cbd5e0',
-                      backgroundColor: '#f7fafc',
-                      color: '#718096',
-                      cursor: 'pointer',
-                      fontSize: 14,
-                      fontWeight: 600,
-                      transition: 'all 0.15s ease',
+                      border: '2px dashed #4299e1',
+                      backgroundColor: '#ebf8ff',
+                      color: '#3182ce',
+                      fontSize: 16,
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
                     }}
-                    title="여기에 노트 추가"
                   >
-                    +
-                  </button>
+                    <span>+</span>
+                    <span style={{ fontSize: 12, fontWeight: 500 }}>노트 추가</span>
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      width: '100%',
+                      height: 2,
+                      backgroundColor: '#e2e8f0',
+                      borderRadius: 1,
+                      margin: '0 12px',
+                    }}
+                  />
                 )}
               </div>
 
@@ -1449,62 +1462,38 @@ ${extractedText.slice(0, 50000)}`;
             </React.Fragment>
           ))}
 
-          {/* Hover insert zone after last note */}
-          {notes.length > 0 && (
+          {/* Hover insert zone after last note / Add note button */}
+          <div
+            onMouseEnter={() => setHoveredInsertIndex(notes.length)}
+            onMouseLeave={() => setHoveredInsertIndex(null)}
+            onClick={() => addNoteAt(notes.length)}
+            style={{
+              height: hoveredInsertIndex === notes.length ? 48 : 40,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s ease',
+              cursor: 'pointer',
+              backgroundColor: hoveredInsertIndex === notes.length ? '#f0f9ff' : 'transparent',
+              borderRadius: 8,
+              margin: '8px 0',
+              border: hoveredInsertIndex === notes.length ? '2px dashed #4299e1' : '2px dashed #e2e8f0',
+            }}
+          >
             <div
-              onMouseEnter={() => setHoveredInsertIndex(notes.length)}
-              onMouseLeave={() => setHoveredInsertIndex(null)}
               style={{
-                height: hoveredInsertIndex === notes.length ? 32 : 8,
+                color: hoveredInsertIndex === notes.length ? '#3182ce' : '#a0aec0',
+                fontSize: 14,
+                fontWeight: 600,
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'height 0.15s ease',
-                marginTop: -4,
+                gap: 6,
               }}
             >
-              {hoveredInsertIndex === notes.length && (
-                <button
-                  onClick={() => addNoteAt(notes.length)}
-                  style={{
-                    padding: '2px 20px',
-                    borderRadius: 12,
-                    border: '1px dashed #cbd5e0',
-                    backgroundColor: '#f7fafc',
-                    color: '#718096',
-                    cursor: 'pointer',
-                    fontSize: 14,
-                    fontWeight: 600,
-                    transition: 'all 0.15s ease',
-                  }}
-                  title="여기에 노트 추가"
-                >
-                  +
-                </button>
-              )}
+              <span style={{ fontSize: 18 }}>+</span>
+              <span>노트 추가</span>
             </div>
-          )}
-
-          {/* Add note button at the bottom */}
-          {notes.length > 0 && (
-            <button
-              onClick={addNote}
-              style={{
-                padding: '10px',
-                borderRadius: 8,
-                border: '2px dashed #e2e8f0',
-                backgroundColor: 'transparent',
-                color: '#a0aec0',
-                cursor: 'pointer',
-                fontSize: 13,
-                fontWeight: 600,
-                textAlign: 'center',
-                marginTop: 4,
-              }}
-            >
-              + 노트 추가
-            </button>
-          )}
+          </div>
         </div>
       </div>
     </div>
