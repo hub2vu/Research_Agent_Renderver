@@ -91,6 +91,7 @@ services:
     depends_on:
       mcp-server:
         condition: service_healthy
+    command: ["/bin/sh", "-c", "if [ ! -d \"node_modules\" ] || [ -z \"$(ls -A node_modules 2>/dev/null)\" ] || [ ! -d \"node_modules/react-markdown\" ]; then npm install; fi && exec npm run dev"]
     restart: unless-stopped
 
 networks:
