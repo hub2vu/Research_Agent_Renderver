@@ -20,11 +20,18 @@ type PdfLoadResult = {
   doc: PdfDoc;
 };
 
+interface SectionBoundary {
+  startIndex: number;
+  endIndex: number;
+  sourceFile: 'json' | 'txt';
+}
+
 interface NoteItem {
   id: string;
   title: string;
   content: string;
   isOpen: boolean;
+  sectionBoundary?: SectionBoundary;
 }
 
 function stripPrefixes(id: string): string {
@@ -318,28 +325,201 @@ export default function NotePage(props: { noteId?: string } = {}) {
     setNotes(prev => prev.map(n => n.id === noteId ? { ...n, content } : n));
   }, []);
 
-  // Extract chapter headings via LLM chat and create notes
+  // Load extracted text from JSON (preferred) or TXT file
+  const loadExtractedText = useCallback(async (id: string): Promise<{ text: string; sourceFile: 'json' | 'txt' } | null> => {
+    // Try JSON first (cleaner, no page markers)
+    try {
+      const jsonUrl = `/output/${id}/extracted_text.json`;
+      const jsonRes = await fetch(jsonUrl);
+      if (jsonRes.ok) {
+        const data = await jsonRes.json();
+        const fullText = data.full_text || '';
+        if (fullText.trim()) {
+          return { text: fullText, sourceFile: 'json' };
+        }
+      }
+    } catch {
+      // JSON failed, try TXT
+    }
+
+    // Fallback to TXT
+    try {
+      const txtUrl = `/output/${id}/extracted_text.txt`;
+      const txtRes = await fetch(txtUrl);
+      if (txtRes.ok) {
+        let text = await txtRes.text();
+        // Remove page markers
+        text = text.replace(/===\s*Page\s*\d+\s*===\n*/g, '\n');
+        text = text.replace(/\n{3,}/g, '\n\n');
+        if (text.trim()) {
+          return { text, sourceFile: 'txt' };
+        }
+      }
+    } catch {
+      // TXT also failed
+    }
+
+    return null;
+  }, []);
+
+  // Extract section headings using regex patterns with boundary information
   const extractHeadings = useCallback(async () => {
     const id = usedId || stripPrefixes(paperId);
     if (!id) return;
 
     setExtracting(true);
     try {
-      // 1. Fetch extracted_text.txt for the paper
-      const textUrl = `/output/${id}/extracted_text.txt`;
-      const textRes = await fetch(textUrl);
-      if (!textRes.ok) {
-        alert(`텍스트 파일을 불러올 수 없습니다: ${textUrl}`);
+      // 1. Load extracted text
+      const textData = await loadExtractedText(id);
+      if (!textData) {
+        alert('텍스트 파일을 불러올 수 없습니다. PDF 텍스트 추출이 먼저 필요합니다.');
         return;
       }
-      const extractedText = await textRes.text();
-      if (!extractedText.trim()) {
-        alert('추출된 텍스트가 비어 있습니다.');
-        return;
+      const { text: extractedText, sourceFile } = textData;
+
+      // 2. Extract sections using multiple regex patterns
+      interface SectionMatch {
+        title: string;
+        startIndex: number;
+        matchLength: number;
       }
 
-      // 2. Send to LLM chat to extract subtitles
-      const prompt = `다음 논문 텍스트에서 소목차(section/subsection headings)를 추출해주세요.
+      const sections: SectionMatch[] = [];
+      
+      // Pattern 1: "N\nTitle" format (number on one line, title on next) - e.g., "1\nIntroduction"
+      const pattern1 = /^(\d+(?:\.\d+)*)\s*\n([A-Z][A-Za-z\s\-:,]+?)(?=\n)/gm;
+      let match;
+      while ((match = pattern1.exec(extractedText)) !== null) {
+        const numPart = match[1];
+        // Validate section number format
+        const parts = numPart.split('.');
+        let isValidSectionNum = true;
+        for (const part of parts) {
+          const num = parseInt(part, 10);
+          const maxAllowed = parts.indexOf(part) === 0 ? 20 : 50;
+          if (isNaN(num) || num > maxAllowed || part.length > 2) {
+            isValidSectionNum = false;
+            break;
+          }
+        }
+        if (!isValidSectionNum) {
+          continue;
+        }
+        const title = `${match[1]} ${match[2].trim()}`;
+        // Skip if title text is too short
+        if (match[2].trim().length < 3) {
+          continue;
+        }
+        // Skip if title is too long (likely not a heading)
+        if (title.length <= 80) {
+          sections.push({
+            title,
+            startIndex: match.index,
+            matchLength: match[0].length
+          });
+        }
+      }
+
+      // Pattern 2: "N. Title" format (same line) - e.g., "1. Introduction"
+      // Only match valid section numbers (not decimal values from tables)
+      const pattern2 = /^(\d+(?:\.\d+)*)\.\s+([A-Z][A-Za-z\s\-:,]+?)(?=\n)/gm;
+      while ((match = pattern2.exec(extractedText)) !== null) {
+        const numPart = match[1];
+        // Validate section number format: each part should be a reasonable integer (1-50)
+        // Skip numbers like "14.76", "29.50", "66.7" which are likely table values
+        const parts = numPart.split('.');
+        let isValidSectionNum = true;
+        for (const part of parts) {
+          const num = parseInt(part, 10);
+          // First part can be larger (up to 20 for main sections), subsections up to 50
+          const maxAllowed = parts.indexOf(part) === 0 ? 20 : 50;
+          if (isNaN(num) || num > maxAllowed || part.length > 2) {
+            isValidSectionNum = false;
+            break;
+          }
+        }
+        if (!isValidSectionNum) {
+          continue;
+        }
+        const title = `${match[1]}. ${match[2].trim()}`;
+        // Skip if title is too short (less than 3 characters for the text part)
+        if (match[2].trim().length < 3) {
+          continue;
+        }
+        if (title.length <= 80) {
+          // Check for duplicates (same position)
+          const isDuplicate = sections.some(s => Math.abs(s.startIndex - match!.index) < 10);
+          if (!isDuplicate) {
+            sections.push({
+              title,
+              startIndex: match.index,
+              matchLength: match[0].length
+            });
+          }
+        }
+      }
+
+      // Pattern 3: Special sections without numbers
+      const specialSections = ['Abstract', 'ABSTRACT', 'References', 'REFERENCES', 'Conclusion', 'CONCLUSION', 'Acknowledgement', 'Acknowledgements', 'ACKNOWLEDGEMENT', 'ACKNOWLEDGEMENTS'];
+      for (const sectionName of specialSections) {
+        const pattern = new RegExp(`^(${sectionName})\\s*(?:\\n|$)`, 'gm');
+        while ((match = pattern.exec(extractedText)) !== null) {
+          const title = match[1];
+          const isDuplicate = sections.some(s => Math.abs(s.startIndex - match!.index) < 10);
+          if (!isDuplicate) {
+            sections.push({
+              title,
+              startIndex: match.index,
+              matchLength: match[0].length
+            });
+          }
+        }
+      }
+
+      // Pattern 4: Appendix sections - e.g., "A. Details", "B Implementation"
+      const pattern4 = /^([A-Z]\.?\d*\.?)\s+([A-Z][A-Za-z\s\-:,]+?)(?=\n)/gm;
+      while ((match = pattern4.exec(extractedText)) !== null) {
+        // Only match single letters (A, B, C...) not words
+        if (match[1].length <= 3) {
+          const title = `${match[1]} ${match[2].trim()}`;
+          if (title.length <= 80) {
+            const isDuplicate = sections.some(s => Math.abs(s.startIndex - match!.index) < 10);
+            if (!isDuplicate) {
+              sections.push({
+                title,
+                startIndex: match.index,
+                matchLength: match[0].length
+              });
+            }
+          }
+        }
+      }
+
+      // 3. Sort sections by position and calculate end indices
+      sections.sort((a, b) => a.startIndex - b.startIndex);
+
+      // Remove duplicates: by position (within 50 chars) or by title
+      const uniqueSections: SectionMatch[] = [];
+      const seenTitles = new Set<string>();
+      for (const section of sections) {
+        const lastSection = uniqueSections[uniqueSections.length - 1];
+        const normalizedTitle = section.title.toLowerCase().trim();
+        // Skip if too close to previous or if we've seen this title before
+        if (seenTitles.has(normalizedTitle)) {
+          continue;
+        }
+        if (lastSection && section.startIndex - lastSection.startIndex <= 50) {
+          continue;
+        }
+        uniqueSections.push(section);
+        seenTitles.add(normalizedTitle);
+      }
+
+      if (uniqueSections.length === 0) {
+        // Fallback to LLM if regex didn't find anything
+        alert('정규식으로 목차를 찾을 수 없습니다. LLM 폴백을 시도합니다...');
+        
+        const prompt = `다음 논문 텍스트에서 소목차(section/subsection headings)를 추출해주세요.
 규칙:
 - 한 줄에 하나의 소목차만 출력
 - 번호가 있으면 번호 포함 (예: "1. Introduction", "2.1 Background")
@@ -347,67 +527,92 @@ export default function NotePage(props: { noteId?: string } = {}) {
 - 목차 제목만 순서대로 나열해주세요
 
 논문 텍스트:
-${extractedText.slice(0, 15000)}`;
+${extractedText.slice(0, 50000)}`;
 
-      const chatRes = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: prompt, history: [] }),
+        const chatRes = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: prompt, history: [] }),
+        });
+
+        if (chatRes.ok) {
+          const chatData = await chatRes.json();
+          const responseText = chatData.response || '';
+          const headings = responseText
+            .split('\n')
+            .map((line: string) => line.trim())
+            .filter((line: string) => line.length > 0 && line.length < 100);
+
+          if (headings.length > 0) {
+            const newNotes: NoteItem[] = headings.map((title: string) => ({
+              id: generateId(),
+              title,
+              content: '',
+              isOpen: true,
+            }));
+            setNotes(newNotes);
+            return;
+          }
+        }
+        
+        alert('목차를 추출할 수 없습니다.');
+        return;
+      }
+
+      // 4. Create notes with boundary information
+      const newNotes: NoteItem[] = uniqueSections.map((section, index) => {
+        const nextSection = uniqueSections[index + 1];
+        return {
+          id: generateId(),
+          title: section.title,
+          content: '',
+          isOpen: true,
+          sectionBoundary: {
+            startIndex: section.startIndex,
+            endIndex: nextSection ? nextSection.startIndex : extractedText.length,
+            sourceFile
+          }
+        };
       });
 
-      if (!chatRes.ok) {
-        alert(`LLM 채팅 요청 실패: HTTP ${chatRes.status}`);
-        return;
-      }
-
-      const chatData = await chatRes.json();
-      const responseText = chatData.response || '';
-
-      // 3. Parse each line as a subtitle
-      const headings = responseText
-        .split('\n')
-        .map((line: string) => line.trim())
-        .filter((line: string) => line.length > 0);
-
-      if (headings.length === 0) {
-        alert('추출된 소목차가 없습니다.');
-        return;
-      }
-
-      // 4. Create notes from extracted subtitles
-      const newNotes: NoteItem[] = headings.map((title: string) => ({
-        id: generateId(),
-        title,
-        content: '',
-        isOpen: true,
-      }));
       setNotes(newNotes);
+      console.log(`Extracted ${newNotes.length} sections with boundaries`);
     } catch (e) {
       alert(`소목차 추출 에러: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setExtracting(false);
     }
-  }, [usedId, paperId]);
+  }, [usedId, paperId, loadExtractedText]);
 
-  // Translate a specific note's section using extracted_text.txt
+  // Translate a specific note's section using boundary indices (preferred) or title matching (fallback)
   const translateSection = useCallback(async (noteId: string, sectionTitle: string) => {
     const id = usedId || stripPrefixes(paperId);
     if (!id) return;
 
     setTranslatingNoteId(noteId);
     try {
-      // Find the next note's title for boundary detection
+      // Find the note and its boundary information
       const noteIndex = notes.findIndex(n => n.id === noteId);
+      const note = notes[noteIndex];
       const nextSectionTitle = noteIndex >= 0 && noteIndex < notes.length - 1
         ? notes[noteIndex + 1].title
         : '';
 
-      const result = await executeTool('translate_section', {
+      // Build request parameters
+      const params: Record<string, unknown> = {
         paper_id: id,
         section_title: sectionTitle,
         next_section_title: nextSectionTitle,
         target_language: 'Korean',
-      });
+      };
+
+      // Add boundary indices if available (more reliable than title matching)
+      if (note?.sectionBoundary) {
+        params.start_index = note.sectionBoundary.startIndex;
+        params.end_index = note.sectionBoundary.endIndex;
+      }
+
+      const result = await executeTool('translate_section', params);
       if (!result.success) {
         alert(`번역 실패: ${result.error || 'Unknown error'}`);
         return;
@@ -430,15 +635,25 @@ ${extractedText.slice(0, 15000)}`;
     setAnalyzingNoteId(noteId);
     try {
       const noteIndex = notes.findIndex(n => n.id === noteId);
+      const note = notes[noteIndex];
       const nextSectionTitle = noteIndex >= 0 && noteIndex < notes.length - 1
         ? notes[noteIndex + 1].title
         : '';
 
-      const result = await executeTool('analyze_section', {
+      // Build request parameters
+      const params: Record<string, unknown> = {
         paper_id: id,
         section_title: sectionTitle,
         next_section_title: nextSectionTitle,
-      });
+      };
+
+      // Add boundary indices if available
+      if (note?.sectionBoundary) {
+        params.start_index = note.sectionBoundary.startIndex;
+        params.end_index = note.sectionBoundary.endIndex;
+      }
+
+      const result = await executeTool('analyze_section', params);
       if (!result.success) {
         alert(`분석 실패: ${result.error || 'Unknown error'}`);
         return;

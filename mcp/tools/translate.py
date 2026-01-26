@@ -567,8 +567,8 @@ class TranslateSectionTool(MCPTool):
     @property
     def description(self) -> str:
         return (
-            "Translate a specific section of a paper. Extracts text between the given "
-            "section heading and the next heading from extracted_text.txt, then translates it."
+            "Translate a specific section of a paper. Uses boundary indices if provided, "
+            "otherwise extracts text between the given section heading and the next heading."
         )
 
     @property
@@ -594,6 +594,18 @@ class TranslateSectionTool(MCPTool):
                 default="",
             ),
             ToolParameter(
+                name="start_index",
+                type="integer",
+                description="Section start position in extracted text (character index)",
+                required=False,
+            ),
+            ToolParameter(
+                name="end_index",
+                type="integer",
+                description="Section end position in extracted text (character index)",
+                required=False,
+            ),
+            ToolParameter(
                 name="target_language",
                 type="string",
                 description="Target language (default: 'Korean')",
@@ -612,6 +624,33 @@ class TranslateSectionTool(MCPTool):
     @property
     def category(self) -> str:
         return "translation"
+
+    def _get_full_text(self, paper_dir: Path) -> str:
+        """Get full text from JSON (preferred) or TXT file with page marker removal."""
+        # Priority 1: JSON file (no page markers)
+        json_file = paper_dir / "extracted_text.json"
+        if json_file.exists():
+            try:
+                with open(json_file, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    return data.get("full_text", "")
+            except (json.JSONDecodeError, IOError):
+                pass
+        
+        # Priority 2: TXT file (remove page markers)
+        txt_file = paper_dir / "extracted_text.txt"
+        if txt_file.exists():
+            try:
+                text = txt_file.read_text(encoding="utf-8")
+                # Remove page markers like "=== Page 1 ==="
+                text = re.sub(r"===\s*Page\s*\d+\s*===\n*", "\n", text)
+                # Clean up excessive newlines
+                text = re.sub(r"\n{3,}", "\n\n", text)
+                return text
+            except IOError:
+                pass
+        
+        return ""
 
     def _extract_section_from_text(self, full_text: str, section_title: str, next_section_title: str) -> str:
         """Extract text between section_title and next_section_title from extracted text.
@@ -742,7 +781,7 @@ class TranslateSectionTool(MCPTool):
                     end_idx = i
 
                 if score >= 0.9:
-                    break
+                        break
 
         # Extract text between start (exclusive of heading line) and end
         section_lines = lines[start_idx + 1:end_idx]
@@ -762,6 +801,8 @@ class TranslateSectionTool(MCPTool):
         paper_id: str,
         section_title: str,
         next_section_title: str = "",
+        start_index: Optional[int] = None,
+        end_index: Optional[int] = None,
         target_language: str = "Korean",
         source_language: str = "English",
         **kwargs,
@@ -777,30 +818,31 @@ class TranslateSectionTool(MCPTool):
                 tool_name=self.name,
             )
 
-        # Read extracted_text.txt
+        # Get full text using the helper method (JSON preferred, with page marker removal)
         paper_dir = OUTPUT_DIR / paper_id
-        text_file = paper_dir / "extracted_text.txt"
-
-        if not text_file.exists():
-            json_file = paper_dir / "extracted_text.json"
-            if json_file.exists():
-                with open(json_file, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                    full_text = data.get("full_text", "")
-            else:
+        full_text = self._get_full_text(paper_dir)
+        
+        if not full_text:
                 raise ExecutionError(
-                    f"텍스트 파일을 찾을 수 없습니다: {text_file}",
+                f"텍스트 파일을 찾을 수 없습니다: {paper_dir}",
                     tool_name=self.name,
                 )
-        else:
-            with open(text_file, "r", encoding="utf-8") as f:
-                full_text = f.read()
 
         if isinstance(full_text, str):
             full_text = full_text.encode("utf-8", "replace").decode("utf-8")
 
-        # Extract section text between titles
-        section_text = self._extract_section_from_text(full_text, section_title, next_section_title)
+        # Extract section text: use boundary indices if provided, otherwise use title matching
+        if start_index is not None and end_index is not None:
+            # Use boundary indices directly (more reliable)
+            section_text = full_text[start_index:end_index].strip()
+            if not section_text:
+                raise ExecutionError(
+                    f"섹션 '{section_title}'에서 텍스트를 찾을 수 없습니다 (indices: {start_index}-{end_index}).",
+                    tool_name=self.name,
+                )
+        else:
+            # Fallback: extract section by title matching
+            section_text = self._extract_section_from_text(full_text, section_title, next_section_title)
 
         # Translate the section
         client = openai.OpenAI(api_key=API_KEY)
