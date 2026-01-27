@@ -1,0 +1,33 @@
+{
+  "filename": "115929_The Price of Sparsity_ Sufficient Conditions for Sparse Recovery using Sparse and Sparsified Measurements",
+  "original_filename": "115929_The Price of Sparsity_ Sufficient Conditions for Sparse Recovery using Sparse and Sparsified Measurements",
+  "references_detected": 19,
+  "titles_extracted": 19,
+  "titles": [
+    "Information theoretic bounds for compressed sensing",
+    "Robust uncertainty principles: exact signal reconstruction from highly incomplete frequency information",
+    "Atomic decomposition by basis pursuit",
+    "Finding the frequent items in streams of data",
+    "Compressed sensing",
+    "Combinatorial group testing and its applications, volume 12",
+    "An invitation to compressive sensing",
+    "Sparse high-dimensional linear regression",
+    "Sparse recovery using sparse matrices",
+    "The elements of statistical learning: data mining, inference, and prediction",
+    "Sketching, streaming and sublinear-space algorithms",
+    "High-dimensional regression with noisy and missing data: Provable guarantees with non-convexity",
+    "Subset selection in regression",
+    "Data streams: algorithms and applications",
+    "High-dimensional subset recovery in noise: sparsified measurements without loss of statistical efficiency",
+    "The all-or-nothing phenomenon in sparse linear regression",
+    "Regression shrinkage and selection via the lasso",
+    "Sharp thresholds for high-dimensional and noisy sparsity recovery using ℓ1-constrained quadratic programming (lasso",
+    "Information-theoretic limits on sparse signal recovery: dense versus sparse measurement matrices"
+  ],
+  "diagnostics": {
+    "has_references_header": true,
+    "parsed_items_count": 19,
+    "is_numbered": true,
+    "id_normalized": false
+  }
+}

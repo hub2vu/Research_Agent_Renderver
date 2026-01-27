@@ -1,0 +1,1194 @@
+[
+  {
+    "ref_no": 1,
+    "title": "Zoom in: An introduction to circuits",
+    "ids": {
+      "year": "2020"
+    },
+    "graph_id": "",
+    "raw_text": "Chris Olah, Nick Cammarata, Ludwig Schubert, Gabriel Goh, Michael Petrov, and Shan Carter. Zoom in: An introduction to circuits. Distill, 5(3):e00024–001, 2020."
+  },
+  {
+    "ref_no": 2,
+    "title": "A mathematical framework for transformer circuits",
+    "ids": {
+      "year": "2021"
+    },
+    "graph_id": "",
+    "raw_text": "Nelson Elhage, Neel Nanda, Catherine Olsson, Tom Henighan, Nicholas Joseph, Ben Mann, Amanda Askell, Yuntao Bai, Anna Chen, Tom Conerly, et al. A mathematical framework for transformer circuits. Trans..."
+  },
+  {
+    "ref_no": 3,
+    "title": "In-context learning and induction heads",
+    "ids": {
+      "arxiv": "2209.11895",
+      "year": "2022"
+    },
+    "graph_id": "10.48550_arxiv.2209.11895",
+    "raw_text": "Catherine Olsson, Nelson Elhage, Neel Nanda, Nicholas Joseph, Nova DasSarma, Tom Henighan, Ben Mann, Amanda Askell, Yuntao Bai, Anna Chen, et al. In-context learning and induction heads. arXiv preprin..."
+  },
+  {
+    "ref_no": 4,
+    "title": "Sparse autoencoders find highly interpretable features in language models",
+    "ids": {
+      "arxiv": "2309.08600",
+      "year": "2023"
+    },
+    "graph_id": "10.48550_arxiv.2309.08600",
+    "raw_text": "Hoagy Cunningham, Aidan Ewart, Logan Riggs, Robert Huben, and Lee Sharkey. Sparse autoencoders find highly interpretable features in language models. arXiv preprint arXiv:2309.08600, 2023."
+  },
+  {
+    "ref_no": 5,
+    "title": "Towards monosemanticity: Decomposing language models with dictionary learning",
+    "ids": {
+      "arxiv": "2301.05217",
+      "url": "https://transformercircuits.pub/2023/monosemantic-features/index.html.[6]",
+      "year": "2023"
+    },
+    "graph_id": "10.48550_arxiv.2301.05217",
+    "raw_text": "Trenton Bricken, Adly Templeton, Joshua Batson, Brian Chen, Adam Jermyn, Tom Conerly, Nick Turner, Cem Anil, Carson Denison, Amanda Askell, Robert Lasenby, Yifan Wu, Shauna Kravec, Nicholas Schiefer, ..."
+  },
+  {
+    "ref_no": 7,
+    "title": "Mechanistic interpretability for ai safety–a review",
+    "ids": {
+      "arxiv": "2404.14082",
+      "year": "2024"
+    },
+    "graph_id": "10.48550_arxiv.2404.14082",
+    "raw_text": "Leonard Bereska and Efstratios Gavves. Mechanistic interpretability for ai safety–a review. arXiv preprint arXiv:2404.14082, 2024."
+  },
+  {
+    "ref_no": 8,
+    "title": "Emergent abilities of large language models",
+    "ids": {
+      "arxiv": "2206.07682",
+      "year": "2022"
+    },
+    "graph_id": "10.48550_arxiv.2206.07682",
+    "raw_text": "Jason Wei, Yi Tay, Rishi Bommasani, Colin Raffel, Barret Zoph, Sebastian Borgeaud, Dani Yogatama, Maarten Bosma, Denny Zhou, Donald Metzler, et al. Emergent abilities of large language models. arXiv p..."
+  },
+  {
+    "ref_no": 9,
+    "title": "A toy model of universality: Reverse engineering how networks learn group operations",
+    "ids": {
+      "year": "2023"
+    },
+    "graph_id": "",
+    "raw_text": "Bilal Chughtai, Lawrence Chan, and Neel Nanda. A toy model of universality: Reverse engineering how networks learn group operations. In International Conference on Machine Learning, pages 6243–6267. P..."
+  },
+  {
+    "ref_no": 10,
+    "title": "Open problems in mechanistic interpretability",
+    "ids": {
+      "arxiv": "2501.16496",
+      "year": "2025"
+    },
+    "graph_id": "10.48550_arxiv.2501.16496",
+    "raw_text": "Lee Sharkey, Bilal Chughtai, Joshua Batson, Jack Lindsey, Jeff Wu, Lucius Bushnaq, Nicholas Goldowsky-Dill, Stefan Heimersheim, Alejandro Ortega, Joseph Bloom, et al. Open problems in mechanistic inte..."
+  },
+  {
+    "ref_no": 11,
+    "title": "A closer look at memorization in deep networks",
+    "ids": {
+      "year": "2017"
+    },
+    "graph_id": "",
+    "raw_text": "Devansh Arpit, Stanisław Jastrz˛ebski, Nicolas Ballas, David Krueger, Emmanuel Bengio, Maxinder S Kanwal, Tegan Maharaj, Asja Fischer, Aaron Courville, Yoshua Bengio, et al. A closer look at memorizat..."
+  },
+  {
+    "ref_no": 12,
+    "title": "Sgd on neural networks learns functions of increasing complexity",
+    "ids": {
+      "year": "2019"
+    },
+    "graph_id": "",
+    "raw_text": "Dimitris Kalimeris, Gal Kaplun, Preetum Nakkiran, Benjamin Edelman, Tristan Yang, Boaz Barak, and Haofeng Zhang. Sgd on neural networks learns functions of increasing complexity. Advances in neural in..."
+  },
+  {
+    "ref_no": 13,
+    "title": "Hidden progress in deep learning: Sgd learns parities near the computational limit",
+    "ids": {
+      "year": "2022"
+    },
+    "graph_id": "",
+    "raw_text": "Boaz Barak, Benjamin Edelman, Surbhi Goel, Sham Kakade, Eran Malach, and Cyril Zhang. Hidden progress in deep learning: Sgd learns parities near the computational limit. Advances in Neural Information..."
+  },
+  {
+    "ref_no": 14,
+    "title": "The optimization landscape of sgd across the feature learning strength",
+    "ids": {
+      "arxiv": "2410.04642"
+    },
+    "graph_id": "10.48550_arxiv.2410.04642",
+    "raw_text": "Alexander Atanasov, Alexandru Meterez, James B Simon, and Cengiz Pehlevan. The optimization landscape of sgd across the feature learning strength. arXiv preprint arXiv:2410.04642,"
+  },
+  {
+    "ref_no": 15,
+    "title": "Saddle-tosaddle dynamics in deep linear networks: Small initialization training, symmetry, and sparsity",
+    "ids": {
+      "arxiv": "2106.15933",
+      "year": "2021"
+    },
+    "graph_id": "10.48550_arxiv.2106.15933",
+    "raw_text": "Arthur Jacot, François Ged, Berfin ¸Sim¸sek, Clément Hongler, and Franck Gabriel. Saddle-tosaddle dynamics in deep linear networks: Small initialization training, symmetry, and sparsity. arXiv preprin..."
+  },
+  {
+    "ref_no": 16,
+    "title": "A mathematical theory of semantic development in deep neural networks",
+    "ids": {
+      "year": "2019"
+    },
+    "graph_id": "",
+    "raw_text": "Andrew M Saxe, James L McClelland, and Surya Ganguli. A mathematical theory of semantic development in deep neural networks. Proceedings of the National Academy of Sciences, 116 (23):11537–11546, 2019..."
+  },
+  {
+    "ref_no": 17,
+    "title": "Incremental learning in diagonal linear networks",
+    "ids": {
+      "year": "2023"
+    },
+    "graph_id": "",
+    "raw_text": "Raphaël Berthier. Incremental learning in diagonal linear networks. Journal of Machine Learning Research, 24(171):1–26, 2023."
+  },
+  {
+    "ref_no": 18,
+    "title": "Saddle-to-saddle dynamics in diagonal linear networks",
+    "ids": {
+      "year": "2023"
+    },
+    "graph_id": "",
+    "raw_text": "Scott Pesme and Nicolas Flammarion. Saddle-to-saddle dynamics in diagonal linear networks. Advances in Neural Information Processing Systems, 36:7475–7505, 2023."
+  },
+  {
+    "ref_no": 19,
+    "title": "Implicit regularization of discrete gradient dynamics in linear neural networks",
+    "ids": {
+      "year": "2019"
+    },
+    "graph_id": "",
+    "raw_text": "Gauthier Gidel, Francis Bach, and Simon Lacoste-Julien. Implicit regularization of discrete gradient dynamics in linear neural networks. Advances in Neural Information Processing Systems, 32, 2019."
+  },
+  {
+    "ref_no": 20,
+    "title": "Towards resolving the implicit bias of gradient descent for matrix factorization: Greedy low-rank learning",
+    "ids": {
+      "arxiv": "2012.09839",
+      "year": "2012"
+    },
+    "graph_id": "10.48550_arxiv.2012.09839",
+    "raw_text": "Zhiyuan Li, Yuping Luo, and Kaifeng Lyu. Towards resolving the implicit bias of gradient descent for matrix factorization: Greedy low-rank learning. arXiv preprint arXiv:2012.09839,"
+  },
+  {
+    "ref_no": 21,
+    "title": "Understanding deflation process in over-parametrized tensor decomposition",
+    "ids": {
+      "year": "2021"
+    },
+    "graph_id": "",
+    "raw_text": "Rong Ge, Yunwei Ren, Xiang Wang, and Mo Zhou. Understanding deflation process in over-parametrized tensor decomposition. Advances in Neural Information Processing Systems, 34:1299–1311, 2021."
+  },
+  {
+    "ref_no": 22,
+    "title": "On the stepwise nature of self-supervised learning",
+    "ids": {
+      "year": "2023"
+    },
+    "graph_id": "",
+    "raw_text": "James B Simon, Maksis Knutins, Liu Ziyin, Daniel Geisz, Abraham J Fetterman, and Joshua Albrecht. On the stepwise nature of self-supervised learning. In International Conference on Machine Learning, p..."
+  },
+  {
+    "ref_no": 23,
+    "title": "Solvable dynamics of self-supervised word embeddings and the emergence of analogical reasoning",
+    "ids": {
+      "arxiv": "2502.09863",
+      "year": "2025"
+    },
+    "graph_id": "10.48550_arxiv.2502.09863",
+    "raw_text": "Dhruva Karkada, James B Simon, Yasaman Bahri, and Michael R DeWeese. Solvable dynamics of self-supervised word embeddings and the emergence of analogical reasoning. arXiv preprint arXiv:2502.09863, 20..."
+  },
+  {
+    "ref_no": 24,
+    "title": "The inductive bias of relu networks on orthogonally separable data",
+    "ids": {
+      "year": "2020"
+    },
+    "graph_id": "",
+    "raw_text": "Mary Phuong and Christoph H Lampert. The inductive bias of relu networks on orthogonally separable data. In International Conference on Learning Representations, 2020."
+  },
+  {
+    "ref_no": 25,
+    "title": "Gradient descent on two-layer nets: Margin maximization and simplicity bias",
+    "ids": {
+      "year": "2021"
+    },
+    "graph_id": "",
+    "raw_text": "Kaifeng Lyu, Zhiyuan Li, Runzhe Wang, and Sanjeev Arora. Gradient descent on two-layer nets: Margin maximization and simplicity bias. Advances in Neural Information Processing Systems, 34, 2021."
+  },
+  {
+    "ref_no": 26,
+    "title": "Early stage convergence and global convergence of training mildly parameterized neural networks",
+    "ids": {
+      "year": "2022"
+    },
+    "graph_id": "",
+    "raw_text": "Mingze Wang and Chao Ma. Early stage convergence and global convergence of training mildly parameterized neural networks. Advances in Neural Information Processing Systems, 35:743–756, 2022."
+  },
+  {
+    "ref_no": 27,
+    "title": "Gradient flow dynamics of shallow relu networks for square loss and orthogonal inputs",
+    "ids": {
+      "year": "2022"
+    },
+    "graph_id": "",
+    "raw_text": "Etienne Boursier, Loucas Pillaud-Vivien, and Nicolas Flammarion. Gradient flow dynamics of shallow relu networks for square loss and orthogonal inputs. Advances in Neural Information Processing System..."
+  },
+  {
+    "ref_no": 28,
+    "title": "Early neuron alignment in two-layer relu networks with small initialization",
+    "ids": {
+      "arxiv": "2307.12851",
+      "year": "2023"
+    },
+    "graph_id": "10.48550_arxiv.2307.12851",
+    "raw_text": "Hancheng Min, René Vidal, and Enrique Mallada. Early neuron alignment in two-layer relu networks with small initialization. arXiv preprint arXiv:2307.12851, 2023."
+  },
+  {
+    "ref_no": 29,
+    "title": "Sgd finds then tunes features in two-layer neural networks with near-optimal sample complexity: A case study in the xor problem",
+    "ids": {
+      "arxiv": "2309.15111",
+      "year": "2023"
+    },
+    "graph_id": "10.48550_arxiv.2309.15111",
+    "raw_text": "Margalit Glasgow. Sgd finds then tunes features in two-layer neural networks with near-optimal sample complexity: A case study in the xor problem. arXiv preprint arXiv:2309.15111, 2023."
+  },
+  {
+    "ref_no": 30,
+    "title": "Understanding multi-phase optimization dynamics and rich nonlinear behaviors of relu networks",
+    "ids": {},
+    "graph_id": "",
+    "raw_text": "Mingze Wang and Chao Ma. Understanding multi-phase optimization dynamics and rich nonlinear behaviors of relu networks. Advances in Neural Information Processing Systems, 36,"
+  },
+  {
+    "ref_no": 31,
+    "title": "Transformers learn through gradual rank increase",
+    "ids": {
+      "year": "2023"
+    },
+    "graph_id": "",
+    "raw_text": "Enric Boix-Adsera, Etai Littwin, Emmanuel Abbe, Samy Bengio, and Joshua Susskind. Transformers learn through gradual rank increase. Advances in Neural Information Processing Systems, 36:24519–24551, 2..."
+  },
+  {
+    "ref_no": 32,
+    "title": "Training dynamics of in-context learning in linear attention",
+    "ids": {
+      "arxiv": "2501.16265",
+      "year": "2025"
+    },
+    "graph_id": "10.48550_arxiv.2501.16265",
+    "raw_text": "Yedi Zhang, Aaditya K Singh, Peter E Latham, and Andrew Saxe. Training dynamics of in-context learning in linear attention. arXiv preprint arXiv:2501.16265, 2025."
+  },
+  {
+    "ref_no": 33,
+    "title": "The staircase property: How hierarchical structure can guide deep learning",
+    "ids": {
+      "year": "2021"
+    },
+    "graph_id": "",
+    "raw_text": "Emmanuel Abbe, Enric Boix-Adsera, Matthew S Brennan, Guy Bresler, and Dheeraj Nagaraj. The staircase property: How hierarchical structure can guide deep learning. Advances in Neural Information Proces..."
+  },
+  {
+    "ref_no": 34,
+    "title": "The merged-staircase property: a necessary and nearly sufficient condition for sgd learning of sparse functions on two-layer neural networks",
+    "ids": {},
+    "graph_id": "",
+    "raw_text": "Emmanuel Abbe, Enric Boix Adsera, and Theodor Misiakiewicz. The merged-staircase property: a necessary and nearly sufficient condition for sgd learning of sparse functions on two-layer neural networks..."
+  },
+  {
+    "ref_no": 35,
+    "title": "Sgd learning on neural networks: leap complexity and saddle-to-saddle dynamics",
+    "ids": {
+      "year": "2023"
+    },
+    "graph_id": "",
+    "raw_text": "Emmanuel Abbe, Enric Boix Adsera, and Theodor Misiakiewicz. Sgd learning on neural networks: leap complexity and saddle-to-saddle dynamics. In The Thirty Sixth Annual Conference on Learning Theory, pa..."
+  },
+  {
+    "ref_no": 36,
+    "title": "On learning gaussian multi-index models with gradient flow",
+    "ids": {
+      "arxiv": "2310.19793",
+      "year": "2023"
+    },
+    "graph_id": "10.48550_arxiv.2310.19793",
+    "raw_text": "Alberto Bietti, Joan Bruna, and Loucas Pillaud-Vivien. On learning gaussian multi-index models with gradient flow. arXiv preprint arXiv:2310.19793, 2023."
+  },
+  {
+    "ref_no": 37,
+    "title": "Learning gaussian multi-index models with gradient flow: Time complexity and directional convergence",
+    "ids": {
+      "arxiv": "2411.08798",
+      "year": "2024"
+    },
+    "graph_id": "10.48550_arxiv.2411.08798",
+    "raw_text": "Berfin Simsek, Amire Bendjeddou, and Daniel Hsu. Learning gaussian multi-index models with gradient flow: Time complexity and directional convergence. arXiv preprint arXiv:2411.08798, 2024."
+  },
+  {
+    "ref_no": 38,
+    "title": "The benefits of reusing batches for gradient descent in two-layer networks: Breaking the curse of information and leap exponents",
+    "ids": {
+      "arxiv": "2402.03220",
+      "year": "2024"
+    },
+    "graph_id": "10.48550_arxiv.2402.03220",
+    "raw_text": "Yatin Dandi, Emanuele Troiani, Luca Arnaboldi, Luca Pesce, Lenka Zdeborová, and Florent Krzakala. The benefits of reusing batches for gradient descent in two-layer networks: Breaking the curse of info..."
+  },
+  {
+    "ref_no": 39,
+    "title": "Repetita iuvant: Data repetition allows sgd to learn high-dimensional multi-index functions",
+    "ids": {
+      "arxiv": "2405.15459",
+      "year": "2024"
+    },
+    "graph_id": "10.48550_arxiv.2405.15459",
+    "raw_text": "Luca Arnaboldi, Yatin Dandi, Florent Krzakala, Luca Pesce, and Ludovic Stephan. Repetita iuvant: Data repetition allows sgd to learn high-dimensional multi-index functions. arXiv preprint arXiv:2405.1..."
+  },
+  {
+    "ref_no": 40,
+    "title": "A mean field view of the landscape of two-layer neural networks",
+    "ids": {
+      "year": "2018"
+    },
+    "graph_id": "",
+    "raw_text": "Song Mei, Andrea Montanari, and Phan-Minh Nguyen. A mean field view of the landscape of two-layer neural networks. Proceedings of the National Academy of Sciences, 115(33): E7665–E7671, 2018."
+  },
+  {
+    "ref_no": 41,
+    "title": "On the global convergence of gradient descent for overparameterized models using optimal transport",
+    "ids": {
+      "year": "2018"
+    },
+    "graph_id": "",
+    "raw_text": "Lenaic Chizat and Francis Bach. On the global convergence of gradient descent for overparameterized models using optimal transport. Advances in neural information processing systems, 31, 2018."
+  },
+  {
+    "ref_no": 42,
+    "title": "Mean field analysis of neural networks: A law of large numbers",
+    "ids": {
+      "year": "2020"
+    },
+    "graph_id": "",
+    "raw_text": "Justin Sirignano and Konstantinos Spiliopoulos. Mean field analysis of neural networks: A law of large numbers. SIAM Journal on Applied Mathematics, 80(2):725–752, 2020."
+  },
+  {
+    "ref_no": 43,
+    "title": "Trainability and accuracy of artificial neural networks: An interacting particle system approach",
+    "ids": {
+      "year": "1935"
+    },
+    "graph_id": "",
+    "raw_text": "Grant Rotskoff and Eric Vanden-Eijnden. Trainability and accuracy of artificial neural networks: An interacting particle system approach. Communications on Pure and Applied Mathematics, 75(9):1889–193..."
+  },
+  {
+    "ref_no": 44,
+    "title": "On-line learning in soft committee machines",
+    "ids": {
+      "year": "1995"
+    },
+    "graph_id": "",
+    "raw_text": "David Saad and Sara A Solla. On-line learning in soft committee machines. Physical Review E, 52(4):4225, 1995."
+  },
+  {
+    "ref_no": 45,
+    "title": "Exact solution for on-line learning in multilayer neural networks",
+    "ids": {
+      "year": "1995"
+    },
+    "graph_id": "",
+    "raw_text": "David Saad and Sara A Solla. Exact solution for on-line learning in multilayer neural networks. Physical Review Letters, 74(21):4337, 1995."
+  },
+  {
+    "ref_no": 46,
+    "title": "Dynamics of on-line gradient descent learning for multilayer neural networks",
+    "ids": {
+      "year": "1995"
+    },
+    "graph_id": "",
+    "raw_text": "David Saad and Sara Solla. Dynamics of on-line gradient descent learning for multilayer neural networks. Advances in neural information processing systems, 8, 1995."
+  },
+  {
+    "ref_no": 47,
+    "title": "Dynamics of stochastic gradient descent for two-layer neural networks in the teacher-student setup",
+    "ids": {
+      "year": "2019"
+    },
+    "graph_id": "",
+    "raw_text": "Sebastian Goldt, Madhu Advani, Andrew M Saxe, Florent Krzakala, and Lenka Zdeborová. Dynamics of stochastic gradient descent for two-layer neural networks in the teacher-student setup. Advances in neu..."
+  },
+  {
+    "ref_no": 48,
+    "title": "Phase diagram of stochastic gradient descent in high-dimensional two-layer neural networks",
+    "ids": {
+      "year": "2022"
+    },
+    "graph_id": "",
+    "raw_text": "Rodrigo Veiga, Ludovic Stephan, Bruno Loureiro, Florent Krzakala, and Lenka Zdeborová. Phase diagram of stochastic gradient descent in high-dimensional two-layer neural networks. Advances in Neural In..."
+  },
+  {
+    "ref_no": 49,
+    "title": "Optimization and generalization of shallow neural networks with quadratic activation functions",
+    "ids": {
+      "year": "2020"
+    },
+    "graph_id": "",
+    "raw_text": "Stefano Sarao Mannelli, Eric Vanden-Eijnden, and Lenka Zdeborová. Optimization and generalization of shallow neural networks with quadratic activation functions. Advances in Neural Information Process..."
+  },
+  {
+    "ref_no": 50,
+    "title": "Learning curves of generic features maps for realistic datasets with a teacher-student model",
+    "ids": {},
+    "graph_id": "",
+    "raw_text": "Bruno Loureiro, Cedric Gerbelot, Hugo Cui, Sebastian Goldt, Florent Krzakala, Marc Mezard, and Lenka Zdeborová. Learning curves of generic features maps for realistic datasets with a teacher-student m..."
+  },
+  {
+    "ref_no": 51,
+    "title": "From highdimensional & mean-field dynamics to dimensionless odes: A unifying approach to sgd in two-layers networks",
+    "ids": {
+      "year": "2023"
+    },
+    "graph_id": "",
+    "raw_text": "Luca Arnaboldi, Ludovic Stephan, Florent Krzakala, and Bruno Loureiro. From highdimensional & mean-field dynamics to dimensionless odes: A unifying approach to sgd in two-layers networks. In The Thirt..."
+  },
+  {
+    "ref_no": 52,
+    "title": "Neural tangent kernel: Convergence and generalization in neural networks",
+    "ids": {},
+    "graph_id": "",
+    "raw_text": "Arthur Jacot, Franck Gabriel, and Clément Hongler. Neural tangent kernel: Convergence and generalization in neural networks. Advances in neural information processing systems, 31,"
+  },
+  {
+    "ref_no": 53,
+    "title": "On lazy training in differentiable programming",
+    "ids": {
+      "year": "2019"
+    },
+    "graph_id": "",
+    "raw_text": "Lenaic Chizat, Edouard Oyallon, and Francis Bach. On lazy training in differentiable programming. Advances in neural information processing systems, 32, 2019."
+  },
+  {
+    "ref_no": 54,
+    "title": "Feature learning in infinite-width neural networks",
+    "ids": {
+      "arxiv": "2011.14522",
+      "year": "2011"
+    },
+    "graph_id": "10.48550_arxiv.2011.14522",
+    "raw_text": "Greg Yang and Edward J Hu. Feature learning in infinite-width neural networks. arXiv preprint arXiv:2011.14522, 2020."
+  },
+  {
+    "ref_no": 55,
+    "title": "Noisy heteroclinic networks",
+    "ids": {},
+    "graph_id": "",
+    "raw_text": "Yuri Bakhtin. Noisy heteroclinic networks. Probability theory and related fields, 150:1–42,"
+  },
+  {
+    "ref_no": 56,
+    "title": "Gradient descent quantizes relu network features",
+    "ids": {
+      "arxiv": "1803.08367",
+      "year": "2018"
+    },
+    "graph_id": "10.48550_arxiv.1803.08367",
+    "raw_text": "Hartmut Maennel, Olivier Bousquet, and Sylvain Gelly. Gradient descent quantizes relu network features. arXiv preprint arXiv:1803.08367, 2018."
+  },
+  {
+    "ref_no": 57,
+    "title": "Neural networks as kernel learners: The silent alignment effect",
+    "ids": {
+      "year": "2021"
+    },
+    "graph_id": "",
+    "raw_text": "Alexander Atanasov, Blake Bordelon, and Cengiz Pehlevan. Neural networks as kernel learners: The silent alignment effect. In International Conference on Learning Representations, 2021."
+  },
+  {
+    "ref_no": 58,
+    "title": "Directional convergence near small initializations and saddles in two-homogeneous neural networks",
+    "ids": {
+      "arxiv": "2402.09226",
+      "year": "2024"
+    },
+    "graph_id": "10.48550_arxiv.2402.09226",
+    "raw_text": "Akshay Kumar and Jarvis Haupt. Directional convergence near small initializations and saddles in two-homogeneous neural networks. arXiv preprint arXiv:2402.09226, 2024."
+  },
+  {
+    "ref_no": 59,
+    "title": "Early directional convergence in deep homogeneous neural networks for small initializations",
+    "ids": {
+      "arxiv": "2403.08121",
+      "year": "2024"
+    },
+    "graph_id": "10.48550_arxiv.2403.08121",
+    "raw_text": "Akshay Kumar and Jarvis Haupt. Early directional convergence in deep homogeneous neural networks for small initializations. arXiv preprint arXiv:2403.08121, 2024."
+  },
+  {
+    "ref_no": 60,
+    "title": "Learning time-scales in two-layers neural networks",
+    "ids": {
+      "year": "2024"
+    },
+    "graph_id": "",
+    "raw_text": "Raphaël Berthier, Andrea Montanari, and Kangjie Zhou. Learning time-scales in two-layers neural networks. Foundations of Computational Mathematics, pages 1–84, 2024."
+  },
+  {
+    "ref_no": 61,
+    "title": "Get rich quick: exact solutions reveal how unbalanced initializations promote rapid feature learning",
+    "ids": {
+      "arxiv": "2406.06158",
+      "year": "2024"
+    },
+    "graph_id": "10.48550_arxiv.2406.06158",
+    "raw_text": "Daniel Kunin, Allan Raventós, Clémentine Dominé, Feng Chen, David Klindt, Andrew Saxe, and Surya Ganguli. Get rich quick: exact solutions reveal how unbalanced initializations promote rapid feature le..."
+  },
+  {
+    "ref_no": 62,
+    "title": "The implicit bias of depth: How incremental learning drives generalization",
+    "ids": {
+      "arxiv": "1909.12051",
+      "year": "1909"
+    },
+    "graph_id": "10.48550_arxiv.1909.12051",
+    "raw_text": "Daniel Gissin, Shai Shalev-Shwartz, and Amit Daniely. The implicit bias of depth: How incremental learning drives generalization. arXiv preprint arXiv:1909.12051, 2019."
+  },
+  {
+    "ref_no": 63,
+    "title": "Kernel and rich regimes in overparametrized models",
+    "ids": {
+      "year": "2020"
+    },
+    "graph_id": "",
+    "raw_text": "Blake Woodworth, Suriya Gunasekar, Jason D Lee, Edward Moroshko, Pedro Savarese, Itay Golan, Daniel Soudry, and Nathan Srebro. Kernel and rich regimes in overparametrized models. In Conference on Lear..."
+  },
+  {
+    "ref_no": 64,
+    "title": "Implicit bias of sgd for diagonal linear networks: a provable benefit of stochasticity",
+    "ids": {
+      "year": "2021"
+    },
+    "graph_id": "",
+    "raw_text": "Scott Pesme, Loucas Pillaud-Vivien, and Nicolas Flammarion. Implicit bias of sgd for diagonal linear networks: a provable benefit of stochasticity. Advances in Neural Information Processing Systems, 3..."
+  },
+  {
+    "ref_no": 65,
+    "title": "s) gd over diagonal linear networks: Implicit regularisation, large stepsizes and edge of stability",
+    "ids": {
+      "arxiv": "2302.08982",
+      "year": "2023"
+    },
+    "graph_id": "10.48550_arxiv.2302.08982",
+    "raw_text": "Mathieu Even, Scott Pesme, Suriya Gunasekar, and Nicolas Flammarion. (s) gd over diagonal linear networks: Implicit regularisation, large stepsizes and edge of stability. arXiv preprint arXiv:2302.089..."
+  },
+  {
+    "ref_no": 66,
+    "title": "Leveraging continuous time to understand momentum when training diagonal linear networks",
+    "ids": {
+      "year": "2024"
+    },
+    "graph_id": "",
+    "raw_text": "Hristo Papazov, Scott Pesme, and Nicolas Flammarion. Leveraging continuous time to understand momentum when training diagonal linear networks. In International Conference on Artificial Intelligence an..."
+  },
+  {
+    "ref_no": 67,
+    "title": "The lasso problem and uniqueness",
+    "ids": {
+      "year": "2013"
+    },
+    "graph_id": "",
+    "raw_text": "Ryan J Tibshirani. The lasso problem and uniqueness. Electronic Journal of Statistics, 2013."
+  },
+  {
+    "ref_no": 68,
+    "title": "Neural networks and principal component analysis: Learning from examples without local minima",
+    "ids": {
+      "year": "1989"
+    },
+    "graph_id": "",
+    "raw_text": "Pierre Baldi and Kurt Hornik. Neural networks and principal component analysis: Learning from examples without local minima. Neural networks, 2(1):53–58, 1989."
+  },
+  {
+    "ref_no": 69,
+    "title": "Effect of batch learning in multilayer neural networks",
+    "ids": {},
+    "graph_id": "",
+    "raw_text": "Kenji Fukumizu. Effect of batch learning in multilayer neural networks. Gen, 1(04):1E–03,"
+  },
+  {
+    "ref_no": 70,
+    "title": "Exact solutions to the nonlinear dynamics of learning in deep linear neural networks",
+    "ids": {
+      "arxiv": "1312.6120",
+      "year": "2013"
+    },
+    "graph_id": "10.48550_arxiv.1312.6120",
+    "raw_text": "Andrew M Saxe, James L McClelland, and Surya Ganguli. Exact solutions to the nonlinear dynamics of learning in deep linear neural networks. arXiv preprint arXiv:1312.6120, 2013."
+  },
+  {
+    "ref_no": 71,
+    "title": "An analytic theory of generalization dynamics and transfer learning in deep linear networks",
+    "ids": {
+      "arxiv": "1809.10374",
+      "year": "2018"
+    },
+    "graph_id": "10.48550_arxiv.1809.10374",
+    "raw_text": "Andrew K Lampinen and Surya Ganguli. An analytic theory of generalization dynamics and transfer learning in deep linear networks. arXiv preprint arXiv:1809.10374, 2018."
+  },
+  {
+    "ref_no": 72,
+    "title": "From lazy to rich: Exact learning dynamics in deep linear networks",
+    "ids": {
+      "arxiv": "2409.14623",
+      "year": "2024"
+    },
+    "graph_id": "10.48550_arxiv.2409.14623",
+    "raw_text": "Clémentine CJ Dominé, Nicolas Anguita, Alexandra M Proca, Lukas Braun, Daniel Kunin, Pedro AM Mediano, and Andrew M Saxe. From lazy to rich: Exact learning dynamics in deep linear networks. arXiv prep..."
+  },
+  {
+    "ref_no": 73,
+    "title": "Features are fate: a theory of transfer learning in high-dimensional regression",
+    "ids": {
+      "arxiv": "2410.08194",
+      "year": "2024"
+    },
+    "graph_id": "10.48550_arxiv.2410.08194",
+    "raw_text": "Javan Tahir, Surya Ganguli, and Grant M Rotskoff. Features are fate: a theory of transfer learning in high-dimensional regression. arXiv preprint arXiv:2410.08194, 2024."
+  },
+  {
+    "ref_no": 74,
+    "title": "Small random initialization is akin to spectral learning: Optimization and generalization guarantees for overparameterized low-rank matrix reconstruction",
+    "ids": {
+      "year": "2021"
+    },
+    "graph_id": "",
+    "raw_text": "Dominik Stöger and Mahdi Soltanolkotabi. Small random initialization is akin to spectral learning: Optimization and generalization guarantees for overparameterized low-rank matrix reconstruction. Adva..."
+  },
+  {
+    "ref_no": 75,
+    "title": "Implicit regularization in deep matrix factorization",
+    "ids": {
+      "year": "2019"
+    },
+    "graph_id": "",
+    "raw_text": "Sanjeev Arora, Nadav Cohen, Wei Hu, and Yuping Luo. Implicit regularization in deep matrix factorization. Advances in Neural Information Processing Systems, 32, 2019."
+  },
+  {
+    "ref_no": 76,
+    "title": "Algorithmic regularization in learning deep homogeneous models: Layers are automatically balanced",
+    "ids": {
+      "year": "2018"
+    },
+    "graph_id": "",
+    "raw_text": "Simon S Du, Wei Hu, and Jason D Lee. Algorithmic regularization in learning deep homogeneous models: Layers are automatically balanced. Advances in Neural Information Processing Systems, 31, 2018."
+  },
+  {
+    "ref_no": 77,
+    "title": "Neural mechanics: Symmetry and broken conservation laws in deep learning dynamics",
+    "ids": {
+      "arxiv": "2012.04728",
+      "year": "2012"
+    },
+    "graph_id": "10.48550_arxiv.2012.04728",
+    "raw_text": "Daniel Kunin, Javier Sagastuy-Brena, Surya Ganguli, Daniel LK Yamins, and Hidenori Tanaka. Neural mechanics: Symmetry and broken conservation laws in deep learning dynamics. arXiv preprint arXiv:2012...."
+  },
+  {
+    "ref_no": 78,
+    "title": "Reduced-rank regression for the multivariate linear model",
+    "ids": {
+      "year": "1975"
+    },
+    "graph_id": "",
+    "raw_text": "Alan Julian Izenman. Reduced-rank regression for the multivariate linear model. Journal of multivariate analysis, 5(2):248–264, 1975."
+  },
+  {
+    "ref_no": 79,
+    "title": "Language models are few-shot learners",
+    "ids": {
+      "year": "1901"
+    },
+    "graph_id": "",
+    "raw_text": "Tom Brown, Benjamin Mann, Nick Ryder, Melanie Subbiah, Jared D Kaplan, Prafulla Dhariwal, Arvind Neelakantan, Pranav Shyam, Girish Sastry, Amanda Askell, et al. Language models are few-shot learners. ..."
+  },
+  {
+    "ref_no": 80,
+    "title": "What can transformers learn in-context? a case study of simple function classes",
+    "ids": {
+      "year": "2022"
+    },
+    "graph_id": "",
+    "raw_text": "Shivam Garg, Dimitris Tsipras, Percy S Liang, and Gregory Valiant. What can transformers learn in-context? a case study of simple function classes. Advances in Neural Information Processing Systems, 3..."
+  },
+  {
+    "ref_no": 81,
+    "title": "Transformers as algorithms: Generalization and stability in in-context learning",
+    "ids": {
+      "year": "2023"
+    },
+    "graph_id": "",
+    "raw_text": "Yingcong Li, Muhammed Emrullah Ildiz, Dimitris Papailiopoulos, and Samet Oymak. Transformers as algorithms: Generalization and stability in in-context learning. In International conference on machine ..."
+  },
+  {
+    "ref_no": 82,
+    "title": "Pretraining task diversity and the emergence of non-bayesian in-context learning for regression",
+    "ids": {
+      "year": "2023"
+    },
+    "graph_id": "",
+    "raw_text": "Allan Raventós, Mansheej Paul, Feng Chen, and Surya Ganguli. Pretraining task diversity and the emergence of non-bayesian in-context learning for regression. Advances in neural information processing ..."
+  },
+  {
+    "ref_no": 83,
+    "title": "What learning algorithm is in-context learning? investigations with linear models",
+    "ids": {
+      "arxiv": "2211.15661",
+      "year": "2022"
+    },
+    "graph_id": "10.48550_arxiv.2211.15661",
+    "raw_text": "Ekin Akyürek, Dale Schuurmans, Jacob Andreas, Tengyu Ma, and Denny Zhou. What learning algorithm is in-context learning? investigations with linear models. arXiv preprint arXiv:2211.15661, 2022."
+  },
+  {
+    "ref_no": 84,
+    "title": "",
+    "ids": {
+      "arxiv": "2310.08391",
+      "year": "2023"
+    },
+    "graph_id": "10.48550_arxiv.2310.08391",
+    "raw_text": "Jingfeng Wu, Difan Zou, Zixiang Chen, Vladimir Braverman, Quanquan Gu, and Peter L Bartlett. How many pretraining tasks are needed for in-context learning of linear regression? arXiv preprint arXiv:23..."
+  },
+  {
+    "ref_no": 85,
+    "title": "edge of stability",
+    "ids": {
+      "arxiv": "2212.07469",
+      "year": "2022"
+    },
+    "graph_id": "10.48550_arxiv.2212.07469",
+    "raw_text": "Kwangjun Ahn, Sébastien Bubeck, Sinho Chewi, Yin Tat Lee, Felipe Suarez, and Yi Zhang. Learning threshold neurons via the\" edge of stability\". arXiv preprint arXiv:2212.07469, 2022."
+  },
+  {
+    "ref_no": 86,
+    "title": "Transformers learn in-context by gradient descent",
+    "ids": {
+      "year": "2023"
+    },
+    "graph_id": "",
+    "raw_text": "Johannes Von Oswald, Eyvind Niklasson, Ettore Randazzo, João Sacramento, Alexander Mordvintsev, Andrey Zhmoginov, and Max Vladymyrov. Transformers learn in-context by gradient descent. In Internationa..."
+  },
+  {
+    "ref_no": 87,
+    "title": "Transformers learn to implement preconditioned gradient descent for in-context learning",
+    "ids": {
+      "year": "2023"
+    },
+    "graph_id": "",
+    "raw_text": "Kwangjun Ahn, Xiang Cheng, Hadi Daneshmand, and Suvrit Sra. Transformers learn to implement preconditioned gradient descent for in-context learning. Advances in Neural Information Processing Systems, ..."
+  },
+  {
+    "ref_no": 88,
+    "title": "Trained transformers learn linear models in-context",
+    "ids": {
+      "year": "2024"
+    },
+    "graph_id": "",
+    "raw_text": "Ruiqi Zhang, Spencer Frei, and Peter L Bartlett. Trained transformers learn linear models in-context. Journal of Machine Learning Research, 25(49):1–55, 2024."
+  },
+  {
+    "ref_no": 89,
+    "title": "Grokking: Generalization beyond overfitting on small algorithmic datasets",
+    "ids": {
+      "arxiv": "2201.02177",
+      "year": "2022"
+    },
+    "graph_id": "10.48550_arxiv.2201.02177",
+    "raw_text": "Alethea Power, Yuri Burda, Harri Edwards, Igor Babuschkin, and Vedant Misra. Grokking: Generalization beyond overfitting on small algorithmic datasets. arXiv preprint arXiv:2201.02177, 2022."
+  },
+  {
+    "ref_no": 90,
+    "title": "Grokking modular arithmetic",
+    "ids": {
+      "arxiv": "2301.02679",
+      "year": "2023"
+    },
+    "graph_id": "10.48550_arxiv.2301.02679",
+    "raw_text": "Andrey Gromov. Grokking modular arithmetic. arXiv preprint arXiv:2301.02679, 2023."
+  },
+  {
+    "ref_no": 91,
+    "title": "The clock and the pizza: Two stories in mechanistic explanation of neural networks",
+    "ids": {
+      "year": "2024"
+    },
+    "graph_id": "",
+    "raw_text": "Ziqian Zhong, Ziming Liu, Max Tegmark, and Jacob Andreas. The clock and the pizza: Two stories in mechanistic explanation of neural networks. Advances in Neural Information Processing Systems, 36, 202..."
+  },
+  {
+    "ref_no": 92,
+    "title": "Pre-trained large language models use fourier features to compute addition",
+    "ids": {
+      "arxiv": "2406.03445",
+      "year": "2024"
+    },
+    "graph_id": "10.48550_arxiv.2406.03445",
+    "raw_text": "Tianyi Zhou, Deqing Fu, Vatsal Sharan, and Robin Jia. Pre-trained large language models use fourier features to compute addition. arXiv preprint arXiv:2406.03445, 2024."
+  },
+  {
+    "ref_no": 93,
+    "title": "Language models use trigonometry to do addition",
+    "ids": {
+      "arxiv": "2502.00873",
+      "year": "2025"
+    },
+    "graph_id": "10.48550_arxiv.2502.00873",
+    "raw_text": "Subhash Kantamneni and Max Tegmark. Language models use trigonometry to do addition. arXiv preprint arXiv:2502.00873, 2025."
+  },
+  {
+    "ref_no": 94,
+    "title": "Emergence in non-neural models: grokking modular arithmetic via average gradient outer product",
+    "ids": {
+      "arxiv": "2407.20199",
+      "year": "2024"
+    },
+    "graph_id": "10.48550_arxiv.2407.20199",
+    "raw_text": "Neil Mallinar, Daniel Beaglehole, Libin Zhu, Adityanarayanan Radhakrishnan, Parthe Pandit, and Mikhail Belkin. Emergence in non-neural models: grokking modular arithmetic via average gradient outer pr..."
+  },
+  {
+    "ref_no": 95,
+    "title": "Harmonics of learning: Universal fourier features emerge in invariant networks",
+    "ids": {
+      "year": "2024"
+    },
+    "graph_id": "",
+    "raw_text": "Giovanni Luca Marchetti, Christopher J Hillar, Danica Kragic, and Sophia Sanborn. Harmonics of learning: Universal fourier features emerge in invariant networks. In The Thirty Seventh Annual Conferenc..."
+  },
+  {
+    "ref_no": 96,
+    "title": "Feature emergence via margin maximization: case studies in algebraic tasks",
+    "ids": {
+      "year": "2023"
+    },
+    "graph_id": "",
+    "raw_text": "Depen Morwani, Benjamin L Edelman, Costin-Andrei Oncescu, Rosie Zhao, and Sham M Kakade. Feature emergence via margin maximization: case studies in algebraic tasks. In The Twelfth International Confer..."
+  },
+  {
+    "ref_no": 97,
+    "title": "Composing global optimizers to reasoning tasks via algebraic objects in neural nets",
+    "ids": {
+      "arxiv": "2410.01779",
+      "year": "2024"
+    },
+    "graph_id": "10.48550_arxiv.2410.01779",
+    "raw_text": "Yuandong Tian. Composing global optimizers to reasoning tasks via algebraic objects in neural nets. arXiv preprint arXiv:2410.01779, 2024."
+  },
+  {
+    "ref_no": 98,
+    "title": "Data-dependence of plateau phenomenon in learning with neural network—statistical mechanical analysis",
+    "ids": {
+      "year": "2019"
+    },
+    "graph_id": "",
+    "raw_text": "Yuki Yoshida and Masato Okada. Data-dependence of plateau phenomenon in learning with neural network—statistical mechanical analysis. Advances in Neural Information Processing Systems, 32, 2019."
+  },
+  {
+    "ref_no": 99,
+    "title": "The quantization model of neural scaling",
+    "ids": {
+      "year": "2023"
+    },
+    "graph_id": "",
+    "raw_text": "Eric Michaud, Ziming Liu, Uzay Girit, and Max Tegmark. The quantization model of neural scaling. Advances in Neural Information Processing Systems, 36:28699–28722, 2023."
+  },
+  {
+    "ref_no": 100,
+    "title": "An exactly solvable model for emergence and scaling laws in the multitask sparse parity problem",
+    "ids": {
+      "arxiv": "2404.17563",
+      "year": "2024"
+    },
+    "graph_id": "10.48550_arxiv.2404.17563",
+    "raw_text": "Yoonsoo Nam, Nayara Fonseca, Seok Hyeong Lee, Chris Mingard, and Ard A Louis. An exactly solvable model for emergence and scaling laws in the multitask sparse parity problem. arXiv preprint arXiv:2404..."
+  },
+  {
+    "ref_no": 101,
+    "title": "Emergence and scaling laws in sgd learning of shallow neural networks",
+    "ids": {
+      "arxiv": "2504.19983",
+      "year": "2025"
+    },
+    "graph_id": "10.48550_arxiv.2504.19983",
+    "raw_text": "Yunwei Ren, Eshaan Nichani, Denny Wu, and Jason D Lee. Emergence and scaling laws in sgd learning of shallow neural networks. arXiv preprint arXiv:2504.19983, 2025."
+  },
+  {
+    "ref_no": 102,
+    "title": "Learning quadratic neural networks in high dimensions: Sgd dynamics and scaling laws",
+    "ids": {
+      "arxiv": "2508.03688",
+      "year": "2025"
+    },
+    "graph_id": "10.48550_arxiv.2508.03688",
+    "raw_text": "Gérard Ben Arous, Murat A Erdogdu, N Mert Vural, and Denny Wu. Learning quadratic neural networks in high dimensions: Sgd dynamics and scaling laws. arXiv preprint arXiv:2508.03688, 2025."
+  },
+  {
+    "ref_no": 103,
+    "title": "The neural race reduction: Dynamics of abstraction in gated networks",
+    "ids": {
+      "year": "2022"
+    },
+    "graph_id": "",
+    "raw_text": "Andrew Saxe, Shagun Sodhani, and Sam Jay Lewallen. The neural race reduction: Dynamics of abstraction in gated networks. In International Conference on Machine Learning, pages 19287–19309. PMLR, 2022."
+  },
+  {
+    "ref_no": 104,
+    "title": "Make haste slowly: A theory of emergent structured mixed selectivity in feature learning relu networks",
+    "ids": {
+      "arxiv": "2503.06181",
+      "year": "2025"
+    },
+    "graph_id": "10.48550_arxiv.2503.06181",
+    "raw_text": "Devon Jarvis, Richard Klein, Benjamin Rosman, and Andrew M Saxe. Make haste slowly: A theory of emergent structured mixed selectivity in feature learning relu networks. arXiv preprint arXiv:2503.06181..."
+  },
+  {
+    "ref_no": 105,
+    "title": "Transformer Circuits Thread",
+    "ids": {
+      "arxiv": "2502.15952",
+      "url": "https://transformer-circuits.pub/2025/attribution-graphs/methods.html.[106]",
+      "year": "2025"
+    },
+    "graph_id": "10.48550_arxiv.2502.15952",
+    "raw_text": "Emmanuel Ameisen, Jack Lindsey, Adam Pearce, Wes Gurnee, Nicholas L. Turner, Brian Chen, Craig Citro, David Abrahams, Shan Carter, Basil Hosmer, Jonathan Marcus, Michael Sklar, Adly Templeton, Trenton..."
+  },
+  {
+    "ref_no": 107,
+    "title": "Tensor programs v: Tuning large neural networks via zero-shot hyperparameter transfer",
+    "ids": {
+      "arxiv": "2203.03466"
+    },
+    "graph_id": "10.48550_arxiv.2203.03466",
+    "raw_text": "Greg Yang, Edward J Hu, Igor Babuschkin, Szymon Sidor, Xiaodong Liu, David Farhi, Nick Ryder, Jakub Pachocki, Weizhu Chen, and Jianfeng Gao. Tensor programs v: Tuning large neural networks via zero-sh..."
+  },
+  {
+    "ref_no": 108,
+    "title": "Self-consistent dynamical field theory of kernel evolution in wide neural networks",
+    "ids": {
+      "year": "2022"
+    },
+    "graph_id": "",
+    "raw_text": "Blake Bordelon and Cengiz Pehlevan. Self-consistent dynamical field theory of kernel evolution in wide neural networks. Advances in Neural Information Processing Systems, 35: 32240–32256, 2022."
+  },
+  {
+    "ref_no": 109,
+    "title": "The committee machine: Computational to statistical gaps in learning a two-layers neural network",
+    "ids": {
+      "year": "2018"
+    },
+    "graph_id": "",
+    "raw_text": "Benjamin Aubin, Antoine Maillard, Florent Krzakala, Nicolas Macris, Lenka Zdeborová, et al. The committee machine: Computational to statistical gaps in learning a two-layers neural network. Advances i..."
+  },
+  {
+    "ref_no": 110,
+    "title": "Optimal errors and phase transitions in high-dimensional generalized linear models",
+    "ids": {
+      "year": "2019"
+    },
+    "graph_id": "",
+    "raw_text": "Jean Barbier, Florent Krzakala, Nicolas Macris, Léo Miolane, and Lenka Zdeborová. Optimal errors and phase transitions in high-dimensional generalized linear models. Proceedings of the National Academ..."
+  },
+  {
+    "ref_no": 111,
+    "title": "Neural networks can learn representations with gradient descent",
+    "ids": {},
+    "graph_id": "",
+    "raw_text": "Alexandru Damian, Jason Lee, and Mahdi Soltanolkotabi. Neural networks can learn representations with gradient descent. In Conference on Learning Theory, pages 5413–5452. PMLR,"
+  },
+  {
+    "ref_no": 112,
+    "title": "Fundamental computational limits of weak learnability in high-dimensional multi-index models",
+    "ids": {
+      "arxiv": "2405.15480",
+      "year": "2024"
+    },
+    "graph_id": "10.48550_arxiv.2405.15480",
+    "raw_text": "Emanuele Troiani, Yatin Dandi, Leonardo Defilippis, Lenka Zdeborová, Bruno Loureiro, and Florent Krzakala. Fundamental computational limits of weak learnability in high-dimensional multi-index models...."
+  },
+  {
+    "ref_no": 113,
+    "title": "Optimal spectral transitions in high-dimensional multi-index models",
+    "ids": {
+      "arxiv": "2502.02545",
+      "year": "2025"
+    },
+    "graph_id": "10.48550_arxiv.2502.02545",
+    "raw_text": "Leonardo Defilippis, Yatin Dandi, Pierre Mergny, Florent Krzakala, and Bruno Loureiro. Optimal spectral transitions in high-dimensional multi-index models. arXiv preprint arXiv:2502.02545, 2025."
+  },
+  {
+    "ref_no": 114,
+    "title": "The computational advantage of depth: Learning high-dimensional hierarchical functions with gradient descent",
+    "ids": {
+      "arxiv": "2502.13961",
+      "year": "2025"
+    },
+    "graph_id": "10.48550_arxiv.2502.13961",
+    "raw_text": "Yatin Dandi, Luca Pesce, Lenka Zdeborová, and Florent Krzakala. The computational advantage of depth: Learning high-dimensional hierarchical functions with gradient descent. arXiv preprint arXiv:2502...."
+  },
+  {
+    "ref_no": 115,
+    "title": "The large learning rate phase of deep learning: the catapult mechanism",
+    "ids": {
+      "arxiv": "2003.02218",
+      "year": "2003"
+    },
+    "graph_id": "10.48550_arxiv.2003.02218",
+    "raw_text": "Aitor Lewkowycz, Yasaman Bahri, Ethan Dyer, Jascha Sohl-Dickstein, and Guy Gur-Ari. The large learning rate phase of deep learning: the catapult mechanism. arXiv preprint arXiv:2003.02218, 2020."
+  },
+  {
+    "ref_no": 116,
+    "title": "Catapults in sgd: spikes in the training loss and their impact on generalization through feature learning",
+    "ids": {
+      "arxiv": "2306.04815",
+      "year": "2023"
+    },
+    "graph_id": "10.48550_arxiv.2306.04815",
+    "raw_text": "Libin Zhu, Chaoyue Liu, Adityanarayanan Radhakrishnan, and Mikhail Belkin. Catapults in sgd: spikes in the training loss and their impact on generalization through feature learning. arXiv preprint arX..."
+  },
+  {
+    "ref_no": 117,
+    "title": "High-dimensional asymptotics of feature learning: How one gradient step improves the representation",
+    "ids": {
+      "year": "2022"
+    },
+    "graph_id": "",
+    "raw_text": "Jimmy Ba, Murat A Erdogdu, Taiji Suzuki, Zhichao Wang, Denny Wu, and Greg Yang. High-dimensional asymptotics of feature learning: How one gradient step improves the representation. Advances in Neural ..."
+  },
+  {
+    "ref_no": 118,
+    "title": "Asymptotics of feature learning in two-layer networks after one gradient-step",
+    "ids": {
+      "arxiv": "2402.04980",
+      "year": "2024"
+    },
+    "graph_id": "10.48550_arxiv.2402.04980",
+    "raw_text": "Hugo Cui, Luca Pesce, Yatin Dandi, Florent Krzakala, Yue M Lu, Lenka Zdeborová, and Bruno Loureiro. Asymptotics of feature learning in two-layer networks after one gradient-step. arXiv preprint arXiv:..."
+  },
+  {
+    "ref_no": 119,
+    "title": "A random matrix theory perspective on the spectrum of learned features and asymptotic generalization capabilities",
+    "ids": {
+      "arxiv": "2410.18938",
+      "year": "2024"
+    },
+    "graph_id": "10.48550_arxiv.2410.18938",
+    "raw_text": "Yatin Dandi, Luca Pesce, Hugo Cui, Florent Krzakala, Yue M Lu, and Bruno Loureiro. A random matrix theory perspective on the spectrum of learned features and asymptotic generalization capabilities. ar..."
+  },
+  {
+    "ref_no": 120,
+    "title": "How two-layer neural networks learn, one (giant) step at a time",
+    "ids": {
+      "year": "2024"
+    },
+    "graph_id": "",
+    "raw_text": "Yatin Dandi, Florent Krzakala, Bruno Loureiro, Luca Pesce, and Ludovic Stephan. How two-layer neural networks learn, one (giant) step at a time. Journal of Machine Learning Research, 25(349):1–65, 202..."
+  },
+  {
+    "ref_no": 121,
+    "title": "Learning a neuron by a shallow relu network: Dynamics and implicit bias for correlated inputs",
+    "ids": {
+      "year": "2023"
+    },
+    "graph_id": "",
+    "raw_text": "Dmitry Chistikov, Matthias Englert, and Ranko Lazic. Learning a neuron by a shallow relu network: Dynamics and implicit bias for correlated inputs. Advances in Neural Information Processing Systems, 3..."
+  },
+  {
+    "ref_no": 122,
+    "title": "Saddle-to-saddle dynamics in deep relu networks: Low-rank bias in the first saddle escape",
+    "ids": {
+      "arxiv": "2505.21722",
+      "year": "2025"
+    },
+    "graph_id": "10.48550_arxiv.2505.21722",
+    "raw_text": "Ioannis Bantzis, James B Simon, and Arthur Jacot. Saddle-to-saddle dynamics in deep relu networks: Low-rank bias in the first saddle escape. arXiv preprint arXiv:2505.21722, 2025."
+  },
+  {
+    "ref_no": 123,
+    "title": "Optimization and dynamical systems",
+    "ids": {
+      "year": "2012"
+    },
+    "graph_id": "",
+    "raw_text": "Uwe Helmke and John B Moore. Optimization and dynamical systems. Springer Science & Business Media, 2012."
+  },
+  {
+    "ref_no": 124,
+    "title": "catapult",
+    "ids": {
+      "year": "1970"
+    },
+    "graph_id": "",
+    "raw_text": "Chandler Davis and William Morton Kahan. The rotation of eigenvectors by a perturbation. iii. SIAM Journal on Numerical Analysis, 7(1):1–46, 1970. A Additional Related Work A.1 What is a feature? Here..."
+  },
+  {
+    "ref_no": 10,
+    "title": "* fi(x; θi), y(x) − X j∈A fj(x; θj) +# −∇θiEx",
+    "ids": {},
+    "graph_id": "",
+    "raw_text": "where r(x; Θ) = y(x) −P i fi(x; θi) is a residual that depends on all neurons. Given a partition of neurons into two sets, an active A and dormant D set, then the gradient for a dormant neuron i ∈D ca..."
+  },
+  {
+    "ref_no": 12,
+    "title": "To formally prove that AGF converges to gradient flow in the limit of vanishing initialization one might consider using tools like Hartman–Grobman theorem to make this step rigorous",
+    "ids": {},
+    "graph_id": "",
+    "raw_text": "This observation motivates the utility and our AGF ansatz for gradient flow. To formally prove that AGF converges to gradient flow in the limit of vanishing initialization one might consider using too..."
+  },
+  {
+    "ref_no": 13,
+    "title": "When σ(·) is a homogeneous function of degree k, then the utility is a homogeneous function of degree κ = k + 1",
+    "ids": {},
+    "graph_id": "",
+    "raw_text": "where P⊥ θi = \u0010 Im −θiθ⊺ i ∥θi∥2 \u0011 is a projection matrix. When σ(·) is a homogeneous function of degree k, then the utility is a homogeneous function of degree κ = k + 1. Using Euler’s homogeneous fu..."
+  },
+  {
+    "ref_no": 14,
+    "title": "B.2 Deriving the jump time To compute τi∗, we use Equation (2) to obtain the time evolution of the norms of the dormant neurons",
+    "ids": {},
+    "graph_id": "",
+    "raw_text": "In general, this ODE is coupled with the dynamics for both the direction and norm, except when κ = 2 for which the dependency on the norm disappears. B.2 Deriving the jump time To compute τi∗, we use ..."
+  },
+  {
+    "ref_no": 15,
+    "title": "",
+    "ids": {},
+    "graph_id": "",
+    "raw_text": "where we have defined the accumulated utility as the path integral Si(t) = R t 0 κ ¯Ui(s)ds of the normalized utility. We find τi as the earliest time at which neuron i satisfies ∥θi(τi)∥> 1: τi = inf..."
+  },
+  {
+    "ref_no": 16,
+    "title": "Lower bound on jump time",
+    "ids": {},
+    "graph_id": "",
+    "raw_text": "Note that the expression for ci is continuous at κ = 2. Lower bound on jump time. When applying this framework to analyze dynamics, computing the exact jump time can be challenging due to the complexi..."
+  },
+  {
+    "ref_no": 17,
+    "title": "Here, we motivate and discuss this phenomenon",
+    "ids": {},
+    "graph_id": "",
+    "raw_text": "B.3 Active neurons can become dormant again In the cost minimization phase of AGF, active neurons can become dormant. Here, we motivate and discuss this phenomenon. Intuitively, this happens when the ..."
+  },
+  {
+    "ref_no": 18,
+    "title": "",
+    "ids": {},
+    "graph_id": "",
+    "raw_text": "which holds with equality when either ∥wi(t)∥2 = 0 for c ≥0 or ∥ai(t)∥2 = 0 for c < 0."
+  }
+]

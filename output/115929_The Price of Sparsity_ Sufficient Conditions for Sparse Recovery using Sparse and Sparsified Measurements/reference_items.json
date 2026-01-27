@@ -1,0 +1,174 @@
+[
+  {
+    "ref_no": 1,
+    "title": "Information theoretic bounds for compressed sensing",
+    "ids": {
+      "year": "2010"
+    },
+    "graph_id": "",
+    "raw_text": "Shuchin Aeron, Venkatesh Saligrama, and Manqi Zhao. Information theoretic bounds for compressed sensing. IEEE Transactions on Information Theory, 56(10):5111–5130, 2010."
+  },
+  {
+    "ref_no": 2,
+    "title": "Robust uncertainty principles: exact signal reconstruction from highly incomplete frequency information",
+    "ids": {
+      "year": "2006"
+    },
+    "graph_id": "",
+    "raw_text": "Emmanuel J Candès, Justin Romberg, and Terence Tao. Robust uncertainty principles: exact signal reconstruction from highly incomplete frequency information. IEEE Transactions on information theory, 52..."
+  },
+  {
+    "ref_no": 3,
+    "title": "Atomic decomposition by basis pursuit",
+    "ids": {
+      "year": "2001"
+    },
+    "graph_id": "",
+    "raw_text": "Scott Shaobing Chen, David L Donoho, and Michael A Saunders. Atomic decomposition by basis pursuit. SIAM review, 43(1):129–159, 2001."
+  },
+  {
+    "ref_no": 4,
+    "title": "Finding the frequent items in streams of data",
+    "ids": {
+      "year": "2009"
+    },
+    "graph_id": "",
+    "raw_text": "Graham Cormode and Marios Hadjieleftheriou. Finding the frequent items in streams of data. Communications of the ACM, 52(10):97–105, 2009."
+  },
+  {
+    "ref_no": 5,
+    "title": "Compressed sensing",
+    "ids": {
+      "year": "2006"
+    },
+    "graph_id": "",
+    "raw_text": "David L Donoho. Compressed sensing. IEEE Transactions on information theory, 52(4):1289– 1306, 2006."
+  },
+  {
+    "ref_no": 6,
+    "title": "Combinatorial group testing and its applications, volume 12",
+    "ids": {
+      "year": "1999"
+    },
+    "graph_id": "",
+    "raw_text": "Ding-Zhu Du and Frank Kwang-ming Hwang. Combinatorial group testing and its applications, volume 12. World Scientific, 1999."
+  },
+  {
+    "ref_no": 7,
+    "title": "An invitation to compressive sensing",
+    "ids": {
+      "year": "2013"
+    },
+    "graph_id": "",
+    "raw_text": "Simon Foucart, Holger Rauhut, Simon Foucart, and Holger Rauhut. An invitation to compressive sensing. Springer, 2013."
+  },
+  {
+    "ref_no": 8,
+    "title": "Sparse high-dimensional linear regression",
+    "ids": {
+      "year": "2022"
+    },
+    "graph_id": "",
+    "raw_text": "David Gamarnik and Ilias Zadik. Sparse high-dimensional linear regression. estimating squared error and a phase transition. The Annals of Statistics, 50(2):880–903, 2022."
+  },
+  {
+    "ref_no": 9,
+    "title": "Sparse recovery using sparse matrices",
+    "ids": {
+      "year": "2010"
+    },
+    "graph_id": "",
+    "raw_text": "Anna Gilbert and Piotr Indyk. Sparse recovery using sparse matrices. Proceedings of the IEEE, 98(6):937–947, 2010."
+  },
+  {
+    "ref_no": 10,
+    "title": "The elements of statistical learning: data mining, inference, and prediction",
+    "ids": {
+      "year": "2009"
+    },
+    "graph_id": "",
+    "raw_text": "Trevor Hastie. The elements of statistical learning: data mining, inference, and prediction, 2009."
+  },
+  {
+    "ref_no": 11,
+    "title": "Sketching, streaming and sublinear-space algorithms",
+    "ids": {
+      "year": "2007"
+    },
+    "graph_id": "",
+    "raw_text": "Piotr Indyk. Sketching, streaming and sublinear-space algorithms. Graduate course notes, available at, 33:617, 2007."
+  },
+  {
+    "ref_no": 12,
+    "title": "High-dimensional regression with noisy and missing data: Provable guarantees with non-convexity",
+    "ids": {
+      "year": "2011"
+    },
+    "graph_id": "",
+    "raw_text": "Po-Ling Loh and Martin J Wainwright. High-dimensional regression with noisy and missing data: Provable guarantees with non-convexity. Advances in neural information processing systems, 24, 2011."
+  },
+  {
+    "ref_no": 13,
+    "title": "Subset selection in regression",
+    "ids": {
+      "year": "2002"
+    },
+    "graph_id": "",
+    "raw_text": "Alan Miller. Subset selection in regression. chapman and hall/CRC, 2002."
+  },
+  {
+    "ref_no": 14,
+    "title": "Data streams: algorithms and applications",
+    "ids": {
+      "year": "2005"
+    },
+    "graph_id": "",
+    "raw_text": "Shanmugavelayutham Muthukrishnan et al. Data streams: algorithms and applications. Foundations and Trends® in Theoretical Computer Science, 1(2):117–236, 2005."
+  },
+  {
+    "ref_no": 15,
+    "title": "High-dimensional subset recovery in noise: sparsified measurements without loss of statistical efficiency",
+    "ids": {
+      "arxiv": "0805.3005",
+      "year": "2008"
+    },
+    "graph_id": "10.48550_arxiv.0805.3005",
+    "raw_text": "Dapo Omidiran and Martin J Wainwright. High-dimensional subset recovery in noise: sparsified measurements without loss of statistical efficiency. arXiv preprint arXiv:0805.3005, 2008."
+  },
+  {
+    "ref_no": 16,
+    "title": "The all-or-nothing phenomenon in sparse linear regression",
+    "ids": {
+      "year": "2019"
+    },
+    "graph_id": "",
+    "raw_text": "Galen Reeves, Jiaming Xu, and Ilias Zadik. The all-or-nothing phenomenon in sparse linear regression. In Conference on Learning Theory, pages 2652–2663. PMLR, 2019."
+  },
+  {
+    "ref_no": 17,
+    "title": "Regression shrinkage and selection via the lasso",
+    "ids": {
+      "year": "1996"
+    },
+    "graph_id": "",
+    "raw_text": "Robert Tibshirani. Regression shrinkage and selection via the lasso. Journal of the Royal Statistical Society Series B: Statistical Methodology, 58(1):267–288, 1996."
+  },
+  {
+    "ref_no": 18,
+    "title": "Sharp thresholds for high-dimensional and noisy sparsity recovery using ℓ1-constrained quadratic programming (lasso",
+    "ids": {
+      "year": "2009"
+    },
+    "graph_id": "",
+    "raw_text": "Martin J Wainwright. Sharp thresholds for high-dimensional and noisy sparsity recovery using ℓ1-constrained quadratic programming (lasso). IEEE transactions on information theory, 55(5):2183–2202, 200..."
+  },
+  {
+    "ref_no": 19,
+    "title": "Information-theoretic limits on sparse signal recovery: dense versus sparse measurement matrices",
+    "ids": {
+      "year": "2010"
+    },
+    "graph_id": "",
+    "raw_text": "Wei Wang, Martin J Wainwright, and Kannan Ramchandran. Information-theoretic limits on sparse signal recovery: dense versus sparse measurement matrices. IEEE Transactions on Information Theory, 56(6):..."
+  }
+]

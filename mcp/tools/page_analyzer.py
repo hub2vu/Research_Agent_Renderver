@@ -202,7 +202,7 @@ class AnalyzeSectionTool(MCPTool):
             ),
         ]
 
-    # 👇 사용자님의 튼튼한 추출 로직 그대로 사용
+    # 사용자님의 튼튼한 추출 로직 그대로 사용
     def _extract_section_from_text(
         self, full_text: str, section_title: str, next_section_title: str
     ) -> str:
@@ -309,7 +309,7 @@ class AnalyzeSectionTool(MCPTool):
     ) -> Dict[str, Any]:
         paper_dir = OUTPUT_DIR / paper_id
 
-        # 1. 파일 읽기 (기존 로직 유지 + Full Text 확보)
+        # 1. 파일 읽기
         text_file = paper_dir / "extracted_text.txt"
         full_text = ""
 
@@ -335,7 +335,7 @@ class AnalyzeSectionTool(MCPTool):
             full_text, section_title, next_section_title
         )
 
-        # 3. 프롬프트 수정 (🔥 Full Context 추가하되, 출력 포맷은 Text 유지!)
+        # 3. 프롬프트 수정 (Full Context 추가)
         prompt = f"""당신은 노련한 AI 연구원으로서, 동료에게 논문 내용을 쉽게 설명해주는 역할을 맡았습니다.
 
 아래 제공된 **[논문 전체 내용]**을 참고하여 맥락을 이해하되, 설명은 반드시 **[분석할 섹션 내용]**에 집중해서 작성해 주세요.
