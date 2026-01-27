@@ -79,6 +79,36 @@ export default function GlobalGraphPage() {
   const [focusNodeId, setFocusNodeId] = useState<string | undefined>(undefined);
   const [searchError, setSearchError] = useState<string | null>(null);
 
+  // Arxiv search popover state
+  const [isArxivOpen, setIsArxivOpen] = useState(false);
+  const arxivPopoverRef = useRef<HTMLDivElement | null>(null);
+
+  // Close Arxiv search popover on outside click / Esc
+  useEffect(() => {
+    if (!isArxivOpen) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!arxivPopoverRef.current) return;
+      if (!arxivPopoverRef.current.contains(event.target as Node)) {
+        setIsArxivOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsArxivOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isArxivOpen]);
+
   // ui_state.json 폴링용
   const lastTimestampRef = useRef<number>(0);
 
@@ -365,7 +395,7 @@ export default function GlobalGraphPage() {
             </p>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', position: 'relative' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <label style={{ fontSize: '13px', color: '#4a5568' }}>Similarity:</label>
               <input
@@ -403,20 +433,43 @@ export default function GlobalGraphPage() {
             >
               {state.loading ? 'Loading...' : 'Refresh'}
             </button>
+
+            <button
+              onClick={() => setIsArxivOpen((prev) => !prev)}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: isArxivOpen ? '#c02e2e' : '#e04141',
+                color: '#fff',
+                border: '1px solid #cbd5e0',
+                borderRadius: '6px',
+                cursor: 'pointer'
+              }}
+            >
+              ArxiveSearch
+            </button>
+
+            {isArxivOpen && !state.loading && !state.error && (
+              <div
+                ref={arxivPopoverRef}
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 8px)',
+                  right: 0,
+                  zIndex: 50
+                }}
+              >
+                <ArxivSearchSidebar
+                  searchQuery={searchQuery}
+                  onSearchQueryChange={setSearchQuery}
+                  onSearch={handleSearch}
+                  isSearching={isSearching}
+                />
+              </div>
+            )}
           </div>
         </header>
 
         <div style={{ flex: 1, position: 'relative' }}>
-          {/* Search Sidebar */}
-          {!state.loading && !state.error && (
-            <ArxivSearchSidebar
-              searchQuery={searchQuery}
-              onSearchQueryChange={setSearchQuery}
-              onSearch={handleSearch}
-              isSearching={isSearching}
-            />
-          )}
-
           {/* Search Results List */}
           {!state.loading && !state.error && isSearching ? (
             <div style={{

@@ -26,19 +26,17 @@ export default function ArxivSearchSidebar({
 
   return (
     <>
-      <div style={{
-        position: 'absolute',
-        top: '16px',
-        right: '16px',
-        zIndex: 5,
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        padding: '16px',
-        borderRadius: '8px',
-        width: '320px',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-        maxHeight: 'calc(100vh - 120px)',
-        overflowY: 'auto',
-      }}>
+      <div
+        style={{
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          padding: '16px',
+          borderRadius: '8px',
+          width: '320px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          maxHeight: 'calc(100vh - 120px)',
+          overflowY: 'auto',
+        }}
+      >
         {/* Profile Settings Button */}
         <div style={{ marginBottom: '16px' }}>
           <button
