@@ -557,3 +557,147 @@ export async function executeNeurIPSSearchAndRank(
     };
   }
 }
+
+// ==================== ICLR Search & Rank API ====================
+
+/**
+ * Execute ICLR search and rank pipeline
+ */
+export async function executeICLRSearchAndRank(
+  query: string,
+  profilePath: string = 'users/profile.json',
+  topK: number = 10,
+  clusterK?: number
+): Promise<{
+  ranked_papers: Array<{
+    rank: number;
+    paper_id: string;
+    title: string;
+    authors: string[];
+    published?: string;
+    score: {
+      final: number;
+      breakdown: any;
+      soft_penalty: number;
+      penalty_keywords: string[];
+      evaluation_method: string;
+    };
+    tags: string[];
+    local_status: {
+      already_downloaded: boolean;
+      local_path: string | null;
+    };
+    original_data: any;
+    reasoning?: string;
+  }>;
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    // Step 1: Search ICLR papers
+    const searchResult = await executeTool('iclr_search', {
+      query,
+      max_results: 100,
+      profile_path: profilePath,
+    });
+
+    if (!searchResult.success) {
+      return {
+        ranked_papers: [],
+        success: false,
+        error: searchResult.error || 'ICLR search failed',
+      };
+    }
+
+    if (!searchResult.result?.papers || searchResult.result.papers.length === 0) {
+      return {
+        ranked_papers: [],
+        success: true,
+      };
+    }
+
+    // Step 2: Apply hard filters
+    const filterResult = await executeTool('apply_hard_filters', {
+      papers: searchResult.result.papers,
+      profile_path: profilePath,
+    });
+
+    if (!filterResult.success) {
+      throw new Error(filterResult.error || 'Hard filters failed');
+    }
+
+    const passedPapers = filterResult.result?.passed_papers || [];
+
+    if (passedPapers.length === 0) {
+      return {
+        ranked_papers: [],
+        success: true,
+      };
+    }
+
+    // Step 3: Calculate semantic scores
+    const semanticResult = await executeTool('calculate_semantic_scores', {
+      papers: passedPapers,
+      query,
+      profile_path: profilePath,
+    });
+
+    if (!semanticResult.success) {
+      throw new Error(semanticResult.error || 'Semantic scoring failed');
+    }
+
+    const semanticScores = semanticResult.result?.scores || {};
+
+    // Step 4: Evaluate metrics (with ICLR cluster map)
+    const clusterKToUse = clusterK ?? 15;
+    let iclrClusterMap: Record<string, number> = {};
+    try {
+      const clusterRes = await fetch(`/api/iclr/clusters?k=${clusterKToUse}`);
+      if (clusterRes.ok) {
+        const clusterData = await clusterRes.json();
+        iclrClusterMap = clusterData.paper_id_to_cluster || {};
+      }
+    } catch (e) {
+      console.warn('Failed to load ICLR cluster map:', e);
+    }
+
+    const metricsResult = await executeTool('evaluate_paper_metrics', {
+      papers: passedPapers,
+      semantic_scores: semanticScores,
+      neurips_cluster_map: iclrClusterMap,
+      profile_path: profilePath,
+    });
+
+    if (!metricsResult.success) {
+      throw new Error(metricsResult.error || 'Metrics evaluation failed');
+    }
+
+    const metricsScores = metricsResult.result?.scores || {};
+
+    // Step 5: Rank and select top K
+    const rankResult = await executeTool('rank_and_select_top_k', {
+      papers: passedPapers,
+      semantic_scores: semanticScores,
+      metrics_scores: metricsScores,
+      neurips_cluster_map: iclrClusterMap,
+      top_k: topK,
+      profile_path: profilePath,
+      cluster_k: clusterKToUse,
+    });
+
+    if (!rankResult.success) {
+      throw new Error(rankResult.error || 'Ranking failed');
+    }
+
+    return {
+      ranked_papers: rankResult.result?.ranked_papers || [],
+      success: true,
+    };
+  } catch (error) {
+    return {
+      ranked_papers: [],
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}

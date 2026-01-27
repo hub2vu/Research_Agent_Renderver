@@ -90,6 +90,19 @@ export default function NavBar({ onOpenChat }: NavBarProps) {
         >
           NeurIPS 2025
         </button>
+
+        <button
+          style={buttonStyle('/iclr2025')}
+          onClick={() => navigate('/iclr2025')}
+          onMouseEnter={(e) => {
+            if (!isActive('/iclr2025')) e.currentTarget.style.backgroundColor = '#3d4a5c';
+          }}
+          onMouseLeave={(e) => {
+            if (!isActive('/iclr2025')) e.currentTarget.style.backgroundColor = '#2d3748';
+          }}
+        >
+          ICLR 2025
+        </button>
       </div>
 
       <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
