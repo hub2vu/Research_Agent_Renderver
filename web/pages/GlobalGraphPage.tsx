@@ -349,34 +349,6 @@ export default function GlobalGraphPage() {
 
   return (
     <div style={{ display: 'flex', height: '100vh', backgroundColor: '#f5f5f5' }}>
-      <div style={{ display: 'flex', gap: '6px' }}>
-        <button
-          onClick={() => setViewMode('graph')}
-          style={{
-            padding: '8px 12px',
-            borderRadius: '6px',
-            border: '1px solid #cbd5e0',
-            backgroundColor: viewMode === 'graph' ? '#2d3748' : '#fff',
-            color: viewMode === 'graph' ? '#fff' : '#2d3748',
-            cursor: 'pointer'
-          }}
-        >
-          Node
-        </button>
-        <button
-          onClick={() => setViewMode('list')}
-          style={{
-            padding: '8px 12px',
-            borderRadius: '6px',
-            border: '1px solid #cbd5e0',
-            backgroundColor: viewMode === 'list' ? '#2d3748' : '#fff',
-            color: viewMode === 'list' ? '#fff' : '#2d3748',
-            cursor: 'pointer'
-          }}
-        >
-          List
-        </button>
-      </div>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         <header
           style={{
@@ -388,9 +360,54 @@ export default function GlobalGraphPage() {
             justifyContent: 'space-between'
           }}
         >
-          <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <h1 style={{ margin: 0, fontSize: '20px', color: '#1a202c' }}>Global Paper Graph</h1>
-            <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#718096' }}>
+            <div style={{
+              display: 'flex',
+              backgroundColor: '#edf2f7',
+              borderRadius: '6px',
+              padding: '2px',
+              border: '1px solid #cbd5e0',
+              position: 'relative'
+            }}>
+              <button
+                onClick={() => setViewMode('graph')}
+                style={{
+                  padding: '6px 16px',
+                  borderRadius: '4px',
+                  border: 'none',
+                  backgroundColor: viewMode === 'graph' ? '#2d3748' : 'transparent',
+                  color: viewMode === 'graph' ? '#fff' : '#4a5568',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  transition: 'all 0.2s ease',
+                  position: 'relative',
+                  zIndex: 1
+                }}
+              >
+                Node
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                style={{
+                  padding: '6px 16px',
+                  borderRadius: '4px',
+                  border: 'none',
+                  backgroundColor: viewMode === 'list' ? '#2d3748' : 'transparent',
+                  color: viewMode === 'list' ? '#fff' : '#4a5568',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  transition: 'all 0.2s ease',
+                  position: 'relative',
+                  zIndex: 1
+                }}
+              >
+                List
+              </button>
+            </div>
+            <p style={{ margin: 0, fontSize: '13px', color: '#718096' }}>
               Overview of all papers
             </p>
           </div>
