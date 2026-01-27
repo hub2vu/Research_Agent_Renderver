@@ -887,10 +887,121 @@ Translate the following text from {source_language} to {target_language}.
 
         translated_text = "\n\n".join(translated_chunks)
 
+        # Save to file system
+        notes_dir = paper_dir / "notes"
+        notes_dir.mkdir(parents=True, exist_ok=True)
+        notes_file = notes_dir / "notes.json"
+        
+        # Load existing notes if available
+        notes_data = {"notes": [], "updated_at": None}
+        if notes_file.exists():
+            try:
+                with open(notes_file, "r", encoding="utf-8") as f:
+                    notes_data = json.load(f)
+            except:
+                pass
+        
+        # Find or create note for this section
+        notes_list = notes_data.get("notes", [])
+        note_found = False
+        for note in notes_list:
+            if note.get("title") == section_title:
+                note["content"] = translated_text
+                note["translated_at"] = datetime.now().isoformat()
+                note["target_language"] = target_language
+                if start_index is not None and end_index is not None:
+                    note["sectionBoundary"] = {
+                        "startIndex": start_index,
+                        "endIndex": end_index,
+                        "sourceFile": "json"
+                    }
+                note_found = True
+                break
+        
+        if not note_found:
+            new_note = {
+                "id": f"note_{int(time.time())}_{section_title[:20].replace(' ', '_')}",
+                "title": section_title,
+                "content": translated_text,
+                "isOpen": True,
+                "translated_at": datetime.now().isoformat(),
+                "target_language": target_language,
+            }
+            if start_index is not None and end_index is not None:
+                new_note["sectionBoundary"] = {
+                    "startIndex": start_index,
+                    "endIndex": end_index,
+                    "sourceFile": "json"
+                }
+            notes_list.append(new_note)
+        
+        notes_data["notes"] = notes_list
+        notes_data["updated_at"] = datetime.now().isoformat()
+        
+        with open(notes_file, "w", encoding="utf-8") as f:
+            json.dump(notes_data, f, ensure_ascii=False, indent=2)
+
         return {
             "status": "success",
             "paper_id": paper_id,
             "section_title": section_title,
             "target_language": target_language,
             "translated_text": translated_text,
+            "saved_to": str(notes_file),
+        }
+
+
+class SaveNotesTool(MCPTool):
+    """Save notes to file system for persistence."""
+
+    @property
+    def name(self) -> str:
+        return "save_notes"
+
+    @property
+    def description(self) -> str:
+        return "Save notes data to file system for persistence across sessions."
+
+    @property
+    def parameters(self) -> List[ToolParameter]:
+        return [
+            ToolParameter(
+                name="paper_id",
+                type="string",
+                description="Paper ID (e.g., '1809.04281')",
+                required=True,
+            ),
+            ToolParameter(
+                name="notes",
+                type="array",
+                description="Array of note objects with id, title, content, isOpen, sectionBoundary",
+                required=True,
+            ),
+        ]
+
+    @property
+    def category(self) -> str:
+        return "notes"
+
+    async def execute(
+        self, paper_id: str, notes: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
+        paper_dir = OUTPUT_DIR / paper_id
+        notes_dir = paper_dir / "notes"
+        notes_dir.mkdir(parents=True, exist_ok=True)
+        notes_file = notes_dir / "notes.json"
+
+        notes_data = {
+            "notes": notes,
+            "updated_at": datetime.now().isoformat(),
+        }
+
+        with open(notes_file, "w", encoding="utf-8") as f:
+            json.dump(notes_data, f, ensure_ascii=False, indent=2)
+
+        return {
+            "status": "success",
+            "paper_id": paper_id,
+            "saved_to": str(notes_file),
+            "notes_count": len(notes),
         }

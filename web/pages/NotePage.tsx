@@ -26,12 +26,51 @@ interface SectionBoundary {
   sourceFile: 'json' | 'txt';
 }
 
+// 멀티 페이지 노트 구조: 각 기능별로 별도 저장
+type NotePageType = 'manual' | 'translation' | 'analysis' | 'qa';
+
+interface NotePages {
+  manual: string;       // 사용자가 직접 작성한 메모
+  translation?: string; // 번역 결과
+  analysis?: string;    // 분석 결과
+  qa?: string;          // QA 결과 (히스토리)
+}
+
 interface NoteItem {
   id: string;
   title: string;
-  content: string;
+  pages: NotePages;     // content → pages로 변경
+  activePage: NotePageType;  // 현재 보이는 페이지
   isOpen: boolean;
   sectionBoundary?: SectionBoundary;
+}
+
+// 기존 content 형식과의 호환을 위한 마이그레이션 헬퍼
+function migrateNoteItem(note: any): NoteItem {
+  // 이미 새 형식인 경우
+  if (note.pages && typeof note.pages === 'object') {
+    return {
+      ...note,
+      pages: {
+        manual: note.pages.manual || '',
+        translation: note.pages.translation,
+        analysis: note.pages.analysis,
+        qa: note.pages.qa,
+      },
+      activePage: note.activePage || 'manual',
+    };
+  }
+  // 구 형식(content)인 경우 마이그레이션
+  return {
+    id: note.id,
+    title: note.title,
+    pages: {
+      manual: note.content || '',
+    },
+    activePage: 'manual',
+    isOpen: note.isOpen !== undefined ? note.isOpen : true,
+    sectionBoundary: note.sectionBoundary,
+  };
 }
 
 function stripPrefixes(id: string): string {
@@ -142,28 +181,113 @@ export default function NotePage(props: { noteId?: string } = {}) {
   const [analyzingNoteId, setAnalyzingNoteId] = useState<string | null>(null);
   const [promptingNoteId, setPromptingNoteId] = useState<string | null>(null);
 
-  // Load notes from localStorage
+  // Load notes from file system (priority) or localStorage (fallback)
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(notesStorageKey);
-      if (stored) {
-        setNotes(JSON.parse(stored));
-      } else {
+    const loadNotes = async () => {
+      const id = usedId || stripPrefixes(paperId);
+      if (!id) {
+        // Fallback to localStorage if no paper ID
+        try {
+          const stored = localStorage.getItem(notesStorageKey);
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            // 마이그레이션 적용
+            setNotes(parsed.map(migrateNoteItem));
+          } else {
+            setNotes([]);
+          }
+        } catch {
+          setNotes([]);
+        }
+        return;
+      }
+
+      try {
+        // 1. Try loading from file system first (persistent storage)
+        const notesFileUrl = `/output/${id}/notes/notes.json`;
+        try {
+          const fileRes = await fetch(notesFileUrl);
+          if (fileRes.ok) {
+            const fileData = await fileRes.json();
+            const fileNotes = fileData.notes || [];
+            if (fileNotes.length > 0) {
+              // 마이그레이션 적용하여 새 형식으로 변환
+              const convertedNotes: NoteItem[] = fileNotes.map(migrateNoteItem);
+              setNotes(convertedNotes);
+              // Also update localStorage as cache
+              try {
+                localStorage.setItem(notesStorageKey, JSON.stringify(convertedNotes));
+              } catch {}
+              return; // File system data takes priority
+            }
+          }
+        } catch (e) {
+          console.log('File system notes not found, trying localStorage:', e);
+        }
+
+        // 2. Fallback to localStorage
+        try {
+          const stored = localStorage.getItem(notesStorageKey);
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            // 마이그레이션 적용
+            setNotes(parsed.map(migrateNoteItem));
+          } else {
+            setNotes([]);
+          }
+        } catch {
+          setNotes([]);
+        }
+      } catch (e) {
+        console.error('Error loading notes:', e);
         setNotes([]);
       }
-    } catch {
-      setNotes([]);
-    }
-  }, [notesStorageKey]);
+    };
 
-  // Save notes to localStorage
+    loadNotes();
+  }, [notesStorageKey, usedId, paperId]);
+
+  // Save notes to localStorage (cache) and file system
   useEffect(() => {
+    if (notes.length === 0) return; // Don't save empty notes
+
+    // Save to localStorage (for immediate access and cache)
     try {
       localStorage.setItem(notesStorageKey, JSON.stringify(notes));
     } catch {
       // ignore
     }
-  }, [notes, notesStorageKey]);
+
+    // Save to file system (debounced to avoid too frequent saves)
+    const id = usedId || stripPrefixes(paperId);
+    if (!id) return;
+
+    const saveTimeout = setTimeout(async () => {
+      try {
+        const notesToSave = notes.map(n => ({
+          id: n.id,
+          title: n.title,
+          pages: n.pages,  // 새 형식: pages 객체로 저장
+          activePage: n.activePage,
+          isOpen: n.isOpen,
+          sectionBoundary: n.sectionBoundary,
+        }));
+        
+        const result = await executeTool('save_notes', {
+          paper_id: id,
+          notes: notesToSave,
+        });
+        if (result.success) {
+          console.log('Notes auto-saved to file system');
+        }
+      } catch (e) {
+        console.error('Failed to auto-save notes:', e);
+        // Non-blocking error - localStorage still works
+      }
+    }, 2000); // 2 second debounce
+
+    return () => clearTimeout(saveTimeout);
+  }, [notes, notesStorageKey, usedId, paperId]);
 
   // PDF loading
   useEffect(() => {
@@ -303,7 +427,8 @@ export default function NotePage(props: { noteId?: string } = {}) {
     const newNote: NoteItem = {
       id: generateId(),
       title: '새 노트',
-      content: '',
+      pages: { manual: '' },
+      activePage: 'manual',
       isOpen: true,
     };
     setNotes(prev => [...prev, newNote]);
@@ -321,8 +446,42 @@ export default function NotePage(props: { noteId?: string } = {}) {
     setNotes(prev => prev.map(n => n.id === noteId ? { ...n, title } : n));
   }, []);
 
+  // 현재 활성 페이지의 내용을 업데이트
   const updateNoteContent = useCallback((noteId: string, content: string) => {
-    setNotes(prev => prev.map(n => n.id === noteId ? { ...n, content } : n));
+    setNotes(prev => prev.map(n => {
+      if (n.id !== noteId) return n;
+      return {
+        ...n,
+        pages: {
+          ...n.pages,
+          [n.activePage]: content,
+        }
+      };
+    }));
+  }, []);
+
+  // 특정 페이지의 내용을 업데이트
+  const updateNotePage = useCallback((noteId: string, pageType: NotePageType, content: string) => {
+    setNotes(prev => prev.map(n => {
+      if (n.id !== noteId) return n;
+      return {
+        ...n,
+        pages: {
+          ...n.pages,
+          [pageType]: content,
+        }
+      };
+    }));
+  }, []);
+
+  // 활성 페이지 변경
+  const setActivePage = useCallback((noteId: string, pageType: NotePageType) => {
+    setNotes(prev => prev.map(n => n.id === noteId ? { ...n, activePage: pageType } : n));
+  }, []);
+
+  // 현재 노트의 활성 페이지 내용 가져오기
+  const getActivePageContent = useCallback((note: NoteItem): string => {
+    return note.pages[note.activePage] || '';
   }, []);
 
   // Load extracted text from JSON (preferred) or TXT file
@@ -542,7 +701,8 @@ export default function NotePage(props: { noteId?: string } = {}) {
     const newNote: NoteItem = {
       id: generateId(),
       title: '',
-      content: '',
+      pages: { manual: '' },
+      activePage: 'manual',
       isOpen: true,
     };
     setNotes(prev => {
@@ -823,7 +983,8 @@ ${extractedText.slice(0, 50000)}`;
             const newNotes: NoteItem[] = headings.map((title: string) => ({
               id: generateId(),
               title,
-              content: '',
+              pages: { manual: '' },
+              activePage: 'manual' as NotePageType,
               isOpen: true,
             }));
             setNotes(newNotes);
@@ -841,7 +1002,8 @@ ${extractedText.slice(0, 50000)}`;
         return {
           id: generateId(),
           title: section.title,
-          content: '',
+          pages: { manual: '' },
+          activePage: 'manual' as NotePageType,
           isOpen: true,
           sectionBoundary: {
             startIndex: section.startIndex,
@@ -853,6 +1015,31 @@ ${extractedText.slice(0, 50000)}`;
 
       setNotes(newNotes);
       console.log(`Extracted ${newNotes.length} sections with boundaries`);
+      
+      // Save extracted headings to file system
+      try {
+        const notesToSave = newNotes.map(n => ({
+          id: n.id,
+          title: n.title,
+          pages: n.pages,
+          activePage: n.activePage,
+          isOpen: n.isOpen,
+          sectionBoundary: n.sectionBoundary,
+        }));
+        
+        const id = usedId || stripPrefixes(paperId);
+        if (id) {
+          const result = await executeTool('save_notes', {
+            paper_id: id,
+            notes: notesToSave,
+          });
+          if (result.success) {
+            console.log('Notes saved to file system:', result.result?.saved_to);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to save extracted headings:', e);
+      }
     } catch (e) {
       alert(`소목차 추출 에러: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
@@ -865,11 +1052,18 @@ ${extractedText.slice(0, 50000)}`;
     const id = usedId || stripPrefixes(paperId);
     if (!id) return;
 
+    // 이미 번역 결과가 있으면 탭만 전환
+    const note = notes.find(n => n.id === noteId);
+    if (note?.pages.translation?.trim()) {
+      setActivePage(noteId, 'translation');
+      return;
+    }
+
     setTranslatingNoteId(noteId);
     try {
       // Find the note and its boundary information
       const noteIndex = notes.findIndex(n => n.id === noteId);
-      const note = notes[noteIndex];
+      const noteData = notes[noteIndex];
       const nextSectionTitle = noteIndex >= 0 && noteIndex < notes.length - 1
         ? notes[noteIndex + 1].title
         : '';
@@ -883,9 +1077,9 @@ ${extractedText.slice(0, 50000)}`;
       };
 
       // Add boundary indices if available (more reliable than title matching)
-      if (note?.sectionBoundary) {
-        params.start_index = note.sectionBoundary.startIndex;
-        params.end_index = note.sectionBoundary.endIndex;
+      if (noteData?.sectionBoundary) {
+        params.start_index = noteData.sectionBoundary.startIndex;
+        params.end_index = noteData.sectionBoundary.endIndex;
       }
 
       const result = await executeTool('translate_section', params);
@@ -895,23 +1089,32 @@ ${extractedText.slice(0, 50000)}`;
       }
 
       const translatedText = result.result?.translated_text || '';
-      updateNoteContent(noteId, translatedText);
+      // translation 페이지에 저장하고 해당 탭으로 전환
+      updateNotePage(noteId, 'translation', translatedText);
+      setActivePage(noteId, 'translation');
     } catch (e) {
       alert(`번역 에러: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setTranslatingNoteId(null);
     }
-  }, [usedId, paperId, notes, updateNoteContent]);
+  }, [usedId, paperId, notes, updateNotePage, setActivePage]);
 
   // Analyze a specific note's section using page_analyzer
   const analyzeSection = useCallback(async (noteId: string, sectionTitle: string) => {
     const id = usedId || stripPrefixes(paperId);
     if (!id) return;
 
+    // 이미 분석 결과가 있으면 탭만 전환
+    const note = notes.find(n => n.id === noteId);
+    if (note?.pages.analysis?.trim()) {
+      setActivePage(noteId, 'analysis');
+      return;
+    }
+
     setAnalyzingNoteId(noteId);
     try {
       const noteIndex = notes.findIndex(n => n.id === noteId);
-      const note = notes[noteIndex];
+      const noteData = notes[noteIndex];
       const nextSectionTitle = noteIndex >= 0 && noteIndex < notes.length - 1
         ? notes[noteIndex + 1].title
         : '';
@@ -924,9 +1127,9 @@ ${extractedText.slice(0, 50000)}`;
       };
 
       // Add boundary indices if available
-      if (note?.sectionBoundary) {
-        params.start_index = note.sectionBoundary.startIndex;
-        params.end_index = note.sectionBoundary.endIndex;
+      if (noteData?.sectionBoundary) {
+        params.start_index = noteData.sectionBoundary.startIndex;
+        params.end_index = noteData.sectionBoundary.endIndex;
       }
 
       const result = await executeTool('analyze_section', params);
@@ -936,54 +1139,75 @@ ${extractedText.slice(0, 50000)}`;
       }
 
       const analysisText = result.result?.analysis_text || '';
-      updateNoteContent(noteId, analysisText);
+      // analysis 페이지에 저장하고 해당 탭으로 전환
+      updateNotePage(noteId, 'analysis', analysisText);
+      setActivePage(noteId, 'analysis');
     } catch (e) {
       alert(`분석 에러: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setAnalyzingNoteId(null);
     }
-  }, [usedId, paperId, notes, updateNoteContent]);
+  }, [usedId, paperId, notes, updateNotePage, setActivePage]);
 
-  // Execute prompt: send note content to LLM and append result to note
-  const executePrompt = useCallback(async (noteId: string, noteContent: string) => {
-    if (!noteContent.trim()) {
-      alert('노트에 내용이 없습니다. 프롬프트로 사용할 내용을 먼저 작성해주세요.');
+  // Execute prompt: send QA tab content to paper_qa tool (논문 특화 QA)
+  // QA 탭의 내용을 질문으로 사용하고, 결과를 QA 탭에 누적
+  const executePrompt = useCallback(async (noteId: string) => {
+    const note = notes.find(n => n.id === noteId);
+    const question = note?.pages.qa?.trim() || '';
+    
+    if (!question) {
+      alert('QA 탭에 질문을 먼저 작성해주세요.');
+      setActivePage(noteId, 'qa');
+      return;
+    }
+
+    const id = usedId || stripPrefixes(paperId);
+    if (!id) {
+      alert('논문 ID를 찾을 수 없습니다.');
       return;
     }
 
     setPromptingNoteId(noteId);
     try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: noteContent,
-          history: [],
-        }),
+      // 현재 섹션 컨텍스트 가져오기 (선택적)
+      let sectionContext = '';
+      if (note?.sectionBoundary) {
+        const textData = await loadExtractedText(id);
+        if (textData) {
+          const { startIndex, endIndex } = note.sectionBoundary;
+          sectionContext = textData.text.slice(startIndex, Math.min(endIndex, startIndex + 3000));
+        }
+      }
+
+      // MCP paper_qa 도구 호출 (논문 특화 QA)
+      const result = await executeTool('paper_qa', {
+        paper_id: id,
+        question: question,
+        section_context: sectionContext,
       });
 
-      if (!response.ok) {
-        alert(`LLM 요청 실패: HTTP ${response.status}`);
+      if (!result.success) {
+        alert(`QA 실패: ${result.error || 'Unknown error'}`);
         return;
       }
 
-      const data = await response.json();
-      const llmResponse = data.response || '';
-
-      if (!llmResponse) {
-        alert('LLM 응답이 비어 있습니다.');
+      const answer = result.result?.answer || '';
+      if (!answer) {
+        alert('응답이 비어 있습니다.');
         return;
       }
 
-      // Append LLM response to the note content
-      const newContent = noteContent + '\n\n---\n\n**LLM 응답:**\n\n' + llmResponse;
-      updateNoteContent(noteId, newContent);
+      // QA 탭에 결과 추가 (기존 질문 + 답변)
+      const timestamp = new Date().toLocaleString('ko-KR');
+      const qaResult = `${question}\n\n---\n\n**[${timestamp}] 답변:**\n\n${answer}`;
+      
+      updateNotePage(noteId, 'qa', qaResult);
     } catch (e) {
       alert(`프롬프트 실행 에러: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setPromptingNoteId(null);
     }
-  }, [updateNoteContent]);
+  }, [usedId, paperId, notes, loadExtractedText, updateNotePage, setActivePage]);
 
   return (
     <div ref={containerRef} style={{ display: 'flex', height: '100vh', backgroundColor: '#f5f5f5' }}>
@@ -1328,8 +1552,8 @@ ${extractedText.slice(0, 50000)}`;
 
                 {/* Prompt button */}
                 <button
-                  onClick={() => executePrompt(note.id, note.content)}
-                  disabled={promptingNoteId === note.id || !note.content.trim()}
+                  onClick={() => executePrompt(note.id)}
+                  disabled={promptingNoteId === note.id || !note.pages.qa?.trim()}
                   style={{
                     padding: '3px 8px',
                     borderRadius: 4,
@@ -1341,7 +1565,7 @@ ${extractedText.slice(0, 50000)}`;
                     fontWeight: 600,
                     flexShrink: 0,
                   }}
-                  title="노트 내용을 프롬프트로 LLM에 전송하고 결과를 노트에 출력합니다"
+                  title="QA 탭의 내용을 질문으로 LLM에 전송하고 답변을 추가합니다"
                 >
                   {promptingNoteId === note.id ? '처리 중...' : 'Prompt'}
                 </button>
@@ -1354,16 +1578,16 @@ ${extractedText.slice(0, 50000)}`;
                     padding: '3px 8px',
                     borderRadius: 4,
                     border: '1px solid #e2e8f0',
-                    backgroundColor: analyzingNoteId === note.id ? '#edf2f7' : '#e9d8fd',
+                    backgroundColor: analyzingNoteId === note.id ? '#edf2f7' : note.pages.analysis?.trim() ? '#d6bcfa' : '#e9d8fd',
                     color: analyzingNoteId === note.id ? '#a0aec0' : '#553c9a',
                     cursor: analyzingNoteId === note.id ? 'not-allowed' : 'pointer',
                     fontSize: 11,
                     fontWeight: 600,
                     flexShrink: 0,
                   }}
-                  title="이 섹션을 분석하여 해설합니다"
+                  title={note.pages.analysis?.trim() ? '분석 결과 보기 (클릭하여 탭 전환)' : '이 섹션을 분석하여 해설합니다'}
                 >
-                  {analyzingNoteId === note.id ? '분석 중...' : 'Analysis'}
+                  {analyzingNoteId === note.id ? '분석 중...' : note.pages.analysis?.trim() ? 'Analysis ✓' : 'Analysis'}
                 </button>
 
                 {/* Translate button */}
@@ -1374,16 +1598,16 @@ ${extractedText.slice(0, 50000)}`;
                     padding: '3px 8px',
                     borderRadius: 4,
                     border: '1px solid #e2e8f0',
-                    backgroundColor: translatingNoteId === note.id ? '#edf2f7' : '#fefcbf',
+                    backgroundColor: translatingNoteId === note.id ? '#edf2f7' : note.pages.translation?.trim() ? '#f6e05e' : '#fefcbf',
                     color: translatingNoteId === note.id ? '#a0aec0' : '#975a16',
                     cursor: translatingNoteId === note.id ? 'not-allowed' : 'pointer',
                     fontSize: 11,
                     fontWeight: 600,
                     flexShrink: 0,
                   }}
-                  title="이 섹션을 한국어로 번역합니다"
+                  title={note.pages.translation?.trim() ? '번역 결과 보기 (클릭하여 탭 전환)' : '이 섹션을 한국어로 번역합니다'}
                 >
-                  {translatingNoteId === note.id ? '번역 중...' : 'Translate'}
+                  {translatingNoteId === note.id ? '번역 중...' : note.pages.translation?.trim() ? 'Translate ✓' : 'Translate'}
                 </button>
 
                 {/* Edit/Preview toggle button */}
@@ -1427,90 +1651,154 @@ ${extractedText.slice(0, 50000)}`;
               {/* Note content (collapsible) */}
               {note.isOpen && (
                 <div style={{ padding: 10 }}>
-                  {editingNoteIds.has(note.id) ? (
-                    /* Edit Mode: Split View (Left: Editor, Right: Live Preview) */
-                    <div style={{ display: 'flex', gap: 10, minHeight: 150 }}>
-                      {/* Left: Editor */}
-                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                        <div style={{ fontSize: 10, color: '#718096', marginBottom: 4, fontWeight: 600 }}>
-                          편집 (마크다운)
-                        </div>
-                        <textarea
-                          value={note.content}
-                          onChange={(e) => updateNoteContent(note.id, e.target.value)}
-                          placeholder="마크다운으로 작성하세요... (# 제목, **굵게**, *기울임*, `코드` 등)"
+                  {/* 탭 네비게이션 */}
+                  <div style={{ 
+                    display: 'flex', 
+                    gap: 2, 
+                    marginBottom: 10, 
+                    borderBottom: '1px solid #e2e8f0',
+                    paddingBottom: 6,
+                  }}>
+                    {(['manual', 'translation', 'analysis', 'qa'] as const).map(tab => {
+                      const hasContent = tab === 'manual' 
+                        ? !!note.pages.manual?.trim()
+                        : !!note.pages[tab]?.trim();
+                      const isActive = note.activePage === tab;
+                      const tabLabels = {
+                        manual: '📝 메모',
+                        translation: '🌐 번역',
+                        analysis: '🔬 분석',
+                        qa: '💬 Prompt',
+                      };
+                      return (
+                        <button
+                          key={tab}
+                          onClick={() => setActivePage(note.id, tab)}
                           style={{
-                            flex: 1,
-                            width: '100%',
-                            minHeight: 120,
-                            resize: 'vertical',
-                            borderRadius: 6,
-                            border: '1px solid #e2e8f0',
-                            padding: 10,
-                            fontSize: 13,
-                            lineHeight: 1.6,
-                            outline: 'none',
-                            fontFamily: 'monospace',
-                          }}
-                        />
-                      </div>
-                      {/* Right: Live Preview */}
-                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                        <div style={{ fontSize: 10, color: '#718096', marginBottom: 4, fontWeight: 600 }}>
-                          실시간 미리보기
-                        </div>
-                        <div
-                          style={{
-                            flex: 1,
-                            borderRadius: 6,
-                            border: '1px solid #e2e8f0',
-                            padding: 10,
-                            fontSize: 13,
-                            lineHeight: 1.6,
-                            backgroundColor: '#fafafa',
-                            overflowY: 'auto',
-                            minHeight: 120,
+                            padding: '5px 10px',
+                            border: 'none',
+                            borderBottom: isActive ? '2px solid #3182ce' : '2px solid transparent',
+                            background: 'transparent',
+                            color: isActive ? '#3182ce' : '#718096',
+                            fontWeight: isActive ? 600 : 400,
+                            cursor: 'pointer',
+                            fontSize: 12,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 4,
                           }}
                         >
-                          {note.content.trim() ? (
-                            <div className="markdown-preview">
-                              <ReactMarkdown>{note.content}</ReactMarkdown>
-                            </div>
-                          ) : (
-                            <div style={{ color: '#a0aec0', fontStyle: 'italic' }}>
-                              미리보기가 여기에 표시됩니다...
-                            </div>
+                          {tabLabels[tab]}
+                          {hasContent && !isActive && (
+                            <span style={{ 
+                              width: 6, 
+                              height: 6, 
+                              borderRadius: '50%', 
+                              backgroundColor: '#48bb78',
+                            }} />
                           )}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* 현재 탭 내용 */}
+                  {(() => {
+                    const currentContent = note.pages[note.activePage] || '';
+                    const tabPlaceholders: Record<NotePageType, string> = {
+                      manual: '메모를 작성하세요...',
+                      translation: '번역 결과가 표시됩니다. "Translate" 버튼을 클릭하거나 직접 작성하세요...',
+                      analysis: '분석 결과가 표시됩니다. "Analysis" 버튼을 클릭하거나 직접 작성하세요...',
+                      qa: '질문을 작성한 후 "Prompt" 버튼을 클릭하세요...',
+                    };
+                    
+                    // 편집 모드: 모든 탭에서 편집 가능
+                    if (editingNoteIds.has(note.id)) {
+                      return (
+                        <div style={{ display: 'flex', gap: 10, minHeight: 150 }}>
+                          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                            <div style={{ fontSize: 10, color: '#718096', marginBottom: 4, fontWeight: 600 }}>
+                              편집 (마크다운)
+                            </div>
+                            <textarea
+                              value={currentContent}
+                              onChange={(e) => updateNotePage(note.id, note.activePage, e.target.value)}
+                              placeholder={tabPlaceholders[note.activePage]}
+                              style={{
+                                flex: 1,
+                                width: '100%',
+                                minHeight: 120,
+                                resize: 'vertical',
+                                borderRadius: 6,
+                                border: '1px solid #e2e8f0',
+                                padding: 10,
+                                fontSize: 13,
+                                lineHeight: 1.6,
+                                outline: 'none',
+                                fontFamily: 'monospace',
+                              }}
+                            />
+                          </div>
+                          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                            <div style={{ fontSize: 10, color: '#718096', marginBottom: 4, fontWeight: 600 }}>
+                              실시간 미리보기
+                            </div>
+                            <div
+                              style={{
+                                flex: 1,
+                                borderRadius: 6,
+                                border: '1px solid #e2e8f0',
+                                padding: 10,
+                                fontSize: 13,
+                                lineHeight: 1.6,
+                                backgroundColor: '#fafafa',
+                                overflowY: 'auto',
+                                minHeight: 120,
+                              }}
+                            >
+                              {currentContent.trim() ? (
+                                <div className="markdown-preview">
+                                  <ReactMarkdown>{currentContent}</ReactMarkdown>
+                                </div>
+                              ) : (
+                                <div style={{ color: '#a0aec0', fontStyle: 'italic' }}>
+                                  미리보기가 여기에 표시됩니다...
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         </div>
+                      );
+                    }
+
+                    // 미리보기 모드: 클릭하면 편집 모드로 전환
+                    return (
+                      <div
+                        onClick={() => toggleEditMode(note.id)}
+                        style={{
+                          minHeight: 60,
+                          borderRadius: 6,
+                          border: '1px solid #e2e8f0',
+                          padding: 10,
+                          fontSize: 13,
+                          lineHeight: 1.6,
+                          cursor: 'pointer',
+                          backgroundColor: '#fafafa',
+                        }}
+                        title="클릭하여 편집"
+                      >
+                        {currentContent.trim() ? (
+                          <div className="markdown-preview">
+                            <ReactMarkdown>{currentContent}</ReactMarkdown>
+                          </div>
+                        ) : (
+                          <div style={{ color: '#a0aec0', fontStyle: 'italic' }}>
+                            {tabPlaceholders[note.activePage]}
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ) : (
-                    /* Preview Mode: Full width rendered markdown */
-                    <div
-                      onClick={() => toggleEditMode(note.id)}
-                      style={{
-                        minHeight: 60,
-                        borderRadius: 6,
-                        border: '1px solid #e2e8f0',
-                        padding: 10,
-                        fontSize: 13,
-                        lineHeight: 1.6,
-                        cursor: 'pointer',
-                        backgroundColor: '#fafafa',
-                      }}
-                      title="클릭하여 편집"
-                    >
-                      {note.content.trim() ? (
-                        <div className="markdown-preview">
-                          <ReactMarkdown>{note.content}</ReactMarkdown>
-                        </div>
-                      ) : (
-                        <div style={{ color: '#a0aec0', fontStyle: 'italic' }}>
-                          클릭하여 내용을 작성하세요...
-                        </div>
-                      )}
-                    </div>
-                  )}
+                    );
+                  })()}
                 </div>
               )}
             </div>
