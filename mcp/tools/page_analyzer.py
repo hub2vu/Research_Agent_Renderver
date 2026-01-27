@@ -2,6 +2,8 @@ import os
 import logging
 import json
 import re
+import time
+from datetime import datetime
 from typing import Any, Dict, List
 from pathlib import Path
 from openai import AsyncOpenAI
@@ -371,9 +373,191 @@ class AnalyzeSectionTool(MCPTool):
 
         analysis_text = response.choices[0].message.content
 
+        # Save to file system
+        notes_dir = paper_dir / "notes"
+        notes_dir.mkdir(parents=True, exist_ok=True)
+        notes_file = notes_dir / "notes.json"
+        
+        # Load existing notes if available
+        notes_data = {"notes": [], "updated_at": None}
+        if notes_file.exists():
+            try:
+                with open(notes_file, "r", encoding="utf-8") as f:
+                    notes_data = json.load(f)
+            except:
+                pass
+        
+        # Find or create note for this section
+        notes_list = notes_data.get("notes", [])
+        note_found = False
+        for note in notes_list:
+            if note.get("title") == section_title:
+                note["content"] = analysis_text
+                note["analyzed_at"] = datetime.now().isoformat()
+                note_found = True
+                break
+        
+        if not note_found:
+            notes_list.append({
+                "id": f"note_{int(time.time())}_{section_title[:20].replace(' ', '_')}",
+                "title": section_title,
+                "content": analysis_text,
+                "isOpen": True,
+                "analyzed_at": datetime.now().isoformat(),
+            })
+        
+        notes_data["notes"] = notes_list
+        notes_data["updated_at"] = datetime.now().isoformat()
+        
+        with open(notes_file, "w", encoding="utf-8") as f:
+            json.dump(notes_data, f, ensure_ascii=False, indent=2)
+
         return {
             "status": "success",
             "paper_id": paper_id,
             "section_title": section_title,
             "analysis_text": analysis_text,
+            "saved_to": str(notes_file),
+        }
+
+
+# =============================================================================
+# 헬퍼 함수: 초록 추출 (translate.py의 _extract_abstract_intro 패턴 재사용)
+# =============================================================================
+def _extract_abstract(text: str) -> str:
+    """
+    논문 텍스트에서 Abstract 섹션을 추출합니다.
+    """
+    # Abstract 섹션 찾기
+    abstract_pattern = re.compile(
+        r"(?i)^\s*(?:abstract|summary)\s*:?\s*\n(.*?)(?=\n\s*(?:1\.|introduction|keywords|index terms|ccs concepts|acm reference format|introduction:))",
+        re.MULTILINE | re.DOTALL,
+    )
+    
+    abstract_match = abstract_pattern.search(text)
+    
+    if abstract_match:
+        abstract_text = abstract_match.group(1).strip()
+        if len(abstract_text) > 50:  # 최소 길이 체크
+            return abstract_text[:3000]  # 토큰 효율성을 위해 최대 3000자
+    
+    # Fallback: 텍스트 앞부분 사용
+    return text[:2000]
+
+
+# =============================================================================
+# Tool: Paper QA (초록 컨텍스트 기반 질문 답변)
+# =============================================================================
+class PaperQATool(MCPTool):
+    """Answer questions about a paper using abstract as context."""
+
+    @property
+    def name(self) -> str:
+        return "paper_qa"
+
+    @property
+    def description(self) -> str:
+        return "Answer questions about a specific paper using the abstract as primary context. Optionally includes current section context."
+
+    @property
+    def parameters(self) -> List[ToolParameter]:
+        return [
+            ToolParameter(
+                name="paper_id",
+                type="string",
+                description="Paper ID (folder name in output directory)",
+                required=True,
+            ),
+            ToolParameter(
+                name="question",
+                type="string",
+                description="User's question about the paper",
+                required=True,
+            ),
+            ToolParameter(
+                name="section_context",
+                type="string",
+                description="Optional: current section text the user is viewing",
+                required=False,
+                default="",
+            ),
+        ]
+
+    @property
+    def category(self) -> str:
+        return "analysis"
+
+    async def execute(
+        self, paper_id: str, question: str, section_context: str = "", **kwargs
+    ) -> Dict[str, Any]:
+        # 1. 논문 디렉토리 찾기
+        paper_dir = find_paper_directory(OUTPUT_DIR, paper_id)
+        if not paper_dir:
+            paper_dir = OUTPUT_DIR / paper_id
+        
+        # 2. 전체 텍스트 로드
+        full_text = get_full_paper_text(paper_dir)
+        if not full_text:
+            # Fallback: txt 파일 시도
+            text_file = paper_dir / "extracted_text.txt"
+            if text_file.exists():
+                with open(text_file, "r", encoding="utf-8") as f:
+                    full_text = f.read()
+        
+        if not full_text:
+            return {
+                "status": "error",
+                "error": f"논문 텍스트를 찾을 수 없습니다: {paper_id}. 먼저 extract_all을 실행하세요.",
+            }
+        
+        # 3. 초록 추출
+        abstract = _extract_abstract(full_text)
+        
+        # 4. 프롬프트 구성
+        section_part = ""
+        if section_context and section_context.strip():
+            section_part = f"""
+[현재 보고 있는 섹션]
+{section_context[:3000]}
+"""
+        
+        prompt = f"""당신은 이 논문을 읽은 AI 연구 동료입니다. 아래 논문 정보를 바탕으로 질문에 답변하세요.
+
+[논문 초록]
+{abstract}
+{section_part}
+[질문]
+{question}
+
+**지침:**
+1. 논문 내용을 바탕으로 정확하게 답변하세요.
+2. 논문에 없는 내용은 추측하지 말고, "논문에서 직접 언급되지 않았습니다"라고 답하세요.
+3. 한국어로 명확하고 이해하기 쉽게 답변하세요.
+4. 필요시 논문의 맥락을 설명해주세요.
+"""
+
+        # 5. LLM 호출
+        response = await aclient.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are a helpful research assistant who has read the paper thoroughly.",
+                },
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.3,
+        )
+
+        answer = response.choices[0].message.content
+
+        return {
+            "status": "success",
+            "paper_id": paper_id,
+            "question": question,
+            "answer": answer,
+            "context_used": {
+                "abstract_length": len(abstract),
+                "section_context_provided": bool(section_context),
+            },
         }

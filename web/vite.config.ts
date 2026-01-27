@@ -11,31 +11,79 @@ const NODE_COLORS_PATH = '/app/output/graph/node_colors.json';
 const NEURIPS_METADATA_PATH = '/app/data/embeddings_Neu/metadata.csv';
 const NEURIPS_EMBEDDINGS_PATH = '/app/data/embeddings_Neu/embeddings.npy';
 
-// Parse CSV helper
+// ICLR data paths
+const ICLR_METADATA_PATH = '/app/data/embeddings_ICLR/ICLR2025_accepted_meta.csv';
+const ICLR_EMBEDDINGS_PATH = '/app/data/embeddings_ICLR/ICLR2025_accepted_bge_large_en_v1_5.npy';
+
+// Parse CSV helper - supports multiline fields in quotes
 function parseCSV(content: string): Array<Record<string, string>> {
-  const lines = content.split('\n');
-  if (lines.length < 2) return [];
+  const result: Array<Record<string, string>> = [];
+  let currentRow: string[] = [];
+  let currentField = '';
+  let inQuotes = false;
+  let headers: string[] = [];
+  let headersDone = false;
 
-  // Parse header
-  const headers = parseCSVLine(lines[0]);
-  const results: Array<Record<string, string>> = [];
+  for (let i = 0; i < content.length; i++) {
+    const char = content[i];
 
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
+    if (char === '"') {
+      if (inQuotes && content[i + 1] === '"') {
+        // Escaped quote
+        currentField += '"';
+        i++;
+      } else {
+        // Toggle quote state
+        inQuotes = !inQuotes;
+      }
+    } else if (char === ',' && !inQuotes) {
+      // Field separator
+      currentRow.push(currentField);
+      currentField = '';
+    } else if ((char === '\n' || char === '\r') && !inQuotes) {
+      // Row separator (only when not in quotes)
+      if (char === '\r' && content[i + 1] === '\n') {
+        i++; // Skip \n in \r\n
+      }
+      if (currentField || currentRow.length > 0) {
+        currentRow.push(currentField);
+        currentField = '';
 
-    const values = parseCSVLine(line);
-    const row: Record<string, string> = {};
-    headers.forEach((h, idx) => {
-      row[h] = values[idx] || '';
-    });
-    results.push(row);
+        if (!headersDone) {
+          // First row is headers - trim whitespace from each header
+          headers = currentRow.map(h => h.trim());
+          headersDone = true;
+        } else {
+          // Data row
+          const row: Record<string, string> = {};
+          headers.forEach((h, idx) => {
+            row[h] = (currentRow[idx] || '').trim();
+          });
+          result.push(row);
+        }
+        currentRow = [];
+      }
+    } else {
+      currentField += char;
+    }
   }
 
-  return results;
+  // Handle last row if no trailing newline
+  if (currentField || currentRow.length > 0) {
+    currentRow.push(currentField);
+    if (headersDone && currentRow.length > 0) {
+      const row: Record<string, string> = {};
+      headers.forEach((h, idx) => {
+        row[h] = (currentRow[idx] || '').trim();
+      });
+      result.push(row);
+    }
+  }
+
+  return result;
 }
 
-// Parse a single CSV line handling quoted fields
+// Parse a single CSV line handling quoted fields (kept for backward compatibility)
 function parseCSVLine(line: string): string[] {
   const result: string[] = [];
   let current = '';
@@ -285,6 +333,103 @@ export default defineConfig({
             const validK = Math.max(5, Math.min(30, k));
 
             const clusterPath = `/app/data/embeddings_Neu/neurips_clusters_k${validK}.json`;
+            if (fs.existsSync(clusterPath)) {
+              const data = fs.readFileSync(clusterPath, 'utf-8');
+              res.end(data);
+            } else {
+              res.end(JSON.stringify({ paper_id_to_cluster: {}, k: 0 }));
+            }
+          } catch (err) {
+            res.statusCode = 500;
+            res.end(JSON.stringify({ error: String(err) }));
+          }
+        });
+      }
+    },
+    {
+      name: 'iclr-api',
+      configureServer(server) {
+        // API: GET /api/iclr/papers - Load ICLR metadata
+        server.middlewares.use('/api/iclr/papers', (req: IncomingMessage, res: ServerResponse, next) => {
+          if (req.method === 'OPTIONS') {
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+            res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+            res.statusCode = 204;
+            res.end();
+            return;
+          }
+
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          res.setHeader('Content-Type', 'application/json');
+
+          try {
+            if (!fs.existsSync(ICLR_METADATA_PATH)) {
+              res.statusCode = 404;
+              res.end(JSON.stringify({ error: 'ICLR metadata.csv not found' }));
+              return;
+            }
+
+            // Read with BOM handling
+            let content = fs.readFileSync(ICLR_METADATA_PATH, 'utf-8');
+            // Remove BOM if present
+            if (content.charCodeAt(0) === 0xFEFF) {
+              content = content.slice(1);
+            }
+            const papers = parseCSV(content);
+
+            res.end(JSON.stringify({ papers, count: papers.length }));
+          } catch (err) {
+            res.statusCode = 500;
+            res.end(JSON.stringify({ error: String(err) }));
+          }
+        });
+
+        // API: GET /api/iclr/similarities - Get pre-computed similarities
+        server.middlewares.use('/api/iclr/similarities', (req: IncomingMessage, res: ServerResponse, next) => {
+          if (req.method === 'OPTIONS') {
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            res.statusCode = 204;
+            res.end();
+            return;
+          }
+
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          res.setHeader('Content-Type', 'application/json');
+
+          try {
+            const simPath = '/app/data/embeddings_ICLR/similarities.json';
+            if (fs.existsSync(simPath)) {
+              const data = fs.readFileSync(simPath, 'utf-8');
+              res.end(data);
+            } else {
+              res.end(JSON.stringify({ edges: [], message: 'Run compute_similarities.py to generate' }));
+            }
+          } catch (err) {
+            res.statusCode = 500;
+            res.end(JSON.stringify({ error: String(err) }));
+          }
+        });
+
+        // API: GET /api/iclr/clusters?k=15 - Get KMeans clusters
+        server.middlewares.use('/api/iclr/clusters', (req: IncomingMessage, res: ServerResponse, next) => {
+          if (req.method === 'OPTIONS') {
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            res.statusCode = 204;
+            res.end();
+            return;
+          }
+
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          res.setHeader('Content-Type', 'application/json');
+
+          try {
+            const url = new URL(req.url || '', `http://${req.headers.host}`);
+            const kParam = url.searchParams.get('k');
+            const k = kParam ? parseInt(kParam, 10) : 15;
+            const validK = Math.max(5, Math.min(30, k));
+
+            const clusterPath = `/app/data/embeddings_ICLR/iclr_clusters_k${validK}.json`;
             if (fs.existsSync(clusterPath)) {
               const data = fs.readFileSync(clusterPath, 'utf-8');
               res.end(data);

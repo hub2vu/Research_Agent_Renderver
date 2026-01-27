@@ -1,0 +1,615 @@
+{
+  "success": true,
+  "error": null,
+  "summary": {
+    "input_count": 100,
+    "filtered_count": 0,
+    "scored_count": 100,
+    "output_count": 10,
+    "purpose": "general",
+    "ranking_mode": "balanced",
+    "profile_used": "users/profile.json",
+    "llm_verification_used": false,
+    "llm_calls_made": 0
+  },
+  "ranked_papers": [
+    {
+      "rank": 1,
+      "paper_id": "117472",
+      "title": "DevFD : Developmental Face Forgery Detection by Learning Shared and Orthogonal LoRA Subspaces",
+      "authors": [
+        "Tianshuo Zhang",
+        "Li Gao",
+        "Siran Peng",
+        "Xiangyu Zhu",
+        "Zhen Lei"
+      ],
+      "published": "2025-12-01",
+      "score": {
+        "final": 1.0,
+        "breakdown": {
+          "semantic_relevance": 0,
+          "must_keywords": 0,
+          "author_trust": 1,
+          "institution_trust": 1,
+          "recency": 0.7027177228683976,
+          "practicality": 0,
+          "keyword_score": 1.0
+        },
+        "soft_penalty": 0.0,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_low"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR",
+        "PREFERRED_INSTITUTION",
+        "NO_CODE"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "117472",
+        "title": "DevFD : Developmental Face Forgery Detection by Learning Shared and Orthogonal LoRA Subspaces",
+        "abstract": "The rise of realistic digital face generation and manipulation poses significant social risks. The primary challenge lies in the rapid and diverse evolution of generation techniques, which often outstrip the detection capabilities of existing models. To defend against the ever-evolving new types of forgery, we need to enable our model to quickly adapt to new domains with limited computation and data while avoiding forgetting previously learned forgery types. In this work, we posit that genuine facial samples are abundant and relatively stable in acquisition methods, while forgery faces continuously evolve with the iteration of manipulation techniques. Given the practical infeasibility of exhaustively collecting all forgery variants, we frame face forgery detection as a continual learning problem and allow the model to develop as new forgery types emerge. Specifically, we employ a Developmental Mixture of Experts (MoE) architecture that uses LoRA models as its individual experts. These experts are organized into two groups: a Real-LoRA to learn and refine knowledge of real faces, and multiple Fake-LoRAs to capture incremental information from different forgery types. To prevent catastrophic forgetting, we ensure that the learning direction of Fake-LoRAs is orthogonal to the established subspace. Moreover, we integrate orthogonal gradients into the orthogonal loss of Fake-LoRAs, preventing gradient interference throughout the training process of each task. Experimental results under both the datasets and manipulation types incremental protocols demonstrate the effectiveness of our method.",
+        "authors": [
+          "Tianshuo Zhang",
+          "Li Gao",
+          "Siran Peng",
+          "Xiangyu Zhu",
+          "Zhen Lei"
+        ],
+        "published": "2025-12-01",
+        "categories": [
+          "NeurIPS 2025"
+        ],
+        "pdf_url": null,
+        "github_url": null,
+        "semantic_score": 0,
+        "keyword_score": 1,
+        "combined_score": 1
+      }
+    },
+    {
+      "rank": 2,
+      "paper_id": "118923",
+      "title": "HMVLM:Human Motion-Vision-Language Model via MoE LoRA",
+      "authors": [
+        "Lei Hu",
+        "Yongjing Ye",
+        "Shihong Xia"
+      ],
+      "published": "2025-12-01",
+      "score": {
+        "final": 1.0,
+        "breakdown": {
+          "semantic_relevance": 0,
+          "must_keywords": 0,
+          "author_trust": 1,
+          "institution_trust": 1,
+          "recency": 0.7027177228683976,
+          "practicality": 0,
+          "keyword_score": 1.0
+        },
+        "soft_penalty": 0.0,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_low"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR",
+        "PREFERRED_INSTITUTION",
+        "NO_CODE"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "118923",
+        "title": "HMVLM:Human Motion-Vision-Language Model via MoE LoRA",
+        "abstract": "The expansion of instruction-tuning data has enabled foundation language models to exhibit improved instruction adherence and superior performance across diverse downstream tasks. Semantically-rich 3D human motion is being progressively integrated with these foundation models to enhance multimodal understanding and cross-modal generation capabilities. However, the modality gap between human motion and text raises unresolved concerns about catastrophic forgetting during this integration. In addition, developing autoregressive-compatible pose representations that preserve generalizability across heterogeneous downstream tasks remains a critical technical barrier. To address these issues, we propose the Human Motion-Vision-Language Model (HMVLM), a unified framework based on the Mixture of Expert Low-Rank Adaption(MoE LoRA) strategy. The framework leverages the gating network to dynamically allocate LoRA expert weights based on the input prompt, enabling synchronized fine-tuning of multiple tasks. To mitigate catastrophic forgetting during instruction-tuning, we introduce a novel zero expert that preserves the pre-trained parameters for general linguistic tasks. For pose representation, we implement body-part-specific tokenization by partitioning the human body into different joint groups, enhancing the spatial resolution of the representation. Experiments show that our method effectively alleviates knowledge forgetting during instruction-tuning and achieves remarkable performance across diverse human motion downstream tasks.",
+        "authors": [
+          "Lei Hu",
+          "Yongjing Ye",
+          "Shihong Xia"
+        ],
+        "published": "2025-12-01",
+        "categories": [
+          "NeurIPS 2025"
+        ],
+        "pdf_url": null,
+        "github_url": null,
+        "semantic_score": 0,
+        "keyword_score": 1,
+        "combined_score": 1
+      }
+    },
+    {
+      "rank": 3,
+      "paper_id": "119479",
+      "title": "Exploration from a Primal-Dual Lens: Value-Incentivized Actor-Critic Methods for Sample-Efficient Online RL",
+      "authors": [
+        "Tong Yang",
+        "Bo Dai",
+        "Lin Xiao",
+        "Yuejie Chi"
+      ],
+      "published": "2025-12-01",
+      "score": {
+        "final": 0.7905435445736795,
+        "breakdown": {
+          "semantic_relevance": 0,
+          "must_keywords": 1,
+          "author_trust": 1,
+          "institution_trust": 1,
+          "recency": 0.7027177228683976,
+          "practicality": 0,
+          "keyword_score": 0.8
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_low"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR",
+        "PREFERRED_INSTITUTION",
+        "MUST_KEYWORD_MATCH",
+        "NO_CODE"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "119479",
+        "title": "Exploration from a Primal-Dual Lens: Value-Incentivized Actor-Critic Methods for Sample-Efficient Online RL",
+        "abstract": "Online reinforcement learning (RL) with complex function approximations such as transformers and deep neural networks plays a significant role in the modern practice of artificial intelligence. Despite its popularity and importance, balancing the fundamental trade-off between exploration and exploitation remains a long-standing challenge; in particular, we are still in lack of efficient and practical schemes that are backed by theoretical performance guarantees. Motivated by recent developments in exploration via optimistic regularization, this paper provides an interpretation of the principle of optimism through the lens of primal-dual optimization. From this fresh perspective, we set forth a new value-incentivized actor-critic (VAC) method, which optimizes a single easy-to-optimize objective integrating exploration and exploitation --- it promotes state-action and policy estimates that are both consistent with collected data transitions and result in higher value functions. Theoretically, the proposed VAC method has near-optimal regret guarantees under linear Markov decision processes (MDPs) in both finite-horizon and infinite-horizon settings, which can be extended to the general function approximation setting under appropriate assumptions.",
+        "authors": [
+          "Tong Yang",
+          "Bo Dai",
+          "Lin Xiao",
+          "Yuejie Chi"
+        ],
+        "published": "2025-12-01",
+        "categories": [
+          "NeurIPS 2025"
+        ],
+        "pdf_url": null,
+        "github_url": null,
+        "semantic_score": 0,
+        "keyword_score": 0.8,
+        "combined_score": 0.728
+      }
+    },
+    {
+      "rank": 4,
+      "paper_id": "118478",
+      "title": "Teaching Transformers to Solve Combinatorial Problems through Efficient Trial & Error",
+      "authors": [
+        "Panagiotis Giannoulis",
+        "Yorgos Pantis",
+        "Christos Tzamos"
+      ],
+      "published": "2025-12-01",
+      "score": {
+        "final": 0.7905435445736795,
+        "breakdown": {
+          "semantic_relevance": 0,
+          "must_keywords": 1,
+          "author_trust": 1,
+          "institution_trust": 1,
+          "recency": 0.7027177228683976,
+          "practicality": 0,
+          "keyword_score": 0.3333333333333333
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_low"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR",
+        "PREFERRED_INSTITUTION",
+        "MUST_KEYWORD_MATCH",
+        "NO_CODE"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "118478",
+        "title": "Teaching Transformers to Solve Combinatorial Problems through Efficient Trial & Error",
+        "abstract": "Despite their proficiency in various language tasks, Large Language Models (LLMs) struggle with combinatorial problems like Satisfiability, Traveling Salesman Problem, or even basic arithmetic. We address this gap through a novel approach for solving problems in the class NP. We focus on the paradigmatic task of Sudoku and achieve state-of-the-art accuracy (99\\%) compared to prior neuro-symbolic approaches. Unlike prior work that used custom architectures, our method employs a vanilla decoder-only Transformer (GPT-2) without external tools or function calling. Our method integrates imitation learning of simple Sudoku rules with an explicit Depth-First Search (DFS) exploration strategy involving informed guessing and backtracking. Moving beyond imitation learning, we seek to minimize the number of guesses until reaching a solution. We provide a rigorous analysis of this setup by formalizing its connection to a contextual variant of $\\textit{Min-Sum Set Cover}$, a well-studied problem in algorithms and stochastic optimization.",
+        "authors": [
+          "Panagiotis Giannoulis",
+          "Yorgos Pantis",
+          "Christos Tzamos"
+        ],
+        "published": "2025-12-01",
+        "categories": [
+          "NeurIPS 2025"
+        ],
+        "pdf_url": null,
+        "github_url": null,
+        "semantic_score": 0.01398744247853756,
+        "keyword_score": 0.3333333333333333,
+        "combined_score": 0.23752956607689457
+      }
+    },
+    {
+      "rank": 5,
+      "paper_id": "120211",
+      "title": "Block-Diagonal LoRA for Eliminating Communication Overhead in Tensor Parallel LoRA Serving",
+      "authors": [
+        "Xinyu Wang",
+        "Jonas M. Kübler",
+        "Kailash Budhathoki",
+        "Yida Wang",
+        "Matthäus Kleindessner"
+      ],
+      "published": "2025-12-01",
+      "score": {
+        "final": 1.0,
+        "breakdown": {
+          "semantic_relevance": 0,
+          "must_keywords": 0,
+          "author_trust": 1,
+          "institution_trust": 1,
+          "recency": 0.7027177228683976,
+          "practicality": 0,
+          "keyword_score": 1.0
+        },
+        "soft_penalty": 0.0,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_low"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR",
+        "PREFERRED_INSTITUTION",
+        "NO_CODE"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "120211",
+        "title": "Block-Diagonal LoRA for Eliminating Communication Overhead in Tensor Parallel LoRA Serving",
+        "abstract": "When serving a single base LLM with several different LoRA adapters simultaneously, the adapters cannot simply be merged with the base model’s weights as the adapter swapping would create overhead and requests using different adapters could not be batched. Rather, the LoRA computations have to be separated from the base LLM computations, and in a multi-device setup the LoRA adapters can be sharded in a way that is well aligned with the base model’s tensor parallel execution, as proposed in S-LoRA. However, the S-LoRA sharding strategy encounters some communication overhead, which may be small in theory, but can be large in practice. In this paper, we propose to constrain certain LoRA factors to be block-diagonal, which allows for an alternative way of sharding LoRA adapters that does not require any additional communication for the LoRA computations. We demonstrate in extensive experiments that our block-diagonal LoRA approach is similarly parameter efficient as standard LoRA (i.e., for a similar number of parameters it achieves similar downstream performance) and that it leads to significant end-to-end speed-up over S-LoRA. For example, when serving on eight A100 GPUs, we observe up to 1.79x (1.23x) end-to-end speed-up with 0.87x (1.74x) the number of adapter parameters for Llama-3.1-70B, and up to 1.63x (1.3x) end-to-end speed-up with 0.86x (1.73x) the number of adapter parameters for Llama-3.1-8B.",
+        "authors": [
+          "Xinyu Wang",
+          "Jonas M. Kübler",
+          "Kailash Budhathoki",
+          "Yida Wang",
+          "Matthäus Kleindessner"
+        ],
+        "published": "2025-12-01",
+        "categories": [
+          "NeurIPS 2025"
+        ],
+        "pdf_url": null,
+        "github_url": null,
+        "semantic_score": 0,
+        "keyword_score": 1,
+        "combined_score": 1
+      }
+    },
+    {
+      "rank": 6,
+      "paper_id": "115642",
+      "title": "FairNet: Dynamic Fairness Correction without Performance Loss via Contrastive Conditional LoRA",
+      "authors": [
+        "Songqi Zhou",
+        "Zeyuan Liu",
+        "Benben Jiang"
+      ],
+      "published": "2025-12-01",
+      "score": {
+        "final": 1.0,
+        "breakdown": {
+          "semantic_relevance": 0,
+          "must_keywords": 0,
+          "author_trust": 1,
+          "institution_trust": 1,
+          "recency": 0.7027177228683976,
+          "practicality": 0,
+          "keyword_score": 1.0
+        },
+        "soft_penalty": 0.0,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_low"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR",
+        "PREFERRED_INSTITUTION",
+        "NO_CODE"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "115642",
+        "title": "FairNet: Dynamic Fairness Correction without Performance Loss via Contrastive Conditional LoRA",
+        "abstract": "Ensuring fairness in machine learning models is a critical challenge. Existing debiasing methods often compromise performance, rely on static correction strategies, and struggle with data sparsity, particularly within minority groups. Furthermore, their utilization of sensitive attributes is often suboptimal, either depending excessively on complete attribute labeling or disregarding these attributes entirely. To overcome these limitations, we propose FairNet, a novel framework for dynamic, instance-level fairness correction. FairNet integrates a bias detector with conditional low-rank adaptation (LoRA), which enables selective activation of the fairness correction mechanism exclusively for instances identified as biased, and thereby preserve performance on unbiased instances. A key contribution is a new contrastive loss function for training the LoRA module, specifically designed to minimize intra-class representation disparities across different sensitive groups and effectively address underfitting in minority groups. The FairNet framework can flexibly handle scenarios with complete, partial, or entirely absent sensitive attribute labels. Theoretical analysis confirms that, under moderate TPR/FPR for the bias detector, FairNet can enhance the performance of the worst group without diminishing overall model performance, and potentially yield slight performance improvements. Comprehensive empirical evaluations across diverse vision and language benchmarks validate the effectiveness of FairNet. Code is available at \\url{https://github.com/SongqiZhou/FairNet}.",
+        "authors": [
+          "Songqi Zhou",
+          "Zeyuan Liu",
+          "Benben Jiang"
+        ],
+        "published": "2025-12-01",
+        "categories": [
+          "NeurIPS 2025"
+        ],
+        "pdf_url": null,
+        "github_url": null,
+        "semantic_score": 0,
+        "keyword_score": 1,
+        "combined_score": 1
+      }
+    },
+    {
+      "rank": 7,
+      "paper_id": "118097",
+      "title": "FedSVD: Adaptive Orthogonalization for Private Federated Learning with LoRA",
+      "authors": [
+        "Seanie Lee",
+        "Sangwoo Park",
+        "Dong Bok Lee",
+        "Dominik Wagner",
+        "Haebin Seong",
+        "Tobias Bocklet",
+        "Juho Lee",
+        "Sung Ju Hwang"
+      ],
+      "published": "2025-12-01",
+      "score": {
+        "final": 1.0,
+        "breakdown": {
+          "semantic_relevance": 0,
+          "must_keywords": 0,
+          "author_trust": 1,
+          "institution_trust": 1,
+          "recency": 0.7027177228683976,
+          "practicality": 0,
+          "keyword_score": 1.0
+        },
+        "soft_penalty": 0.1,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_low"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR",
+        "PREFERRED_INSTITUTION",
+        "NO_CODE"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "118097",
+        "title": "FedSVD: Adaptive Orthogonalization for Private Federated Learning with LoRA",
+        "abstract": "Low-Rank Adaptation (LoRA), which introduces a product of two trainable low-rank matrices into frozen pre-trained weights, is widely used for efficient fine-tuning of language models in federated learning (FL). However, when combined with differentially private stochastic gradient descent (DP-SGD), LoRA faces substantial noise amplification: DP-SGD perturbs per-sample gradients, and the matrix multiplication of the LoRA update ($BA$) intensifies this effect. Freezing one matrix (*e.g.*, $A$) reduces the noise but restricts model expressiveness, often resulting in suboptimal adaptation. To address this, we propose $\\texttt{FedSVD}$, a simple yet effective method that introduces a global reparameterization based on singular value decomposition (SVD). In our approach, each client optimizes only the $B$ matrix and transmits it to the server. The server aggregates the $B$ matrices, computes the product $BA$ using the previous $A$, and refactorizes the result via SVD. This yields a new adaptive $A$ composed of the orthonormal right singular vectors of $BA$, and an updated $B$ containing the remaining SVD components. This reparameterization avoids quadratic noise amplification, while allowing $A$ to better capture the principal directions of the aggregate updates. Moreover, the orthonormal structure of $A$ bounds the gradient norms of $B$ and preserves more signal under DP-SGD, as confirmed by our theoretical analysis. As a result, $\\texttt{FedSVD}$ consistently improves stability and performance across a variety of privacy settings and benchmarks, outperforming relevant baselines under both private and non-private regimes.",
+        "authors": [
+          "Seanie Lee",
+          "Sangwoo Park",
+          "Dong Bok Lee",
+          "Dominik Wagner",
+          "Haebin Seong",
+          "Tobias Bocklet",
+          "Juho Lee",
+          "Sung Ju Hwang"
+        ],
+        "published": "2025-12-01",
+        "categories": [
+          "NeurIPS 2025"
+        ],
+        "pdf_url": null,
+        "github_url": null,
+        "semantic_score": 0,
+        "keyword_score": 1,
+        "combined_score": 1
+      }
+    },
+    {
+      "rank": 8,
+      "paper_id": "117161",
+      "title": "Turning the Tables: Enabling Backward Transfer via Causal-Aware LoRA in Continual Learning",
+      "authors": [
+        "Chaoyang Li",
+        "Runze Ye",
+        "Jianyang Qin",
+        "Jinhao Cui",
+        "Lingzhi Wang",
+        "Ning Hu",
+        "Qing Liao"
+      ],
+      "published": "2025-12-01",
+      "score": {
+        "final": 1.0,
+        "breakdown": {
+          "semantic_relevance": 0,
+          "must_keywords": 0,
+          "author_trust": 1,
+          "institution_trust": 1,
+          "recency": 0.7027177228683976,
+          "practicality": 0,
+          "keyword_score": 1.0
+        },
+        "soft_penalty": 0.2,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_low"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR",
+        "PREFERRED_INSTITUTION",
+        "NO_CODE"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "117161",
+        "title": "Turning the Tables: Enabling Backward Transfer via Causal-Aware LoRA in Continual Learning",
+        "abstract": "Current parameter-efficient fine-tuning (PEFT) methods have shown superior performance in continual learning. However, most existing PEFT-based methods focus on mitigating catastrophic forgetting by limiting modifications to the old task model caused by new tasks. This hinders backward knowledge transfer, as when new tasks have a strong positive correlation with old tasks, appropriately training on new tasks can transfer beneficial knowledge to old tasks. Critically, achieving backward knowledge transfer faces two fundamental challenges: (1) some parameters may be ineffective on task performance, which constrains the task solution space and model capacity; (2) since old task data are inaccessible, modeling task correlation via shared data is infeasible. To address these challenges, we propose CaLoRA, a novel \\textbf{c}ausal-\\textbf{a}ware \\textbf{lo}w-\\textbf{r}ank \\textbf{a}daptation framework that is the first PEFT-based continual learning work with backward knowledge transfer. Specifically, we first propose \\textbf{p}ar\\textbf{a}meter-level \\textbf{c}ounterfactual \\textbf{a}ttribution (PaCA) that estimates the causal effect of LoRA parameters via counterfactual reasoning, identifying effective parameters from a causal view. Second, we propose \\textbf{c}ross-t\\textbf{a}sk \\textbf{g}radient \\textbf{a}daptation (CaGA) to quantify task correlation by gradient projection and evaluate task affinity based on gradient similarity. By incorporating causal effect, task correlation, and affinity, CaGA adaptively adjusts task gradients, facilitating backward knowledge transfer without relying on data replay. Extensive experiments across multiple benchmarks and continual learning settings show that CaLoRA outperforms state-of-the-art methods. In particular, CaLoRA better mitigates catastrophic forgetting by enabling positive backward knowledge transfer.",
+        "authors": [
+          "Chaoyang Li",
+          "Runze Ye",
+          "Jianyang Qin",
+          "Jinhao Cui",
+          "Lingzhi Wang",
+          "Ning Hu",
+          "Qing Liao"
+        ],
+        "published": "2025-12-01",
+        "categories": [
+          "NeurIPS 2025"
+        ],
+        "pdf_url": null,
+        "github_url": null,
+        "semantic_score": 0,
+        "keyword_score": 1,
+        "combined_score": 1
+      }
+    },
+    {
+      "rank": 9,
+      "paper_id": "118570",
+      "title": "LoRASuite: Efficient LoRA Adaptation Across Large Language Model Upgrades",
+      "authors": [
+        "Yanan Li",
+        "Fanxu Meng",
+        "Muhan Zhang",
+        "Shiai Zhu",
+        "Shangguang Wang",
+        "Mengwei Xu"
+      ],
+      "published": "2025-12-01",
+      "score": {
+        "final": 1.0,
+        "breakdown": {
+          "semantic_relevance": 0,
+          "must_keywords": 0,
+          "author_trust": 1,
+          "institution_trust": 1,
+          "recency": 0.7027177228683976,
+          "practicality": 0,
+          "keyword_score": 1.0
+        },
+        "soft_penalty": -0.15,
+        "penalty_keywords": [
+          "attention"
+        ],
+        "evaluation_method": "embedding_low"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR",
+        "PREFERRED_INSTITUTION",
+        "NO_CODE"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "118570",
+        "title": "LoRASuite: Efficient LoRA Adaptation Across Large Language Model Upgrades",
+        "abstract": "As Large Language Models (LLMs) are frequently updated, LoRA weights trained on earlier versions quickly become obsolete. The conventional practice of retraining LoRA weights from scratch on the latest model is costly, time-consuming, and environmentally detrimental, particularly as the diversity of LLMs and downstream tasks expands. This motivates a critical question: \"How can we efficiently leverage existing LoRA weights to adapt to newer model versions?\" To address this, we propose LoRASuite, a modular approach tailored specifically to various types of LLM updates. First, we compute a transfer matrix utilizing known parameters from both old and new LLMs. Next, we allocate corresponding layers and attention heads based on centered kernel alignment and cosine similarity metrics, respectively. A subsequent small-scale, skillful fine-tuning step ensures numerical stability. Experimental evaluations demonstrate that LoRASuite consistently surpasses small-scale vanilla LoRA methods. Notably, on backbone LLMs such as MiniCPM and Qwen, LoRASuite even exceeds the performance of full-scale LoRA retraining, with average improvements of +1.4 and +6.6 points on math tasks, respectively. Additionally, LoRASuite significantly reduces memory consumption by 5.5 GB and computational time by 78.23%.",
+        "authors": [
+          "Yanan Li",
+          "Fanxu Meng",
+          "Muhan Zhang",
+          "Shiai Zhu",
+          "Shangguang Wang",
+          "Mengwei Xu"
+        ],
+        "published": "2025-12-01",
+        "categories": [
+          "NeurIPS 2025"
+        ],
+        "pdf_url": null,
+        "github_url": null,
+        "semantic_score": 0,
+        "keyword_score": 1,
+        "combined_score": 1
+      }
+    },
+    {
+      "rank": 10,
+      "paper_id": "115207",
+      "title": "LoRA vs Full Fine-tuning: An Illusion of Equivalence",
+      "authors": [
+        "Reece Shuttleworth",
+        "Jacob Andreas",
+        "Antonio Torralba",
+        "Pratyusha Sharma"
+      ],
+      "published": "2025-12-01",
+      "score": {
+        "final": 1.0,
+        "breakdown": {
+          "semantic_relevance": 0,
+          "must_keywords": 0,
+          "author_trust": 1,
+          "institution_trust": 1,
+          "recency": 0.7027177228683976,
+          "practicality": 0,
+          "keyword_score": 1.0
+        },
+        "soft_penalty": 0.1,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_low"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR",
+        "PREFERRED_INSTITUTION",
+        "NO_CODE"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "115207",
+        "title": "LoRA vs Full Fine-tuning: An Illusion of Equivalence",
+        "abstract": "Fine-tuning is a crucial paradigm for adapting pre-trained large language models to downstream tasks. Recently, methods like Low-Rank Adaptation (LoRA) have been shown to effectively fine-tune LLMs with an extreme reduction in trainable parameters. But, \\emph{are their learned solutions really equivalent?} We study how LoRA and full-finetuning change pre-trained models by analyzing the model's weight matrices through the lens of their spectral properties. We find that LoRA and full fine-tuning yield weight matrices whose singular value decompositions exhibit very different structure: weight matrices trained with LoRA have new, high-ranking singular vectors, which we call \\emph{intruder dimensions}, while those trained with full fine-tuning do not. Further, we extend the finding that LoRA forgets less than full fine-tuning and find its forgetting is vastly localized to the intruder dimension -- by causally intervening on the intruder dimensions by changing their associated singular values post-fine-tuning, we show that they cause forgetting. Moreover, scaling them down significantly improves modeling of the pre-training distribution with a minimal drop in downstream task performance. Given this, we should expect accumulating intruder dimensions to be harmful and lead to more forgetting. This will be amplified during continual learning because of sequentially fine-tuning, and we show that LoRA models do accumulate intruder dimensions here tend to perform worse in this setting, emphasizing the practicality of our findings.",
+        "authors": [
+          "Reece Shuttleworth",
+          "Jacob Andreas",
+          "Antonio Torralba",
+          "Pratyusha Sharma"
+        ],
+        "published": "2025-12-01",
+        "categories": [
+          "NeurIPS 2025"
+        ],
+        "pdf_url": null,
+        "github_url": null,
+        "semantic_score": 0,
+        "keyword_score": 1,
+        "combined_score": 1
+      }
+    }
+  ],
+  "filtered_papers": [],
+  "contrastive_paper": null,
+  "comparison_notes": [
+    {
+      "paper_ids": [
+        "118570",
+        "115207"
+      ],
+      "relation": "similar_approach",
+      "shared_traits": [
+        "lora"
+      ],
+      "differentiator": "language_vs_efficient_vs_equivalence",
+      "contrast_point": null
+    }
+  ],
+  "output_path": "/data/output/rankings/2026-01-26_2026-01-26T13-35-41_ranked.json",
+  "generated_at": "2026-01-26T13:35:41.237569"
+}

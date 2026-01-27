@@ -567,8 +567,8 @@ class TranslateSectionTool(MCPTool):
     @property
     def description(self) -> str:
         return (
-            "Translate a specific section of a paper. Extracts text between the given "
-            "section heading and the next heading from extracted_text.txt, then translates it."
+            "Translate a specific section of a paper. Uses boundary indices if provided, "
+            "otherwise extracts text between the given section heading and the next heading."
         )
 
     @property
@@ -594,6 +594,18 @@ class TranslateSectionTool(MCPTool):
                 default="",
             ),
             ToolParameter(
+                name="start_index",
+                type="integer",
+                description="Section start position in extracted text (character index)",
+                required=False,
+            ),
+            ToolParameter(
+                name="end_index",
+                type="integer",
+                description="Section end position in extracted text (character index)",
+                required=False,
+            ),
+            ToolParameter(
                 name="target_language",
                 type="string",
                 description="Target language (default: 'Korean')",
@@ -612,6 +624,33 @@ class TranslateSectionTool(MCPTool):
     @property
     def category(self) -> str:
         return "translation"
+
+    def _get_full_text(self, paper_dir: Path) -> str:
+        """Get full text from JSON (preferred) or TXT file with page marker removal."""
+        # Priority 1: JSON file (no page markers)
+        json_file = paper_dir / "extracted_text.json"
+        if json_file.exists():
+            try:
+                with open(json_file, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    return data.get("full_text", "")
+            except (json.JSONDecodeError, IOError):
+                pass
+        
+        # Priority 2: TXT file (remove page markers)
+        txt_file = paper_dir / "extracted_text.txt"
+        if txt_file.exists():
+            try:
+                text = txt_file.read_text(encoding="utf-8")
+                # Remove page markers like "=== Page 1 ==="
+                text = re.sub(r"===\s*Page\s*\d+\s*===\n*", "\n", text)
+                # Clean up excessive newlines
+                text = re.sub(r"\n{3,}", "\n\n", text)
+                return text
+            except IOError:
+                pass
+        
+        return ""
 
     def _extract_section_from_text(self, full_text: str, section_title: str, next_section_title: str) -> str:
         """Extract text between section_title and next_section_title from extracted text.
@@ -742,7 +781,7 @@ class TranslateSectionTool(MCPTool):
                     end_idx = i
 
                 if score >= 0.9:
-                    break
+                        break
 
         # Extract text between start (exclusive of heading line) and end
         section_lines = lines[start_idx + 1:end_idx]
@@ -762,6 +801,8 @@ class TranslateSectionTool(MCPTool):
         paper_id: str,
         section_title: str,
         next_section_title: str = "",
+        start_index: Optional[int] = None,
+        end_index: Optional[int] = None,
         target_language: str = "Korean",
         source_language: str = "English",
         **kwargs,
@@ -777,30 +818,31 @@ class TranslateSectionTool(MCPTool):
                 tool_name=self.name,
             )
 
-        # Read extracted_text.txt
+        # Get full text using the helper method (JSON preferred, with page marker removal)
         paper_dir = OUTPUT_DIR / paper_id
-        text_file = paper_dir / "extracted_text.txt"
-
-        if not text_file.exists():
-            json_file = paper_dir / "extracted_text.json"
-            if json_file.exists():
-                with open(json_file, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                    full_text = data.get("full_text", "")
-            else:
+        full_text = self._get_full_text(paper_dir)
+        
+        if not full_text:
                 raise ExecutionError(
-                    f"텍스트 파일을 찾을 수 없습니다: {text_file}",
+                f"텍스트 파일을 찾을 수 없습니다: {paper_dir}",
                     tool_name=self.name,
                 )
-        else:
-            with open(text_file, "r", encoding="utf-8") as f:
-                full_text = f.read()
 
         if isinstance(full_text, str):
             full_text = full_text.encode("utf-8", "replace").decode("utf-8")
 
-        # Extract section text between titles
-        section_text = self._extract_section_from_text(full_text, section_title, next_section_title)
+        # Extract section text: use boundary indices if provided, otherwise use title matching
+        if start_index is not None and end_index is not None:
+            # Use boundary indices directly (more reliable)
+            section_text = full_text[start_index:end_index].strip()
+            if not section_text:
+                raise ExecutionError(
+                    f"섹션 '{section_title}'에서 텍스트를 찾을 수 없습니다 (indices: {start_index}-{end_index}).",
+                    tool_name=self.name,
+                )
+        else:
+            # Fallback: extract section by title matching
+            section_text = self._extract_section_from_text(full_text, section_title, next_section_title)
 
         # Translate the section
         client = openai.OpenAI(api_key=API_KEY)
@@ -845,10 +887,121 @@ Translate the following text from {source_language} to {target_language}.
 
         translated_text = "\n\n".join(translated_chunks)
 
+        # Save to file system
+        notes_dir = paper_dir / "notes"
+        notes_dir.mkdir(parents=True, exist_ok=True)
+        notes_file = notes_dir / "notes.json"
+        
+        # Load existing notes if available
+        notes_data = {"notes": [], "updated_at": None}
+        if notes_file.exists():
+            try:
+                with open(notes_file, "r", encoding="utf-8") as f:
+                    notes_data = json.load(f)
+            except:
+                pass
+        
+        # Find or create note for this section
+        notes_list = notes_data.get("notes", [])
+        note_found = False
+        for note in notes_list:
+            if note.get("title") == section_title:
+                note["content"] = translated_text
+                note["translated_at"] = datetime.now().isoformat()
+                note["target_language"] = target_language
+                if start_index is not None and end_index is not None:
+                    note["sectionBoundary"] = {
+                        "startIndex": start_index,
+                        "endIndex": end_index,
+                        "sourceFile": "json"
+                    }
+                note_found = True
+                break
+        
+        if not note_found:
+            new_note = {
+                "id": f"note_{int(time.time())}_{section_title[:20].replace(' ', '_')}",
+                "title": section_title,
+                "content": translated_text,
+                "isOpen": True,
+                "translated_at": datetime.now().isoformat(),
+                "target_language": target_language,
+            }
+            if start_index is not None and end_index is not None:
+                new_note["sectionBoundary"] = {
+                    "startIndex": start_index,
+                    "endIndex": end_index,
+                    "sourceFile": "json"
+                }
+            notes_list.append(new_note)
+        
+        notes_data["notes"] = notes_list
+        notes_data["updated_at"] = datetime.now().isoformat()
+        
+        with open(notes_file, "w", encoding="utf-8") as f:
+            json.dump(notes_data, f, ensure_ascii=False, indent=2)
+
         return {
             "status": "success",
             "paper_id": paper_id,
             "section_title": section_title,
             "target_language": target_language,
             "translated_text": translated_text,
+            "saved_to": str(notes_file),
+        }
+
+
+class SaveNotesTool(MCPTool):
+    """Save notes to file system for persistence."""
+
+    @property
+    def name(self) -> str:
+        return "save_notes"
+
+    @property
+    def description(self) -> str:
+        return "Save notes data to file system for persistence across sessions."
+
+    @property
+    def parameters(self) -> List[ToolParameter]:
+        return [
+            ToolParameter(
+                name="paper_id",
+                type="string",
+                description="Paper ID (e.g., '1809.04281')",
+                required=True,
+            ),
+            ToolParameter(
+                name="notes",
+                type="array",
+                description="Array of note objects with id, title, content, isOpen, sectionBoundary",
+                required=True,
+            ),
+        ]
+
+    @property
+    def category(self) -> str:
+        return "notes"
+
+    async def execute(
+        self, paper_id: str, notes: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
+        paper_dir = OUTPUT_DIR / paper_id
+        notes_dir = paper_dir / "notes"
+        notes_dir.mkdir(parents=True, exist_ok=True)
+        notes_file = notes_dir / "notes.json"
+
+        notes_data = {
+            "notes": notes,
+            "updated_at": datetime.now().isoformat(),
+        }
+
+        with open(notes_file, "w", encoding="utf-8") as f:
+            json.dump(notes_data, f, ensure_ascii=False, indent=2)
+
+        return {
+            "status": "success",
+            "paper_id": paper_id,
+            "saved_to": str(notes_file),
+            "notes_count": len(notes),
         }

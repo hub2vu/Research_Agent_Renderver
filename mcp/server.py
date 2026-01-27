@@ -9,7 +9,7 @@ Tools are automatically discovered via registry.py
 import logging
 import os
 from contextlib import asynccontextmanager
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
@@ -289,6 +289,199 @@ async def interpret_page_endpoint(request: InterpretRequest):
     except Exception as e:
         logger.error(f"해석 실패: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============== Rank Filter API Endpoints ==============
+
+@app.get("/rank-filter/profile")
+async def get_user_profile(profile_path: str = "users/profile.json"):
+    """
+    Get user profile from JSON file.
+    """
+    try:
+        from .tools.rank_filter_utils import load_profile
+        profile = load_profile(profile_path, tool_name="get_user_profile")
+        return {"profile": profile}
+    except Exception as e:
+        logger.error(f"Failed to load profile: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to load profile: {str(e)}")
+
+
+class UpdateProfileRequest(BaseModel):
+    """Request body for profile update."""
+    profile_path: str = "users/profile.json"
+    interests: Optional[Dict[str, List[str]]] = None
+    keywords: Optional[Dict[str, Any]] = None
+    exclude_local_papers: Optional[bool] = None
+    purpose: Optional[str] = None
+    ranking_mode: Optional[str] = None
+    top_k: Optional[int] = None
+    include_contrastive: Optional[bool] = None
+    contrastive_type: Optional[str] = None
+    preferred_authors: Optional[List[str]] = None
+    preferred_institutions: Optional[List[str]] = None
+    constraints: Optional[Dict[str, Any]] = None
+
+
+@app.post("/rank-filter/profile")
+async def update_user_profile(request: UpdateProfileRequest):
+    """
+    Update user profile.
+    """
+    try:
+        result = await execute_tool("update_user_profile", **request.model_dump(exclude_none=True))
+        if not result["success"]:
+            raise HTTPException(status_code=500, detail=result.get("error"))
+        return result["result"]
+    except Exception as e:
+        logger.error(f"Failed to update profile: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to update profile: {str(e)}")
+
+
+class ArxivSearchForRankingRequest(BaseModel):
+    """Request body for arXiv search for ranking."""
+    query: str
+    max_results: int = 50
+
+
+@app.post("/arxiv/search-for-ranking")
+async def search_arxiv_for_ranking(request: ArxivSearchForRankingRequest):
+    """
+    Search arXiv and convert results to PaperInput format for ranking pipeline.
+    """
+    try:
+        # Search arXiv
+        search_result = await execute_tool("arxiv_search", query=request.query, max_results=request.max_results)
+        if not search_result["success"]:
+            raise HTTPException(status_code=500, detail=search_result.get("error"))
+        
+        # Convert to PaperInput format
+        papers = []
+        for paper in search_result["result"]["papers"]:
+            # Extract paper ID from entry_id (format: "http://arxiv.org/abs/2301.07041")
+            paper_id = paper["id"].split("/")[-1] if "/" in paper["id"] else paper["id"]
+            
+            papers.append({
+                "paper_id": paper_id,
+                "title": paper["title"],
+                "abstract": paper["summary"],
+                "authors": paper["authors"],
+                "published": paper.get("published"),
+                "categories": paper.get("categories", []),
+                "pdf_url": paper.get("pdf_url"),
+                "github_url": None,  # Will be searched later if needed
+            })
+        
+        return {
+            "query": request.query,
+            "total_results": len(papers),
+            "papers": papers
+        }
+    except Exception as e:
+        logger.error(f"Failed to search arXiv for ranking: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to search arXiv: {str(e)}")
+
+
+class ExecutePipelineRequest(BaseModel):
+    """Request body for rank-filter pipeline execution."""
+    query: str
+    max_results: int = 50
+    purpose: str = "general"
+    ranking_mode: str = "balanced"
+    top_k: int = 5
+    include_contrastive: bool = False
+    contrastive_type: str = "method"
+    profile_path: str = "users/profile.json"
+
+
+@app.post("/rank-filter/execute-pipeline")
+async def execute_rank_filter_pipeline(request: ExecutePipelineRequest):
+    """
+    Execute the full rank and filter pipeline.
+    """
+    try:
+        # Step 1: Search arXiv
+        search_result = await execute_tool("arxiv_search", query=request.query, max_results=request.max_results)
+        if not search_result["success"]:
+            raise HTTPException(status_code=500, detail=search_result.get("error"))
+        
+        # Convert to PaperInput format
+        papers = []
+        for paper in search_result["result"]["papers"]:
+            paper_id = paper["id"].split("/")[-1] if "/" in paper["id"] else paper["id"]
+            papers.append({
+                "paper_id": paper_id,
+                "title": paper["title"],
+                "abstract": paper["summary"],
+                "authors": paper["authors"],
+                "published": paper.get("published"),
+                "categories": paper.get("categories", []),
+                "pdf_url": paper.get("pdf_url"),
+                "github_url": None,
+            })
+        
+        if not papers:
+            return {
+                "success": True,
+                "ranked_papers": [],
+                "message": "No papers found"
+            }
+        
+        # Step 2: Apply hard filters
+        filter_result = await execute_tool("apply_hard_filters", papers=papers, profile_path=request.profile_path, purpose=request.purpose)
+        if not filter_result["success"]:
+            raise HTTPException(status_code=500, detail=filter_result.get("error"))
+        
+        passed_papers = filter_result["result"].get("passed_papers", [])
+        if not passed_papers:
+            return {
+                "success": True,
+                "ranked_papers": [],
+                "message": "All papers were filtered out"
+            }
+        
+        # Step 3: Calculate semantic scores
+        semantic_result = await execute_tool("calculate_semantic_scores", papers=passed_papers, profile_path=request.profile_path)
+        if not semantic_result["success"]:
+            raise HTTPException(status_code=500, detail=semantic_result.get("error"))
+        
+        semantic_scores = semantic_result["result"].get("scores", {})
+        
+        # Step 4: Evaluate metrics
+        metrics_result = await execute_tool("evaluate_paper_metrics", papers=passed_papers, semantic_scores=semantic_scores, profile_path=request.profile_path)
+        if not metrics_result["success"]:
+            raise HTTPException(status_code=500, detail=metrics_result.get("error"))
+        
+        metrics_scores = metrics_result["result"].get("scores", {})
+        
+        # Step 5: Rank and select top K
+        rank_result = await execute_tool(
+            "rank_and_select_top_k",
+            papers=passed_papers,
+            semantic_scores=semantic_scores,
+            metrics_scores=metrics_scores,
+            top_k=request.top_k,
+            purpose=request.purpose,
+            ranking_mode=request.ranking_mode,
+            include_contrastive=request.include_contrastive,
+            contrastive_type=request.contrastive_type,
+            profile_path=request.profile_path
+        )
+        if not rank_result["success"]:
+            raise HTTPException(status_code=500, detail=rank_result.get("error"))
+        
+        return {
+            "success": True,
+            "ranked_papers": rank_result["result"].get("ranked_papers", []),
+            "contrastive_paper": rank_result["result"].get("contrastive_paper"),
+            "comparison_notes": rank_result["result"].get("comparison_notes", []),
+            "summary": rank_result["result"].get("summary", {})
+        }
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        logger.error(f"Pipeline execution failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Pipeline execution failed: {str(e)}")
 
 
 # ============== Main (실행 코드는 파일 맨 끝에 딱 한 번만!) ==============
