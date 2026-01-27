@@ -1,154 +1,31 @@
 import os
 import json
+import logging
+import re
+import arxiv
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
+from openai import AsyncOpenAI
+from ..base import MCPTool, ToolParameter
 
-# [1] pdf.py와 똑같은 경로 설정 방식 사용 (이러면 pdf.py랑 같은 곳에 저장됨)
-OUTPUT_DIR = Path(os.getenv("OUTPUT_DIR", "/data/output"))
-
-# [2] OpenAI 키 가져오기 (환경변수에서)
-API_KEY = os.getenv("OPENAI_API_KEY")
-
-# [3] 라이브러리 체크 (없으면 에러 메시지를 명확히 뱉도록 함)
+# PDF 라이브러리
 try:
-    import openai
-
-    HAS_OPENAI = True
+    from pypdf import PdfReader
 except ImportError:
-    HAS_OPENAI = False
+    PdfReader = None
 
-from ..base import MCPTool, ToolParameter, ExecutionError
+logger = logging.getLogger("mcp.tools.report")
+logger.setLevel(logging.INFO)
+aclient = AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
-
-class GenerateReportTool(MCPTool):
-    """Generate a structured markdown report from extracted text."""
-
-    @property
-    def name(self) -> str:
-        return "generate_report"
-
-    @property
-    def description(self) -> str:
-        return "Generate a txt summary report from extracted text using OpenAI."
-
-    @property
-    def parameters(self) -> List[ToolParameter]:
-        return [
-            ToolParameter(
-                name="paper_id",
-                type="string",
-                description="Paper ID (e.g., '1809.04281')",
-                required=True,
-            )
-        ]
-
-    @property
-    def category(self) -> str:
-        return "report"
-
-    async def execute(self, paper_id: str) -> Dict[str, Any]:
-        # --- [체크 1] OpenAI 라이브러리 확인 ---
-        if not HAS_OPENAI:
-            raise ExecutionError(
-                "서버에 'openai' 패키지가 없습니다. (pip install openai 필요)",
-                tool_name=self.name,
-            )
-
-        # --- [체크 2] API 키 확인 ---
-        if not API_KEY:
-            raise ExecutionError(
-                "환경변수 OPENAI_API_KEY가 설정되지 않았습니다.", tool_name=self.name
-            )
-
-        # --- [체크 3] 파일 경로 확인 ---
-        paper_dir = OUTPUT_DIR / paper_id
-        text_file = paper_dir / "extracted_text.txt"
-
-        if not text_file.exists():
-            json_file = paper_dir / "extracted_text.json"
-            if json_file.exists():
-                with open(json_file, "r", encoding="utf-8") as f:
-                    full_text = json.load(f).get("full_text", "")
-            else:
-                raise ExecutionError(
-                    f"텍스트 파일을 찾을 수 없습니다. 경로: {text_file}",
-                    tool_name=self.name,
-                )
-        else:
-            with open(text_file, "r", encoding="utf-8") as f:
-                full_text = f.read()
-
-        # ⭐ [핵심 수정] 여기서도 깨진 문자(Surrogate)를 제거해야 함! ⭐
-        # 이 줄이 없으면 report.py가 텍스트 읽다가 죽습니다.
-        if isinstance(full_text, str):
-            full_text = full_text.encode("utf-8", "replace").decode("utf-8")
-
-        # --- OpenAI 호출 및 리포트 작성 ---
-        try:
-            client = openai.OpenAI(api_key=API_KEY)
-
-            # 텍스트 길이 제한
-            if len(full_text) > 30000:
-                full_text = full_text[:30000] + "\n...(truncated)..."
-
-            system_instruction = """
-You are a professional IT Tech Journalist who explains complex research to general readers.
-Your task is to rewrite the given academic paper into an easy-to-read structured report.
-
-Please follow this format strictly:
-
-# [Title of the Paper] - Easy Review
-
-## 1. Problem Definition (Why did they start this?)
-- Explain the limitation of previous technologies in simple terms.
-- Avoid complex math symbols (like O(L^2)) or jargon.
-- Focus on "what was difficult to do before" and "why it mattered".
-
-## 2. Research Objective (What did they want to solve?)
-- Describe the goal clearly in one or two sentences.
-- Example: "They wanted to make AI compose music longer than 1 minute without losing the beat."
-
-## 3. Core Claims & Achievements (What is the breakthrough?)
-- List 3 key achievements.
-- Use analogies if possible to help understanding.
-
-## 4. Summary Report (Narrative)
-- Write a 3-paragraph story summarizing the paper.
-- Do NOT use bullet points here. Write it like a blog post or news article.
-- Start with "This research proposes..." or "The authors introduce..."
-- Make it engaging and easy to read for non-experts.
-
-(IMPORTANT: Write the report in English. If the text is truncated, focus on the available parts.)
-"""
-            response = client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[
-                    {
-                        "role": "system",
-                        "content": system_instruction,
-                    },
-                    {"role": "user", "content": f"Paper text:\n{full_text}"},
-                ],
-            )
-            report_content = response.choices[0].message.content
-
-            # 저장 (txt 파일로 저장)
-            report_path = paper_dir / "summary_report.txt"
-            with open(report_path, "w", encoding="utf-8") as f:
-                f.write(report_content)
-
-            return {
-                "status": "success",
-                "report_path": str(report_path),
-                "preview": report_content[:100],
-            }
-
-        except Exception as e:
-            raise ExecutionError(f"OpenAI API 호출 실패: {str(e)}", tool_name=self.name)
+# 경로 설정
+OUTPUT_DIR = Path(os.getenv("OUTPUT_DIR", "data/output"))
+PDF_DIR = Path(os.getenv("PDF_DIR", "data/pdf"))
+NEURIPS_DIR = PDF_DIR / "neurips2025"
 
 
 class GetReportTool(MCPTool):
-    """Retrieve an existing report."""
+    """이미 생성된 요약 리포트(txt)를 읽어옵니다."""
 
     @property
     def name(self) -> str:
@@ -156,7 +33,7 @@ class GetReportTool(MCPTool):
 
     @property
     def description(self) -> str:
-        return "Retrieve the generated report."
+        return "Retrieve existing summary report."
 
     @property
     def parameters(self) -> List[ToolParameter]:
@@ -166,13 +43,181 @@ class GetReportTool(MCPTool):
             )
         ]
 
-    @property
-    def category(self) -> str:
-        return "report"
-
-    async def execute(self, paper_id: str) -> Dict[str, Any]:
+    async def execute(self, paper_id: str, **kwargs) -> Dict[str, Any]:
+        # 1. 기본 경로 확인
         report_path = OUTPUT_DIR / paper_id / "summary_report.txt"
+
+        # 2. 없으면 fuzzy folder (예: 115627_Title) 확인
+        if not report_path.exists() and OUTPUT_DIR.exists():
+            for folder in OUTPUT_DIR.iterdir():
+                if folder.is_dir() and folder.name.startswith(f"{paper_id}_"):
+                    candidate = folder / "summary_report.txt"
+                    if candidate.exists():
+                        report_path = candidate
+                        break
+
         if report_path.exists():
             with open(report_path, "r", encoding="utf-8") as f:
                 return {"found": True, "content": f.read()}
         return {"found": False, "message": "Report not found."}
+
+
+class GenerateReportTool(MCPTool):
+    """논문 리포트 생성기 (NeurIPS 경로 자동 탐색 포함)"""
+
+    @property
+    def name(self) -> str:
+        return "generate_report"
+
+    @property
+    def description(self) -> str:
+        return "Generate summary report from PDF or text."
+
+    @property
+    def parameters(self) -> List[ToolParameter]:
+        return [
+            ToolParameter(
+                name="paper_id", type="string", description="Paper ID", required=True
+            )
+        ]
+
+    def _resolve_paper_dir(self, paper_id: str) -> Path:
+        """ID로 폴더 찾기 (정확히 일치하거나, ID_Title 형태)"""
+        exact = OUTPUT_DIR / paper_id
+        if exact.exists():
+            return exact
+
+        # Fuzzy search in output dir
+        if OUTPUT_DIR.exists():
+            for folder in OUTPUT_DIR.iterdir():
+                if folder.is_dir() and folder.name.startswith(f"{paper_id}_"):
+                    return folder
+
+        # 없으면 새로 생성할 기본 경로
+        return exact
+
+    def _get_text_from_file(self, paper_dir: Path) -> str:
+        """추출된 텍스트 파일 읽기"""
+        for fname in ["extracted_text.json", "extracted_text.txt"]:
+            fpath = paper_dir / fname
+            if fpath.exists():
+                try:
+                    with open(fpath, "r", encoding="utf-8") as f:
+                        if fname.endswith(".json"):
+                            data = json.load(f)
+                            return data.get("full_text", "") or ""
+                        return f.read()
+                except:
+                    pass
+        return ""
+
+    def _find_pdf_path(self, paper_id: str, paper_dir: Path) -> Optional[Path]:
+        """PDF 파일 위치 추적 (NeurIPS 폴더 포함)"""
+        # 1. Output 폴더 내
+        if paper_dir.exists():
+            pdfs = list(paper_dir.glob("*.pdf"))
+            if pdfs:
+                return pdfs[0]
+
+        # 2. NeurIPS 2025 폴더 (ID_Title.pdf 패턴)
+        if NEURIPS_DIR.exists():
+            # 정확한 ID 매칭
+            exact = NEURIPS_DIR / f"{paper_id}.pdf"
+            if exact.exists():
+                return exact
+            # 접두어 매칭 (115627_Alternating_Gradient...)
+            for f in NEURIPS_DIR.glob(f"{paper_id}_*.pdf"):
+                return f
+
+        # 3. 기본 PDF 폴더
+        if (PDF_DIR / f"{paper_id}.pdf").exists():
+            return PDF_DIR / f"{paper_id}.pdf"
+
+        return None
+
+    def _extract_from_pdf_file(self, pdf_path: Path) -> str:
+        """PDF 파일에서 텍스트 추출"""
+        if not PdfReader:
+            return ""
+        try:
+            reader = PdfReader(str(pdf_path))
+            return "\n".join([page.extract_text() or "" for page in reader.pages])
+        except Exception as e:
+            logger.error(f"PDF read error: {e}")
+            return ""
+
+    def _download_arxiv_pdf(self, paper_id: str, save_dir: Path) -> bool:
+        if not arxiv:
+            return False
+        try:
+            clean_id = paper_id.split("v")[0]
+            paper = next(arxiv.Search(id_list=[clean_id]).results(), None)
+            if paper:
+                save_dir.mkdir(parents=True, exist_ok=True)
+                paper.download_pdf(dirpath=str(save_dir), filename=f"{paper_id}.pdf")
+                return True
+        except:
+            pass
+        return False
+
+    async def execute(self, paper_id: str, **kwargs) -> Dict[str, Any]:
+        paper_dir = self._resolve_paper_dir(paper_id)
+
+        # 1. 텍스트 확인
+        full_text = self._get_text_from_file(paper_dir)
+
+        # 2. 텍스트 없으면 PDF 찾아서 추출
+        if not full_text:
+            pdf_path = self._find_pdf_path(paper_id, paper_dir)
+
+            if pdf_path:
+                logger.info(f"Found PDF at {pdf_path}, extracting...")
+                full_text = self._extract_from_pdf_file(pdf_path)
+            else:
+                # PDF도 없으면 ArXiv 다운로드 시도 (NeurIPS는 이미 다운로드 되었다고 가정)
+                if "." in paper_id and self._download_arxiv_pdf(paper_id, paper_dir):
+                    full_text = self._extract_from_pdf_file(
+                        paper_dir / f"{paper_id}.pdf"
+                    )
+
+        if not full_text:
+            return {
+                "success": False,
+                "error": f"논문 파일(PDF)을 찾을 수 없습니다. 경로: {NEURIPS_DIR}/{paper_id}_*.pdf 확인 필요.",
+            }
+
+        # 3. 리포트 생성
+        try:
+            prompt = f"""
+            당신은 AI 논문 전문 분석가입니다. 아래 내용을 바탕으로 [종합 요약 보고서]를 작성해 주세요.
+            
+            [논문 텍스트 일부]
+            {full_text[:50000]}
+
+            [작성 양식]
+            1. 📌 논문 제목 및 핵심 기여 (3문장 요약)
+            2. 🛠 주요 방법론 (Methodology)
+            3. 📊 실험 결과 및 성능 (Experiments)
+            4. 💡 결론 및 한계점
+            
+            반드시 **한국어**로 작성하세요.
+            """
+
+            response = await aclient.chat.completions.create(
+                model="gpt-4o",
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.3,
+            )
+
+            content = response.choices[0].message.content
+
+            # 저장 (결과 폴더가 없으면 생성)
+            paper_dir.mkdir(parents=True, exist_ok=True)
+            with open(paper_dir / "summary_report.txt", "w", encoding="utf-8") as f:
+                f.write(content)
+
+            return {"success": True, "content": content}
+
+        except Exception as e:
+            logger.error(f"Report gen failed: {e}")
+            return {"success": False, "error": str(e)}

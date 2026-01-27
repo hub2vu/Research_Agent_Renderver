@@ -22,6 +22,27 @@
       "year": null
     },
     {
+      "id": "115627_Alternating Gradient Flows_ A Theory of Feature Learning in Two-layer Neural Networks",
+      "title": "Alternating Gradient Flows: A Theory of Feature Learning in Two-layer Neural Networks Daniel Kunin†",
+      "cluster": 0,
+      "authors": [],
+      "year": null
+    },
+    {
+      "id": "115929_The Price of Sparsity_ Sufficient Conditions for Sparse Recovery using Sparse and Sparsified Measurements",
+      "title": "The Price of Sparsity: Sufficient Conditions for Sparse Recovery using Sparse and Sparsified Measurements",
+      "cluster": 0,
+      "authors": [],
+      "year": null
+    },
+    {
+      "id": "116466_Self-Evolving Pseudo-Rehearsal for Catastrophic Forgetting with Task Similarity in LLMs",
+      "title": "Self-Evolving Pseudo-Rehearsal for Catastrophic Forgetting with Task Similarity in LLMs Jun Wang1∗Liang Ding2∗Shuai Wang1",
+      "cluster": 0,
+      "authors": [],
+      "year": null
+    },
+    {
       "id": "117038_GoRA_ Gradient-driven Adaptive Low Rank Adaptation",
       "title": "GoRA: Gradient-driven Adaptive Low Rank Adaptation Haonan He1,2,3∗,",
       "cluster": 0,
@@ -38,6 +59,13 @@
     {
       "id": "118575_Inverse Methods for Missing Data Imputation",
       "title": "Inverse Methods for Missing Data Imputation Hao Wang1∗Zhengnan Li1∗ Zhichao Chen2",
+      "cluster": 0,
+      "authors": [],
+      "year": null
+    },
+    {
+      "id": "118823_How many measurements are enough_ Bayesian recovery in inverse problems with general distributions",
+      "title": "How many measurements are enough? Bayesian recovery in inverse problems with general distributions",
       "cluster": 0,
       "authors": [],
       "year": null
@@ -71,6 +99,13 @@
       "year": null
     },
     {
+      "id": "2506.07976",
+      "title": "2506.07976",
+      "cluster": 0,
+      "authors": [],
+      "year": null
+    },
+    {
       "id": "SpaceTimePilot",
       "title": "SpaceTimePilot: Generative Rendering of Dynamic Scenes Across Space and Time Zhening Huang1,2",
       "cluster": 0,
@@ -80,106 +115,33 @@
   ],
   "edges": [
     {
-      "source": "10.48550_arxiv.2201.07207",
-      "target": "10.48550_arxiv.2210.03629",
-      "weight": 0.6313140392303467,
-      "type": "similarity"
-    },
-    {
-      "source": "10.48550_arxiv.2201.07207",
-      "target": "10.48550_arxiv.2506.07976",
-      "weight": 0.46228349208831787,
-      "type": "similarity"
-    },
-    {
-      "source": "10.48550_arxiv.2201.07207",
-      "target": "119698_The Rise of Parameter Specialization for Knowledge Storage in Large Language Models",
-      "weight": 0.4371035695075989,
-      "type": "similarity"
-    },
-    {
-      "source": "10.48550_arxiv.2201.07207",
-      "target": "120272_metaTextGrad_ Automatically optimizing language model optimizers",
-      "weight": 0.5292994976043701,
-      "type": "similarity"
-    },
-    {
-      "source": "10.48550_arxiv.2210.03629",
-      "target": "10.48550_arxiv.2506.07976",
-      "weight": 0.5511950254440308,
-      "type": "similarity"
-    },
-    {
-      "source": "10.48550_arxiv.2210.03629",
-      "target": "119698_The Rise of Parameter Specialization for Knowledge Storage in Large Language Models",
-      "weight": 0.5119104385375977,
-      "type": "similarity"
-    },
-    {
-      "source": "10.48550_arxiv.2210.03629",
-      "target": "120272_metaTextGrad_ Automatically optimizing language model optimizers",
-      "weight": 0.5392121076583862,
-      "type": "similarity"
-    },
-    {
-      "source": "10.48550_arxiv.2210.03629",
-      "target": "1706.03762",
-      "weight": 0.4852225184440613,
-      "type": "similarity"
-    },
-    {
-      "source": "117038_GoRA_ Gradient-driven Adaptive Low Rank Adaptation",
-      "target": "119698_The Rise of Parameter Specialization for Knowledge Storage in Large Language Models",
-      "weight": 0.5681643486022949,
-      "type": "similarity"
-    },
-    {
-      "source": "117038_GoRA_ Gradient-driven Adaptive Low Rank Adaptation",
-      "target": "120272_metaTextGrad_ Automatically optimizing language model optimizers",
-      "weight": 0.5112696290016174,
-      "type": "similarity"
-    },
-    {
-      "source": "117038_GoRA_ Gradient-driven Adaptive Low Rank Adaptation",
-      "target": "1706.03762",
-      "weight": 0.42816996574401855,
-      "type": "similarity"
-    },
-    {
-      "source": "119698_The Rise of Parameter Specialization for Knowledge Storage in Large Language Models",
-      "target": "120272_metaTextGrad_ Automatically optimizing language model optimizers",
-      "weight": 0.5411215424537659,
-      "type": "similarity"
-    },
-    {
-      "source": "119698_The Rise of Parameter Specialization for Knowledge Storage in Large Language Models",
-      "target": "1706.03762",
-      "weight": 0.4062662422657013,
-      "type": "similarity"
-    },
-    {
-      "source": "1706.03762",
-      "target": "1809.04281",
-      "weight": 0.5406745076179504,
+      "source": "10.48550_arxiv.2506.07976",
+      "target": "2506.07976",
+      "weight": 0.8455031514167786,
       "type": "similarity"
     }
   ],
   "meta": {
-    "total_papers": 11,
-    "total_edges": 14,
-    "similarity_threshold": 0.4,
+    "total_papers": 16,
+    "total_edges": 1,
+    "similarity_threshold": 0.75,
     "used_embeddings": true,
     "titles": {
       "10.48550_arxiv.2201.07207": "Language Models as Zero-Shot Planners: Extracting Actionable Knowledge for Embodied Agents",
       "10.48550_arxiv.2210.03629": "REACT: SYNERGIZING REASONING AND ACTING IN LANGUAGE MODELS",
       "10.48550_arxiv.2506.07976": "Thinking vs. Doing: Agents that Reason by Scaling Test-Time Interaction",
+      "115627_Alternating Gradient Flows_ A Theory of Feature Learning in Two-layer Neural Networks": "Alternating Gradient Flows: A Theory of Feature Learning in Two-layer Neural Networks Daniel Kunin†",
+      "115929_The Price of Sparsity_ Sufficient Conditions for Sparse Recovery using Sparse and Sparsified Measurements": "The Price of Sparsity: Sufficient Conditions for Sparse Recovery using Sparse and Sparsified Measurements",
+      "116466_Self-Evolving Pseudo-Rehearsal for Catastrophic Forgetting with Task Similarity in LLMs": "Self-Evolving Pseudo-Rehearsal for Catastrophic Forgetting with Task Similarity in LLMs Jun Wang1∗Liang Ding2∗Shuai Wang1",
       "117038_GoRA_ Gradient-driven Adaptive Low Rank Adaptation": "GoRA: Gradient-driven Adaptive Low Rank Adaptation Haonan He1,2,3∗,",
       "117231_Bernstein–von Mises for Adaptively Collected Data": "Bernstein–von Mises for Adaptively Collected Data",
       "118575_Inverse Methods for Missing Data Imputation": "Inverse Methods for Missing Data Imputation Hao Wang1∗Zhengnan Li1∗ Zhichao Chen2",
+      "118823_How many measurements are enough_ Bayesian recovery in inverse problems with general distributions": "How many measurements are enough? Bayesian recovery in inverse problems with general distributions",
       "119698_The Rise of Parameter Specialization for Knowledge Storage in Large Language Models": "The Rise of Parameter Specialization for Knowledge Storage in Large Language Models Yihuai Hong1,2∗",
       "120272_metaTextGrad_ Automatically optimizing language model optimizers": "metaTextGrad: Automatically optimizing language model optimizers",
       "1706.03762": "1706.03762",
       "1809.04281": "MUSIC TRANSFORMER: GENERATING MUSIC WITH LONG-TERM STRUCTURE Cheng-Zhi Anna Huang∗Ashish Vaswani",
+      "2506.07976": "2506.07976",
       "SpaceTimePilot": "SpaceTimePilot: Generative Rendering of Dynamic Scenes Across Space and Time Zhening Huang1,2"
     }
   }

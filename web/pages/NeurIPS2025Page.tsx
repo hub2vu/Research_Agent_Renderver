@@ -14,7 +14,7 @@ import SidePanel from '../components/SidePanel';
 import NeurIPSSearchSidebar from '../components/NeurIPSSearchSidebar';
 import NeurIPSRankedList from '../components/NeurIPSRankedList';
 import PaperListView from '../components/PaperListView';
-import { GraphNode, GraphEdge, executeNeurIPSSearchAndRank, getUserProfile,  executeTool } from '../lib/mcp';
+import { GraphNode, GraphEdge, executeNeurIPSSearchAndRank, getUserProfile, executeTool } from '../lib/mcp';
 import { ScoredPaper } from '../components/PaperResultCard';
 import { useNodeColors } from '../hooks/useNodeColors';
 
@@ -80,9 +80,11 @@ export default function NeurIPS2025Page() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
+
   //  토글
   const [showControls, setShowControls] = useState(true);
   const [showSearchUI, setShowSearchUI] = useState(true);
+
   // ✅ 유사도 기준(슬라이더)
   const [minSim, setMinSim] = useState<number>(0.75);
 
@@ -152,6 +154,11 @@ export default function NeurIPS2025Page() {
           stableKey: neuripsStableKey(p.paper_id),
           type: 'neurips_paper',
           cluster: clusterId,
+
+          // ✅ [핵심 수정] 리스트 뷰에 보여줄 Abstract와 Authors 정보를 여기서 꼭 넣어줘야 합니다!
+          abstract: p.abstract,
+          authors: p['speakers/authors'] ? p['speakers/authors'].split(',').map(s => s.trim()) : [],
+
           // Initial position near cluster center
           x: center ? center.x + (Math.random() - 0.5) * 200 : (idx % 50) * 30,
           y: center ? center.y + (Math.random() - 0.5) * 200 : Math.floor(idx / 50) * 30,
@@ -230,7 +237,7 @@ export default function NeurIPS2025Page() {
 
       if (result.success && result.ranked_papers) {
         setSearchResults(result.ranked_papers);
-        
+
         // Update highlighted paper IDs
         const highlightedSet = new Set(result.ranked_papers.map(p => p.paper_id));
         setHighlightedPaperIds(highlightedSet);
@@ -242,7 +249,7 @@ export default function NeurIPS2025Page() {
     } finally {
       setIsSearching(false);
     }
-  }, [searchQuery]);
+  }, [searchQuery, numClusters]); // numClusters 의존성 추가
 
   // Handle paper click from list
   const handlePaperClick = useCallback((paperId: string) => {
@@ -256,32 +263,30 @@ export default function NeurIPS2025Page() {
     }
   }, [graphState.nodes]);
 
-  // Handle PDF download
+  // Handle PDF download (for SidePanel)
   const handleDownloadPdf = useCallback(async () => {
-  if (!selectedNode) return;
-  const paper = papers.get(selectedNode.id);
-  if (!paper) return;
+    if (!selectedNode) return;
+    const paper = papers.get(selectedNode.id);
+    if (!paper) return;
 
-  setDownloadingPdf(true); // 로딩 표시 시작
-  try {
-    // [수정됨] 기존 'neurips2025_download_pdf' 대신 'process_neurips_paper' 호출
-    const result = await executeTool('process_neurips_paper', {
-      paper_id: paper.paper_id,
-      out_dir: '/data/pdf/neurips2025' // 이전에 수정한 경로 유지
-    });
+    setDownloadingPdf(true); // 로딩 표시 시작
+    try {
+      const result = await executeTool('process_neurips_paper', {
+        paper_id: paper.paper_id,
+        out_dir: '/data/pdf/neurips2025'
+      });
 
-    if (!result.success) {
-      alert(`Pipeline failed: ${result.error}`);
-    } else {
-      // 결과 보여주기
-      const info = result.result?.pipeline_results;
-      const refCount = info?.ref_count || 0;
-      alert(`Process Complete!\n\n- PDF Saved: ${info?.pdf_path}\n- References Found: ${refCount}`);
-    }
-  } catch (err) {
-    alert(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
-  } finally {
-    setDownloadingPdf(false); // 로딩 표시 끝
+      if (!result.success) {
+        alert(`Pipeline failed: ${result.error}`);
+      } else {
+        const info = result.result?.pipeline_results;
+        const refCount = info?.ref_count || 0;
+        alert(`Process Complete!\n\n- PDF Saved: ${info?.pdf_path}\n- References Found: ${refCount}`);
+      }
+    } catch (err) {
+      alert(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    } finally {
+      setDownloadingPdf(false); // 로딩 표시 끝
     }
   }, [selectedNode, papers]);
 
@@ -711,24 +716,24 @@ export default function NeurIPS2025Page() {
       </div>
 
       {viewMode === 'graph' && (
-      <SidePanel
-        selectedNode={selectedNode ? {
-          ...selectedNode,
-          label: selectedPaper?.name || selectedNode.label,
-        } : null}
-        onClose={() => setSelectedNode(null)}
-        onNodeColorChange={(key, color) => {
-          const k = selectedNode?.stableKey || key;
-          handleNodeColorChange(k, color);
-        }}
-        onNodeColorReset={(key) => {
-          const k = selectedNode?.stableKey || key;
-          handleNodeColorReset(k);
-        }}
-        nodeColor={selectedNode?.stableKey ? nodeColorMap[selectedNode.stableKey] : undefined}
-        extraContent={renderNeurIPSDetails()}
-      />
-    )}
+        <SidePanel
+          selectedNode={selectedNode ? {
+            ...selectedNode,
+            label: selectedPaper?.name || selectedNode.label,
+          } : null}
+          onClose={() => setSelectedNode(null)}
+          onNodeColorChange={(key, color) => {
+            const k = selectedNode?.stableKey || key;
+            handleNodeColorChange(k, color);
+          }}
+          onNodeColorReset={(key) => {
+            const k = selectedNode?.stableKey || key;
+            handleNodeColorReset(k);
+          }}
+          nodeColor={selectedNode?.stableKey ? nodeColorMap[selectedNode.stableKey] : undefined}
+          extraContent={renderNeurIPSDetails()}
+        />
+      )}
     </div>
   );
 }
