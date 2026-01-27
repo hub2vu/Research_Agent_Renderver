@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, useParams } from 'react-router-dom';
 import GlobalGraphPage from './pages/GlobalGraphPage';
 import PaperGraphPage from './pages/PaperGraphPage';
 import NeurIPS2025Page from './pages/NeurIPS2025Page';
+import ICLR2025Page from './pages/ICLR2025Page';
 import NavBar from './components/NavBar';
 import LLMChatPopup from './components/LLMChatPopup';
 import NotePage from './pages/NotePage';
@@ -27,6 +28,7 @@ function AppContent() {
         <Route path="/" element={<GlobalGraphPage />} />
         <Route path="/paper/:paperId" element={<PaperGraphWrapper />} />
         <Route path="/neurips2025" element={<NeurIPS2025Page />} />
+        <Route path="/iclr2025" element={<ICLR2025Page />} />
         <Route path="/note/:paperId" element={<NotePage />} />
       </Routes>
 
