@@ -10,6 +10,7 @@ import json
 import logging
 import os
 import re
+import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -29,6 +30,12 @@ aclient = AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 # Paths
 OUTPUT_DIR = Path(os.getenv("OUTPUT_DIR", "data/output"))
 PDF_DIR = Path(os.getenv("PDF_DIR", "data/pdf"))
+STATUS_DIR = OUTPUT_DIR / "agent_status"
+STATUS_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def _env_or_empty(key: str) -> str:
+    return (os.getenv(key) or "").strip()
 
 
 # =============================================================================
@@ -60,13 +67,24 @@ class PaperAnalysisResult:
 @dataclass
 class AgentState:
     """State management for the research agent."""
+    job_id: str
     goal: str
     papers: List[str]
     analysis_mode: str = "quick"             # quick, standard, deep
+    status: str = "running"                   # running, completed, failed
     current_paper_idx: int = 0
+    current_step: str = ""                    # Current step description
+    progress_percent: float = 0.0             # 0-100
     paper_results: List[PaperAnalysisResult] = field(default_factory=list)
     reasoning_log: List[ReasoningEntry] = field(default_factory=list)
     errors: List[str] = field(default_factory=list)
+    created_at: str = ""
+    updated_at: str = ""
+    
+    def __post_init__(self):
+        if not self.created_at:
+            self.created_at = datetime.now().isoformat()
+        self.updated_at = datetime.now().isoformat()
     
     def log_reasoning(
         self,
@@ -87,6 +105,51 @@ class AgentState:
         )
         self.reasoning_log.append(entry)
         logger.info(f"[Agent Decision] {paper_id}: {decision}")
+    
+    def update_progress(self, step: str, percent: float):
+        """Update progress and save state."""
+        self.current_step = step
+        self.progress_percent = percent
+        self.updated_at = datetime.now().isoformat()
+        self._save_state()
+    
+    def _save_state(self):
+        """Save current state to JSON file."""
+        try:
+            state_file = STATUS_DIR / f"{self.job_id}.json"
+            state_dict = {
+                "job_id": self.job_id,
+                "goal": self.goal,
+                "papers": self.papers,
+                "analysis_mode": self.analysis_mode,
+                "status": self.status,
+                "current_paper_idx": self.current_paper_idx,
+                "current_step": self.current_step,
+                "progress_percent": self.progress_percent,
+                "paper_results_count": len(self.paper_results),
+                "reasoning_log_count": len(self.reasoning_log),
+                "errors": self.errors,
+                "created_at": self.created_at,
+                "updated_at": self.updated_at,
+            }
+            with open(state_file, "w", encoding="utf-8") as f:
+                json.dump(state_dict, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            logger.warning(f"Failed to save state: {e}")
+    
+    def mark_completed(self):
+        """Mark job as completed and save state."""
+        self.status = "completed"
+        self.progress_percent = 100.0
+        self.updated_at = datetime.now().isoformat()
+        self._save_state()
+    
+    def mark_failed(self, error: str):
+        """Mark job as failed and save state."""
+        self.status = "failed"
+        self.errors.append(error)
+        self.updated_at = datetime.now().isoformat()
+        self._save_state()
 
 
 # =============================================================================
@@ -417,27 +480,41 @@ class ResearchAgentTool(MCPTool):
         slack_webhook_full: str = "",
         slack_webhook_summary: str = "",
         source: str = "local",
+        job_id: Optional[str] = None,
         **kwargs
     ) -> Dict[str, Any]:
         """Execute the research agent pipeline."""
         
+        # Generate job ID if not provided
+        if not job_id:
+            job_id = f"job_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
+        
         # Limit papers to 3
         paper_ids = paper_ids[:3]
         
+        # If webhook not provided by UI, fall back to env/.env-loaded env
+        slack_webhook_full = (slack_webhook_full or "").strip() or _env_or_empty("SLACK_WEBHOOK_FULL")
+        slack_webhook_summary = (slack_webhook_summary or "").strip() or _env_or_empty("SLACK_WEBHOOK_SUMMARY")
+
         # Initialize state
         state = AgentState(
+            job_id=job_id,
             goal=goal,
             papers=paper_ids,
             analysis_mode=analysis_mode
         )
+        state.update_progress("Initializing...", 0.0)
         
-        logger.info(f"[Research Agent] Starting analysis of {len(paper_ids)} papers")
+        logger.info(f"[Research Agent] Starting analysis of {len(paper_ids)} papers (Job ID: {job_id})")
         logger.info(f"[Research Agent] Goal: {goal}, Mode: {analysis_mode}")
         
         # Process each paper
+        total_papers = len(paper_ids)
         for idx, paper_id in enumerate(paper_ids):
             state.current_paper_idx = idx
-            logger.info(f"[Research Agent] Processing paper {idx + 1}/{len(paper_ids)}: {paper_id}")
+            progress = (idx / total_papers) * 60  # 0-60% for paper processing
+            state.update_progress(f"Processing paper {idx + 1}/{total_papers}: {paper_id}", progress)
+            logger.info(f"[Research Agent] Processing paper {idx + 1}/{total_papers}: {paper_id}")
             
             try:
                 result = await self._process_single_paper(paper_id, state)
@@ -448,6 +525,7 @@ class ResearchAgentTool(MCPTool):
                 logger.error(error_msg)
         
         # Generate executive summary
+        state.update_progress("Generating executive summary...", 70.0)
         executive_summary = ""
         if state.paper_results:
             executive_summary = await LLMOrchestrator.generate_executive_summary(
@@ -456,6 +534,7 @@ class ResearchAgentTool(MCPTool):
             )
         
         # Generate final report
+        state.update_progress("Generating final report...", 80.0)
         final_report = FinalReportGenerator.generate(state, executive_summary)
         
         # Save report
@@ -470,6 +549,7 @@ class ResearchAgentTool(MCPTool):
         logger.info(f"[Research Agent] Report saved to {report_file}")
         
         # Send notifications to Slack
+        state.update_progress("Sending notifications...", 90.0)
         notification_results = {}
         
         # Send full report to first Slack channel
@@ -509,8 +589,12 @@ class ResearchAgentTool(MCPTool):
             except Exception as e:
                 notification_results["slack_summary"] = {"success": False, "error": str(e)}
         
+        # Mark as completed
+        state.mark_completed()
+        
         return {
             "success": True,
+            "job_id": job_id,
             "papers_analyzed": len(state.paper_results),
             "report_path": str(report_file),
             "executive_summary": executive_summary,

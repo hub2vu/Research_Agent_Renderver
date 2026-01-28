@@ -11,11 +11,14 @@ import os
 from contextlib import asynccontextmanager
 from typing import Any, Dict, List, Optional
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, BackgroundTasks
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pathlib import Path
+import json
+import uuid
+from datetime import datetime
 
 # 새로 만든 도구 임포트
 from .tools.page_analyzer import interpret_paper_page
@@ -206,6 +209,113 @@ async def web_search(query: str, max_results: int = 5):
 
 # [파일 저장 경로 정의]
 OUTPUT_DIR = Path(os.getenv("OUTPUT_DIR", "/data/output"))
+STATUS_DIR = OUTPUT_DIR / "agent_status"
+STATUS_DIR.mkdir(parents=True, exist_ok=True)
+
+# .env management (best-effort; primarily for local/dev)
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+DOTENV_PATH = Path(os.getenv("DOTENV_PATH", str(PROJECT_ROOT / ".env")))
+
+
+def _read_dotenv(path: Path) -> Dict[str, str]:
+    if not path.exists():
+        return {}
+    data: Dict[str, str] = {}
+    try:
+        for line in path.read_text(encoding="utf-8").splitlines():
+            s = line.strip()
+            if not s or s.startswith("#") or "=" not in s:
+                continue
+            k, v = s.split("=", 1)
+            data[k.strip()] = v.strip()
+    except Exception as e:
+        logger.warning(f"Failed to read .env at {path}: {e}")
+    return data
+
+
+def _write_dotenv(path: Path, updates: Dict[str, str]) -> None:
+    """
+    Update (or append) keys in .env while preserving other lines best-effort.
+    Writes UTF-8.
+    """
+    lines: List[str] = []
+    existing = {}
+    if path.exists():
+        lines = path.read_text(encoding="utf-8").splitlines()
+    else:
+        # ensure parent exists
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            pass
+
+    # index existing keys
+    key_to_idx: Dict[str, int] = {}
+    for i, line in enumerate(lines):
+        s = line.strip()
+        if not s or s.startswith("#") or "=" not in s:
+            continue
+        k, _ = s.split("=", 1)
+        k = k.strip()
+        key_to_idx[k] = i
+
+    # apply updates
+    for k, v in updates.items():
+        new_line = f"{k}={v}"
+        if k in key_to_idx:
+            lines[key_to_idx[k]] = new_line
+        else:
+            lines.append(new_line)
+
+    path.write_text("\n".join(lines) + ("\n" if lines else ""), encoding="utf-8")
+
+
+class SlackConfigRequest(BaseModel):
+    slack_webhook_full: str = ""
+    slack_webhook_summary: str = ""
+
+
+@app.get("/config/slack")
+async def get_slack_config():
+    """
+    Returns Slack webhook URLs from process env, falling back to .env file if present.
+    """
+    full = os.getenv("SLACK_WEBHOOK_FULL", "")
+    summary = os.getenv("SLACK_WEBHOOK_SUMMARY", "")
+
+    if not full or not summary:
+        dotenv = _read_dotenv(DOTENV_PATH)
+        full = full or dotenv.get("SLACK_WEBHOOK_FULL", "")
+        summary = summary or dotenv.get("SLACK_WEBHOOK_SUMMARY", "")
+
+    return {
+        "success": True,
+        "dotenv_path": str(DOTENV_PATH),
+        "slack_webhook_full": full,
+        "slack_webhook_summary": summary,
+    }
+
+
+@app.post("/config/slack")
+async def update_slack_config(req: SlackConfigRequest):
+    """
+    Update .env with Slack webhook URLs and also update current process env
+    (so running server can use the new values without restart).
+    """
+    updates = {
+        "SLACK_WEBHOOK_FULL": (req.slack_webhook_full or "").strip(),
+        "SLACK_WEBHOOK_SUMMARY": (req.slack_webhook_summary or "").strip(),
+    }
+    try:
+        _write_dotenv(DOTENV_PATH, updates)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to write .env: {e}")
+
+    # Update runtime environment for immediate use
+    os.environ["SLACK_WEBHOOK_FULL"] = updates["SLACK_WEBHOOK_FULL"]
+    os.environ["SLACK_WEBHOOK_SUMMARY"] = updates["SLACK_WEBHOOK_SUMMARY"]
+
+    return {"success": True, "dotenv_path": str(DOTENV_PATH), **updates}
 
 
 # [리포트 조회 기능]
@@ -289,6 +399,138 @@ async def interpret_page_endpoint(request: InterpretRequest):
     except Exception as e:
         logger.error(f"해석 실패: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============== Research Agent Pipeline API ==============
+
+async def run_agent_background(job_id: str, tool_args: Dict[str, Any]):
+    """Background task to run the research agent."""
+    try:
+        result = await execute_tool("run_research_agent", **tool_args, job_id=job_id)
+        logger.info(f"[Background] Job {job_id} completed: {result.get('success')}")
+    except Exception as e:
+        logger.error(f"[Background] Job {job_id} failed: {str(e)}")
+        # Update status to failed
+        try:
+            status_file = STATUS_DIR / f"{job_id}.json"
+            if status_file.exists():
+                with open(status_file, "r", encoding="utf-8") as f:
+                    status_data = json.load(f)
+                status_data["status"] = "failed"
+                status_data["errors"] = status_data.get("errors", []) + [str(e)]
+                status_data["updated_at"] = datetime.now().isoformat()
+                with open(status_file, "w", encoding="utf-8") as f:
+                    json.dump(status_data, f, ensure_ascii=False, indent=2)
+        except Exception as save_error:
+            logger.error(f"Failed to save error status: {save_error}")
+
+
+@app.post("/agent/run")
+async def run_agent_pipeline(background_tasks: BackgroundTasks, request: ToolRequest):
+    """
+    Start the research agent pipeline in the background.
+    Returns immediately with job_id.
+    """
+    job_id = f"job_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
+    
+    # Add job_id to arguments
+    tool_args = request.arguments.copy()
+    
+    # Start background task
+    background_tasks.add_task(run_agent_background, job_id, tool_args)
+    
+    logger.info(f"[API] Started background job: {job_id}")
+    
+    return {
+        "success": True,
+        "job_id": job_id,
+        "message": "Pipeline started in background",
+        "status_url": f"/agent/status/{job_id}"
+    }
+
+
+@app.get("/agent/status/{job_id}")
+async def get_agent_status(job_id: str):
+    """
+    Get the current status of a running or completed pipeline job.
+    """
+    status_file = STATUS_DIR / f"{job_id}.json"
+    
+    if not status_file.exists():
+        raise HTTPException(status_code=404, detail=f"Job not found: {job_id}")
+    
+    try:
+        with open(status_file, "r", encoding="utf-8") as f:
+            status_data = json.load(f)
+        
+        # If completed, try to get final result
+        result_data = None
+        if status_data.get("status") == "completed":
+            # Try to find the report file
+            report_dir = OUTPUT_DIR / "agent_reports"
+            if report_dir.exists():
+                # Find the most recent report (could be improved with job_id mapping)
+                reports = sorted(report_dir.glob("research_report_*.md"), key=lambda p: p.stat().st_mtime, reverse=True)
+                if reports:
+                    result_data = {
+                        "report_path": str(reports[0]),
+                        "report_exists": True
+                    }
+        
+        return {
+            "success": True,
+            "job_id": job_id,
+            "status": status_data.get("status", "unknown"),
+            "current_step": status_data.get("current_step", ""),
+            "progress_percent": status_data.get("progress_percent", 0.0),
+            "papers": status_data.get("papers", []),
+            "current_paper_idx": status_data.get("current_paper_idx", 0),
+            "paper_results_count": status_data.get("paper_results_count", 0),
+            "reasoning_log_count": status_data.get("reasoning_log_count", 0),
+            "errors": status_data.get("errors", []),
+            "created_at": status_data.get("created_at"),
+            "updated_at": status_data.get("updated_at"),
+            "result": result_data
+        }
+    except Exception as e:
+        logger.error(f"Failed to read status file: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to read status: {str(e)}")
+
+
+@app.get("/agent/jobs")
+async def list_agent_jobs():
+    """
+    List all agent jobs (running and completed).
+    """
+    jobs = []
+    
+    if not STATUS_DIR.exists():
+        return {"jobs": []}
+    
+    try:
+        for status_file in STATUS_DIR.glob("*.json"):
+            try:
+                with open(status_file, "r", encoding="utf-8") as f:
+                    status_data = json.load(f)
+                jobs.append({
+                    "job_id": status_data.get("job_id", status_file.stem),
+                    "status": status_data.get("status", "unknown"),
+                    "goal": status_data.get("goal", ""),
+                    "papers_count": len(status_data.get("papers", [])),
+                    "progress_percent": status_data.get("progress_percent", 0.0),
+                    "created_at": status_data.get("created_at"),
+                    "updated_at": status_data.get("updated_at"),
+                })
+            except Exception as e:
+                logger.warning(f"Failed to read {status_file}: {e}")
+        
+        # Sort by updated_at descending (most recent first)
+        jobs.sort(key=lambda x: x.get("updated_at", ""), reverse=True)
+        
+        return {"jobs": jobs}
+    except Exception as e:
+        logger.error(f"Failed to list jobs: {e}")
+        return {"jobs": []}
 
 
 # ============== Rank Filter API Endpoints ==============

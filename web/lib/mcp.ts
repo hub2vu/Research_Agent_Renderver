@@ -747,29 +747,123 @@ export async function listLocalPdfs(): Promise<LocalPdfInfo[]> {
 }
 
 /**
- * Run the LLM-orchestrated research agent pipeline
+ * Run the LLM-orchestrated research agent pipeline in background
  */
-export async function runResearchAgent(config: PipelineConfig): Promise<PipelineResult> {
-  const result = await executeTool('run_research_agent', {
-    paper_ids: config.paper_ids,
-    goal: config.goal || 'general understanding',
-    analysis_mode: config.analysis_mode || 'quick',
-    slack_webhook_full: config.slack_webhook_full || '',
-    slack_webhook_summary: config.slack_webhook_summary || '',
-    source: config.source || 'local',
+export async function runResearchAgent(config: PipelineConfig): Promise<{ success: boolean; job_id?: string; error?: string }> {
+  const response = await fetch(`${MCP_BASE_URL}/agent/run`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ arguments: {
+      paper_ids: config.paper_ids,
+      goal: config.goal || 'general understanding',
+      analysis_mode: config.analysis_mode || 'quick',
+      slack_webhook_full: config.slack_webhook_full || '',
+      slack_webhook_summary: config.slack_webhook_summary || '',
+      source: config.source || 'local',
+    }})
   });
   
-  if (!result.success) {
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: response.statusText }));
     return {
       success: false,
-      errors: [result.error || 'Pipeline execution failed'],
+      error: error.detail || 'Failed to start pipeline',
     };
   }
   
+  const data = await response.json();
   return {
     success: true,
-    ...result.result,
+    job_id: data.job_id,
   };
+}
+
+/**
+ * Get the status of a running pipeline job
+ */
+export async function getAgentStatus(jobId: string): Promise<{
+  success: boolean;
+  job_id: string;
+  status: 'running' | 'completed' | 'failed';
+  current_step: string;
+  progress_percent: number;
+  papers: string[];
+  current_paper_idx: number;
+  paper_results_count: number;
+  reasoning_log_count: number;
+  errors: string[];
+  created_at: string;
+  updated_at: string;
+  result?: {
+    report_path: string;
+    report_exists: boolean;
+  };
+}> {
+  const response = await fetch(`${MCP_BASE_URL}/agent/status/${jobId}`);
+  
+  if (!response.ok) {
+    throw new Error(`Failed to get status: ${response.statusText}`);
+  }
+  
+  return response.json();
+}
+
+/**
+ * List all agent jobs
+ */
+export async function listAgentJobs(): Promise<Array<{
+  job_id: string;
+  status: string;
+  goal: string;
+  papers_count: number;
+  progress_percent: number;
+  created_at: string;
+  updated_at: string;
+}>> {
+  const response = await fetch(`${MCP_BASE_URL}/agent/jobs`);
+  
+  if (!response.ok) {
+    throw new Error(`Failed to list jobs: ${response.statusText}`);
+  }
+  
+  const data = await response.json();
+  return data.jobs || [];
+}
+
+// ==================== Slack Config (.env-backed) ====================
+
+export async function getSlackConfig(): Promise<{
+  slack_webhook_full: string;
+  slack_webhook_summary: string;
+  dotenv_path?: string;
+}> {
+  const response = await fetch(`${MCP_BASE_URL}/config/slack`);
+  if (!response.ok) {
+    throw new Error(`Failed to load Slack config: ${response.statusText}`);
+  }
+  const data = await response.json();
+  return {
+    slack_webhook_full: data.slack_webhook_full || '',
+    slack_webhook_summary: data.slack_webhook_summary || '',
+    dotenv_path: data.dotenv_path,
+  };
+}
+
+export async function updateSlackConfig(payload: {
+  slack_webhook_full: string;
+  slack_webhook_summary: string;
+}): Promise<{ success: boolean; dotenv_path?: string }> {
+  const response = await fetch(`${MCP_BASE_URL}/config/slack`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: response.statusText }));
+    throw new Error(error.detail || 'Failed to update Slack config');
+  }
+  const data = await response.json();
+  return { success: !!data.success, dotenv_path: data.dotenv_path };
 }
 
 /**

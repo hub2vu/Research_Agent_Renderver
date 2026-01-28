@@ -5,8 +5,8 @@
  * Includes source selection, analysis settings, and notification configuration.
  */
 
-import React, { useState, useEffect } from 'react';
-import { executeTool, listLocalPdfs } from '../lib/mcp';
+import React, { useState, useEffect, useRef } from 'react';
+import { runResearchAgent, getAgentStatus, listAgentJobs, listLocalPdfs, getSlackConfig, updateSlackConfig } from '../lib/mcp';
 
 interface PipelineModalProps {
   isOpen: boolean;
@@ -30,8 +30,8 @@ interface PipelineResult {
   executive_summary?: string;
   reasoning_log_count?: number;
   notifications?: {
-    email?: { success: boolean; error?: string };
-    slack?: { success: boolean; error?: string };
+    slack_full?: { success: boolean; error?: string };
+    slack_summary?: { success: boolean; error?: string };
   };
   errors?: string[];
 }
@@ -56,12 +56,16 @@ export default function PipelineModal({ isOpen, onClose }: PipelineModalProps) {
   // Step 3: Notification Settings
   const [slackWebhookFull, setSlackWebhookFull] = useState('');
   const [slackWebhookSummary, setSlackWebhookSummary] = useState('');
+  const [savingSlackConfig, setSavingSlackConfig] = useState(false);
   
   // Execution state
+  const [currentJobId, setCurrentJobId] = useState<string | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [progress, setProgress] = useState('');
+  const [progressPercent, setProgressPercent] = useState(0);
   const [result, setResult] = useState<PipelineResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const pollingIntervalRef = useRef<number | null>(null);
 
   // Load local PDFs when source is 'local'
   useEffect(() => {
@@ -70,15 +74,130 @@ export default function PipelineModal({ isOpen, onClose }: PipelineModalProps) {
     }
   }, [isOpen, source]);
 
-  // Reset state when modal opens
+  // Check for running jobs when modal opens
   useEffect(() => {
     if (isOpen) {
-      setCurrentStep('config');
-      setConfigStep(1);
-      setResult(null);
-      setError(null);
+      loadSlackConfig();
+      checkRunningJobs();
+    } else {
+      // Stop polling when modal closes
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
     }
+    
+    return () => {
+      // Cleanup on unmount
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+    };
   }, [isOpen]);
+
+  const loadSlackConfig = async () => {
+    try {
+      const cfg = await getSlackConfig();
+      setSlackWebhookFull(cfg.slack_webhook_full || '');
+      setSlackWebhookSummary(cfg.slack_webhook_summary || '');
+    } catch (e) {
+      // If not available, keep empty
+    }
+  };
+
+  const persistSlackConfig = async (nextFull: string, nextSummary: string) => {
+    setSavingSlackConfig(true);
+    try {
+      await updateSlackConfig({
+        slack_webhook_full: nextFull,
+        slack_webhook_summary: nextSummary,
+      });
+    } finally {
+      setSavingSlackConfig(false);
+    }
+  };
+
+  const checkRunningJobs = async () => {
+    try {
+      const jobs = await listAgentJobs();
+      // Find the most recent running job
+      const runningJob = jobs.find(j => j.status === 'running');
+      if (runningJob) {
+        setCurrentJobId(runningJob.job_id);
+        setIsRunning(true);
+        setCurrentStep('running');
+        startPolling(runningJob.job_id);
+      } else {
+        // Check for most recent completed job
+        const completedJob = jobs.find(j => j.status === 'completed');
+        if (completedJob) {
+          // Load its status to show result
+          try {
+            const status = await getAgentStatus(completedJob.job_id);
+            if (status.status === 'completed' && status.result) {
+              setCurrentJobId(completedJob.job_id);
+              setResult({
+                success: true,
+                papers_analyzed: status.paper_results_count,
+                report_path: status.result.report_path,
+                reasoning_log_count: status.reasoning_log_count,
+              });
+              setCurrentStep('complete');
+            }
+          } catch (e) {
+            // Ignore errors when loading completed job
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Failed to check running jobs:', err);
+    }
+  };
+
+  const startPolling = (jobId: string) => {
+    // Clear any existing polling
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+    }
+    
+    // Poll every 2 seconds
+    pollingIntervalRef.current = window.setInterval(async () => {
+      try {
+        const status = await getAgentStatus(jobId);
+        
+        setProgress(status.current_step);
+        setProgressPercent(status.progress_percent);
+        
+        if (status.status === 'completed') {
+          setIsRunning(false);
+          if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current);
+            pollingIntervalRef.current = null;
+          }
+          
+          // Load final result
+          setResult({
+            success: true,
+            papers_analyzed: status.paper_results_count,
+            report_path: status.result?.report_path,
+            reasoning_log_count: status.reasoning_log_count,
+            errors: status.errors.length > 0 ? status.errors : undefined,
+          });
+          setCurrentStep('complete');
+        } else if (status.status === 'failed') {
+          setIsRunning(false);
+          if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current);
+            pollingIntervalRef.current = null;
+          }
+          setError(status.errors.join(', ') || 'Pipeline failed');
+          setCurrentStep('error');
+        }
+      } catch (err) {
+        console.error('Polling error:', err);
+      }
+    }, 2000);
+  };
 
   const loadLocalPdfs = async () => {
     setLoadingPdfs(true);
@@ -113,13 +232,13 @@ export default function PipelineModal({ isOpen, onClose }: PipelineModalProps) {
 
     setIsRunning(true);
     setCurrentStep('running');
-    setProgress('Initializing Research Agent...');
+    setProgress('Starting pipeline in background...');
+    setProgressPercent(0);
     setError(null);
+    setResult(null);
 
     try {
-      setProgress('Agent is analyzing papers...');
-      
-      const response = await executeTool('run_research_agent', {
+      const response = await runResearchAgent({
         paper_ids: selectedPapers,
         goal: goal || 'general understanding',
         analysis_mode: analysisMode,
@@ -128,17 +247,17 @@ export default function PipelineModal({ isOpen, onClose }: PipelineModalProps) {
         source: source
       });
 
-      if (response.success) {
-        setResult(response.result);
-        setCurrentStep('complete');
-        setProgress('');
+      if (response.success && response.job_id) {
+        setCurrentJobId(response.job_id);
+        setProgress('Pipeline started. Monitoring progress...');
+        startPolling(response.job_id);
+        // Don't set isRunning to false here - polling will handle it
       } else {
-        throw new Error(response.error || 'Pipeline execution failed');
+        throw new Error(response.error || 'Failed to start pipeline');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
       setCurrentStep('error');
-    } finally {
       setIsRunning(false);
     }
   };
@@ -450,6 +569,7 @@ export default function PipelineModal({ isOpen, onClose }: PipelineModalProps) {
           type="text"
           value={slackWebhookFull}
           onChange={(e) => setSlackWebhookFull(e.target.value)}
+          onBlur={(e) => persistSlackConfig(e.target.value, slackWebhookSummary)}
           placeholder="https://hooks.slack.com/services/... (전체 리포트용)"
           style={{
             width: '100%',
@@ -475,6 +595,7 @@ export default function PipelineModal({ isOpen, onClose }: PipelineModalProps) {
           type="text"
           value={slackWebhookSummary}
           onChange={(e) => setSlackWebhookSummary(e.target.value)}
+          onBlur={(e) => persistSlackConfig(slackWebhookFull, e.target.value)}
           placeholder="https://hooks.slack.com/services/... (요약본용)"
           style={{
             width: '100%',
@@ -510,6 +631,11 @@ export default function PipelineModal({ isOpen, onClose }: PipelineModalProps) {
           3. 위 입력 필드에 Webhook URL 붙여넣기<br/>
           4. 최소 하나의 채널은 설정해야 합니다
         </div>
+        {savingSlackConfig && (
+          <div style={{ marginTop: '8px', fontSize: '11px', color: '#718096' }}>
+            Saving Slack webhook settings...
+          </div>
+        )}
       </div>
 
       {/* Summary */}
@@ -554,9 +680,43 @@ export default function PipelineModal({ isOpen, onClose }: PipelineModalProps) {
       <div style={{ color: '#fff', fontSize: '16px', marginBottom: '8px' }}>
         🤖 Agent is working...
       </div>
-      <div style={{ color: '#a0aec0', fontSize: '14px' }}>
-        {progress}
+      <div style={{ color: '#a0aec0', fontSize: '14px', marginBottom: '16px' }}>
+        {progress || 'Processing...'}
       </div>
+      
+      {/* Progress Bar */}
+      <div style={{
+        width: '100%',
+        height: '8px',
+        backgroundColor: '#2d3748',
+        borderRadius: '4px',
+        overflow: 'hidden',
+        marginBottom: '12px',
+      }}>
+        <div style={{
+          width: `${progressPercent}%`,
+          height: '100%',
+          backgroundColor: '#4a90d9',
+          transition: 'width 0.3s ease',
+        }} />
+      </div>
+      <div style={{ color: '#718096', fontSize: '12px', marginBottom: '20px' }}>
+        {Math.round(progressPercent)}% complete
+      </div>
+      
+      {currentJobId && (
+        <div style={{
+          marginTop: '12px',
+          padding: '8px 12px',
+          backgroundColor: '#1e293b',
+          borderRadius: '4px',
+          fontSize: '11px',
+          color: '#718096',
+        }}>
+          Job ID: {currentJobId}
+        </div>
+      )}
+      
       <div style={{
         marginTop: '20px',
         padding: '12px',
@@ -565,7 +725,9 @@ export default function PipelineModal({ isOpen, onClose }: PipelineModalProps) {
         color: '#718096',
         fontSize: '12px',
       }}>
-        This may take a few minutes depending on the number of papers and analysis depth.
+        💡 You can close this modal and continue working. The pipeline will continue in the background.
+        <br />
+        Open this modal again anytime to check progress.
       </div>
     </div>
   );
@@ -584,7 +746,7 @@ export default function PipelineModal({ isOpen, onClose }: PipelineModalProps) {
           {/* Stats */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
+            gridTemplateColumns: 'repeat(2, 1fr)',
             gap: '12px',
             marginBottom: '20px',
           }}>
@@ -609,17 +771,6 @@ export default function PipelineModal({ isOpen, onClose }: PipelineModalProps) {
                 {result.reasoning_log_count || 0}
               </div>
               <div style={{ color: '#a0aec0', fontSize: '12px' }}>Agent Decisions</div>
-            </div>
-            <div style={{
-              padding: '12px',
-              backgroundColor: '#2d3748',
-              borderRadius: '6px',
-              textAlign: 'center',
-            }}>
-              <div style={{ color: '#fbbf24', fontSize: '24px', fontWeight: 600 }}>
-                {Object.values(result.notifications || {}).filter((n: any) => n?.success).length}
-              </div>
-              <div style={{ color: '#a0aec0', fontSize: '12px' }}>Notifications Sent</div>
             </div>
           </div>
 
@@ -675,6 +826,32 @@ export default function PipelineModal({ isOpen, onClose }: PipelineModalProps) {
               ))}
             </div>
           )}
+
+          {/* Run again */}
+          <div style={{
+            marginTop: '20px',
+            display: 'flex',
+            justifyContent: 'center',
+          }}>
+            <button
+              onClick={() => {
+                // Re-run with the current config (no need to keep modal open)
+                handleRunPipeline();
+              }}
+              style={{
+                padding: '10px 24px',
+                borderRadius: '6px',
+                border: 'none',
+                backgroundColor: '#48bb78',
+                color: '#fff',
+                fontSize: '14px',
+                fontWeight: 500,
+                cursor: 'pointer',
+              }}
+            >
+              🔁 Run again
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -697,9 +874,9 @@ export default function PipelineModal({ isOpen, onClose }: PipelineModalProps) {
       </div>
       <button
         onClick={() => {
-          setCurrentStep('config');
-          setConfigStep(1);
+          // Re-run with the current config
           setError(null);
+          handleRunPipeline();
         }}
         style={{
           marginTop: '20px',
@@ -712,7 +889,7 @@ export default function PipelineModal({ isOpen, onClose }: PipelineModalProps) {
           cursor: 'pointer',
         }}
       >
-        Try Again
+        🔁 Run again
       </button>
     </div>
   );
@@ -753,13 +930,12 @@ export default function PipelineModal({ isOpen, onClose }: PipelineModalProps) {
           </h2>
           <button
             onClick={onClose}
-            disabled={isRunning}
             style={{
               background: 'none',
               border: 'none',
-              color: isRunning ? '#4a5568' : '#a0aec0',
+              color: '#a0aec0',
               fontSize: '24px',
-              cursor: isRunning ? 'not-allowed' : 'pointer',
+              cursor: 'pointer',
               lineHeight: 1,
             }}
           >
