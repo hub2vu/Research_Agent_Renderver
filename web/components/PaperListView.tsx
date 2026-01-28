@@ -1,10 +1,17 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { getReport, generateReport, executeTool } from '../lib/mcp';
 
+// --- [타입 정의] ---
 type AnyEdge = { source: string; target: string; weight?: number; type?: string; };
-type AnyNode = { id: string; title?: string; label?: string; cluster?: number | string;[key: string]: any; };
+type AnyNode = { id: string; title?: string; label?: string; cluster?: number | string; abstract?: string;[key: string]: any; };
 type ReportState = | { status: 'idle' } | { status: 'loading' } | { status: 'missing' } | { status: 'found'; content: string } | { status: 'error'; message: string };
 
+const INITIAL_VISIBLE_COUNT = 20;
+const LOAD_MORE_STEP = 50;
+
+// --- [헬퍼 함수들] ---
 function truncateText(s: string, n: number) {
   if (!s) return '';
   const t = s.replace(/\s+/g, ' ').trim();
@@ -27,24 +34,80 @@ function buildAdjacency(nodes: AnyNode[], edges: AnyEdge[]) {
   return { adj, degree };
 }
 
+// 연결성 높은(중요한) 순서로 정렬하는 함수
 function orderByConnectivity(groupNodes: AnyNode[], adj: Map<string, Set<string>>, degree: Map<string, number>) {
-  const inGroup = new Set(groupNodes.map(n => n.id));
-  const visited = new Set<string>();
-  const nodesByDeg = [...groupNodes].sort((a, b) => (degree.get(b.id) || 0) - (degree.get(a.id) || 0));
-  const ordered: AnyNode[] = [];
-  for (const start of nodesByDeg) {
-    if (visited.has(start.id)) continue;
-    const stack = [start.id]; visited.add(start.id);
-    while (stack.length) {
-      const cur = stack.pop()!;
-      const node = groupNodes.find(n => n.id === cur);
-      if (node) ordered.push(node);
-      const neighbors = Array.from(adj.get(cur) || []).filter(x => inGroup.has(x) && !visited.has(x)).sort((x, y) => (degree.get(y) || 0) - (degree.get(x) || 0));
-      for (const nb of neighbors) { visited.add(nb); stack.push(nb); }
-    }
-  }
-  return ordered;
+  return [...groupNodes].sort((a, b) => (degree.get(b.id) || 0) - (degree.get(a.id) || 0));
 }
+
+// ✅ [서베이 생성 함수] (백엔드 툴 호출)
+async function generateSurvey(topicName: string, papers: AnyNode[]) {
+  const topPapers = papers.slice(0, 20);
+
+  const context = topPapers.map((p, i) => `
+[Paper ${i + 1}]
+Title: ${p.title || p.id}
+Authors: ${p.authors ? p.authors.slice(0, 2).join(', ') : 'N/A'}
+Abstract: ${p.abstract ? truncateText(p.abstract, 500) : 'No abstract available'}
+`).join('\n');
+
+  try {
+    const result = await executeTool('generate_cluster_survey', {
+      topic: topicName,
+      papers_context: context,
+      language: "Korean"
+    });
+
+    if (result.success && result.result && result.result.survey_content) {
+      return result.result.survey_content;
+    } else {
+      console.error("Tool execution error:", result);
+      return "⚠️ Error: 서베이 생성에 실패했습니다. (백엔드 로그를 확인하세요)";
+    }
+  } catch (error) {
+    console.error("System error:", error);
+    return "⚠️ Error: 서버 통신 중 오류가 발생했습니다.";
+  }
+}
+
+// ✅ [Markdown 스타일 정의] 논문처럼 보이게 하는 커스텀 스타일
+const markdownComponents = {
+  // 표 (Table) 스타일
+  table: ({ node, ...props }: any) => (
+    <table style={{ borderCollapse: 'collapse', width: '100%', margin: '20px 0', fontSize: '13px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }} {...props} />
+  ),
+  thead: ({ node, ...props }: any) => (
+    <thead style={{ backgroundColor: '#f7fafc', borderBottom: '2px solid #e2e8f0' }} {...props} />
+  ),
+  th: ({ node, ...props }: any) => (
+    <th style={{ padding: '12px', textAlign: 'left', fontWeight: 700, color: '#2d3748', border: '1px solid #e2e8f0' }} {...props} />
+  ),
+  td: ({ node, ...props }: any) => (
+    <td style={{ padding: '12px', border: '1px solid #e2e8f0', color: '#4a5568', verticalAlign: 'top' }} {...props} />
+  ),
+  // 제목 (Header) 스타일
+  h1: ({ node, ...props }: any) => (
+    <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#2b6cb0', marginTop: '24px', marginBottom: '16px', borderBottom: '1px solid #bee3f8', paddingBottom: '8px' }} {...props} />
+  ),
+  h2: ({ node, ...props }: any) => (
+    <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#2c5282', marginTop: '20px', marginBottom: '12px', borderLeft: '4px solid #4299e1', paddingLeft: '10px' }} {...props} />
+  ),
+  h3: ({ node, ...props }: any) => (
+    <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#2d3748', marginTop: '16px', marginBottom: '8px' }} {...props} />
+  ),
+  // 본문 및 리스트 스타일
+  p: ({ node, ...props }: any) => (
+    <p style={{ lineHeight: 1.7, marginBottom: '12px', fontSize: '13.5px', color: '#1a202c' }} {...props} />
+  ),
+  ul: ({ node, ...props }: any) => (
+    <ul style={{ paddingLeft: '20px', marginBottom: '16px' }} {...props} />
+  ),
+  li: ({ node, ...props }: any) => (
+    <li style={{ marginBottom: '6px', lineHeight: 1.6 }} {...props} />
+  ),
+  strong: ({ node, ...props }: any) => (
+    <strong style={{ color: '#2b6cb0', fontWeight: 600 }} {...props} />
+  ),
+};
 
 export default function PaperListView(props: {
   nodes: AnyNode[];
@@ -53,10 +116,10 @@ export default function PaperListView(props: {
   groupTitle?: (groupKey: string) => string;
   onOpenPaper?: (paperId: string) => void;
   initialPrefetchCount?: number;
-  conferenceType?: 'neurips' | 'iclr';  // Added to support different conferences
 }) {
-  const { nodes, edges, groupBy, groupTitle, onOpenPaper, initialPrefetchCount = 60, conferenceType = 'neurips' } = props;
+  const { nodes, edges, groupBy, groupTitle, onOpenPaper, initialPrefetchCount = 60 } = props;
   const { adj, degree } = useMemo(() => buildAdjacency(nodes, edges), [nodes, edges]);
+
   const groups = useMemo(() => {
     const g = new Map<string, AnyNode[]>();
     for (const n of nodes) {
@@ -67,6 +130,7 @@ export default function PaperListView(props: {
     }
     return g;
   }, [nodes, groupBy]);
+
   const sortedGroupKeys = useMemo(() => {
     const keys = Array.from(groups.keys());
     const allNumeric = keys.every(k => /^-?\d+(\.\d+)?$/.test(k));
@@ -81,208 +145,178 @@ export default function PaperListView(props: {
   const [pipelineState, setPipelineState] = useState<Record<string, 'idle' | 'loading' | 'done' | 'error'>>({});
   const inflightRef = useRef<Set<string>>(new Set());
   const generatingRef = useRef<Set<string>>(new Set());
+  const [visibleCounts, setVisibleCounts] = useState<Record<string, number>>({});
 
-  const setReportState = useCallback((paperId: string, st: ReportState) => {
-    setReportMap(prev => ({ ...prev, [paperId]: st }));
-  }, []);
+  // ✅ [상태 분리] 데이터 / 가시성 / 로딩
+  const [surveyData, setSurveyData] = useState<Record<string, string>>({});
+  const [surveyVisible, setSurveyVisible] = useState<Record<string, boolean>>({});
+  const [surveyLoading, setSurveyLoading] = useState<Record<string, boolean>>({});
 
+  const setReportState = useCallback((paperId: string, st: ReportState) => { setReportMap(prev => ({ ...prev, [paperId]: st })); }, []);
   const ensureReport = useCallback(async (paperId: string) => {
-    const cur = reportMap[paperId];
-    if (cur && cur.status !== 'idle') return;
-    if (inflightRef.current.has(paperId)) return;
-    inflightRef.current.add(paperId);
-    setReportState(paperId, { status: 'loading' });
-    try {
-      const r = await getReport(paperId);
-      if (r.found) setReportState(paperId, { status: 'found', content: r.content || '' });
-      else setReportState(paperId, { status: 'missing' });
-    } catch (e) {
-      setReportState(paperId, { status: 'error', message: e instanceof Error ? e.message : 'Failed to get report' });
-    } finally {
-      inflightRef.current.delete(paperId);
-    }
+    const cur = reportMap[paperId]; if (cur && cur.status !== 'idle') return; if (inflightRef.current.has(paperId)) return;
+    inflightRef.current.add(paperId); setReportState(paperId, { status: 'loading' });
+    try { const r = await getReport(paperId); if (r.found) setReportState(paperId, { status: 'found', content: r.content || '' }); else setReportState(paperId, { status: 'missing' }); } catch (e) { setReportState(paperId, { status: 'error', message: e instanceof Error ? e.message : 'Err' }); } finally { inflightRef.current.delete(paperId); }
   }, [reportMap, setReportState]);
-
   const handleGenerate = useCallback(async (paperId: string) => {
-    if (generatingRef.current.has(paperId)) return;
-    generatingRef.current.add(paperId);
-    setReportState(paperId, { status: 'loading' });
-    try {
-      const gen = await generateReport(paperId);
-      if (!gen?.status && gen?.success === false) throw new Error(gen?.error || 'generate_report failed');
-      const r = await getReport(paperId);
-      if (r.found) setReportState(paperId, { status: 'found', content: r.content || '' });
-      else setReportState(paperId, { status: 'missing' });
-    } catch (e) {
-      setReportState(paperId, { status: 'error', message: e instanceof Error ? e.message : 'Failed to generate report' });
-    } finally {
-      generatingRef.current.delete(paperId);
-    }
+    if (generatingRef.current.has(paperId)) return; generatingRef.current.add(paperId); setReportState(paperId, { status: 'loading' });
+    try { const gen = await generateReport(paperId); if (!gen?.status && gen?.success === false) throw new Error('fail'); const r = await getReport(paperId); if (r.found) setReportState(paperId, { status: 'found', content: r.content || '' }); else setReportState(paperId, { status: 'missing' }); } catch (e) { setReportState(paperId, { status: 'error', message: String(e) }); } finally { generatingRef.current.delete(paperId); }
   }, [setReportState]);
-
   const handleDownloadAndProcess = async (paperId: string) => {
-    if (pipelineState[paperId] === 'loading') return;
-    setPipelineState(prev => ({ ...prev, [paperId]: 'loading' }));
+    if (pipelineState[paperId] === 'loading') return; setPipelineState(prev => ({ ...prev, [paperId]: 'loading' }));
+    try { const result = await executeTool('process_neurips_paper', { paper_id: paperId, out_dir: '/data/pdf/neurips2025' }); setPipelineState(prev => ({ ...prev, [paperId]: 'done' })); alert(result.result?.pipeline_results ? "PDF Saved!" : "Process Complete!"); ensureReport(paperId); } catch (err) { setPipelineState(prev => ({ ...prev, [paperId]: 'error' })); alert(`Error: ${String(err)}`); }
+  };
+
+  const handleLoadMore = (groupKey: string) => {
+    setVisibleCounts(prev => ({ ...prev, [groupKey]: (prev[groupKey] || INITIAL_VISIBLE_COUNT) + LOAD_MORE_STEP }));
+  };
+
+  // ✅ [버튼 핸들러] 데이터 유무에 따라 생성 또는 토글
+  const handleWriteSurveyButton = async (groupKey: string, papers: AnyNode[]) => {
+    if (surveyLoading[groupKey]) return;
+
+    if (surveyData[groupKey]) {
+      setSurveyVisible(prev => ({ ...prev, [groupKey]: !prev[groupKey] }));
+      return;
+    }
+
+    setSurveyLoading(prev => ({ ...prev, [groupKey]: true }));
     try {
-      // Use appropriate tool based on conference type
-      const toolName = conferenceType === 'iclr' ? 'process_iclr_paper' : 'process_neurips_paper';
-      const outDir = conferenceType === 'iclr' ? '/data/pdf/iclr2025' : '/data/pdf/neurips2025';
+      const title = groupTitle ? groupTitle(groupKey) : `Cluster ${groupKey}`;
+      const ordered = orderByConnectivity(papers, adj, degree);
+      const resultText = await generateSurvey(title, ordered);
 
-      const result = await executeTool(toolName, {
-        paper_id: paperId,
-        out_dir: outDir
-      });
-      setPipelineState(prev => ({ ...prev, [paperId]: 'done' }));
-
-      if (result.result && result.result.pipeline_results) {
-        const res = result.result.pipeline_results;
-        const msg = `Process Complete!\n\n- PDF Saved: ${res.pdf_path || 'unknown'}\n- References Found: ${res.ref_count || 0}`;
-        alert(msg);
-      } else {
-        alert("Process Complete!");
-      }
-      ensureReport(paperId);
-    } catch (err) {
-      console.error(err);
-      setPipelineState(prev => ({ ...prev, [paperId]: 'error' }));
-      alert(`Error: ${err instanceof Error ? err.message : String(err)}`);
+      setSurveyData(prev => ({ ...prev, [groupKey]: resultText }));
+      setSurveyVisible(prev => ({ ...prev, [groupKey]: true }));
+    } catch (e) {
+      alert("Failed to write survey.");
+    } finally {
+      setSurveyLoading(prev => ({ ...prev, [groupKey]: false }));
     }
   };
 
-  useEffect(() => {
-    const flat = nodes.slice(0, Math.min(nodes.length, initialPrefetchCount));
-    for (const n of flat) if (!reportMap[n.id]) setReportState(n.id, { status: 'idle' });
-  }, [nodes, initialPrefetchCount]);
-
-  useEffect(() => {
-    const flat = nodes.slice(0, Math.min(nodes.length, initialPrefetchCount));
-    (async () => {
-      for (const n of flat) {
-        if (!reportMap[n.id]) continue;
-        if (reportMap[n.id].status === 'idle') await ensureReport(n.id);
-      }
-    })();
-  }, [nodes, initialPrefetchCount, ensureReport]);
-
-  const rowStyle: React.CSSProperties = {
-    display: 'grid', gridTemplateColumns: '420px 1fr', gap: '16px', padding: '10px 12px', borderBottom: '1px solid #e2e8f0', alignItems: 'start',
+  // ✅ [재생성 핸들러]
+  const handleRegenerate = async (groupKey: string, papers: AnyNode[]) => {
+    if (!confirm("서베이를 다시 작성하시겠습니까? (기존 내용은 사라집니다)")) return;
+    setSurveyData(prev => { const n = { ...prev }; delete n[groupKey]; return n; });
+    handleWriteSurveyButton(groupKey, papers);
   };
+
+  useEffect(() => { const flat = nodes.slice(0, Math.min(nodes.length, initialPrefetchCount)); for (const n of flat) if (!reportMap[n.id]) setReportState(n.id, { status: 'idle' }); }, [nodes, initialPrefetchCount]);
+  useEffect(() => { const flat = nodes.slice(0, Math.min(nodes.length, initialPrefetchCount)); (async () => { for (const n of flat) { if (!reportMap[n.id]) continue; if (reportMap[n.id].status === 'idle') await ensureReport(n.id); } })(); }, [nodes, initialPrefetchCount, ensureReport]);
+
+  const rowStyle: React.CSSProperties = { display: 'grid', gridTemplateColumns: '420px 1fr', gap: '16px', padding: '10px 12px', borderBottom: '1px solid #e2e8f0', alignItems: 'start' };
 
   return (
     <div style={{ height: '100%', overflow: 'auto', background: '#fff' }}>
       {sortedGroupKeys.map(gk => {
         const rawNodes = groups.get(gk) || [];
         const ordered = orderByConnectivity(rawNodes, adj, degree);
+        const currentLimit = visibleCounts[gk] || INITIAL_VISIBLE_COUNT;
+        const visibleNodes = ordered.slice(0, currentLimit);
+        const remainingCount = ordered.length - visibleNodes.length;
+
+        const isLoading = surveyLoading[gk];
+        const hasData = !!surveyData[gk];
+        const isVisible = surveyVisible[gk];
 
         return (
           <div key={gk} style={{ borderBottom: '1px solid #cbd5e0' }}>
-            <div style={{ position: 'sticky', top: 0, zIndex: 2, background: '#f7fafc', padding: '10px 12px', borderBottom: '1px solid #e2e8f0', fontSize: '13px', fontWeight: 700, color: '#2d3748', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span>{groupTitle ? groupTitle(gk) : `Group ${gk}`}</span>
-              <span style={{ fontWeight: 500, color: '#718096' }}>{rawNodes.length} papers</span>
+
+            {/* --- [그룹 헤더] --- */}
+            <div style={{ position: 'sticky', top: 0, zIndex: 2, background: '#f7fafc', padding: '10px 12px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{ fontSize: '13px', fontWeight: 700, color: '#2d3748' }}>
+                  {groupTitle ? groupTitle(gk) : `Group ${gk}`}
+                </span>
+
+                <button
+                  onClick={() => handleWriteSurveyButton(gk, rawNodes)}
+                  disabled={isLoading}
+                  style={{
+                    padding: '4px 12px',
+                    fontSize: '11px',
+                    borderRadius: '20px',
+                    border: '1px solid #805ad5',
+                    backgroundColor: isVisible ? '#805ad5' : '#fff',
+                    color: isVisible ? '#fff' : '#805ad5',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                    display: 'flex', alignItems: 'center', gap: '4px',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  {isLoading ? 'Writing...' : (
+                    hasData
+                      ? (isVisible ? '📝 Hide Survey' : '📝 Show Survey (Cached)')
+                      : '📝 Write Survey'
+                  )}
+                </button>
+              </div>
+              <span style={{ fontSize: '12px', fontWeight: 500, color: '#718096' }}>{rawNodes.length} papers</span>
             </div>
 
-            {ordered.map(n => {
+            {/* ✅ [서베이 결과 화면: ReactMarkdown 적용] */}
+            {hasData && isVisible && (
+              <div style={{ padding: '24px', backgroundColor: '#fff', borderBottom: '1px solid #e2e8f0', borderTop: '1px solid #e2e8f0' }}>
+                <div style={{ fontWeight: 700, color: '#553c9a', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '14px' }}> AI Research Agent Report</span>
+                    <button onClick={() => handleRegenerate(gk, rawNodes)} style={{ fontSize: '11px', padding: '4px 8px', border: '1px solid #d6bcfa', background: '#faf5ff', color: '#805ad5', borderRadius: '4px', cursor: 'pointer' }}>↻ Regenerate</button>
+                  </div>
+                  <button onClick={() => setSurveyVisible(prev => ({ ...prev, [gk]: false }))} style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '18px', color: '#a0aec0' }}>×</button>
+                </div>
+
+                <div style={{ fontFamily: '"Inter", sans-serif' }}>
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={markdownComponents}
+                  >
+                    {surveyData[gk]}
+                  </ReactMarkdown>
+                </div>
+              </div>
+            )}
+
+            {/* --- [논문 리스트] --- */}
+            {visibleNodes.map(n => {
               const title = n.title || n.label || n.id;
               const deg = degree.get(n.id) || 0;
               const hasLink = deg > 0;
               const st = reportMap[n.id] ?? { status: 'idle' as const };
-
-              // ✅ Abstract용 토글 버튼
               const isExpanded = !!expanded[n.id];
-
               const pStatus = pipelineState[n.id] || 'idle';
               const abstractText = (n as any).abstract || (n as any).summary || '';
 
               const rightContent = (() => {
                 if (st.status === 'loading') return <span style={{ color: '#718096' }}>Loading report...</span>;
-
-                // 1. 리포트 생성 완료
                 if (st.status === 'found') {
                   const text = isExpanded ? st.content : truncateText(st.content, 420);
                   return (
                     <div>
                       <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.5, fontSize: '12.5px', color: '#1a202c' }}>{text || '(empty)'}</div>
                       {!!st.content && st.content.length > 450 && (
-                        <button onClick={() => setExpanded(prev => ({ ...prev, [n.id]: !prev[n.id] }))} style={{ marginTop: '6px', border: 'none', background: 'transparent', color: '#3182ce', cursor: 'pointer', fontSize: '12px', padding: 0 }}>
-                          {isExpanded ? 'Show less' : 'Show more'}
-                        </button>
+                        <button onClick={() => setExpanded(prev => ({ ...prev, [n.id]: !prev[n.id] }))} style={{ marginTop: '6px', border: 'none', background: 'transparent', color: '#3182ce', cursor: 'pointer', fontSize: '12px', padding: 0 }}>{isExpanded ? 'Show less' : 'Show more'}</button>
                       )}
                     </div>
                   );
                 }
-
-                // 2. 대기/에러 상태 -> Abstract 미리보기
                 const isIdle = st.status === 'idle';
                 const isError = st.status === 'error';
-
                 return (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      {isError && <span style={{ color: '#e53e3e', fontSize: '11px' }}>오류 발생</span>}
-
-                      {isIdle ? (
-                        <button
-                          onClick={() => ensureReport(n.id)}
-                          style={{ padding: '6px 12px', borderRadius: '4px', border: '1px solid #a0aec0', background: '#fff', cursor: 'pointer', fontSize: '12px', fontWeight: 600, color: '#4a5568' }}
-                        >
-                          Load report
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleGenerate(n.id)}
-                          style={{ padding: '6px 12px', borderRadius: '4px', border: '1px solid #3182ce', background: '#ebf8ff', color: '#2b6cb0', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}
-                        >
-                          {isError ? 'Retry Gen' : 'Generate'}
-                        </button>
-                      )}
-
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleDownloadAndProcess(n.id); }}
-                        disabled={pStatus === 'loading' || pStatus === 'done'}
-                        style={{
-                          padding: '6px 12px', borderRadius: '4px', border: 'none',
-                          backgroundColor: pStatus === 'loading' ? '#cbd5e0' : (pStatus === 'done' ? '#2f855a' : (pStatus === 'error' ? '#f56565' : '#48bb78')),
-                          color: '#fff', fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', cursor: (pStatus === 'loading' || pStatus === 'done') ? 'default' : 'pointer'
-                        }}
-                      >
-                        {pStatus === 'loading' ? 'Downloading...' : (pStatus === 'done' ? '✓ Complete' : 'Download PDF')}
-                      </button>
+                      {isError && <span style={{ color: '#e53e3e', fontSize: '11px' }}>Error</span>}
+                      {isIdle ? <button onClick={() => ensureReport(n.id)} style={{ padding: '6px 12px', borderRadius: '4px', border: '1px solid #a0aec0', background: '#fff', cursor: 'pointer', fontSize: '12px', fontWeight: 600, color: '#4a5568' }}>Load report</button> : <button onClick={() => handleGenerate(n.id)} style={{ padding: '6px 12px', borderRadius: '4px', border: '1px solid #3182ce', background: '#ebf8ff', color: '#2b6cb0', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}>{isError ? 'Retry' : 'Generate'}</button>}
+                      <button onClick={(e) => { e.stopPropagation(); handleDownloadAndProcess(n.id); }} disabled={pStatus === 'loading' || pStatus === 'done'} style={{ padding: '6px 12px', borderRadius: '4px', border: 'none', backgroundColor: pStatus === 'loading' ? '#cbd5e0' : (pStatus === 'done' ? '#2f855a' : (pStatus === 'error' ? '#f56565' : '#48bb78')), color: '#fff', fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', cursor: (pStatus === 'loading' || pStatus === 'done') ? 'default' : 'pointer' }}>{pStatus === 'loading' ? 'DL...' : (pStatus === 'done' ? '✓ PDF' : 'Download PDF')}</button>
                     </div>
-
-                    {/* ✅ Abstract 미리보기 (더 보기 버튼 추가) */}
                     {abstractText ? (
                       <div style={{ backgroundColor: '#f7fafc', padding: '12px', borderRadius: '6px', border: '1px solid #edf2f7' }}>
                         <div style={{ fontSize: '11px', fontWeight: 700, color: '#718096', marginBottom: '6px', textTransform: 'uppercase' }}>Abstract Preview</div>
-                        <div style={{ fontSize: '12.5px', color: '#4a5568', lineHeight: '1.5' }}>
-                          {/* 내용이 길면 잘라 보여주고, 버튼 클릭 시 전체 표시 */}
-                          {isExpanded ? abstractText : truncateText(abstractText, 350)}
-                        </div>
-
-                        {/* 350자 넘으면 더보기 버튼 표시 */}
-                        {abstractText.length > 350 && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setExpanded(prev => ({ ...prev, [n.id]: !prev[n.id] }));
-                            }}
-                            style={{
-                              marginTop: '6px',
-                              border: 'none',
-                              background: 'transparent',
-                              color: '#3182ce',
-                              cursor: 'pointer',
-                              fontSize: '12px',
-                              padding: 0,
-                              fontWeight: 500
-                            }}
-                          >
-                            {isExpanded ? 'Show less' : 'Show more'}
-                          </button>
-                        )}
+                        <div style={{ fontSize: '12.5px', color: '#4a5568', lineHeight: '1.5' }}>{isExpanded ? abstractText : truncateText(abstractText, 350)}</div>
+                        {abstractText.length > 350 && <button onClick={(e) => { e.stopPropagation(); setExpanded(prev => ({ ...prev, [n.id]: !prev[n.id] })); }} style={{ marginTop: '6px', border: 'none', background: 'transparent', color: '#3182ce', cursor: 'pointer', fontSize: '12px', padding: 0, fontWeight: 500 }}>{isExpanded ? 'Show less' : 'Show more'}</button>}
                       </div>
-                    ) : (
-                      <div style={{ fontSize: '12px', color: '#a0aec0', fontStyle: 'italic' }}>(No abstract available)</div>
-                    )}
+                    ) : <div style={{ fontSize: '12px', color: '#a0aec0', fontStyle: 'italic' }}>(No abstract)</div>}
                   </div>
                 );
               })();
@@ -292,7 +326,7 @@ export default function PaperListView(props: {
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
                     <div style={{ width: '18px', textAlign: 'center', marginTop: '2px', color: hasLink ? '#2b6cb0' : '#cbd5e0' }}>{hasLink ? '⟷' : '·'}</div>
                     <div style={{ flex: 1 }}>
-                      <div onClick={() => onOpenPaper?.(n.id)} style={{ fontSize: '13px', fontWeight: 700, color: '#1a202c', cursor: onOpenPaper ? 'pointer' : 'default', lineHeight: 1.35 }} title={title}>{title}</div>
+                      <div onClick={(e) => { e.stopPropagation(); onOpenPaper?.(n.id); }} style={{ fontSize: '13px', fontWeight: 700, color: '#1a202c', cursor: onOpenPaper ? 'pointer' : 'default', lineHeight: 1.35 }} title={title}>{title}</div>
                       <div style={{ marginTop: '4px', fontSize: '11px', color: '#718096' }}>{n.id} {hasLink ? `• links: ${deg}` : ''}</div>
                     </div>
                   </div>
@@ -300,6 +334,12 @@ export default function PaperListView(props: {
                 </div>
               );
             })}
+
+            {remainingCount > 0 && (
+              <div style={{ padding: '12px', textAlign: 'center' }}>
+                <button onClick={() => handleLoadMore(gk)} style={{ padding: '8px 24px', borderRadius: '20px', border: '1px solid #cbd5e0', background: '#fff', color: '#4a5568', cursor: 'pointer', fontSize: '13px', fontWeight: 600, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>👇 Show {Math.min(remainingCount, LOAD_MORE_STEP)} more ({remainingCount} remaining)</button>
+              </div>
+            )}
           </div>
         );
       })}
