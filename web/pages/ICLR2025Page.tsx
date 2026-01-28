@@ -152,6 +152,11 @@ export default function ICLR2025Page() {
           stableKey: iclrStableKey(p.paper_id),
           type: 'iclr_paper',
           cluster: clusterId,
+
+          // Add abstract and authors for PaperListView (like NeurIPS)
+          abstract: p.abstract,
+          authors: p.authors ? p.authors.split(',').map(s => s.trim()) : [],
+
           // Initial position near cluster center
           x: center ? center.x + (Math.random() - 0.5) * 200 : (idx % 50) * 30,
           y: center ? center.y + (Math.random() - 0.5) * 200 : Math.floor(idx / 50) * 30,
@@ -256,15 +261,31 @@ export default function ICLR2025Page() {
     }
   }, [graphState.nodes]);
 
-  // Handle PDF download
+  // Handle PDF download (using executeTool like NeurIPS)
   const handleDownloadPdf = useCallback(async () => {
     if (!selectedNode) return;
     const paper = papers.get(selectedNode.id);
     if (!paper) return;
 
-    // ICLR papers have OpenReview URLs
-    const openReviewUrl = `https://openreview.net/forum?id=${paper.paper_id}`;
-    window.open(openReviewUrl, '_blank');
+    setDownloadingPdf(true);
+    try {
+      const result = await executeTool('process_iclr_paper', {
+        paper_id: paper.paper_id,
+        out_dir: '/data/pdf/iclr2025'
+      });
+
+      if (!result.success) {
+        alert(`Pipeline failed: ${result.error}`);
+      } else {
+        const info = result.result?.pipeline_results;
+        const refCount = info?.ref_count || 0;
+        alert(`Process Complete!\n\n- PDF Saved: ${info?.pdf_path}\n- References Found: ${refCount}`);
+      }
+    } catch (err) {
+      alert(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    } finally {
+      setDownloadingPdf(false);
+    }
   }, [selectedNode, papers]);
 
   // Get selected paper details
@@ -285,22 +306,6 @@ export default function ICLR2025Page() {
           </label>
           <div style={{ fontSize: '13px', color: '#000000', marginTop: '4px' }}>
             {selectedPaper.authors || 'N/A'}
-          </div>
-        </div>
-
-        <div style={{ marginBottom: '12px' }}>
-          <label style={{ fontSize: '11px', color: '#000000', textTransform: 'uppercase' }}>
-            Abstract
-          </label>
-          <div style={{
-            fontSize: '12px',
-            color: '#000000',
-            marginTop: '4px',
-            maxHeight: '200px',
-            overflowY: 'auto',
-            lineHeight: 1.5,
-          }}>
-            {selectedPaper.abstract || 'N/A'}
           </div>
         </div>
 
@@ -335,7 +340,7 @@ export default function ICLR2025Page() {
             cursor: downloadingPdf ? 'not-allowed' : 'pointer',
           }}
         >
-          {downloadingPdf ? 'Opening...' : 'View PDF'}
+          {downloadingPdf ? 'Downloading...' : 'Download PDF'}
         </button>
       </div>
     );
@@ -673,6 +678,7 @@ export default function ICLR2025Page() {
               groupTitle={(k) => `Cluster ${k}`}
               onOpenPaper={(paperId) => window.location.href = `/paper/${encodeURIComponent(paperId)}`}
               initialPrefetchCount={80}
+              conferenceType="iclr"
             />
           </div>
         )}

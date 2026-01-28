@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { getReport, generateReport, executeTool } from '../lib/mcp';
 
 // --- [타입 정의] ---
@@ -67,6 +69,45 @@ Abstract: ${p.abstract ? truncateText(p.abstract, 500) : 'No abstract available'
   }
 }
 
+// ✅ [Markdown 스타일 정의] 논문처럼 보이게 하는 커스텀 스타일
+const markdownComponents = {
+  // 표 (Table) 스타일
+  table: ({ node, ...props }: any) => (
+    <table style={{ borderCollapse: 'collapse', width: '100%', margin: '20px 0', fontSize: '13px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }} {...props} />
+  ),
+  thead: ({ node, ...props }: any) => (
+    <thead style={{ backgroundColor: '#f7fafc', borderBottom: '2px solid #e2e8f0' }} {...props} />
+  ),
+  th: ({ node, ...props }: any) => (
+    <th style={{ padding: '12px', textAlign: 'left', fontWeight: 700, color: '#2d3748', border: '1px solid #e2e8f0' }} {...props} />
+  ),
+  td: ({ node, ...props }: any) => (
+    <td style={{ padding: '12px', border: '1px solid #e2e8f0', color: '#4a5568', verticalAlign: 'top' }} {...props} />
+  ),
+  // 제목 (Header) 스타일
+  h1: ({ node, ...props }: any) => (
+    <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#2b6cb0', marginTop: '24px', marginBottom: '16px', borderBottom: '1px solid #bee3f8', paddingBottom: '8px' }} {...props} />
+  ),
+  h2: ({ node, ...props }: any) => (
+    <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#2c5282', marginTop: '20px', marginBottom: '12px', borderLeft: '4px solid #4299e1', paddingLeft: '10px' }} {...props} />
+  ),
+  h3: ({ node, ...props }: any) => (
+    <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#2d3748', marginTop: '16px', marginBottom: '8px' }} {...props} />
+  ),
+  // 본문 및 리스트 스타일
+  p: ({ node, ...props }: any) => (
+    <p style={{ lineHeight: 1.7, marginBottom: '12px', fontSize: '13.5px', color: '#1a202c' }} {...props} />
+  ),
+  ul: ({ node, ...props }: any) => (
+    <ul style={{ paddingLeft: '20px', marginBottom: '16px' }} {...props} />
+  ),
+  li: ({ node, ...props }: any) => (
+    <li style={{ marginBottom: '6px', lineHeight: 1.6 }} {...props} />
+  ),
+  strong: ({ node, ...props }: any) => (
+    <strong style={{ color: '#2b6cb0', fontWeight: 600 }} {...props} />
+  ),
+};
 
 export default function PaperListView(props: {
   nodes: AnyNode[];
@@ -106,10 +147,10 @@ export default function PaperListView(props: {
   const generatingRef = useRef<Set<string>>(new Set());
   const [visibleCounts, setVisibleCounts] = useState<Record<string, number>>({});
 
-  // ✅ [핵심 변경 1] 상태 분리: 데이터(Data)와 가시성(Visibility) 분리
-  const [surveyData, setSurveyData] = useState<Record<string, string>>({});   // 내용 저장 (캐시)
-  const [surveyVisible, setSurveyVisible] = useState<Record<string, boolean>>({}); // 보이기/숨기기 상태
-  const [surveyLoading, setSurveyLoading] = useState<Record<string, boolean>>({}); // 로딩 상태
+  // ✅ [상태 분리] 데이터 / 가시성 / 로딩
+  const [surveyData, setSurveyData] = useState<Record<string, string>>({});
+  const [surveyVisible, setSurveyVisible] = useState<Record<string, boolean>>({});
+  const [surveyLoading, setSurveyLoading] = useState<Record<string, boolean>>({});
 
   const setReportState = useCallback((paperId: string, st: ReportState) => { setReportMap(prev => ({ ...prev, [paperId]: st })); }, []);
   const ensureReport = useCallback(async (paperId: string) => {
@@ -130,24 +171,21 @@ export default function PaperListView(props: {
     setVisibleCounts(prev => ({ ...prev, [groupKey]: (prev[groupKey] || INITIAL_VISIBLE_COUNT) + LOAD_MORE_STEP }));
   };
 
-  // ✅ [핵심 변경 2] 버튼 핸들러: 데이터가 있으면 토글, 없으면 생성
+  // ✅ [버튼 핸들러] 데이터 유무에 따라 생성 또는 토글
   const handleWriteSurveyButton = async (groupKey: string, papers: AnyNode[]) => {
     if (surveyLoading[groupKey]) return;
 
-    // 1. 이미 데이터가 있으면 -> 단순히 보이기/숨기기 토글
     if (surveyData[groupKey]) {
       setSurveyVisible(prev => ({ ...prev, [groupKey]: !prev[groupKey] }));
       return;
     }
 
-    // 2. 데이터가 없으면 -> 생성 요청
     setSurveyLoading(prev => ({ ...prev, [groupKey]: true }));
     try {
       const title = groupTitle ? groupTitle(groupKey) : `Cluster ${groupKey}`;
       const ordered = orderByConnectivity(papers, adj, degree);
       const resultText = await generateSurvey(title, ordered);
 
-      // 데이터 저장 및 보여주기
       setSurveyData(prev => ({ ...prev, [groupKey]: resultText }));
       setSurveyVisible(prev => ({ ...prev, [groupKey]: true }));
     } catch (e) {
@@ -157,10 +195,9 @@ export default function PaperListView(props: {
     }
   };
 
-  // ✅ [핵심 변경 3] 재생성(Regenerate) 버튼 기능 추가
+  // ✅ [재생성 핸들러]
   const handleRegenerate = async (groupKey: string, papers: AnyNode[]) => {
     if (!confirm("서베이를 다시 작성하시겠습니까? (기존 내용은 사라집니다)")) return;
-    // 데이터 삭제 후 다시 호출
     setSurveyData(prev => { const n = { ...prev }; delete n[groupKey]; return n; });
     handleWriteSurveyButton(groupKey, papers);
   };
@@ -193,7 +230,6 @@ export default function PaperListView(props: {
                   {groupTitle ? groupTitle(gk) : `Group ${gk}`}
                 </span>
 
-                {/* ✅ [버튼 상태 분기] */}
                 <button
                   onClick={() => handleWriteSurveyButton(gk, rawNodes)}
                   disabled={isLoading}
@@ -220,25 +256,29 @@ export default function PaperListView(props: {
               <span style={{ fontSize: '12px', fontWeight: 500, color: '#718096' }}>{rawNodes.length} papers</span>
             </div>
 
-            {/* ✅ [결과 화면] 가시성(isVisible) 체크 */}
+            {/* ✅ [서베이 결과 화면: ReactMarkdown 적용] */}
             {hasData && isVisible && (
-              <div style={{ padding: '20px', backgroundColor: '#faf5ff', borderBottom: '1px solid #e9d8fd' }}>
-                <div style={{ fontWeight: 700, color: '#553c9a', marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ padding: '24px', backgroundColor: '#fff', borderBottom: '1px solid #e2e8f0', borderTop: '1px solid #e2e8f0' }}>
+                <div style={{ fontWeight: 700, color: '#553c9a', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span>🤖 Agent Generated Survey</span>
-                    {/* 재생성 버튼 (작게) */}
-                    <button onClick={() => handleRegenerate(gk, rawNodes)} style={{ fontSize: '10px', padding: '2px 6px', border: '1px solid #d6bcfa', background: '#fff', color: '#805ad5', borderRadius: '4px', cursor: 'pointer' }}>↻ Regenerate</button>
+                    <span style={{ fontSize: '14px' }}>🤖 AI Research Agent Report</span>
+                    <button onClick={() => handleRegenerate(gk, rawNodes)} style={{ fontSize: '11px', padding: '4px 8px', border: '1px solid #d6bcfa', background: '#faf5ff', color: '#805ad5', borderRadius: '4px', cursor: 'pointer' }}>↻ Regenerate</button>
                   </div>
-                  {/* 닫기 버튼: 이제 삭제하지 않고 숨기기만 함 */}
-                  <button onClick={() => setSurveyVisible(prev => ({ ...prev, [gk]: false }))} style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '16px', color: '#553c9a' }}>×</button>
+                  <button onClick={() => setSurveyVisible(prev => ({ ...prev, [gk]: false }))} style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '18px', color: '#a0aec0' }}>×</button>
                 </div>
 
-                <div style={{ whiteSpace: 'pre-wrap', fontSize: '13.5px', lineHeight: 1.6, color: '#44337a', fontFamily: 'sans-serif' }}>
-                  {surveyData[gk]}
+                <div style={{ fontFamily: '"Inter", sans-serif' }}>
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={markdownComponents}
+                  >
+                    {surveyData[gk]}
+                  </ReactMarkdown>
                 </div>
               </div>
             )}
 
+            {/* --- [논문 리스트] --- */}
             {visibleNodes.map(n => {
               const title = n.title || n.label || n.id;
               const deg = degree.get(n.id) || 0;
