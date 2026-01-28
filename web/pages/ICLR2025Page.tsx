@@ -310,22 +310,6 @@ export default function ICLR2025Page() {
         </div>
 
         <div style={{ marginBottom: '12px' }}>
-          <label style={{ fontSize: '11px', color: '#000000', textTransform: 'uppercase' }}>
-            Abstract
-          </label>
-          <div style={{
-            fontSize: '12px',
-            color: '#000000',
-            marginTop: '4px',
-            maxHeight: '200px',
-            overflowY: 'auto',
-            lineHeight: 1.5,
-          }}>
-            {selectedPaper.abstract || 'N/A'}
-          </div>
-        </div>
-
-        <div style={{ marginBottom: '12px' }}>
           <a
             href={openReviewUrl}
             target="_blank"
