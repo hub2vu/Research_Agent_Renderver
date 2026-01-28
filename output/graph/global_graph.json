@@ -100,7 +100,7 @@
     },
     {
       "id": "2506.07976",
-      "title": "2506.07976",
+      "title": "Thinking vs. Doing: Agents that Reason by Scaling Test-Time Interaction",
       "cluster": 0,
       "authors": [],
       "year": null
@@ -117,14 +117,14 @@
     {
       "source": "10.48550_arxiv.2506.07976",
       "target": "2506.07976",
-      "weight": 0.8455031514167786,
+      "weight": 1.0,
       "type": "similarity"
     }
   ],
   "meta": {
     "total_papers": 16,
     "total_edges": 1,
-    "similarity_threshold": 0.75,
+    "similarity_threshold": 0.95,
     "used_embeddings": true,
     "titles": {
       "10.48550_arxiv.2201.07207": "Language Models as Zero-Shot Planners: Extracting Actionable Knowledge for Embodied Agents",
@@ -141,7 +141,7 @@
       "120272_metaTextGrad_ Automatically optimizing language model optimizers": "metaTextGrad: Automatically optimizing language model optimizers",
       "1706.03762": "1706.03762",
       "1809.04281": "MUSIC TRANSFORMER: GENERATING MUSIC WITH LONG-TERM STRUCTURE Cheng-Zhi Anna Huang∗Ashish Vaswani",
-      "2506.07976": "2506.07976",
+      "2506.07976": "Thinking vs. Doing: Agents that Reason by Scaling Test-Time Interaction",
       "SpaceTimePilot": "SpaceTimePilot: Generative Rendering of Dynamic Scenes Across Space and Time Zhening Huang1,2"
     }
   }
