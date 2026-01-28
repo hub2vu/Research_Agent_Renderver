@@ -6,6 +6,7 @@ import NeurIPS2025Page from './pages/NeurIPS2025Page';
 import ICLR2025Page from './pages/ICLR2025Page';
 import NavBar from './components/NavBar';
 import LLMChatPopup from './components/LLMChatPopup';
+import PipelineModal from './components/PipelineModal';
 import NotePage from './pages/NotePage';
 
 function PaperGraphWrapper() {
@@ -17,11 +18,13 @@ function PaperGraphWrapper() {
 
 function AppContent() {
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isPipelineOpen, setIsPipelineOpen] = useState(false);
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#0d1117' }}>
       <NavBar
         onOpenChat={() => setIsChatOpen(true)}
+        onOpenPipeline={() => setIsPipelineOpen(true)}
       />
 
       <Routes>
@@ -35,6 +38,11 @@ function AppContent() {
       <LLMChatPopup
         isOpen={isChatOpen}
         onClose={() => setIsChatOpen(false)}
+      />
+
+      <PipelineModal
+        isOpen={isPipelineOpen}
+        onClose={() => setIsPipelineOpen(false)}
       />
     </div>
   );

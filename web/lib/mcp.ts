@@ -701,3 +701,100 @@ export async function executeICLRSearchAndRank(
     };
   }
 }
+
+// ==================== Research Agent Pipeline API ====================
+
+export interface LocalPdfInfo {
+  filename: string;
+  path: string;
+  size_bytes: number;
+  size_mb: number;
+}
+
+export interface PipelineConfig {
+  paper_ids: string[];
+  goal?: string;
+  analysis_mode?: 'quick' | 'standard' | 'deep';
+  slack_webhook_full?: string;
+  slack_webhook_summary?: string;
+  source?: 'arxiv' | 'neurips' | 'iclr' | 'local';
+}
+
+export interface PipelineResult {
+  success: boolean;
+  papers_analyzed?: number;
+  report_path?: string;
+  executive_summary?: string;
+  reasoning_log_count?: number;
+  notifications?: {
+    slack_full?: { success: boolean; error?: string };
+    slack_summary?: { success: boolean; error?: string };
+  };
+  errors?: string[];
+}
+
+/**
+ * List all local PDFs available for analysis
+ */
+export async function listLocalPdfs(): Promise<LocalPdfInfo[]> {
+  const result = await executeTool('list_pdfs', {});
+  
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to list PDFs');
+  }
+  
+  return result.result.files || [];
+}
+
+/**
+ * Run the LLM-orchestrated research agent pipeline
+ */
+export async function runResearchAgent(config: PipelineConfig): Promise<PipelineResult> {
+  const result = await executeTool('run_research_agent', {
+    paper_ids: config.paper_ids,
+    goal: config.goal || 'general understanding',
+    analysis_mode: config.analysis_mode || 'quick',
+    slack_webhook_full: config.slack_webhook_full || '',
+    slack_webhook_summary: config.slack_webhook_summary || '',
+    source: config.source || 'local',
+  });
+  
+  if (!result.success) {
+    return {
+      success: false,
+      errors: [result.error || 'Pipeline execution failed'],
+    };
+  }
+  
+  return {
+    success: true,
+    ...result.result,
+  };
+}
+
+/**
+ * Test notification configuration
+ */
+export async function testNotifications(
+  slackWebhookFull?: string,
+  slackWebhookSummary?: string
+): Promise<{
+  slack_full?: { success: boolean; error?: string };
+  slack_summary?: { success: boolean; error?: string };
+  environment_status: Record<string, string>;
+}> {
+  const result = await executeTool('test_notifications', {
+    slack_webhook_full: slackWebhookFull || '',
+    slack_webhook_summary: slackWebhookSummary || '',
+  });
+  
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to test notifications');
+  }
+  
+  return {
+    slack_full: result.result.test_results?.slack_full,
+    slack_summary: result.result.test_results?.slack_summary,
+    environment_status: result.result.environment_status || {},
+  };
+}
