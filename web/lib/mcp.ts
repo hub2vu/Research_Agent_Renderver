@@ -701,3 +701,252 @@ export async function executeICLRSearchAndRank(
     };
   }
 }
+
+// ==================== Research Agent Pipeline API ====================
+
+export interface LocalPdfInfo {
+  filename: string;
+  path: string;
+  size_bytes: number;
+  size_mb: number;
+}
+
+export interface PipelineConfig {
+  paper_ids: string[];
+  goal?: string;
+  analysis_mode?: 'quick' | 'standard' | 'deep';
+  discord_webhook_full?: string;
+  discord_webhook_summary?: string;
+  source?: 'arxiv' | 'neurips' | 'iclr' | 'local';
+}
+
+export interface PipelineResult {
+  success: boolean;
+  papers_analyzed?: number;
+  report_path?: string;
+  executive_summary?: string;
+  reasoning_log_count?: number;
+  notifications?: {
+    discord_full?: { success: boolean; error?: string };
+    discord_summary?: { success: boolean; error?: string };
+  };
+  errors?: string[];
+}
+
+/**
+ * List all local PDFs available for analysis
+ */
+export async function listLocalPdfs(): Promise<LocalPdfInfo[]> {
+  const result = await executeTool('list_pdfs', {});
+  
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to list PDFs');
+  }
+  
+  return result.result.files || [];
+}
+
+/**
+ * Run the LLM-orchestrated research agent pipeline in background
+ */
+export async function runResearchAgent(config: PipelineConfig): Promise<{ success: boolean; job_id?: string; error?: string }> {
+  const response = await fetch(`${MCP_BASE_URL}/agent/run`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ arguments: {
+      paper_ids: config.paper_ids,
+      goal: config.goal || 'general understanding',
+      analysis_mode: config.analysis_mode || 'quick',
+      discord_webhook_full: config.discord_webhook_full || '',
+      discord_webhook_summary: config.discord_webhook_summary || '',
+      source: config.source || 'local',
+    }})
+  });
+  
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: response.statusText }));
+    return {
+      success: false,
+      error: error.detail || 'Failed to start pipeline',
+    };
+  }
+  
+  const data = await response.json();
+  return {
+    success: true,
+    job_id: data.job_id,
+  };
+}
+
+// ==================== Conference Pipeline API ====================
+
+export interface ConferencePipelineConfig {
+  source: 'arxiv' | 'neurips';
+  query: string;
+  top_k?: number;
+  goal?: string;
+  analysis_mode?: 'quick' | 'standard' | 'deep';
+  discord_webhook_full?: string;
+  discord_webhook_summary?: string;
+  profile_path?: string;
+}
+
+/**
+ * Run the conference pipeline (arXiv/NeurIPS) in background.
+ * Searches, ranks, downloads, extracts, and analyzes papers automatically.
+ */
+export async function runConferencePipeline(config: ConferencePipelineConfig): Promise<{
+  success: boolean;
+  job_id?: string;
+  source?: string;
+  query?: string;
+  top_k?: number;
+  error?: string;
+}> {
+  const response = await fetch(`${MCP_BASE_URL}/agent/conference-pipeline`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      source: config.source,
+      query: config.query,
+      top_k: config.top_k ?? 3,
+      goal: config.goal || 'general understanding',
+      analysis_mode: config.analysis_mode || 'quick',
+      discord_webhook_full: config.discord_webhook_full || '',
+      discord_webhook_summary: config.discord_webhook_summary || '',
+      profile_path: config.profile_path || 'users/profile.json',
+    })
+  });
+  
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: response.statusText }));
+    return {
+      success: false,
+      error: error.detail || 'Failed to start conference pipeline',
+    };
+  }
+  
+  const data = await response.json();
+  return {
+    success: true,
+    job_id: data.job_id,
+    source: data.source,
+    query: data.query,
+    top_k: data.top_k,
+  };
+}
+
+/**
+ * Get the status of a running pipeline job
+ */
+export async function getAgentStatus(jobId: string): Promise<{
+  success: boolean;
+  job_id: string;
+  status: 'running' | 'completed' | 'failed';
+  current_step: string;
+  progress_percent: number;
+  papers: string[];
+  current_paper_idx: number;
+  paper_results_count: number;
+  reasoning_log_count: number;
+  errors: string[];
+  created_at: string;
+  updated_at: string;
+  result?: {
+    report_path: string;
+    report_exists: boolean;
+  };
+}> {
+  const response = await fetch(`${MCP_BASE_URL}/agent/status/${jobId}`);
+  
+  if (!response.ok) {
+    throw new Error(`Failed to get status: ${response.statusText}`);
+  }
+  
+  return response.json();
+}
+
+/**
+ * List all agent jobs
+ */
+export async function listAgentJobs(): Promise<Array<{
+  job_id: string;
+  status: string;
+  goal: string;
+  papers_count: number;
+  progress_percent: number;
+  created_at: string;
+  updated_at: string;
+}>> {
+  const response = await fetch(`${MCP_BASE_URL}/agent/jobs`);
+  
+  if (!response.ok) {
+    throw new Error(`Failed to list jobs: ${response.statusText}`);
+  }
+  
+  const data = await response.json();
+  return data.jobs || [];
+}
+
+// ==================== Discord Config (.env-backed) ====================
+
+export async function getDiscordConfig(): Promise<{
+  discord_webhook_full: string;
+  discord_webhook_summary: string;
+  dotenv_path?: string;
+}> {
+  const response = await fetch(`${MCP_BASE_URL}/config/discord`);
+  if (!response.ok) {
+    throw new Error(`Failed to load Discord config: ${response.statusText}`);
+  }
+  const data = await response.json();
+  return {
+    discord_webhook_full: data.discord_webhook_full || '',
+    discord_webhook_summary: data.discord_webhook_summary || '',
+    dotenv_path: data.dotenv_path,
+  };
+}
+
+export async function updateDiscordConfig(payload: {
+  discord_webhook_full: string;
+  discord_webhook_summary: string;
+}): Promise<{ success: boolean; dotenv_path?: string }> {
+  const response = await fetch(`${MCP_BASE_URL}/config/discord`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: response.statusText }));
+    throw new Error(error.detail || 'Failed to update Discord config');
+  }
+  const data = await response.json();
+  return { success: !!data.success, dotenv_path: data.dotenv_path };
+}
+
+/**
+ * Test notification configuration
+ */
+export async function testNotifications(
+  discordWebhookFull?: string,
+  discordWebhookSummary?: string
+): Promise<{
+  discord_full?: { success: boolean; error?: string };
+  discord_summary?: { success: boolean; error?: string };
+  environment_status: Record<string, string>;
+}> {
+  const result = await executeTool('test_notifications', {
+    discord_webhook_full: discordWebhookFull || '',
+    discord_webhook_summary: discordWebhookSummary || '',
+  });
+  
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to test notifications');
+  }
+  
+  return {
+    discord_full: result.result.test_results?.discord_full,
+    discord_summary: result.result.test_results?.discord_summary,
+    environment_status: result.result.environment_status || {},
+  };
+}

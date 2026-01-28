@@ -19,6 +19,35 @@ except ImportError:
     HAS_ARXIV = False
 
 
+def convert_arxiv_to_paper_input(papers: List[Dict]) -> List[Dict]:
+    """
+    Convert arXiv search results to standard PaperInput format.
+    
+    Args:
+        papers: List of arXiv paper dictionaries from arxiv_search
+        
+    Returns:
+        List of papers in PaperInput format
+    """
+    converted = []
+    for paper in papers:
+        # Extract paper ID from entry_id (format: "http://arxiv.org/abs/2301.07041")
+        entry_id = paper.get("id", "")
+        paper_id = entry_id.split("/")[-1] if "/" in entry_id else entry_id
+        
+        converted.append({
+            "paper_id": paper_id,
+            "title": paper.get("title", ""),
+            "abstract": paper.get("summary", ""),
+            "authors": paper.get("authors", []),
+            "published": paper.get("published"),
+            "categories": paper.get("categories", []),
+            "pdf_url": paper.get("pdf_url"),
+            "github_url": None
+        })
+    return converted
+
+
 class ArxivSearchTool(MCPTool):
     """Search for papers on arXiv."""
 
