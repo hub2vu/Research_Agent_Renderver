@@ -53,8 +53,9 @@ export default function PaperListView(props: {
   groupTitle?: (groupKey: string) => string;
   onOpenPaper?: (paperId: string) => void;
   initialPrefetchCount?: number;
+  conferenceType?: 'neurips' | 'iclr';  // Added to support different conferences
 }) {
-  const { nodes, edges, groupBy, groupTitle, onOpenPaper, initialPrefetchCount = 60 } = props;
+  const { nodes, edges, groupBy, groupTitle, onOpenPaper, initialPrefetchCount = 60, conferenceType = 'neurips' } = props;
   const { adj, degree } = useMemo(() => buildAdjacency(nodes, edges), [nodes, edges]);
   const groups = useMemo(() => {
     const g = new Map<string, AnyNode[]>();
@@ -123,9 +124,13 @@ export default function PaperListView(props: {
     if (pipelineState[paperId] === 'loading') return;
     setPipelineState(prev => ({ ...prev, [paperId]: 'loading' }));
     try {
-      const result = await executeTool('process_neurips_paper', {
+      // Use appropriate tool based on conference type
+      const toolName = conferenceType === 'iclr' ? 'process_iclr_paper' : 'process_neurips_paper';
+      const outDir = conferenceType === 'iclr' ? '/data/pdf/iclr2025' : '/data/pdf/neurips2025';
+
+      const result = await executeTool(toolName, {
         paper_id: paperId,
-        out_dir: '/data/pdf/neurips2025'
+        out_dir: outDir
       });
       setPipelineState(prev => ({ ...prev, [paperId]: 'done' }));
 
