@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { runResearchAgent, runConferencePipeline, getAgentStatus, listAgentJobs, listLocalPdfs, getSlackConfig, updateSlackConfig } from '../lib/mcp';
+import { runResearchAgent, runConferencePipeline, getAgentStatus, listAgentJobs, listLocalPdfs, getDiscordConfig, updateDiscordConfig } from '../lib/mcp';
 import UserProfileSettingsModal from './UserProfileSettingsModal';
 
 interface PipelineModalProps {
@@ -31,8 +31,8 @@ interface PipelineResult {
   executive_summary?: string;
   reasoning_log_count?: number;
   notifications?: {
-    slack_full?: { success: boolean; error?: string };
-    slack_summary?: { success: boolean; error?: string };
+    discord_full?: { success: boolean; error?: string };
+    discord_summary?: { success: boolean; error?: string };
   };
   errors?: string[];
 }
@@ -58,9 +58,9 @@ export default function PipelineModal({ isOpen, onClose }: PipelineModalProps) {
   const [goal, setGoal] = useState('');
   
   // Step 3: Notification Settings
-  const [slackWebhookFull, setSlackWebhookFull] = useState('');
-  const [slackWebhookSummary, setSlackWebhookSummary] = useState('');
-  const [savingSlackConfig, setSavingSlackConfig] = useState(false);
+  const [discordWebhookFull, setDiscordWebhookFull] = useState('');
+  const [discordWebhookSummary, setDiscordWebhookSummary] = useState('');
+  const [savingDiscordConfig, setSavingDiscordConfig] = useState(false);
   
   // Execution state
   const [currentJobId, setCurrentJobId] = useState<string | null>(null);
@@ -91,7 +91,7 @@ export default function PipelineModal({ isOpen, onClose }: PipelineModalProps) {
   // Check for running jobs when modal opens
   useEffect(() => {
     if (isOpen) {
-      loadSlackConfig();
+      loadDiscordConfig();
       checkRunningJobs();
     } else {
       // Stop polling when modal closes
@@ -109,37 +109,37 @@ export default function PipelineModal({ isOpen, onClose }: PipelineModalProps) {
     };
   }, [isOpen]);
 
-  // Reload Slack config when entering step 3 to ensure .env values are loaded
+  // Reload Discord config when entering step 3 to ensure .env values are loaded
   useEffect(() => {
     if (isOpen && configStep === 3) {
-      loadSlackConfig();
+      loadDiscordConfig();
     }
   }, [isOpen, configStep]);
 
-  const loadSlackConfig = async () => {
+  const loadDiscordConfig = async () => {
     try {
-      const cfg = await getSlackConfig();
-      console.log('[PipelineModal] Loaded Slack config:', cfg);
+      const cfg = await getDiscordConfig();
+      console.log('[PipelineModal] Loaded Discord config:', cfg);
       // Always set values (even if empty) to ensure UI reflects current state
-      setSlackWebhookFull(cfg.slack_webhook_full || '');
-      setSlackWebhookSummary(cfg.slack_webhook_summary || '');
+      setDiscordWebhookFull(cfg.discord_webhook_full || '');
+      setDiscordWebhookSummary(cfg.discord_webhook_summary || '');
     } catch (e) {
-      console.error('[PipelineModal] Failed to load Slack config:', e);
+      console.error('[PipelineModal] Failed to load Discord config:', e);
       // If not available, keep empty
-      setSlackWebhookFull('');
-      setSlackWebhookSummary('');
+      setDiscordWebhookFull('');
+      setDiscordWebhookSummary('');
     }
   };
 
-  const persistSlackConfig = async (nextFull: string, nextSummary: string) => {
-    setSavingSlackConfig(true);
+  const persistDiscordConfig = async (nextFull: string, nextSummary: string) => {
+    setSavingDiscordConfig(true);
     try {
-      await updateSlackConfig({
-        slack_webhook_full: nextFull,
-        slack_webhook_summary: nextSummary,
+      await updateDiscordConfig({
+        discord_webhook_full: nextFull,
+        discord_webhook_summary: nextSummary,
       });
     } finally {
-      setSavingSlackConfig(false);
+      setSavingDiscordConfig(false);
     }
   };
 
@@ -281,8 +281,8 @@ export default function PipelineModal({ isOpen, onClose }: PipelineModalProps) {
           paper_ids: selectedPapers,
           goal: goal || 'general understanding',
           analysis_mode: analysisMode,
-          slack_webhook_full: slackWebhookFull || '',
-          slack_webhook_summary: slackWebhookSummary || '',
+          discord_webhook_full: discordWebhookFull || '',
+          discord_webhook_summary: discordWebhookSummary || '',
           source: source
         });
       } else {
@@ -293,8 +293,8 @@ export default function PipelineModal({ isOpen, onClose }: PipelineModalProps) {
           top_k: paperCount,
           goal: goal || 'general understanding',
           analysis_mode: analysisMode,
-          slack_webhook_full: slackWebhookFull || '',
-          slack_webhook_summary: slackWebhookSummary || '',
+          discord_webhook_full: discordWebhookFull || '',
+          discord_webhook_summary: discordWebhookSummary || '',
         });
       }
 
@@ -325,9 +325,9 @@ export default function PipelineModal({ isOpen, onClose }: PipelineModalProps) {
   };
 
   const canProceedStep3 = () => {
-    // At least one Slack webhook should be configured
-    const hasFull = slackWebhookFull.startsWith('https://hooks.slack.com/');
-    const hasSummary = slackWebhookSummary.startsWith('https://hooks.slack.com/');
+    // At least one Discord webhook should be configured
+    const hasFull = discordWebhookFull.startsWith('https://discord.com/api/webhooks/');
+    const hasSummary = discordWebhookSummary.startsWith('https://discord.com/api/webhooks/');
     return hasFull || hasSummary;
   };
 
@@ -635,7 +635,7 @@ export default function PipelineModal({ isOpen, onClose }: PipelineModalProps) {
   const renderStep3 = () => (
     <div>
       <h3 style={{ color: '#fff', fontSize: '16px', marginBottom: '16px' }}>
-        Step 3: Slack Notification Settings
+        Step 3: Discord Notification Settings
       </h3>
 
       {/* Full Report Channel */}
@@ -645,10 +645,10 @@ export default function PipelineModal({ isOpen, onClose }: PipelineModalProps) {
         </label>
         <input
           type="text"
-          value={slackWebhookFull}
-          onChange={(e) => setSlackWebhookFull(e.target.value)}
-          onBlur={(e) => persistSlackConfig(e.target.value, slackWebhookSummary)}
-          placeholder="https://hooks.slack.com/services/... (전체 리포트용)"
+          value={discordWebhookFull}
+          onChange={(e) => setDiscordWebhookFull(e.target.value)}
+          onBlur={(e) => persistDiscordConfig(e.target.value, discordWebhookSummary)}
+          placeholder="https://discord.com/api/webhooks/... (전체 리포트용)"
           style={{
             width: '100%',
             padding: '10px 12px',
@@ -671,10 +671,10 @@ export default function PipelineModal({ isOpen, onClose }: PipelineModalProps) {
         </label>
         <input
           type="text"
-          value={slackWebhookSummary}
-          onChange={(e) => setSlackWebhookSummary(e.target.value)}
-          onBlur={(e) => persistSlackConfig(slackWebhookFull, e.target.value)}
-          placeholder="https://hooks.slack.com/services/... (요약본용)"
+          value={discordWebhookSummary}
+          onChange={(e) => setDiscordWebhookSummary(e.target.value)}
+          onBlur={(e) => persistDiscordConfig(discordWebhookFull, e.target.value)}
+          placeholder="https://discord.com/api/webhooks/... (요약본용)"
           style={{
             width: '100%',
             padding: '10px 12px',
@@ -704,14 +704,14 @@ export default function PipelineModal({ isOpen, onClose }: PipelineModalProps) {
           💡 Setup Instructions
         </div>
         <div style={{ lineHeight: 1.6 }}>
-          1. Slack workspace에서 Incoming Webhook 앱 생성<br/>
+          1. Discord 서버 설정 → 통합 → 웹후크 → 새 웹후크<br/>
           2. 각 채널마다 별도의 Webhook URL 생성<br/>
           3. 위 입력 필드에 Webhook URL 붙여넣기<br/>
-          4. 최소 하나의 채널은 설정해야 합니다
+          4. 최소 하나의 채널은 설정해야 합니다<br/>
         </div>
-        {savingSlackConfig && (
+        {savingDiscordConfig && (
           <div style={{ marginTop: '8px', fontSize: '11px', color: '#718096' }}>
-            Saving Slack webhook settings...
+            Saving Discord webhook settings...
           </div>
         )}
       </div>
@@ -738,9 +738,9 @@ export default function PipelineModal({ isOpen, onClose }: PipelineModalProps) {
           )}
           • Mode: {analysisMode}<br/>
           • Goal: {goal || 'General understanding'}<br/>
-          • Slack Channels: {[
-            slackWebhookFull && 'Full Report',
-            slackWebhookSummary && 'Summary'
+          • Discord Channels: {[
+            discordWebhookFull && 'Full Report',
+            discordWebhookSummary && 'Summary'
           ].filter(Boolean).join(', ') || 'None configured'}
         </div>
       </div>

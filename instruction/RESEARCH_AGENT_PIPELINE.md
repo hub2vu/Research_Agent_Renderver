@@ -70,9 +70,9 @@ research_agent.py
 5. 리포트 저장
    └── OUTPUT_DIR/agent_reports/
 
-6. Slack 알림 전송 (90%)
-   ├── Full report (slack_webhook_full)
-   └── Summary (slack_webhook_summary)
+6. Discord 알림 전송 (90%)
+   ├── Full report (discord_webhook_full)
+   └── Summary (discord_webhook_summary)
 
 7. 완료 (100%)
    └── state.mark_completed()
@@ -229,7 +229,7 @@ LLM 분석:
 - `rank_and_select_top_k`: 상위 K개 선택
 
 ### 알림
-- `send_slack_notification`: Slack 알림 전송
+- `send_discord_notification`: Discord 알림 전송 (스레드 지원)
 
 ## 데이터 구조
 

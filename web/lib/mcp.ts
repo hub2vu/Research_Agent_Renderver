@@ -715,8 +715,8 @@ export interface PipelineConfig {
   paper_ids: string[];
   goal?: string;
   analysis_mode?: 'quick' | 'standard' | 'deep';
-  slack_webhook_full?: string;
-  slack_webhook_summary?: string;
+  discord_webhook_full?: string;
+  discord_webhook_summary?: string;
   source?: 'arxiv' | 'neurips' | 'iclr' | 'local';
 }
 
@@ -727,8 +727,8 @@ export interface PipelineResult {
   executive_summary?: string;
   reasoning_log_count?: number;
   notifications?: {
-    slack_full?: { success: boolean; error?: string };
-    slack_summary?: { success: boolean; error?: string };
+    discord_full?: { success: boolean; error?: string };
+    discord_summary?: { success: boolean; error?: string };
   };
   errors?: string[];
 }
@@ -757,8 +757,8 @@ export async function runResearchAgent(config: PipelineConfig): Promise<{ succes
       paper_ids: config.paper_ids,
       goal: config.goal || 'general understanding',
       analysis_mode: config.analysis_mode || 'quick',
-      slack_webhook_full: config.slack_webhook_full || '',
-      slack_webhook_summary: config.slack_webhook_summary || '',
+      discord_webhook_full: config.discord_webhook_full || '',
+      discord_webhook_summary: config.discord_webhook_summary || '',
       source: config.source || 'local',
     }})
   });
@@ -786,8 +786,8 @@ export interface ConferencePipelineConfig {
   top_k?: number;
   goal?: string;
   analysis_mode?: 'quick' | 'standard' | 'deep';
-  slack_webhook_full?: string;
-  slack_webhook_summary?: string;
+  discord_webhook_full?: string;
+  discord_webhook_summary?: string;
   profile_path?: string;
 }
 
@@ -812,8 +812,8 @@ export async function runConferencePipeline(config: ConferencePipelineConfig): P
       top_k: config.top_k ?? 3,
       goal: config.goal || 'general understanding',
       analysis_mode: config.analysis_mode || 'quick',
-      slack_webhook_full: config.slack_webhook_full || '',
-      slack_webhook_summary: config.slack_webhook_summary || '',
+      discord_webhook_full: config.discord_webhook_full || '',
+      discord_webhook_summary: config.discord_webhook_summary || '',
       profile_path: config.profile_path || 'users/profile.json',
     })
   });
@@ -888,37 +888,37 @@ export async function listAgentJobs(): Promise<Array<{
   return data.jobs || [];
 }
 
-// ==================== Slack Config (.env-backed) ====================
+// ==================== Discord Config (.env-backed) ====================
 
-export async function getSlackConfig(): Promise<{
-  slack_webhook_full: string;
-  slack_webhook_summary: string;
+export async function getDiscordConfig(): Promise<{
+  discord_webhook_full: string;
+  discord_webhook_summary: string;
   dotenv_path?: string;
 }> {
-  const response = await fetch(`${MCP_BASE_URL}/config/slack`);
+  const response = await fetch(`${MCP_BASE_URL}/config/discord`);
   if (!response.ok) {
-    throw new Error(`Failed to load Slack config: ${response.statusText}`);
+    throw new Error(`Failed to load Discord config: ${response.statusText}`);
   }
   const data = await response.json();
   return {
-    slack_webhook_full: data.slack_webhook_full || '',
-    slack_webhook_summary: data.slack_webhook_summary || '',
+    discord_webhook_full: data.discord_webhook_full || '',
+    discord_webhook_summary: data.discord_webhook_summary || '',
     dotenv_path: data.dotenv_path,
   };
 }
 
-export async function updateSlackConfig(payload: {
-  slack_webhook_full: string;
-  slack_webhook_summary: string;
+export async function updateDiscordConfig(payload: {
+  discord_webhook_full: string;
+  discord_webhook_summary: string;
 }): Promise<{ success: boolean; dotenv_path?: string }> {
-  const response = await fetch(`${MCP_BASE_URL}/config/slack`, {
+  const response = await fetch(`${MCP_BASE_URL}/config/discord`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
   if (!response.ok) {
     const error = await response.json().catch(() => ({ detail: response.statusText }));
-    throw new Error(error.detail || 'Failed to update Slack config');
+    throw new Error(error.detail || 'Failed to update Discord config');
   }
   const data = await response.json();
   return { success: !!data.success, dotenv_path: data.dotenv_path };
@@ -928,16 +928,16 @@ export async function updateSlackConfig(payload: {
  * Test notification configuration
  */
 export async function testNotifications(
-  slackWebhookFull?: string,
-  slackWebhookSummary?: string
+  discordWebhookFull?: string,
+  discordWebhookSummary?: string
 ): Promise<{
-  slack_full?: { success: boolean; error?: string };
-  slack_summary?: { success: boolean; error?: string };
+  discord_full?: { success: boolean; error?: string };
+  discord_summary?: { success: boolean; error?: string };
   environment_status: Record<string, string>;
 }> {
   const result = await executeTool('test_notifications', {
-    slack_webhook_full: slackWebhookFull || '',
-    slack_webhook_summary: slackWebhookSummary || '',
+    discord_webhook_full: discordWebhookFull || '',
+    discord_webhook_summary: discordWebhookSummary || '',
   });
   
   if (!result.success) {
@@ -945,8 +945,8 @@ export async function testNotifications(
   }
   
   return {
-    slack_full: result.result.test_results?.slack_full,
-    slack_summary: result.result.test_results?.slack_summary,
+    discord_full: result.result.test_results?.discord_full,
+    discord_summary: result.result.test_results?.discord_summary,
     environment_status: result.result.environment_status || {},
   };
 }

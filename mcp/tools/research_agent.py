@@ -205,17 +205,15 @@ class LLMOrchestrator:
     @staticmethod
     async def determine_analysis_strategy(
         summary_report: str,
-        abstract: str,
         sections: List[Dict],
         goal: str,
         mode: str = "quick"
     ) -> Dict[str, Any]:
         """
-        Determine analysis strategy based on summary + abstract + sections + goal.
+        Determine analysis strategy based on summary + sections + goal.
         
         Args:
-            summary_report: The generated summary from generate_report
-            abstract: Extracted abstract text
+            summary_report: The generated summary from generate_report (contains key information)
             sections: List of sections from extract_paper_sections
             goal: User's analysis goal
             mode: Analysis depth mode (quick/standard/deep)
@@ -238,9 +236,6 @@ class LLMOrchestrator:
 ### 종합 요약 보고서
 {summary_report[:4000]}
 
-### 초록 (Abstract)
-{abstract[:2000]}
-
 ### 목차 (Table of Contents)
 {sections_list}
 
@@ -258,7 +253,7 @@ class LLMOrchestrator:
 5. **comparison_focused**: 관련 연구 비교 중심 (Related Work 심층 분석)
 
 ### 판단 기준
-- 초록과 요약에서 논문의 핵심이 무엇인지 파악
+- 요약 보고서에서 논문의 핵심이 무엇인지 파악
 - 목차 구조를 보고 논문의 성격 파악 (실험 논문인지, 이론 논문인지)
 - 사용자 목표에 맞는 전략 선택
 - 분석 모드에 맞는 섹션 수 선택
@@ -512,16 +507,16 @@ class ResearchAgentTool(MCPTool):
                 default="quick"
             ),
             ToolParameter(
-                name="slack_webhook_full",
+                name="discord_webhook_full",
                 type="string",
-                description="Slack webhook URL for full report channel (optional)",
+                description="Discord webhook URL for full report channel (optional)",
                 required=False,
                 default=""
             ),
             ToolParameter(
-                name="slack_webhook_summary",
+                name="discord_webhook_summary",
                 type="string",
-                description="Slack webhook URL for summary notification channel (optional)",
+                description="Discord webhook URL for summary notification channel (optional)",
                 required=False,
                 default=""
             ),
@@ -543,8 +538,8 @@ class ResearchAgentTool(MCPTool):
         paper_ids: List[str],
         goal: str = "general understanding",
         analysis_mode: str = "quick",
-        slack_webhook_full: str = "",
-        slack_webhook_summary: str = "",
+        discord_webhook_full: str = "",
+        discord_webhook_summary: str = "",
         source: str = "local",
         job_id: Optional[str] = None,
         **kwargs
@@ -559,8 +554,8 @@ class ResearchAgentTool(MCPTool):
         paper_ids = paper_ids[:3]
         
         # If webhook not provided by UI, fall back to env/.env-loaded env
-        slack_webhook_full = (slack_webhook_full or "").strip() or _env_or_empty("SLACK_WEBHOOK_FULL")
-        slack_webhook_summary = (slack_webhook_summary or "").strip() or _env_or_empty("SLACK_WEBHOOK_SUMMARY")
+        discord_webhook_full = (discord_webhook_full or "").strip() or _env_or_empty("DISCORD_WEBHOOK_FULL")
+        discord_webhook_summary = (discord_webhook_summary or "").strip() or _env_or_empty("DISCORD_WEBHOOK_SUMMARY")
 
         # Initialize state
         state = AgentState(
@@ -614,46 +609,50 @@ class ResearchAgentTool(MCPTool):
         
         logger.info(f"[Research Agent] Report saved to {report_file}")
         
-        # Send notifications to Slack
+        # Send notifications to Discord
         state.update_progress("Sending notifications...", 90.0)
         notification_results = {}
         
-        # Send full report to first Slack channel
-        if slack_webhook_full:
+        # Send full report to Discord (regular message)
+        if discord_webhook_full:
             try:
-                full_message = f"📚 *Research Analysis Report*\n\n"
-                full_message += f"*Goal:* {goal}\n"
-                full_message += f"*Papers Analyzed:* {len(state.paper_results)}\n"
-                full_message += f"*Analysis Mode:* {analysis_mode}\n"
-                full_message += f"*Generated:* {datetime.now().strftime('%Y-%m-%d %H:%M')}\n\n"
-                full_message += f"---\n\n"
-                full_message += final_report
+                # Add header to full report
+                report_with_header = f"📚 **Research Analysis Report**\n\n"
+                report_with_header += f"**Goal:** {goal}\n"
+                report_with_header += f"**Papers Analyzed:** {len(state.paper_results)}\n"
+                report_with_header += f"**Analysis Mode:** {analysis_mode}\n"
+                report_with_header += f"**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M')}\n\n"
+                report_with_header += "---\n\n"
+                report_with_header += final_report
                 
-                slack_full_result = await execute_tool(
-                    "send_slack_notification",
-                    webhook_url=slack_webhook_full,
-                    message=full_message
+                # Send full report (Discord supports markdown!)
+                discord_full_result = await execute_tool(
+                    "send_discord_notification",
+                    webhook_url=discord_webhook_full,
+                    message=report_with_header
                 )
-                notification_results["slack_full"] = slack_full_result
+                notification_results["discord_full"] = discord_full_result
             except Exception as e:
-                notification_results["slack_full"] = {"success": False, "error": str(e)}
+                notification_results["discord_full"] = {"success": False, "error": str(e)}
         
-        # Send summary to second Slack channel
-        if slack_webhook_summary:
+        # Send summary to Discord channel (regular message)
+        if discord_webhook_summary:
             try:
-                slack_summary = f"📚 *Research Report Generated*\n\n"
-                slack_summary += f"*Goal:* {goal}\n"
-                slack_summary += f"*Papers:* {len(state.paper_results)}\n\n"
-                slack_summary += f"*Executive Summary:*\n{executive_summary}"
+                discord_summary = f"📚 **Research Report Generated**\n\n"
+                discord_summary += f"**Goal:** {goal}\n"
+                discord_summary += f"**Papers:** {len(state.paper_results)}\n"
+                discord_summary += f"**Analysis Mode:** {analysis_mode}\n"
+                discord_summary += f"**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M')}\n\n"
+                discord_summary += f"**Executive Summary:**\n{executive_summary}"
                 
-                slack_summary_result = await execute_tool(
-                    "send_slack_notification",
-                    webhook_url=slack_webhook_summary,
-                    message=slack_summary
+                discord_summary_result = await execute_tool(
+                    "send_discord_notification",
+                    webhook_url=discord_webhook_summary,
+                    message=discord_summary
                 )
-                notification_results["slack_summary"] = slack_summary_result
+                notification_results["discord_summary"] = discord_summary_result
             except Exception as e:
-                notification_results["slack_summary"] = {"success": False, "error": str(e)}
+                notification_results["discord_summary"] = {"success": False, "error": str(e)}
         
         # Mark as completed
         state.mark_completed()
@@ -728,18 +727,6 @@ class ResearchAgentTool(MCPTool):
         title_match = re.search(r"(?:제목|Title)[:\s]*(.+?)(?:\n|$)", summary_report, re.IGNORECASE)
         paper_title = title_match.group(1).strip() if title_match else clean_paper_id
         
-        # Phase 2.5: Extract abstract
-        logger.info(f"[Agent] Extracting abstract for {clean_paper_id}")
-        abstract = await LLMOrchestrator.extract_abstract(clean_paper_id)
-        
-        state.log_reasoning(
-            paper_id=clean_paper_id,
-            context="요약 보고서 생성 완료",
-            decision="초록 추출",
-            rationale="전략 결정을 위해 초록 정보 필요",
-            action_taken="extract_abstract"
-        )
-        
         # Phase 3: Extract sections (table of contents)
         logger.info(f"[Agent] Extracting sections for {clean_paper_id}")
         
@@ -759,12 +746,11 @@ class ResearchAgentTool(MCPTool):
                 {"title": "Conclusion", "level": 1, "page": 10}
             ]
         
-        # Phase 4: Determine analysis strategy (NEW)
+        # Phase 4: Determine analysis strategy
         logger.info(f"[Agent] Determining analysis strategy for {clean_paper_id}")
         
         strategy = await LLMOrchestrator.determine_analysis_strategy(
             summary_report=summary_report,
-            abstract=abstract,
             sections=sections,
             goal=state.goal,
             mode=state.analysis_mode
@@ -1002,16 +988,16 @@ class ConferencePipelineTool(MCPTool):
                 default="quick"
             ),
             ToolParameter(
-                name="slack_webhook_full",
+                name="discord_webhook_full",
                 type="string",
-                description="Slack webhook URL for full report",
+                description="Discord webhook URL for full report",
                 required=False,
                 default=""
             ),
             ToolParameter(
-                name="slack_webhook_summary",
+                name="discord_webhook_summary",
                 type="string",
-                description="Slack webhook URL for summary",
+                description="Discord webhook URL for summary",
                 required=False,
                 default=""
             ),
@@ -1035,8 +1021,8 @@ class ConferencePipelineTool(MCPTool):
         top_k: int = 3,
         goal: str = "general understanding",
         analysis_mode: str = "quick",
-        slack_webhook_full: str = "",
-        slack_webhook_summary: str = "",
+        discord_webhook_full: str = "",
+        discord_webhook_summary: str = "",
         profile_path: str = "users/profile.json",
         job_id: Optional[str] = None,
         **kwargs
@@ -1326,8 +1312,8 @@ class ConferencePipelineTool(MCPTool):
                 paper_ids=paper_ids_for_analysis,
                 goal=goal,
                 analysis_mode=analysis_mode,
-                slack_webhook_full=slack_webhook_full or _env_or_empty("SLACK_WEBHOOK_FULL"),
-                slack_webhook_summary=slack_webhook_summary or _env_or_empty("SLACK_WEBHOOK_SUMMARY"),
+                discord_webhook_full=discord_webhook_full or _env_or_empty("DISCORD_WEBHOOK_FULL"),
+                discord_webhook_summary=discord_webhook_summary or _env_or_empty("DISCORD_WEBHOOK_SUMMARY"),
                 source=source,
                 job_id=job_id
             )

@@ -274,41 +274,41 @@ def _write_dotenv(path: Path, updates: Dict[str, str]) -> None:
     path.write_text("\n".join(lines) + ("\n" if lines else ""), encoding="utf-8")
 
 
-class SlackConfigRequest(BaseModel):
-    slack_webhook_full: str = ""
-    slack_webhook_summary: str = ""
+class DiscordConfigRequest(BaseModel):
+    discord_webhook_full: str = ""
+    discord_webhook_summary: str = ""
 
 
-@app.get("/config/slack")
-async def get_slack_config():
+@app.get("/config/discord")
+async def get_discord_config():
     """
-    Returns Slack webhook URLs from process env, falling back to .env file if present.
+    Returns Discord webhook URLs from process env, falling back to .env file if present.
     Always reads .env file to ensure values are loaded even if process env is empty.
     """
     # Always read .env file first to ensure values are loaded
     dotenv = _read_dotenv(DOTENV_PATH)
     
     # Get from process env, fallback to .env file
-    full = os.getenv("SLACK_WEBHOOK_FULL", "") or dotenv.get("SLACK_WEBHOOK_FULL", "")
-    summary = os.getenv("SLACK_WEBHOOK_SUMMARY", "") or dotenv.get("SLACK_WEBHOOK_SUMMARY", "")
+    full = os.getenv("DISCORD_WEBHOOK_FULL", "") or dotenv.get("DISCORD_WEBHOOK_FULL", "")
+    summary = os.getenv("DISCORD_WEBHOOK_SUMMARY", "") or dotenv.get("DISCORD_WEBHOOK_SUMMARY", "")
 
     return {
         "success": True,
         "dotenv_path": str(DOTENV_PATH),
-        "slack_webhook_full": full,
-        "slack_webhook_summary": summary,
+        "discord_webhook_full": full,
+        "discord_webhook_summary": summary,
     }
 
 
-@app.post("/config/slack")
-async def update_slack_config(req: SlackConfigRequest):
+@app.post("/config/discord")
+async def update_discord_config(req: DiscordConfigRequest):
     """
-    Update .env with Slack webhook URLs and also update current process env
+    Update .env with Discord webhook URLs and also update current process env
     (so running server can use the new values without restart).
     """
     updates = {
-        "SLACK_WEBHOOK_FULL": (req.slack_webhook_full or "").strip(),
-        "SLACK_WEBHOOK_SUMMARY": (req.slack_webhook_summary or "").strip(),
+        "DISCORD_WEBHOOK_FULL": (req.discord_webhook_full or "").strip(),
+        "DISCORD_WEBHOOK_SUMMARY": (req.discord_webhook_summary or "").strip(),
     }
     try:
         _write_dotenv(DOTENV_PATH, updates)
@@ -316,8 +316,8 @@ async def update_slack_config(req: SlackConfigRequest):
         raise HTTPException(status_code=500, detail=f"Failed to write .env: {e}")
 
     # Update runtime environment for immediate use
-    os.environ["SLACK_WEBHOOK_FULL"] = updates["SLACK_WEBHOOK_FULL"]
-    os.environ["SLACK_WEBHOOK_SUMMARY"] = updates["SLACK_WEBHOOK_SUMMARY"]
+    os.environ["DISCORD_WEBHOOK_FULL"] = updates["DISCORD_WEBHOOK_FULL"]
+    os.environ["DISCORD_WEBHOOK_SUMMARY"] = updates["DISCORD_WEBHOOK_SUMMARY"]
 
     return {"success": True, "dotenv_path": str(DOTENV_PATH), **updates}
 
@@ -482,8 +482,8 @@ class ConferencePipelineRequest(BaseModel):
     top_k: int = 3
     goal: str = "general understanding"
     analysis_mode: str = "quick"
-    slack_webhook_full: str = ""
-    slack_webhook_summary: str = ""
+    discord_webhook_full: str = ""
+    discord_webhook_summary: str = ""
     profile_path: str = "users/profile.json"
 
 
@@ -507,8 +507,8 @@ async def run_conference_pipeline(background_tasks: BackgroundTasks, request: Co
         "top_k": min(max(request.top_k, 1), 5),  # Clamp between 1 and 5
         "goal": request.goal,
         "analysis_mode": request.analysis_mode,
-        "slack_webhook_full": request.slack_webhook_full,
-        "slack_webhook_summary": request.slack_webhook_summary,
+        "discord_webhook_full": request.discord_webhook_full,
+        "discord_webhook_summary": request.discord_webhook_summary,
         "profile_path": request.profile_path,
     }
     
