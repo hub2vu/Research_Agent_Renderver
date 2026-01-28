@@ -35,6 +35,7 @@ logger = logging.getLogger(__name__)
 _iclr_embedding_model_cache = None
 _iclr_embeddings_array_cache = None
 _iclr_embeddings_path_cache = None
+_iclr_embeddings_dimension_cache = None  # Cache for embeddings dimension
 _iclr_metadata_cache = None
 _iclr_metadata_path_cache = None
 
@@ -174,11 +175,12 @@ def _get_iclr_embeddings_array(embeddings_path: Optional[str] = None) -> Optiona
     """
     Get or load ICLR embeddings array (singleton pattern).
     """
-    global _iclr_embeddings_array_cache, _iclr_embeddings_path_cache
+    global _iclr_embeddings_array_cache, _iclr_embeddings_path_cache, _iclr_embeddings_dimension_cache
 
     if embeddings_path is None:
         if _iclr_embeddings_path_cache is not None:
             embeddings_path = _iclr_embeddings_path_cache
+            logger.debug(f"Using cached ICLR embeddings path: {embeddings_path}")
         else:
             search_paths = [
                 Path("/app/data/embeddings_ICLR/ICLR2025_accepted_bge_large_en_v1_5.npy"),
@@ -193,24 +195,34 @@ def _get_iclr_embeddings_array(embeddings_path: Optional[str] = None) -> Optiona
             alt_workspace_root = Path(__file__).parent.parent.parent
             search_paths.append(alt_workspace_root / "data" / "embeddings_ICLR" / "ICLR2025_accepted_bge_large_en_v1_5.npy")
 
+            logger.info(f"Searching for ICLR embeddings.npy in {len(search_paths)} locations...")
             for full_path in search_paths:
+                logger.debug(f"  Checking: {full_path} (exists: {full_path.exists()})")
                 if full_path.exists():
                     embeddings_path = str(full_path.resolve())
                     _iclr_embeddings_path_cache = embeddings_path
-                    logger.info(f"Found ICLR embeddings at: {embeddings_path}")
+                    logger.info(f"✓ Found ICLR embeddings at: {embeddings_path}")
                     break
 
             if embeddings_path is None:
-                logger.error("ICLR embeddings.npy not found")
+                logger.error(
+                    f"✗ ICLR embeddings.npy not found in any of the searched locations. "
+                    f"Current working directory: {workspace_root}. "
+                    f"Searched paths: {[str(p) for p in search_paths]}"
+                )
                 return None
 
     embeddings_path_obj = Path(embeddings_path) if embeddings_path else None
     if embeddings_path_obj is None or not embeddings_path_obj.exists():
-        logger.error(f"ICLR embeddings not found at: {embeddings_path}")
+        logger.error(
+            f"✗ ICLR embeddings not found at specified path: {embeddings_path}. "
+            f"Absolute path check: {embeddings_path_obj.resolve() if embeddings_path_obj else 'N/A'}"
+        )
         return None
 
     if (_iclr_embeddings_array_cache is not None
         and _iclr_embeddings_path_cache == embeddings_path):
+        logger.debug(f"Returning cached ICLR embeddings array (shape: {_iclr_embeddings_array_cache.shape})")
         return _iclr_embeddings_array_cache
 
     try:
@@ -220,15 +232,76 @@ def _get_iclr_embeddings_array(embeddings_path: Optional[str] = None) -> Optiona
         if len(embeddings_array.shape) == 1:
             embeddings_array = embeddings_array.reshape(1, -1)
 
-        logger.info(f"Loaded ICLR embeddings: shape={embeddings_array.shape}")
+        # Cache dimension for model selection
+        embedding_dim = embeddings_array.shape[1] if len(embeddings_array.shape) >= 2 else None
+        _iclr_embeddings_dimension_cache = embedding_dim
+
+        logger.info(
+            f"✓ Successfully loaded ICLR embeddings.npy. "
+            f"Shape: {embeddings_array.shape} "
+            f"({embeddings_array.shape[0]} papers × {embedding_dim}D), "
+            f"Dtype: {embeddings_array.dtype}, "
+            f"Size: {embeddings_array.nbytes / (1024 * 1024):.2f} MB"
+        )
 
         _iclr_embeddings_array_cache = embeddings_array
         _iclr_embeddings_path_cache = embeddings_path
 
         return embeddings_array
     except Exception as e:
-        logger.error(f"Failed to load ICLR embeddings: {e}")
+        logger.error(f"✗ Exception loading ICLR embeddings: {type(e).__name__}: {e}")
         return None
+
+
+def _validate_iclr_embeddings_metadata_mapping(
+    embeddings_array: np.ndarray,
+    metadata_list: List[Dict[str, Any]]
+) -> bool:
+    """
+    Validate that ICLR embeddings array and metadata have matching row counts.
+
+    Args:
+        embeddings_array: Loaded embeddings array (should be 2D)
+        metadata_list: List of metadata dictionaries
+
+    Returns:
+        True if validation passes, False otherwise
+    """
+    if embeddings_array is None:
+        logger.warning("✗ Cannot validate: embeddings_array is None")
+        return False
+
+    if metadata_list is None or len(metadata_list) == 0:
+        logger.warning("✗ Cannot validate: metadata_list is empty or None")
+        return False
+
+    # Ensure embeddings are 2D
+    if len(embeddings_array.shape) == 1:
+        embeddings_array = embeddings_array.reshape(1, -1)
+
+    embeddings_count = embeddings_array.shape[0]
+    metadata_count = len(metadata_list)
+
+    logger.info(
+        f"Validating ICLR embeddings-metadata mapping: "
+        f"embeddings rows={embeddings_count}, metadata rows={metadata_count}"
+    )
+
+    if embeddings_count != metadata_count:
+        logger.error(
+            f"✗ Index mismatch detected! "
+            f"ICLR embeddings.npy has {embeddings_count} rows, "
+            f"but metadata has {metadata_count} rows. "
+            f"Difference: {abs(embeddings_count - metadata_count)} rows. "
+            f"This will cause incorrect paper-embedding mappings."
+        )
+        return False
+
+    logger.info(
+        f"✓ ICLR index mapping validation passed: "
+        f"{embeddings_count} embeddings match {metadata_count} metadata entries"
+    )
+    return True
 
 
 def _get_iclr_metadata_cache(metadata_path: Optional[str] = None) -> Optional[List[Dict[str, Any]]]:
@@ -381,6 +454,15 @@ class ICLRSearchTool(MCPTool):
             except Exception:
                 continue
 
+        # Validate embeddings-metadata mapping before semantic search
+        embeddings_array = _get_iclr_embeddings_array(embeddings_path)
+        if embeddings_array is not None:
+            if not _validate_iclr_embeddings_metadata_mapping(embeddings_array, paper_inputs_all):
+                logger.warning(
+                    "⚠ Continuing with semantic search despite index mismatch. "
+                    "Results may be incorrect. Please check ICLR embeddings.npy and metadata alignment."
+                )
+
         # Perform semantic search
         semantic_scores = await self._semantic_search(
             query=query,
@@ -422,14 +504,20 @@ class ICLRSearchTool(MCPTool):
                 paper["combined_score"] = combined_scores.get(pid, 0.0)
                 selected_papers.append(paper)
 
+        # Calculate statistics
+        search_stats = {
+            "semantic_matches": len([s for s in semantic_scores.values() if s > 0]),
+            "keyword_matches": len([s for s in keyword_scores.values() if s > 0]),
+            "combined_count": len(combined_scores),
+            "avg_combined_score": float(np.mean(list(combined_scores.values()))) if combined_scores else 0.0
+        }
+
         return {
             "query": query,
             "total_results": len(selected_papers),
             "papers": selected_papers,
-            "search_stats": {
-                "semantic_matches": len([s for s in semantic_scores.values() if s > 0]),
-                "keyword_matches": len([s for s in keyword_scores.values() if s > 0]),
-            }
+            "search_stats": search_stats,
+            "cached": False
         }
 
     async def _semantic_search(
@@ -438,35 +526,93 @@ class ICLRSearchTool(MCPTool):
         paper_inputs: List[PaperInput],
         embeddings_path: Optional[str] = None
     ) -> Dict[str, float]:
-        """Perform semantic search using pre-computed embeddings."""
+        """
+        Perform semantic search using pre-computed embeddings.
+
+        Args:
+            query: Search query
+            paper_inputs: List of papers to search
+            embeddings_path: Path to embeddings.npy file
+
+        Returns:
+            Dictionary mapping paper_id to semantic score (0.0-1.0)
+        """
         if not HAS_SENTENCE_TRANSFORMERS or not HAS_SKLEARN:
+            logger.warning(
+                "✗ SentenceTransformer or scikit-learn not available. "
+                "Skipping semantic search."
+            )
             return {p.get("paper_id", ""): 0.0 for p in paper_inputs}
 
+        # Get cached embeddings array
         embeddings_array = _get_iclr_embeddings_array(embeddings_path)
 
         if embeddings_array is None:
-            logger.warning("ICLR embeddings not available, skipping semantic search")
-            return {p.get("paper_id", ""): 0.0 for p in paper_inputs}
+            logger.warning(
+                "⚠ ICLR embeddings.npy not found or failed to load. "
+                "Falling back to on-the-fly embedding computation. "
+                "This will be slower and use more resources."
+            )
+            # Fallback: use SentenceTransformer to compute embeddings on-the-fly
+            return await self._semantic_search_fallback(query, paper_inputs)
 
         try:
+            # Get cached embedding model
             model = _get_iclr_embedding_model()
             if model is None:
-                return {p.get("paper_id", ""): 0.0 for p in paper_inputs}
+                logger.warning(
+                    "⚠ Failed to load ICLR embedding model. "
+                    "Falling back to on-the-fly embedding computation."
+                )
+                return await self._semantic_search_fallback(query, paper_inputs)
 
+            # Validate index mapping
+            if not _validate_iclr_embeddings_metadata_mapping(embeddings_array, paper_inputs):
+                logger.error(
+                    "✗ Index mismatch between ICLR embeddings and metadata! "
+                    "Semantic search results may be incorrect. "
+                    "Falling back to on-the-fly computation for safety."
+                )
+                return await self._semantic_search_fallback(query, paper_inputs)
+
+            logger.debug(f"Computing query embedding for: '{query[:50]}...'")
             # Get query embedding
             query_embedding = model.encode([query])[0]
 
-            # Check dimension match
-            if len(query_embedding) != embeddings_array.shape[1]:
-                logger.error(
-                    f"Dimension mismatch: query={len(query_embedding)}, "
-                    f"embeddings={embeddings_array.shape[1]}"
-                )
-                return {p.get("paper_id", ""): 0.0 for p in paper_inputs}
+            # Validate dimensions before computing similarity
+            query_dim = query_embedding.shape[0] if hasattr(query_embedding, 'shape') else len(query_embedding)
+            embeddings_dim = embeddings_array.shape[1] if len(embeddings_array.shape) >= 2 else None
 
+            logger.debug(
+                f"Query embedding dimension: {query_dim}D, "
+                f"Embeddings dimension: {embeddings_dim}D"
+            )
+
+            # Check dimension mismatch
+            if embeddings_dim is not None and query_dim != embeddings_dim:
+                logger.error(
+                    f"✗ Dimension mismatch detected! "
+                    f"Query embedding ({query_dim}D) != paper embeddings ({embeddings_dim}D). "
+                    f"This will cause cosine similarity to fail. "
+                    f"ICLR uses BAAI/bge-large-en-v1.5 (1024D). "
+                    f"Falling back to on-the-fly embedding computation."
+                )
+                return await self._semantic_search_fallback(query, paper_inputs)
+
+            logger.debug(
+                f"Computing cosine similarity: "
+                f"query shape={query_embedding.shape}, "
+                f"embeddings shape={embeddings_array.shape}"
+            )
             # Calculate cosine similarity
             query_embedding_2d = query_embedding.reshape(1, -1)
             similarities = cosine_similarity(query_embedding_2d, embeddings_array)[0]
+
+            logger.debug(
+                f"✓ Computed {len(similarities)} similarities. "
+                f"Max similarity: {float(np.max(similarities)):.4f}, "
+                f"Min similarity: {float(np.min(similarities)):.4f}"
+            )
 
             # Map to paper IDs
             scores: Dict[str, float] = {}
@@ -476,13 +622,113 @@ class ICLRSearchTool(MCPTool):
                     score = float(max(0.0, similarities[idx]))
                     scores[paper_id] = score
                 else:
+                    # Handle case where paper_inputs is longer than embeddings
+                    logger.warning(
+                        f"⚠ Paper at index {idx} (ID: {paper.get('paper_id', 'unknown')}) "
+                        f"exceeds embeddings array length {len(similarities)}. "
+                        f"Setting score to 0.0"
+                    )
                     paper_id = paper.get("paper_id", "")
                     scores[paper_id] = 0.0
+
+            logger.info(
+                f"✓ ICLR semantic search completed: "
+                f"{len(scores)} scores computed, "
+                f"{len([s for s in scores.values() if s > 0])} non-zero scores"
+            )
 
             return scores
 
         except Exception as e:
-            logger.error(f"Semantic search failed: {e}")
+            logger.error(
+                f"✗ Exception during ICLR semantic search with embeddings.npy: "
+                f"{type(e).__name__}: {e}. "
+                f"Falling back to on-the-fly computation."
+            )
+            # Fallback to on-the-fly computation
+            return await self._semantic_search_fallback(query, paper_inputs)
+
+    async def _semantic_search_fallback(
+        self,
+        query: str,
+        paper_inputs: List[PaperInput]
+    ) -> Dict[str, float]:
+        """
+        Fallback semantic search using on-the-fly embedding computation.
+
+        Args:
+            query: Search query
+            paper_inputs: List of papers to search
+
+        Returns:
+            Dictionary mapping paper_id to semantic score
+        """
+        if not HAS_SENTENCE_TRANSFORMERS or not HAS_SKLEARN:
+            logger.warning(
+                "✗ SentenceTransformer or scikit-learn not available. "
+                "Cannot perform fallback semantic search."
+            )
+            return {p.get("paper_id", ""): 0.0 for p in paper_inputs}
+
+        try:
+            logger.info(
+                f"🔄 Performing ICLR fallback semantic search: "
+                f"computing embeddings for {len(paper_inputs)} papers on-the-fly. "
+                f"This may take longer."
+            )
+
+            # Get cached embedding model
+            model = _get_iclr_embedding_model()
+            if model is None:
+                logger.error(
+                    "✗ Failed to load ICLR embedding model. "
+                    "Cannot perform fallback semantic search."
+                )
+                return {p.get("paper_id", ""): 0.0 for p in paper_inputs}
+
+            # Encode query
+            logger.debug(f"Encoding query: '{query[:50]}...'")
+            query_embedding = model.encode([query])[0]
+
+            # Encode papers (title + abstract)
+            logger.debug(f"Encoding {len(paper_inputs)} ICLR papers...")
+            paper_texts = [
+                f"{p.get('title', '')} {p.get('abstract', '')}"
+                for p in paper_inputs
+            ]
+            paper_embeddings = model.encode(paper_texts, show_progress_bar=True)
+
+            logger.debug(f"✓ Encoded {len(paper_embeddings)} ICLR paper embeddings")
+
+            # Calculate cosine similarity
+            query_embedding_2d = query_embedding.reshape(1, -1)
+            similarities = cosine_similarity(query_embedding_2d, paper_embeddings)[0]
+
+            logger.debug(
+                f"✓ Computed similarities. "
+                f"Max: {float(np.max(similarities)):.4f}, "
+                f"Min: {float(np.min(similarities)):.4f}"
+            )
+
+            # Map to paper IDs
+            scores: Dict[str, float] = {}
+            for idx, paper in enumerate(paper_inputs):
+                paper_id = paper.get("paper_id", "")
+                score = float(max(0.0, similarities[idx]))
+                scores[paper_id] = score
+
+            logger.info(
+                f"✓ ICLR fallback semantic search completed: "
+                f"{len(scores)} scores computed"
+            )
+
+            return scores
+
+        except Exception as e:
+            logger.error(
+                f"✗ Exception during ICLR fallback semantic search: "
+                f"{type(e).__name__}: {e}"
+            )
             return {p.get("paper_id", ""): 0.0 for p in paper_inputs}
 
     def _keyword_search(
