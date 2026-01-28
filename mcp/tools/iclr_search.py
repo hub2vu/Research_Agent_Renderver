@@ -90,7 +90,8 @@ class ICLRAdapter:
 
         metadata_list: List[Dict[str, Any]] = []
 
-        with open(metadata_path_obj, "r", encoding="utf-8") as f:
+        # Use utf-8-sig to automatically handle BOM (Byte Order Mark)
+        with open(metadata_path_obj, "r", encoding="utf-8-sig") as f:
             reader = csv.DictReader(f)
             for row in reader:
                 metadata_list.append(dict(row))
