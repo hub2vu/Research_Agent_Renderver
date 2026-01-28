@@ -48,17 +48,20 @@ export default function NavBar({ onOpenChat, onOpenPipeline }: NavBarProps) {
   };
 
   const pipelineButtonStyle: React.CSSProperties = {
-    padding: '8px 16px',
+    padding: '10px 20px',
     border: 'none',
-    borderRadius: '6px',
+    borderRadius: '10px',
     cursor: 'pointer',
     fontSize: '14px',
-    fontWeight: 500,
-    backgroundColor: '#9f7aea',
+    fontWeight: 600,
+    background: 'linear-gradient(135deg, #a855f7 0%, #7c3aed 50%, #6d28d9 100%)',
     color: '#fff',
     display: 'flex',
     alignItems: 'center',
-    gap: '6px',
+    gap: '8px',
+    boxShadow: '0 4px 15px rgba(168, 85, 247, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    position: 'relative',
   };
 
   return (
@@ -124,13 +127,23 @@ export default function NavBar({ onOpenChat, onOpenPipeline }: NavBarProps) {
         <button
           style={pipelineButtonStyle}
           onClick={onOpenPipeline}
-          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#805ad5'}
-          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#9f7aea'}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
+            e.currentTarget.style.boxShadow = '0 6px 20px rgba(168, 85, 247, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0) scale(1)';
+            e.currentTarget.style.boxShadow = '0 4px 15px rgba(168, 85, 247, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)';
+          }}
+          title="전체 파이프라인 실행 및 Discord 전송"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l4.59-4.58L18 11l-6 6z"/>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
           </svg>
-          Pipeline
+          <span>Run Pipeline</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style={{ opacity: 0.8 }}>
+            <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+          </svg>
         </button>
         <button
           style={chatButtonStyle}
