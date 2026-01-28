@@ -5,6 +5,7 @@
  */
 
 import React, { useState } from 'react';
+import LatexText from './LatexText';
 
 export interface ScoredPaper {
   rank: number;
@@ -101,7 +102,7 @@ export default function PaperResultCard({ paper, onDownloadPdf }: PaperResultCar
             lineHeight: 1.4,
             marginBottom: '8px',
           }}>
-            {paper.title}
+            <LatexText>{paper.title}</LatexText>
           </h3>
           <div style={{ color: '#a0aec0', fontSize: '13px', marginBottom: '4px' }}>
             {paper.authors.join(', ')}

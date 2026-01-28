@@ -6,6 +6,7 @@
 
 import React from 'react';
 import { GraphNode } from '../lib/mcp';
+import LatexText, { LatexDiv } from './LatexText';
 
 interface PaperCardProps {
   node: GraphNode;
@@ -24,7 +25,7 @@ export default function PaperCard({ node, compact = false }: PaperCardProps) {
         }}
       >
         <h4 style={{ margin: '0 0 4px 0', fontSize: '13px', color: '#2d3748' }}>
-          {node.title || node.id}
+          <LatexText>{node.title || node.id}</LatexText>
         </h4>
         {node.authors && node.authors.length > 0 && (
           <p style={{ margin: 0, fontSize: '11px', color: '#718096' }}>
@@ -47,7 +48,7 @@ export default function PaperCard({ node, compact = false }: PaperCardProps) {
           lineHeight: 1.4
         }}
       >
-        {node.title || node.id}
+        <LatexText>{node.title || node.id}</LatexText>
       </h4>
 
       {/* Paper ID */}
@@ -168,7 +169,7 @@ export default function PaperCard({ node, compact = false }: PaperCardProps) {
           >
             Abstract
           </label>
-          <p
+          <div
             style={{
               margin: 0,
               fontSize: '12px',
@@ -178,8 +179,8 @@ export default function PaperCard({ node, compact = false }: PaperCardProps) {
               overflow: 'auto'
             }}
           >
-            {node.abstract}
-          </p>
+            <LatexDiv>{node.abstract}</LatexDiv>
+          </div>
         </div>
       )}
 
@@ -200,7 +201,7 @@ export default function PaperCard({ node, compact = false }: PaperCardProps) {
               >
                 💡 Why Selected
               </label>
-              <p
+              <div
                 style={{
                   margin: 0,
                   fontSize: '12px',
@@ -211,8 +212,8 @@ export default function PaperCard({ node, compact = false }: PaperCardProps) {
                   borderRadius: '4px',
                 }}
               >
-                {(node as any).scoredPaper.reasoning}
-              </p>
+                <LatexDiv>{(node as any).scoredPaper.reasoning}</LatexDiv>
+              </div>
             </div>
           )}
 
