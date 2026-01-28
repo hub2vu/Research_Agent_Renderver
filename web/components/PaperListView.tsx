@@ -261,7 +261,7 @@ export default function PaperListView(props: {
               <div style={{ padding: '24px', backgroundColor: '#fff', borderBottom: '1px solid #e2e8f0', borderTop: '1px solid #e2e8f0' }}>
                 <div style={{ fontWeight: 700, color: '#553c9a', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '14px' }}>🤖 AI Research Agent Report</span>
+                    <span style={{ fontSize: '14px' }}> AI Research Agent Report</span>
                     <button onClick={() => handleRegenerate(gk, rawNodes)} style={{ fontSize: '11px', padding: '4px 8px', border: '1px solid #d6bcfa', background: '#faf5ff', color: '#805ad5', borderRadius: '4px', cursor: 'pointer' }}>↻ Regenerate</button>
                   </div>
                   <button onClick={() => setSurveyVisible(prev => ({ ...prev, [gk]: false }))} style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '18px', color: '#a0aec0' }}>×</button>
