@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import { getReport, generateReport, executeTool } from '../lib/mcp';
+import MarkdownWithLatex, { defaultMarkdownComponents } from './MarkdownWithLatex';
+import { LatexDiv } from './LatexText';
 
 // --- [타입 정의] ---
 type AnyEdge = { source: string; target: string; weight?: number; type?: string; };
@@ -69,45 +69,6 @@ Abstract: ${p.abstract ? truncateText(p.abstract, 500) : 'No abstract available'
   }
 }
 
-// ✅ [Markdown 스타일 정의] 논문처럼 보이게 하는 커스텀 스타일
-const markdownComponents = {
-  // 표 (Table) 스타일
-  table: ({ node, ...props }: any) => (
-    <table style={{ borderCollapse: 'collapse', width: '100%', margin: '20px 0', fontSize: '13px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }} {...props} />
-  ),
-  thead: ({ node, ...props }: any) => (
-    <thead style={{ backgroundColor: '#f7fafc', borderBottom: '2px solid #e2e8f0' }} {...props} />
-  ),
-  th: ({ node, ...props }: any) => (
-    <th style={{ padding: '12px', textAlign: 'left', fontWeight: 700, color: '#2d3748', border: '1px solid #e2e8f0' }} {...props} />
-  ),
-  td: ({ node, ...props }: any) => (
-    <td style={{ padding: '12px', border: '1px solid #e2e8f0', color: '#4a5568', verticalAlign: 'top' }} {...props} />
-  ),
-  // 제목 (Header) 스타일
-  h1: ({ node, ...props }: any) => (
-    <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#2b6cb0', marginTop: '24px', marginBottom: '16px', borderBottom: '1px solid #bee3f8', paddingBottom: '8px' }} {...props} />
-  ),
-  h2: ({ node, ...props }: any) => (
-    <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#2c5282', marginTop: '20px', marginBottom: '12px', borderLeft: '4px solid #4299e1', paddingLeft: '10px' }} {...props} />
-  ),
-  h3: ({ node, ...props }: any) => (
-    <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#2d3748', marginTop: '16px', marginBottom: '8px' }} {...props} />
-  ),
-  // 본문 및 리스트 스타일
-  p: ({ node, ...props }: any) => (
-    <p style={{ lineHeight: 1.7, marginBottom: '12px', fontSize: '13.5px', color: '#1a202c' }} {...props} />
-  ),
-  ul: ({ node, ...props }: any) => (
-    <ul style={{ paddingLeft: '20px', marginBottom: '16px' }} {...props} />
-  ),
-  li: ({ node, ...props }: any) => (
-    <li style={{ marginBottom: '6px', lineHeight: 1.6 }} {...props} />
-  ),
-  strong: ({ node, ...props }: any) => (
-    <strong style={{ color: '#2b6cb0', fontWeight: 600 }} {...props} />
-  ),
-};
 
 export default function PaperListView(props: {
   nodes: AnyNode[];
@@ -256,7 +217,7 @@ export default function PaperListView(props: {
               <span style={{ fontSize: '12px', fontWeight: 500, color: '#718096' }}>{rawNodes.length} papers</span>
             </div>
 
-            {/* ✅ [서베이 결과 화면: ReactMarkdown 적용] */}
+            {/* ✅ [서베이 결과 화면: MarkdownWithLatex 적용 - LaTeX 수식 지원] */}
             {hasData && isVisible && (
               <div style={{ padding: '24px', backgroundColor: '#fff', borderBottom: '1px solid #e2e8f0', borderTop: '1px solid #e2e8f0' }}>
                 <div style={{ fontWeight: 700, color: '#553c9a', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -268,12 +229,9 @@ export default function PaperListView(props: {
                 </div>
 
                 <div style={{ fontFamily: '"Inter", sans-serif' }}>
-                  <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    components={markdownComponents}
-                  >
+                  <MarkdownWithLatex components={defaultMarkdownComponents}>
                     {surveyData[gk]}
-                  </ReactMarkdown>
+                  </MarkdownWithLatex>
                 </div>
               </div>
             )}
@@ -294,7 +252,7 @@ export default function PaperListView(props: {
                   const text = isExpanded ? st.content : truncateText(st.content, 420);
                   return (
                     <div>
-                      <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.5, fontSize: '12.5px', color: '#1a202c' }}>{text || '(empty)'}</div>
+                      <LatexDiv style={{ lineHeight: 1.5, fontSize: '12.5px', color: '#1a202c' }}>{text || '(empty)'}</LatexDiv>
                       {!!st.content && st.content.length > 450 && (
                         <button onClick={() => setExpanded(prev => ({ ...prev, [n.id]: !prev[n.id] }))} style={{ marginTop: '6px', border: 'none', background: 'transparent', color: '#3182ce', cursor: 'pointer', fontSize: '12px', padding: 0 }}>{isExpanded ? 'Show less' : 'Show more'}</button>
                       )}
@@ -313,7 +271,7 @@ export default function PaperListView(props: {
                     {abstractText ? (
                       <div style={{ backgroundColor: '#f7fafc', padding: '12px', borderRadius: '6px', border: '1px solid #edf2f7' }}>
                         <div style={{ fontSize: '11px', fontWeight: 700, color: '#718096', marginBottom: '6px', textTransform: 'uppercase' }}>Abstract Preview</div>
-                        <div style={{ fontSize: '12.5px', color: '#4a5568', lineHeight: '1.5' }}>{isExpanded ? abstractText : truncateText(abstractText, 350)}</div>
+                        <LatexDiv style={{ fontSize: '12.5px', color: '#4a5568', lineHeight: '1.5' }}>{isExpanded ? abstractText : truncateText(abstractText, 350)}</LatexDiv>
                         {abstractText.length > 350 && <button onClick={(e) => { e.stopPropagation(); setExpanded(prev => ({ ...prev, [n.id]: !prev[n.id] })); }} style={{ marginTop: '6px', border: 'none', background: 'transparent', color: '#3182ce', cursor: 'pointer', fontSize: '12px', padding: 0, fontWeight: 500 }}>{isExpanded ? 'Show less' : 'Show more'}</button>}
                       </div>
                     ) : <div style={{ fontSize: '12px', color: '#a0aec0', fontStyle: 'italic' }}>(No abstract)</div>}

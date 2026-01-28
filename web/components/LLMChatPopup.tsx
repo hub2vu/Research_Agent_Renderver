@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
+import { LatexDiv } from './LatexText';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -170,11 +171,10 @@ export default function LLMChatPopup({ isOpen, onClose }: LLMChatPopupProps) {
                 borderRadius: '12px',
                 backgroundColor: msg.role === 'user' ? '#4a90d9' : '#2d3748',
                 color: '#fff',
-                whiteSpace: 'pre-wrap',
                 wordBreak: 'break-word',
                 fontSize: '14px',
               }}>
-                {msg.content}
+                <LatexDiv>{msg.content}</LatexDiv>
               </div>
             </div>
           ))}

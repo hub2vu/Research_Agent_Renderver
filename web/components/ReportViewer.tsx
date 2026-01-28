@@ -6,6 +6,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { getOrCreateReport } from '../lib/mcp';
+import { LatexDiv } from './LatexText';
 interface ReportViewerProps {
     paperId: string;
 }
@@ -102,7 +103,7 @@ export default function ReportViewer({ paperId }: ReportViewerProps) {
                 </div>
             )}
 
-            {/* 리포트 내용 (텍스트 뷰어) */}
+            {/* 리포트 내용 (텍스트 뷰어 - LaTeX 수식 지원) */}
             {isOpen && reportContent && !isLoading && (
                 <div style={{
                     marginTop: '10px',
@@ -113,12 +114,11 @@ export default function ReportViewer({ paperId }: ReportViewerProps) {
                     fontSize: '13px',
                     lineHeight: '1.6',
                     color: '#2d3748',
-                    whiteSpace: 'pre-wrap',       // ⭐ 줄바꿈 유지 (txt 파일 핵심)
                     fontFamily: 'monospace',      // 텍스트 파일 느낌 (선택사항)
                     maxHeight: '400px',           // 너무 길면 스크롤
                     overflowY: 'auto'
                 }}>
-                    {reportContent}
+                    <LatexDiv>{reportContent}</LatexDiv>
                 </div>
             )}
         </div>
