@@ -778,6 +778,64 @@ export async function runResearchAgent(config: PipelineConfig): Promise<{ succes
   };
 }
 
+// ==================== Conference Pipeline API ====================
+
+export interface ConferencePipelineConfig {
+  source: 'arxiv' | 'neurips';
+  query: string;
+  top_k?: number;
+  goal?: string;
+  analysis_mode?: 'quick' | 'standard' | 'deep';
+  slack_webhook_full?: string;
+  slack_webhook_summary?: string;
+  profile_path?: string;
+}
+
+/**
+ * Run the conference pipeline (arXiv/NeurIPS) in background.
+ * Searches, ranks, downloads, extracts, and analyzes papers automatically.
+ */
+export async function runConferencePipeline(config: ConferencePipelineConfig): Promise<{
+  success: boolean;
+  job_id?: string;
+  source?: string;
+  query?: string;
+  top_k?: number;
+  error?: string;
+}> {
+  const response = await fetch(`${MCP_BASE_URL}/agent/conference-pipeline`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      source: config.source,
+      query: config.query,
+      top_k: config.top_k ?? 3,
+      goal: config.goal || 'general understanding',
+      analysis_mode: config.analysis_mode || 'quick',
+      slack_webhook_full: config.slack_webhook_full || '',
+      slack_webhook_summary: config.slack_webhook_summary || '',
+      profile_path: config.profile_path || 'users/profile.json',
+    })
+  });
+  
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: response.statusText }));
+    return {
+      success: false,
+      error: error.detail || 'Failed to start conference pipeline',
+    };
+  }
+  
+  const data = await response.json();
+  return {
+    success: true,
+    job_id: data.job_id,
+    source: data.source,
+    query: data.query,
+    top_k: data.top_k,
+  };
+}
+
 /**
  * Get the status of a running pipeline job
  */

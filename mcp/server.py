@@ -227,7 +227,11 @@ def _read_dotenv(path: Path) -> Dict[str, str]:
             if not s or s.startswith("#") or "=" not in s:
                 continue
             k, v = s.split("=", 1)
-            data[k.strip()] = v.strip()
+            v = v.strip()
+            # Remove surrounding quotes if present (handles "value" or 'value')
+            if len(v) >= 2 and ((v.startswith('"') and v.endswith('"')) or (v.startswith("'") and v.endswith("'"))):
+                v = v[1:-1]
+            data[k.strip()] = v
     except Exception as e:
         logger.warning(f"Failed to read .env at {path}: {e}")
     return data
@@ -279,14 +283,14 @@ class SlackConfigRequest(BaseModel):
 async def get_slack_config():
     """
     Returns Slack webhook URLs from process env, falling back to .env file if present.
+    Always reads .env file to ensure values are loaded even if process env is empty.
     """
-    full = os.getenv("SLACK_WEBHOOK_FULL", "")
-    summary = os.getenv("SLACK_WEBHOOK_SUMMARY", "")
-
-    if not full or not summary:
-        dotenv = _read_dotenv(DOTENV_PATH)
-        full = full or dotenv.get("SLACK_WEBHOOK_FULL", "")
-        summary = summary or dotenv.get("SLACK_WEBHOOK_SUMMARY", "")
+    # Always read .env file first to ensure values are loaded
+    dotenv = _read_dotenv(DOTENV_PATH)
+    
+    # Get from process env, fallback to .env file
+    full = os.getenv("SLACK_WEBHOOK_FULL", "") or dotenv.get("SLACK_WEBHOOK_FULL", "")
+    summary = os.getenv("SLACK_WEBHOOK_SUMMARY", "") or dotenv.get("SLACK_WEBHOOK_SUMMARY", "")
 
     return {
         "success": True,
@@ -425,6 +429,28 @@ async def run_agent_background(job_id: str, tool_args: Dict[str, Any]):
             logger.error(f"Failed to save error status: {save_error}")
 
 
+async def run_conference_pipeline_background(job_id: str, tool_args: Dict[str, Any]):
+    """Background task to run the conference pipeline."""
+    try:
+        result = await execute_tool("run_conference_pipeline", **tool_args, job_id=job_id)
+        logger.info(f"[Background] Conference pipeline {job_id} completed: {result.get('success')}")
+    except Exception as e:
+        logger.error(f"[Background] Conference pipeline {job_id} failed: {str(e)}")
+        # Update status to failed
+        try:
+            status_file = STATUS_DIR / f"{job_id}.json"
+            if status_file.exists():
+                with open(status_file, "r", encoding="utf-8") as f:
+                    status_data = json.load(f)
+                status_data["status"] = "failed"
+                status_data["errors"] = status_data.get("errors", []) + [str(e)]
+                status_data["updated_at"] = datetime.now().isoformat()
+                with open(status_file, "w", encoding="utf-8") as f:
+                    json.dump(status_data, f, ensure_ascii=False, indent=2)
+        except Exception as save_error:
+            logger.error(f"Failed to save error status: {save_error}")
+
+
 @app.post("/agent/run")
 async def run_agent_pipeline(background_tasks: BackgroundTasks, request: ToolRequest):
     """
@@ -445,6 +471,59 @@ async def run_agent_pipeline(background_tasks: BackgroundTasks, request: ToolReq
         "success": True,
         "job_id": job_id,
         "message": "Pipeline started in background",
+        "status_url": f"/agent/status/{job_id}"
+    }
+
+
+class ConferencePipelineRequest(BaseModel):
+    """Request body for conference pipeline."""
+    source: str  # 'arxiv' or 'neurips'
+    query: str
+    top_k: int = 3
+    goal: str = "general understanding"
+    analysis_mode: str = "quick"
+    slack_webhook_full: str = ""
+    slack_webhook_summary: str = ""
+    profile_path: str = "users/profile.json"
+
+
+@app.post("/agent/conference-pipeline")
+async def run_conference_pipeline(background_tasks: BackgroundTasks, request: ConferencePipelineRequest):
+    """
+    Start the conference pipeline (arXiv/NeurIPS) in the background.
+    Searches, ranks, downloads, extracts, and analyzes papers.
+    Returns immediately with job_id.
+    """
+    # Validate source
+    if request.source not in ("arxiv", "neurips"):
+        raise HTTPException(status_code=400, detail="Source must be 'arxiv' or 'neurips'")
+    
+    job_id = f"conf_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
+    
+    # Build tool arguments
+    tool_args = {
+        "source": request.source,
+        "query": request.query,
+        "top_k": min(max(request.top_k, 1), 5),  # Clamp between 1 and 5
+        "goal": request.goal,
+        "analysis_mode": request.analysis_mode,
+        "slack_webhook_full": request.slack_webhook_full,
+        "slack_webhook_summary": request.slack_webhook_summary,
+        "profile_path": request.profile_path,
+    }
+    
+    # Start background task
+    background_tasks.add_task(run_conference_pipeline_background, job_id, tool_args)
+    
+    logger.info(f"[API] Started conference pipeline: {job_id} (source={request.source}, query='{request.query}')")
+    
+    return {
+        "success": True,
+        "job_id": job_id,
+        "source": request.source,
+        "query": request.query,
+        "top_k": tool_args["top_k"],
+        "message": f"Conference pipeline started for {request.source}",
         "status_url": f"/agent/status/{job_id}"
     }
 

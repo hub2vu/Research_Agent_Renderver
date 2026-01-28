@@ -6,7 +6,8 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { runResearchAgent, getAgentStatus, listAgentJobs, listLocalPdfs, getSlackConfig, updateSlackConfig } from '../lib/mcp';
+import { runResearchAgent, runConferencePipeline, getAgentStatus, listAgentJobs, listLocalPdfs, getSlackConfig, updateSlackConfig } from '../lib/mcp';
+import UserProfileSettingsModal from './UserProfileSettingsModal';
 
 interface PipelineModalProps {
   isOpen: boolean;
@@ -14,7 +15,7 @@ interface PipelineModalProps {
 }
 
 type PipelineStep = 'config' | 'running' | 'complete' | 'error';
-type SourceType = 'arxiv' | 'neurips' | 'iclr' | 'local';
+type SourceType = 'arxiv' | 'neurips' | 'local';
 type AnalysisMode = 'quick' | 'standard' | 'deep';
 
 interface LocalPdf {
@@ -47,7 +48,10 @@ export default function PipelineModal({ isOpen, onClose }: PipelineModalProps) {
   const [selectedPapers, setSelectedPapers] = useState<string[]>([]);
   const [localPdfs, setLocalPdfs] = useState<LocalPdf[]>([]);
   const [loadingPdfs, setLoadingPdfs] = useState(false);
-  const [paperCount, setPaperCount] = useState(1);
+  const [paperCount, setPaperCount] = useState(3);
+  
+  // Profile Settings (for arxiv/neurips) - reuse existing modal (avoid duplicating rank_filter tool logic)
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   
   // Step 2: Analysis Settings
   const [analysisMode, setAnalysisMode] = useState<AnalysisMode>('quick');
@@ -74,6 +78,16 @@ export default function PipelineModal({ isOpen, onClose }: PipelineModalProps) {
     }
   }, [isOpen, source]);
 
+  // Auto-open profile modal only when entering step 2 with arxiv/neurips source
+  useEffect(() => {
+    if (isOpen && configStep === 2 && (source === 'arxiv' || source === 'neurips')) {
+      setIsProfileModalOpen(true);
+    } else {
+      // Close profile modal when leaving step 2 or changing source
+      setIsProfileModalOpen(false);
+    }
+  }, [isOpen, configStep, source]);
+
   // Check for running jobs when modal opens
   useEffect(() => {
     if (isOpen) {
@@ -95,13 +109,25 @@ export default function PipelineModal({ isOpen, onClose }: PipelineModalProps) {
     };
   }, [isOpen]);
 
+  // Reload Slack config when entering step 3 to ensure .env values are loaded
+  useEffect(() => {
+    if (isOpen && configStep === 3) {
+      loadSlackConfig();
+    }
+  }, [isOpen, configStep]);
+
   const loadSlackConfig = async () => {
     try {
       const cfg = await getSlackConfig();
+      console.log('[PipelineModal] Loaded Slack config:', cfg);
+      // Always set values (even if empty) to ensure UI reflects current state
       setSlackWebhookFull(cfg.slack_webhook_full || '');
       setSlackWebhookSummary(cfg.slack_webhook_summary || '');
     } catch (e) {
+      console.error('[PipelineModal] Failed to load Slack config:', e);
       // If not available, keep empty
+      setSlackWebhookFull('');
+      setSlackWebhookSummary('');
     }
   };
 
@@ -225,9 +251,18 @@ export default function PipelineModal({ isOpen, onClose }: PipelineModalProps) {
   };
 
   const handleRunPipeline = async () => {
-    if (selectedPapers.length === 0 && source === 'local') {
-      setError('Please select at least one paper');
-      return;
+    // Validate based on source type
+    if (source === 'local') {
+      if (selectedPapers.length === 0) {
+        setError('Please select at least one paper');
+        return;
+      }
+    } else {
+      // arxiv or neurips
+      if (!searchQuery.trim()) {
+        setError('Please enter a search query');
+        return;
+      }
     }
 
     setIsRunning(true);
@@ -238,14 +273,30 @@ export default function PipelineModal({ isOpen, onClose }: PipelineModalProps) {
     setResult(null);
 
     try {
-      const response = await runResearchAgent({
-        paper_ids: selectedPapers,
-        goal: goal || 'general understanding',
-        analysis_mode: analysisMode,
-        slack_webhook_full: slackWebhookFull || '',
-        slack_webhook_summary: slackWebhookSummary || '',
-        source: source
-      });
+      let response;
+      
+      if (source === 'local') {
+        // Use the original research agent for local PDFs
+        response = await runResearchAgent({
+          paper_ids: selectedPapers,
+          goal: goal || 'general understanding',
+          analysis_mode: analysisMode,
+          slack_webhook_full: slackWebhookFull || '',
+          slack_webhook_summary: slackWebhookSummary || '',
+          source: source
+        });
+      } else {
+        // Use the conference pipeline for arxiv/neurips
+        response = await runConferencePipeline({
+          source: source as 'arxiv' | 'neurips',
+          query: searchQuery,
+          top_k: paperCount,
+          goal: goal || 'general understanding',
+          analysis_mode: analysisMode,
+          slack_webhook_full: slackWebhookFull || '',
+          slack_webhook_summary: slackWebhookSummary || '',
+        });
+      }
 
       if (response.success && response.job_id) {
         setCurrentJobId(response.job_id);
@@ -324,12 +375,13 @@ export default function PipelineModal({ isOpen, onClose }: PipelineModalProps) {
           Paper Source
         </label>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          {(['local', 'arxiv', 'neurips', 'iclr'] as SourceType[]).map(s => (
+          {(['local', 'arxiv', 'neurips'] as SourceType[]).map(s => (
             <button
               key={s}
               onClick={() => {
                 setSource(s);
                 setSelectedPapers([]);
+                setSearchQuery('');
               }}
               style={{
                 padding: '8px 16px',
@@ -342,8 +394,7 @@ export default function PipelineModal({ isOpen, onClose }: PipelineModalProps) {
               }}
             >
               {s === 'local' ? '📁 Local PDF' :
-               s === 'arxiv' ? '📄 arXiv' :
-               s === 'neurips' ? '🏆 NeurIPS 2025' : '🎓 ICLR 2025'}
+               s === 'arxiv' ? '📄 arXiv' : '🏆 NeurIPS 2025'}
             </button>
           ))}
         </div>
@@ -415,7 +466,7 @@ export default function PipelineModal({ isOpen, onClose }: PipelineModalProps) {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={`Search ${source === 'arxiv' ? 'arXiv' : source === 'neurips' ? 'NeurIPS 2025' : 'ICLR 2025'}...`}
+            placeholder={`Search ${source === 'arxiv' ? 'arXiv' : 'NeurIPS 2025'} papers...`}
             style={{
               width: '100%',
               padding: '10px 12px',
@@ -428,7 +479,7 @@ export default function PipelineModal({ isOpen, onClose }: PipelineModalProps) {
           />
           <div style={{ marginTop: '12px' }}>
             <label style={{ display: 'block', color: '#a0aec0', fontSize: '12px', marginBottom: '8px' }}>
-              Number of papers to analyze
+              Number of papers to analyze (auto-selected by ranking)
             </label>
             <select
               value={paperCount}
@@ -446,18 +497,45 @@ export default function PipelineModal({ isOpen, onClose }: PipelineModalProps) {
               <option value={1}>1 paper</option>
               <option value={2}>2 papers</option>
               <option value={3}>3 papers</option>
+              <option value={4}>4 papers</option>
+              <option value={5}>5 papers</option>
             </select>
           </div>
+
+          {/* Profile Editor (Collapsible) */}
+          <div style={{ marginTop: '16px' }}>
+            <button
+              onClick={() => setIsProfileModalOpen(true)}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                borderRadius: '6px',
+                border: '1px solid #4a5568',
+                backgroundColor: 'transparent',
+                color: '#a0aec0',
+                fontSize: '13px',
+                cursor: 'pointer',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              <span>⚙️ Edit Profile Settings (for ranking)</span>
+              <span>↗</span>
+            </button>
+          </div>
+
+          {/* Info box */}
           <div style={{
             marginTop: '12px',
             padding: '12px',
             backgroundColor: '#2d374820',
             borderRadius: '6px',
-            border: '1px solid #4a5568',
-            color: '#fbbf24',
+            border: '1px solid #48bb78',
+            color: '#48bb78',
             fontSize: '12px',
           }}>
-            ⚠️ Search functionality for {source} is coming soon. Please use Local PDF for now.
+            ✅ The pipeline will automatically search, rank, download, and analyze papers.
           </div>
         </div>
       )}
@@ -649,7 +727,15 @@ export default function PipelineModal({ isOpen, onClose }: PipelineModalProps) {
           📋 Pipeline Summary
         </div>
         <div style={{ color: '#a0aec0', fontSize: '12px', lineHeight: 1.8 }}>
-          • Papers: {selectedPapers.length > 0 ? selectedPapers.join(', ') : 'None selected'}<br/>
+          • Source: {source === 'local' ? 'Local PDF' : source === 'arxiv' ? 'arXiv' : 'NeurIPS 2025'}<br/>
+          {source === 'local' ? (
+            <>• Papers: {selectedPapers.length > 0 ? selectedPapers.join(', ') : 'None selected'}<br/></>
+          ) : (
+            <>
+              • Query: {searchQuery || '(not set)'}<br/>
+              • Top K: {paperCount} papers<br/>
+            </>
+          )}
           • Mode: {analysisMode}<br/>
           • Goal: {goal || 'General understanding'}<br/>
           • Slack Channels: {[
@@ -835,8 +921,19 @@ export default function PipelineModal({ isOpen, onClose }: PipelineModalProps) {
           }}>
             <button
               onClick={() => {
-                // Re-run with the current config (no need to keep modal open)
-                handleRunPipeline();
+                // Reset all state and go back to step 1 (don't re-run automatically)
+                setResult(null);
+                setCurrentJobId(null);
+                setError(null);
+                setCurrentStep('config');
+                setConfigStep(1);
+                // Reset form fields
+                setSearchQuery('');
+                setSelectedPapers([]);
+                setGoal('');
+                setAnalysisMode('quick');
+                setPaperCount(3);
+                setSource('local');
               }}
               style={{
                 padding: '10px 24px',
@@ -874,9 +971,19 @@ export default function PipelineModal({ isOpen, onClose }: PipelineModalProps) {
       </div>
       <button
         onClick={() => {
-          // Re-run with the current config
+          // Reset all state and go back to step 1 (don't re-run automatically)
           setError(null);
-          handleRunPipeline();
+          setResult(null);
+          setCurrentJobId(null);
+          setCurrentStep('config');
+          setConfigStep(1);
+          // Reset form fields
+          setSearchQuery('');
+          setSelectedPapers([]);
+          setGoal('');
+          setAnalysisMode('quick');
+          setPaperCount(3);
+          setSource('local');
         }}
         style={{
           marginTop: '20px',
@@ -961,6 +1068,16 @@ export default function PipelineModal({ isOpen, onClose }: PipelineModalProps) {
           {currentStep === 'complete' && renderComplete()}
           {currentStep === 'error' && renderError()}
         </div>
+
+        {/* Reuse the existing profile settings modal (shared implementation) */}
+        <UserProfileSettingsModal
+          isOpen={isProfileModalOpen}
+          onClose={() => setIsProfileModalOpen(false)}
+          onSave={() => {
+            // Profile is persisted via updateUserProfile() in the modal
+            setIsProfileModalOpen(false);
+          }}
+        />
 
         {/* Footer */}
         {currentStep === 'config' && (
