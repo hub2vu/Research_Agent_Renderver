@@ -939,14 +939,57 @@ export async function testNotifications(
     discord_webhook_full: discordWebhookFull || '',
     discord_webhook_summary: discordWebhookSummary || '',
   });
-  
+
   if (!result.success) {
     throw new Error(result.error || 'Failed to test notifications');
   }
-  
+
   return {
     discord_full: result.result.test_results?.discord_full,
     discord_summary: result.result.test_results?.discord_summary,
     environment_status: result.result.environment_status || {},
   };
+}
+
+// ==================== Notion API ====================
+
+export interface SaveToNotionParams {
+  paper_id: string;
+  paper_title: string;
+  note_content: string;
+  tags?: string[];
+  updated_at?: string;
+}
+
+export interface SaveToNotionResult {
+  success: boolean;
+  page_id: string;
+  page_url: string;
+  page_title: string;
+  blocks_created: number;
+  message: string;
+}
+
+/**
+ * Save note content to Notion.
+ * Creates a new page under the configured parent page with the note content.
+ * Page title format: [{paper_id}] {paper_title}
+ *
+ * Note: Notion credentials (NOTION_API_TOKEN, NOTION_PARENT_PAGE_ID) are
+ * configured in the server's environment variables - frontend never sees them.
+ */
+export async function saveToNotion(params: SaveToNotionParams): Promise<SaveToNotionResult> {
+  const result = await executeTool('save_to_notion', {
+    paper_id: params.paper_id,
+    paper_title: params.paper_title,
+    note_content: params.note_content,
+    tags: params.tags || [],
+    updated_at: params.updated_at,
+  });
+
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to save to Notion');
+  }
+
+  return result.result as SaveToNotionResult;
 }

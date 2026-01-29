@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
 import workerSrc from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import ReactMarkdown from 'react-markdown';
-import { executeTool } from '../lib/mcp';
+import { executeTool, saveToNotion } from '../lib/mcp';
 
 // Vite 호환 worker 설정
 GlobalWorkerOptions.workerSrc = workerSrc;
@@ -175,11 +175,12 @@ export default function NotePage(props: { noteId?: string } = {}) {
     });
   }, []);
 
-  // Loading states for extraction, translation, analysis, and prompt
+  // Loading states for extraction, translation, analysis, prompt, and Notion
   const [extracting, setExtracting] = useState(false);
   const [translatingNoteId, setTranslatingNoteId] = useState<string | null>(null);
   const [analyzingNoteId, setAnalyzingNoteId] = useState<string | null>(null);
   const [promptingNoteId, setPromptingNoteId] = useState<string | null>(null);
+  const [savingToNotion, setSavingToNotion] = useState(false);
 
   // Load notes from file system (priority) or localStorage (fallback)
   useEffect(() => {
@@ -1209,6 +1210,93 @@ ${extractedText.slice(0, 50000)}`;
     }
   }, [usedId, paperId, notes, loadExtractedText, updateNotePage, setActivePage]);
 
+  // Save all notes to Notion
+  const handleSaveToNotion = useCallback(async () => {
+    const id = usedId || stripPrefixes(paperId);
+    if (!id) {
+      alert('논문 ID를 찾을 수 없습니다.');
+      return;
+    }
+
+    if (notes.length === 0) {
+      alert('저장할 노트가 없습니다.');
+      return;
+    }
+
+    setSavingToNotion(true);
+    try {
+      // Build markdown content from all notes
+      const markdownParts: string[] = [];
+
+      for (const note of notes) {
+        // Add note title as heading
+        markdownParts.push(`## ${note.title || '(제목 없음)'}`);
+        markdownParts.push('');
+
+        // Add manual notes if exists
+        if (note.pages.manual?.trim()) {
+          markdownParts.push('### 메모');
+          markdownParts.push(note.pages.manual.trim());
+          markdownParts.push('');
+        }
+
+        // Add translation if exists
+        if (note.pages.translation?.trim()) {
+          markdownParts.push('### 번역');
+          markdownParts.push(note.pages.translation.trim());
+          markdownParts.push('');
+        }
+
+        // Add analysis if exists
+        if (note.pages.analysis?.trim()) {
+          markdownParts.push('### 분석');
+          markdownParts.push(note.pages.analysis.trim());
+          markdownParts.push('');
+        }
+
+        // Add QA if exists
+        if (note.pages.qa?.trim()) {
+          markdownParts.push('### Q&A');
+          markdownParts.push(note.pages.qa.trim());
+          markdownParts.push('');
+        }
+
+        markdownParts.push('---');
+        markdownParts.push('');
+      }
+
+      const noteContent = markdownParts.join('\n');
+
+      // Extract paper title from first note or use ID
+      // Try to get a meaningful title
+      let paperTitle = notes[0]?.title || id;
+      // If first note title looks like a section number, use the ID instead
+      if (/^[\d.]+\s/.test(paperTitle)) {
+        paperTitle = id;
+      }
+
+      const result = await saveToNotion({
+        paper_id: id,
+        paper_title: paperTitle,
+        note_content: noteContent,
+        updated_at: new Date().toISOString(),
+      });
+
+      if (result.success) {
+        alert(`Notion에 저장되었습니다!\n\n페이지: ${result.page_title}\nURL: ${result.page_url}`);
+        // Optionally open the Notion page
+        if (result.page_url && confirm('Notion 페이지를 열까요?')) {
+          window.open(result.page_url, '_blank');
+        }
+      }
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      alert(`Notion 저장 실패: ${errorMessage}`);
+    } finally {
+      setSavingToNotion(false);
+    }
+  }, [usedId, paperId, notes]);
+
   return (
     <div ref={containerRef} style={{ display: 'flex', height: '100vh', backgroundColor: '#f5f5f5' }}>
       <style>{`
@@ -1366,6 +1454,23 @@ ${extractedText.slice(0, 50000)}`;
               title="논문 소목차를 추출하여 노트를 생성합니다"
             >
               {extracting ? '추출 중...' : '소목차 추출'}
+            </button>
+            <button
+              onClick={handleSaveToNotion}
+              disabled={savingToNotion || notes.length === 0}
+              style={{
+                padding: '5px 10px',
+                borderRadius: 6,
+                border: '1px solid #e2e8f0',
+                backgroundColor: savingToNotion ? '#edf2f7' : '#faf5ff',
+                color: savingToNotion ? '#a0aec0' : '#6b46c1',
+                cursor: savingToNotion || notes.length === 0 ? 'not-allowed' : 'pointer',
+                fontSize: 12,
+                fontWeight: 600,
+              }}
+              title="현재 노트를 Notion에 저장합니다"
+            >
+              {savingToNotion ? '저장 중...' : 'Notion에 저장'}
             </button>
             <button
               onClick={addNote}
