@@ -49,6 +49,7 @@ export default function GlobalGraphPage() {
   const [useEmbeddings, setUseEmbeddings] = useState(true);
 
   // Search & Ranking state
+  const [showSearchSidebar, setShowSearchSidebar] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<ScoredPaper[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -226,13 +227,16 @@ export default function GlobalGraphPage() {
               <input type="checkbox" checked={useEmbeddings} onChange={(e) => setUseEmbeddings(e.target.checked)} />
               Embed
             </label>
+            <button onClick={() => setShowSearchSidebar(!showSearchSidebar)} style={{ padding: '8px 16px', backgroundColor: showSearchSidebar ? '#2d3748' : '#48bb78', color: '#', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>ArxivSearch</button>
             <button onClick={handleRebuild} disabled={state.loading} style={{ padding: '8px 16px', backgroundColor: state.loading ? '#cbd5e0' : '#4299e1', color: '#fff', border: 'none', borderRadius: '6px', cursor: state.loading ? 'not-allowed' : 'pointer' }}>{state.loading ? '...' : 'Refresh'}</button>
           </div>
         </header>
 
         <div style={{ flex: 1, position: 'relative' }}>
-          {!state.loading && !state.error && (
-            <ArxivSearchSidebar searchQuery={searchQuery} onSearchQueryChange={setSearchQuery} onSearch={handleSearch} isSearching={isSearching} />
+          {!state.loading && !state.error && showSearchSidebar && (
+            <div style={{ position: 'absolute', top: '16px', right: '16px', zIndex: 10 }}>
+              <ArxivSearchSidebar searchQuery={searchQuery} onSearchQueryChange={setSearchQuery} onSearch={handleSearch} isSearching={isSearching} />
+            </div>
           )}
 
           {!state.loading && !state.error && isSearching && <div style={{ position: 'absolute', bottom: '16px', right: '16px', zIndex: 5, backgroundColor: 'rgba(255, 255, 255, 0.95)', padding: '16px', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', fontSize: '14px', textAlign: 'center' }}>Searching...</div>}

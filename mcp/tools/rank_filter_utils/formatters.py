@@ -85,15 +85,12 @@ def _generate_tags(
     if must_keywords == 1.0:
         tags.append("MUST_KEYWORD_MATCH")
     
-    if "llm" in evaluation_method.lower():
-        tags.append("LLM_VERIFIED")
+    # # Warning tags
+    # if not github_url or not github_url.strip():
+    #     tags.append("NO_CODE")
     
-    # Warning tags
-    if not github_url or not github_url.strip():
-        tags.append("NO_CODE")
-    
-    if recency < 0.3:
-        tags.append("OLDER_PAPER")
+    # if recency < 0.3:
+    #     tags.append("OLDER_PAPER")
     
     # Contrastive tags
     if is_contrastive:
