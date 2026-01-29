@@ -12,11 +12,15 @@ services:
       - ./output:/data/output
       - ./tests:/app/tests
       - ./data:/app/data
+    env_file:
+      - .env
     environment:
       - PDF_DIR=/data/pdf
       - OUTPUT_DIR=/data/output
       - TAVILY_API_KEY=${TAVILY_API_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - NOTION_API_TOKEN=${NOTION_API_TOKEN}
+      - NOTION_PARENT_PAGE_ID=${NOTION_PARENT_PAGE_ID}
       - PYTHONUNBUFFERED=1
     ports:
       - "8000:8000"
