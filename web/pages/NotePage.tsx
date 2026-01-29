@@ -1211,91 +1211,59 @@ ${extractedText.slice(0, 50000)}`;
   }, [usedId, paperId, notes, loadExtractedText, updateNotePage, setActivePage]);
 
   // Save all notes to Notion
-  const handleSaveToNotion = useCallback(async () => {
-    const id = usedId || stripPrefixes(paperId);
-    if (!id) {
-      alert('논문 ID를 찾을 수 없습니다.');
-      return;
-    }
+  
+// Save all notes to Notion (multi-note toggle tree)
+const handleSaveToNotion = useCallback(async () => {
+  const id = usedId || stripPrefixes(paperId);
+  if (!id) {
+    alert('논문 ID를 찾을 수 없습니다.');
+    return;
+  }
 
-    if (notes.length === 0) {
-      alert('저장할 노트가 없습니다.');
-      return;
-    }
+  if (notes.length === 0) {
+    alert('저장할 노트가 없습니다.');
+    return;
+  }
 
-    setSavingToNotion(true);
-    try {
-      // Build markdown content from all notes
-      const markdownParts: string[] = [];
+  setSavingToNotion(true);
+  try {
+    // Build `notes` payload expected by MCP save_to_notion tool.
+    // Each UI note becomes a top-level toggle; each tab becomes a sub-toggle.
+    const notionNotes = notes.map(n => ({
+      title: n.title || '(제목 없음)',
+      memo: (n.pages.manual || '').trim(),
+      translation: (n.pages.translation || '').trim(),
+      analysis: (n.pages.analysis || '').trim(),
+      // In UI this is "qa" tab but label is Prompt; backend supports prompt/qa
+      qa: (n.pages.qa || '').trim(),
+    }));
 
-      for (const note of notes) {
-        // Add note title as heading
-        markdownParts.push(`## ${note.title || '(제목 없음)'}`);
-        markdownParts.push('');
+    // Use executeTool directly so the payload is not altered by wrappers.
+    const result = await executeTool('save_to_notion', {
+      paper_id: id,
+      paper_title: id, // if you later have real title metadata, replace here
+      notes: notionNotes,
+      updated_at: new Date().toISOString(),
+    });
 
-        // Add manual notes if exists
-        if (note.pages.manual?.trim()) {
-          markdownParts.push('### 메모');
-          markdownParts.push(note.pages.manual.trim());
-          markdownParts.push('');
-        }
+    if (result.success) {
+      const pageUrl = result.page_url || result.result?.page_url;
+      const pageTitle = result.page_title || result.result?.page_title;
+      alert(`Notion에 저장되었습니다!\n\n페이지: ${pageTitle || ''}\nURL: ${pageUrl || ''}`);
 
-        // Add translation if exists
-        if (note.pages.translation?.trim()) {
-          markdownParts.push('### 번역');
-          markdownParts.push(note.pages.translation.trim());
-          markdownParts.push('');
-        }
-
-        // Add analysis if exists
-        if (note.pages.analysis?.trim()) {
-          markdownParts.push('### 분석');
-          markdownParts.push(note.pages.analysis.trim());
-          markdownParts.push('');
-        }
-
-        // Add QA if exists
-        if (note.pages.qa?.trim()) {
-          markdownParts.push('### Q&A');
-          markdownParts.push(note.pages.qa.trim());
-          markdownParts.push('');
-        }
-
-        markdownParts.push('---');
-        markdownParts.push('');
+      if (pageUrl && confirm('Notion 페이지를 열까요?')) {
+        window.open(pageUrl, '_blank');
       }
-
-      const noteContent = markdownParts.join('\n');
-
-      // Extract paper title from first note or use ID
-      // Try to get a meaningful title
-      let paperTitle = notes[0]?.title || id;
-      // If first note title looks like a section number, use the ID instead
-      if (/^[\d.]+\s/.test(paperTitle)) {
-        paperTitle = id;
-      }
-
-      const result = await saveToNotion({
-        paper_id: id,
-        paper_title: paperTitle,
-        note_content: noteContent,
-        updated_at: new Date().toISOString(),
-      });
-
-      if (result.success) {
-        alert(`Notion에 저장되었습니다!\n\n페이지: ${result.page_title}\nURL: ${result.page_url}`);
-        // Optionally open the Notion page
-        if (result.page_url && confirm('Notion 페이지를 열까요?')) {
-          window.open(result.page_url, '_blank');
-        }
-      }
-    } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : String(e);
-      alert(`Notion 저장 실패: ${errorMessage}`);
-    } finally {
-      setSavingToNotion(false);
+    } else {
+      alert(`Notion 저장 실패: ${result.error || 'Unknown error'}`);
     }
-  }, [usedId, paperId, notes]);
+  } catch (e) {
+    const errorMessage = e instanceof Error ? e.message : String(e);
+    alert(`Notion 저장 실패: ${errorMessage}`);
+  } finally {
+    setSavingToNotion(false);
+  }
+}, [usedId, paperId, notes]);
 
   return (
     <div ref={containerRef} style={{ display: 'flex', height: '100vh', backgroundColor: '#f5f5f5' }}>

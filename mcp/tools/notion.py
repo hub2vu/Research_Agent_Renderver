@@ -57,8 +57,18 @@ class SaveToNotionTool(MCPTool):
             ToolParameter(
                 name="note_content",
                 type="string",
-                description="The note content in markdown format",
-                required=True,
+                description="(Legacy) Single note content in markdown format. Ignored if `notes` is provided.",
+                required=False,
+                default="",
+            ),
+            ToolParameter(
+                name="notes",
+                type="array",
+                description=("Optional list of notes to save as individual toggles. "
+                             "Each item: {title, memo, translation(or translate), analysis, prompt(or qa)} (title required)."),
+                required=False,
+                default=[],
+                items_type="object",
             ),
             ToolParameter(
                 name="tags",
@@ -101,6 +111,134 @@ class SaveToNotionTool(MCPTool):
         parent_page_id = parent_page_id.replace("-", "")
 
         return token, parent_page_id
+
+
+
+def _toggle_block(self, title: str) -> dict:
+    return {
+        "object": "block",
+        "type": "toggle",
+        "toggle": {
+            "rich_text": self._parse_inline_markdown(title),
+        },
+    }
+
+def _chunk_blocks(self, blocks: List[dict], size: int = 100) -> List[List[dict]]:
+    return [blocks[i:i + size] for i in range(0, len(blocks), size)]
+
+async def _create_paper_page(
+    self,
+    client: httpx.AsyncClient,
+    headers: dict,
+    parent_page_id: str,
+    page_title: str,
+) -> Dict[str, str]:
+    payload = {
+        "parent": {"type": "page_id", "page_id": parent_page_id},
+        "properties": {
+            "title": {"title": [{"type": "text", "text": {"content": page_title}}]}
+        },
+    }
+    resp = await client.post(f"{NOTION_API_BASE}/pages", headers=headers, json=payload)
+    if resp.status_code != 200:
+        detail = resp.text
+        try:
+            detail = resp.json().get("message", detail)
+        except Exception:
+            pass
+        raise ExecutionError(f"Notion API error ({resp.status_code}): {detail}", tool_name=self.name)
+
+    data = resp.json()
+    return {"id": data.get("id", ""), "url": data.get("url", "")}
+
+async def _append_children(
+    self,
+    client: httpx.AsyncClient,
+    headers: dict,
+    block_id: str,
+    children: List[dict],
+) -> List[dict]:
+    """PATCH /blocks/{block_id}/children. Returns created block objects (contain `id`)."""
+    if not children:
+        return []
+    resp = await client.patch(
+        f"{NOTION_API_BASE}/blocks/{block_id}/children",
+        headers=headers,
+        json={"children": children},
+    )
+    if resp.status_code != 200:
+        detail = resp.text
+        try:
+            detail = resp.json().get("message", detail)
+        except Exception:
+            pass
+        raise ExecutionError(f"Notion API error ({resp.status_code}): {detail}", tool_name=self.name)
+
+    return resp.json().get("results", []) or []
+
+async def _append_note_toggle_tree(
+    self,
+    client: httpx.AsyncClient,
+    headers: dict,
+    page_id: str,
+    note: Dict[str, Any],
+) -> None:
+    """Create per-note toggle tree on Notion page.
+
+    page
+      - Toggle(<note.title>)
+          - Toggle(메모)   -> blocks
+          - Toggle(번역)   -> blocks
+          - Toggle(분석)   -> blocks
+          - Toggle(Prompt) -> blocks
+    """
+    title = str(note.get("title", "")).strip()
+    if not title:
+        return
+
+    # 1) Create note toggle under the page
+    created_note = await self._append_children(client, headers, page_id, [self._toggle_block(title)])
+    if not created_note:
+        return
+    note_toggle_id = created_note[0].get("id", "")
+    if not note_toggle_id:
+        return
+
+    # Accept both translation/translate, prompt/qa keys
+    translation_val = note.get("translation", None)
+    if translation_val is None:
+        translation_val = note.get("translate", None)
+
+    prompt_val = note.get("prompt", None)
+    if prompt_val is None:
+        prompt_val = note.get("qa", None)
+
+    sections = [
+        ("메모", note.get("memo", None)),
+        ("번역", translation_val),
+        ("분석", note.get("analysis", None)),
+        ("Prompt", prompt_val),
+    ]
+
+    for label, content in sections:
+        if content is None:
+            continue
+        text = str(content).strip()
+        if not text:
+            continue
+
+        # 2) Create section toggle under note toggle
+        created_sec = await self._append_children(client, headers, note_toggle_id, [self._toggle_block(label)])
+        if not created_sec:
+            continue
+        sec_toggle_id = created_sec[0].get("id", "")
+        if not sec_toggle_id:
+            continue
+
+        # 3) Append content blocks under section toggle (chunked)
+        blocks = self._markdown_to_notion_blocks(text)
+        for chunk in self._chunk_blocks(blocks, 100):
+            await self._append_children(client, headers, sec_toggle_id, chunk)
 
     def _markdown_to_notion_blocks(self, markdown_content: str) -> List[dict]:
         """
@@ -275,91 +413,94 @@ class SaveToNotionTool(MCPTool):
             "xml", "yaml", "java/c/c++/c#"
         }
 
-    async def execute(self, **kwargs) -> Any:
-        """Execute the save to Notion operation."""
-        paper_id = kwargs["paper_id"]
-        paper_title = kwargs["paper_title"]
-        note_content = kwargs["note_content"]
-        tags = kwargs.get("tags", []) or []
-        updated_at = kwargs.get("updated_at")
+async def execute(self, **kwargs) -> Any:
+    """Execute the save to Notion operation."""
+    paper_id = kwargs["paper_id"]
+    paper_title = kwargs["paper_title"]
+    note_content = kwargs.get("note_content", "") or ""
+    notes_raw = kwargs.get("notes", []) or []
+    note_title = kwargs.get("note_title")
+    memo = kwargs.get("memo")
+    translation = kwargs.get("translation")
+    analysis = kwargs.get("analysis")
+    prompt = kwargs.get("prompt")
+    tags = kwargs.get("tags", []) or []
+    updated_at = kwargs.get("updated_at")
 
-        # Get credentials
-        token, parent_page_id = self._get_notion_credentials()
+    # Get credentials
+    token, parent_page_id = self._get_notion_credentials()
 
-        # Build page title: [{paper_id}] {paper_title}
-        page_title = f"[{paper_id}] {paper_title}"
+    # Build page title: [{paper_id}] {paper_title}
+    page_title = f"[{paper_id}] {paper_title}"
 
-        # Convert markdown to Notion blocks
-        content_blocks = self._markdown_to_notion_blocks(note_content)
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
+        "Notion-Version": NOTION_VERSION,
+    }
 
-        # Notion has a limit of 100 blocks per request
-        # We'll only send the first 100 blocks
-        if len(content_blocks) > 100:
-            logger.warning(f"Content has {len(content_blocks)} blocks, truncating to 100")
-            content_blocks = content_blocks[:100]
+    # Normalize notes input:
+    # - list[dict] is ideal
+    # - some clients may send notes as JSON string
+    notes: List[Dict[str, Any]] = []
+    if isinstance(notes_raw, str) and notes_raw.strip():
+        try:
+            parsed = json.loads(notes_raw)
+            if isinstance(parsed, list):
+                notes = [x for x in parsed if isinstance(x, dict)]
+        except Exception:
+            notes = []
+    elif isinstance(notes_raw, list):
+        notes = [x for x in notes_raw if isinstance(x, dict)]
 
-        # Build the page creation payload
-        page_payload = {
-            "parent": {
-                "type": "page_id",
-                "page_id": parent_page_id
-            },
-            "properties": {
-                "title": {
-                    "title": [
-                        {
-                            "type": "text",
-                            "text": {"content": page_title}
-                        }
-                    ]
-                }
-            },
-            "children": content_blocks
-        }
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        # 1) Create paper page first (empty)
+        created_page = await self._create_paper_page(client, headers, parent_page_id, page_title)
+        page_id = created_page.get("id", "")
+        page_url = created_page.get("url", "")
+        if not page_id:
+            raise ExecutionError("Failed to create Notion page (missing id)", tool_name=self.name)
 
-        # Make API request
-        headers = {
-            "Authorization": f"Bearer {token}",
-            "Content-Type": "application/json",
-            "Notion-Version": NOTION_VERSION
-        }
+        # 2) Save multiple notes if provided
+        if notes:
+            for n in notes:
+                await self._append_note_toggle_tree(client, headers, page_id, n)
+            notes_saved = len(notes)
+        else:
+            # Legacy single-note fallback: parse note_content / overrides
+            extracted_title, note_body = self._extract_note_title_from_markdown(note_content)
+            final_note_title = (note_title or extracted_title or "노트").strip()
 
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.post(
-                f"{NOTION_API_BASE}/pages",
-                headers=headers,
-                json=page_payload
-            )
+            sections = self._split_sections_from_markdown(note_body)
+            if memo is not None:
+                sections["memo"] = memo
+            if translation is not None:
+                sections["translation"] = translation
+            if analysis is not None:
+                sections["analysis"] = analysis
+            if prompt is not None:
+                sections["prompt"] = prompt
 
-            if response.status_code != 200:
-                error_detail = response.text
-                try:
-                    error_json = response.json()
-                    error_detail = error_json.get("message", error_detail)
-                except Exception:
-                    pass
+            legacy_note = {
+                "title": final_note_title,
+                "memo": sections.get("memo", ""),
+                "translation": sections.get("translation", ""),
+                "analysis": sections.get("analysis", ""),
+                "prompt": sections.get("prompt", ""),
+            }
+            await self._append_note_toggle_tree(client, headers, page_id, legacy_note)
+            notes_saved = 1
 
-                raise ExecutionError(
-                    f"Notion API error ({response.status_code}): {error_detail}",
-                    tool_name=self.name
-                )
+    logger.info(f"Created Notion page: {page_title} (ID: {page_id})")
 
-            result = response.json()
-
-        # Extract useful info from response
-        page_id = result.get("id", "")
-        page_url = result.get("url", "")
-
-        logger.info(f"Created Notion page: {page_title} (ID: {page_id})")
-
-        return {
-            "success": True,
-            "page_id": page_id,
-            "page_url": page_url,
-            "page_title": page_title,
-            "blocks_created": len(content_blocks),
-            "message": f"Successfully saved to Notion: {page_title}"
-        }
+    return {
+        "success": True,
+        "page_id": page_id,
+        "page_url": page_url,
+        "page_title": page_title,
+        "notes_saved": notes_saved,
+        "message": f"Successfully saved to Notion: {page_title}",
+    }
 
 
 # Export tools for auto-registration
