@@ -10,6 +10,7 @@ import json
 import logging
 import os
 import re
+import time
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -22,6 +23,11 @@ from ..base import MCPTool, ToolParameter, ExecutionError
 from ..registry import execute_tool
 from .arxiv import convert_arxiv_to_paper_input
 from .page_analyzer import get_full_paper_text, _extract_abstract
+
+# LLM Logging
+import sys
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+from logs.llm_logger import get_logger as get_llm_logger, SummaryType
 
 logger = logging.getLogger("mcp.tools.research_agent")
 logger.setLevel(logging.INFO)
@@ -283,6 +289,7 @@ class LLMOrchestrator:
 
 Respond ONLY with valid JSON, no additional text."""
         
+        start_time = time.time()
         try:
             response = await aclient.chat.completions.create(
                 model="gpt-4o",
@@ -296,10 +303,11 @@ Respond ONLY with valid JSON, no additional text."""
                 temperature=0.3,
                 response_format={"type": "json_object"}
             )
-            
+
+            latency_ms = (time.time() - start_time) * 1000
             result_text = response.choices[0].message.content
             result = json.loads(result_text)
-            
+
             # Validate response structure
             if "strategy" not in result:
                 result["strategy"] = "methodology_focused"
@@ -313,9 +321,42 @@ Respond ONLY with valid JSON, no additional text."""
                 result["analysis_questions"] = []
             if "analysis_depth" not in result:
                 result["analysis_depth"] = mode
-                
+
+            # LLM Logging - Log the strategy decision
+            try:
+                llm_logger = get_llm_logger()
+
+                # Log the LLM call
+                llm_logger.log_llm_call(
+                    model="gpt-4o",
+                    prompt=prompt[:8000],
+                    response=result_text[:5000],
+                    tool_name="determine_analysis_strategy",
+                    temperature=0.3,
+                    latency_ms=latency_ms,
+                    metadata={"goal": goal, "mode": mode}
+                )
+
+                # Log the decision
+                llm_logger.log_decision(
+                    decision_id=f"strategy_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+                    decision="Analysis strategy determination",
+                    options=["experiment_focused", "methodology_focused", "formula_heavy", "implementation_focused", "comparison_focused"],
+                    chosen=result.get("strategy", "methodology_focused"),
+                    rationale=result.get("strategy_reasoning", "")[:1000],
+                    agent_name="LLMOrchestrator",
+                    context=f"Goal: {goal}, Mode: {mode}, Sections: {len(sections)}",
+                    evidence_links=result.get("target_sections", []),
+                    metadata={
+                        "focus_areas": result.get("focus_areas", {}),
+                        "analysis_questions": result.get("analysis_questions", [])
+                    }
+                )
+            except Exception as log_error:
+                logger.warning(f"Failed to log strategy determination: {log_error}")
+
             return result
-            
+
         except Exception as e:
             logger.error(f"Strategy determination failed: {e}")
             return {
@@ -339,7 +380,7 @@ Respond ONLY with valid JSON, no additional text."""
             for r in paper_results
         ])
         
-        prompt = f"""You are a Research Agent. Generate a concise executive summary 
+        prompt = f"""You are a Research Agent. Generate a concise executive summary
 that synthesizes the key insights from all analyzed papers.
 
 ## User's Goal
@@ -357,14 +398,49 @@ that synthesizes the key insights from all analyzed papers.
 ## Response Format
 Write the executive summary directly, no JSON needed.
 """
-        
+
+        start_time = time.time()
         try:
             response = await aclient.chat.completions.create(
                 model="gpt-4o",
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.3
             )
-            return response.choices[0].message.content
+
+            latency_ms = (time.time() - start_time) * 1000
+            summary_content = response.choices[0].message.content
+
+            # LLM Logging - Log the executive summary generation
+            try:
+                llm_logger = get_llm_logger()
+
+                llm_logger.log_summary(
+                    paper_id="multi_paper_executive",
+                    summary_type=SummaryType.EXECUTIVE,
+                    summary_prompt=prompt[:5000],
+                    summary_response=summary_content,
+                    source_text_length=len(papers_info),
+                    model="gpt-4o",
+                    temperature=0.3,
+                    metadata={
+                        "goal": goal,
+                        "papers_count": len(paper_results),
+                        "paper_titles": [r.title for r in paper_results]
+                    }
+                )
+
+                llm_logger.log_llm_call(
+                    model="gpt-4o",
+                    prompt=prompt[:5000],
+                    response=summary_content[:5000],
+                    tool_name="generate_executive_summary",
+                    temperature=0.3,
+                    latency_ms=latency_ms
+                )
+            except Exception as log_error:
+                logger.warning(f"Failed to log executive summary: {log_error}")
+
+            return summary_content
         except Exception as e:
             logger.error(f"Executive summary generation failed: {e}")
             return f"분석된 논문 {len(paper_results)}편에 대한 요약 (자동 생성 실패)"
@@ -606,8 +682,31 @@ class ResearchAgentTool(MCPTool):
         
         with open(report_file, "w", encoding="utf-8") as f:
             f.write(final_report)
-        
+
         logger.info(f"[Research Agent] Report saved to {report_file}")
+
+        # LLM Logging - Log the artifact generation
+        try:
+            llm_logger = get_llm_logger()
+            llm_logger.log_artifact(
+                artifact_type="research_report_md",
+                file_path=str(report_file),
+                generation_method="llm_orchestrated",
+                input_sources=[
+                    {"type": "paper_results", "count": len(state.paper_results)},
+                    {"type": "executive_summary", "length": len(executive_summary)},
+                    {"type": "reasoning_log", "count": len(state.reasoning_log)}
+                ],
+                paper_id=",".join(paper_ids[:3]),
+                metadata={
+                    "job_id": job_id,
+                    "goal": goal,
+                    "analysis_mode": analysis_mode,
+                    "paper_count": len(state.paper_results)
+                }
+            )
+        except Exception as log_error:
+            logger.warning(f"Failed to log artifact: {log_error}")
         
         # Send notifications to Discord
         state.update_progress("Sending notifications...", 90.0)

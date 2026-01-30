@@ -1,0 +1,2 @@
+# This file ensures the logs/prompts directory is tracked by git
+# Log files (*.jsonl) will be created here by the LLM logging system

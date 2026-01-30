@@ -17,6 +17,7 @@ import json
 import logging
 import os
 import sys
+import time
 from typing import Any, Dict, List, Optional
 
 import requests
@@ -26,6 +27,11 @@ from openai import OpenAI
 from .memory import Memory, MessageRole
 from .planner import Planner
 from .executor import Executor
+
+# LLM Logging
+import sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from logs.llm_logger import get_logger as get_llm_logger
 
 # Load environment variables
 load_dotenv()
@@ -143,6 +149,7 @@ class AgentClient:
             return {"success": False, "error": str(e)}
 
     def _call_llm(self, messages: List[Dict], tools: List[Dict] = None) -> Any:
+        """Call the LLM with messages and optional tools."""
 
         # 1. 청소 도구 (Helper)
         def sanitize_utf8(text):
@@ -156,8 +163,6 @@ class AgentClient:
             clean_msg = {k: sanitize_utf8(v) for k, v in msg.items()}
             clean_messages.append(clean_msg)
 
-        """Call the LLM with messages and optional tools."""
-
         # 3. 중요!! 여기서 clean_messages를 사용해야 합니다.
         kwargs = {"model": self.model, "messages": clean_messages}
 
@@ -165,7 +170,45 @@ class AgentClient:
             kwargs["tools"] = tools
             kwargs["tool_choice"] = "auto"
 
+        # LLM Logging - Start timing
+        start_time = time.time()
+
         response = self.openai.chat.completions.create(**kwargs)
+
+        # LLM Logging - Log the call
+        latency_ms = (time.time() - start_time) * 1000
+        try:
+            llm_logger = get_llm_logger()
+
+            # Extract prompt from messages for logging
+            prompt_for_log = json.dumps(clean_messages[-3:], ensure_ascii=False)[:5000]  # Last 3 messages
+            response_content = response.choices[0].message.content or ""
+
+            # Get token usage if available
+            token_usage = {}
+            if hasattr(response, 'usage') and response.usage:
+                token_usage = {
+                    "prompt_tokens": response.usage.prompt_tokens,
+                    "completion_tokens": response.usage.completion_tokens,
+                    "total_tokens": response.usage.total_tokens
+                }
+
+            llm_logger.log_llm_call(
+                model=self.model,
+                prompt=prompt_for_log,
+                response=response_content[:5000],
+                tool_name="agent_client",
+                temperature=0.0,
+                token_usage=token_usage,
+                latency_ms=latency_ms,
+                metadata={
+                    "has_tools": bool(tools),
+                    "tool_calls": bool(response.choices[0].message.tool_calls)
+                }
+            )
+        except Exception as log_error:
+            logger.warning(f"Failed to log LLM call: {log_error}")
+
         return response.choices[0].message
 
     async def chat(self, user_message: str) -> str:
