@@ -308,6 +308,15 @@ Respond ONLY with valid JSON, no additional text."""
             result_text = response.choices[0].message.content
             result = json.loads(result_text)
 
+            # Extract token usage
+            token_usage = {}
+            if hasattr(response, 'usage') and response.usage:
+                token_usage = {
+                    "prompt_tokens": response.usage.prompt_tokens,
+                    "completion_tokens": response.usage.completion_tokens,
+                    "total_tokens": response.usage.total_tokens
+                }
+
             # Validate response structure
             if "strategy" not in result:
                 result["strategy"] = "methodology_focused"
@@ -333,6 +342,7 @@ Respond ONLY with valid JSON, no additional text."""
                     response=result_text[:5000],
                     tool_name="determine_analysis_strategy",
                     temperature=0.3,
+                    token_usage=token_usage,
                     latency_ms=latency_ms,
                     metadata={"goal": goal, "mode": mode}
                 )
@@ -410,6 +420,15 @@ Write the executive summary directly, no JSON needed.
             latency_ms = (time.time() - start_time) * 1000
             summary_content = response.choices[0].message.content
 
+            # Extract token usage
+            token_usage = {}
+            if hasattr(response, 'usage') and response.usage:
+                token_usage = {
+                    "prompt_tokens": response.usage.prompt_tokens,
+                    "completion_tokens": response.usage.completion_tokens,
+                    "total_tokens": response.usage.total_tokens
+                }
+
             # LLM Logging - Log the executive summary generation
             try:
                 llm_logger = get_llm_logger()
@@ -435,6 +454,7 @@ Write the executive summary directly, no JSON needed.
                     response=summary_content[:5000],
                     tool_name="generate_executive_summary",
                     temperature=0.3,
+                    token_usage=token_usage,
                     latency_ms=latency_ms
                 )
             except Exception as log_error:

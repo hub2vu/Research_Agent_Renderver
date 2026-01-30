@@ -163,6 +163,15 @@ async def interpret_paper_page(paper_id: str, page_num: int) -> Dict[str, Any]:
         latency_ms = (time.time() - start_time) * 1000
         interpretation = response.choices[0].message.content
 
+        # Extract token usage
+        token_usage = {}
+        if hasattr(response, 'usage') and response.usage:
+            token_usage = {
+                "prompt_tokens": response.usage.prompt_tokens,
+                "completion_tokens": response.usage.completion_tokens,
+                "total_tokens": response.usage.total_tokens
+            }
+
         # LLM Logging
         try:
             llm_logger = get_llm_logger()
@@ -172,6 +181,7 @@ async def interpret_paper_page(paper_id: str, page_num: int) -> Dict[str, Any]:
                 response=interpretation[:5000],
                 tool_name="interpret_paper_page",
                 temperature=0.3,
+                token_usage=token_usage,
                 latency_ms=latency_ms,
                 paper_id=paper_id,
                 metadata={"page_num": page_num, "page_text_length": len(page_text)}
@@ -398,6 +408,15 @@ class AnalyzeSectionTool(MCPTool):
         latency_ms = (time.time() - start_time) * 1000
         analysis_text = response.choices[0].message.content
 
+        # Extract token usage
+        token_usage = {}
+        if hasattr(response, 'usage') and response.usage:
+            token_usage = {
+                "prompt_tokens": response.usage.prompt_tokens,
+                "completion_tokens": response.usage.completion_tokens,
+                "total_tokens": response.usage.total_tokens
+            }
+
         # LLM Logging - Log section analysis
         try:
             llm_logger = get_llm_logger()
@@ -423,6 +442,7 @@ class AnalyzeSectionTool(MCPTool):
                 response=analysis_text[:5000],
                 tool_name="analyze_section",
                 temperature=0.3,
+                token_usage=token_usage,
                 latency_ms=latency_ms,
                 paper_id=paper_id,
                 metadata={"section_title": section_title}
@@ -610,6 +630,15 @@ class PaperQATool(MCPTool):
         latency_ms = (time.time() - start_time) * 1000
         answer = response.choices[0].message.content
 
+        # Extract token usage
+        token_usage = {}
+        if hasattr(response, 'usage') and response.usage:
+            token_usage = {
+                "prompt_tokens": response.usage.prompt_tokens,
+                "completion_tokens": response.usage.completion_tokens,
+                "total_tokens": response.usage.total_tokens
+            }
+
         # LLM Logging - Log QA interaction
         try:
             llm_logger = get_llm_logger()
@@ -619,6 +648,7 @@ class PaperQATool(MCPTool):
                 response=answer[:5000],
                 tool_name="paper_qa",
                 temperature=0.3,
+                token_usage=token_usage,
                 latency_ms=latency_ms,
                 paper_id=paper_id,
                 metadata={
