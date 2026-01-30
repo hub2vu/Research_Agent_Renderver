@@ -513,13 +513,13 @@ export default defineConfig({
       }
     },
     fs: {
-      allow: ['.', '/app/output', '../output', '/app/pdf', '../pdf']
+      allow: ['.', '/app/output', '../output', '/app/pdf', '../pdf', 'node_modules']
     }
   },
   resolve: {
     extensions: ['.tsx', '.ts', '.jsx', '.js']
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', 'react-router-dom', 'd3', 'react-markdown']
+    include: ['react', 'react-dom', 'react-router-dom', 'd3', 'react-markdown', 'pdfjs-dist']
   }
 });
