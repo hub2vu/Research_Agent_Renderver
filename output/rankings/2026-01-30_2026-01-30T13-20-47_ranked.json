@@ -1,0 +1,486 @@
+{
+  "success": true,
+  "error": null,
+  "summary": {
+    "input_count": 99,
+    "filtered_count": 0,
+    "scored_count": 99,
+    "output_count": 10,
+    "purpose": "general",
+    "ranking_mode": "balanced",
+    "profile_used": "users/profile.json",
+    "llm_verification_used": false,
+    "llm_calls_made": 0
+  },
+  "ranked_papers": [
+    {
+      "rank": 1,
+      "paper_id": "eghAocvqBk",
+      "title": "Diffusion Bridge Implicit Models",
+      "authors": [],
+      "published": "2025-05-01",
+      "score": {
+        "final": 1.0,
+        "breakdown": {
+          "semantic_relevance": 0.724762730026541,
+          "must_keywords": 0.25,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.17795937234406978,
+          "practicality": 0,
+          "keyword_score": 1.0
+        },
+        "soft_penalty": 0.0,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_high"
+      },
+      "tags": [
+        "SEMANTIC_HIGH_MATCH",
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "eghAocvqBk",
+        "title": "Diffusion Bridge Implicit Models",
+        "abstract": "Denoising diffusion bridge models (DDBMs) are a powerful variant of diffusion models for interpolating between two arbitrary paired distributions given as endpoints. Despite their promising performance in tasks like image translation, DDBMs require a computationally intensive sampling process that involves the simulation of a (stochastic) differential equation through hundreds of network evaluations. In this work, we take the first step in fast sampling of DDBMs without extra training, motivated by the well-established recipes in diffusion models. We generalize DDBMs via a class of non-Markovian diffusion bridges defined on the discretized timesteps concerning sampling, which share the same marginal distributions and training objectives, give rise to generative processes ranging from stochastic to deterministic, and result in diffusion bridge implicit models (DBIMs). DBIMs are not only up to 25$\\times$ faster than the vanilla sampler of DDBMs but also induce a novel, simple, and insightful form of ordinary differential equation (ODE) which inspires high-order numerical solvers. Moreover, DBIMs maintain the generation diversity in a distinguished way, by using a booting noise in the initial sampling step, which enables faithful encoding, reconstruction, and semantic interpolation in image translation tasks. Code is available at \\url{https://github.com/thu-ml/DiffusionBridge}.",
+        "authors": [],
+        "published": "2025-05-01",
+        "categories": [
+          "ICLR 2025"
+        ],
+        "pdf_url": "https://openreview.net/pdf?id=eghAocvqBk",
+        "github_url": null,
+        "semantic_score": 0.802293062210083,
+        "keyword_score": 1,
+        "combined_score": 1
+      }
+    },
+    {
+      "rank": 2,
+      "paper_id": "8pusxkLEQO",
+      "title": "ARLON: Boosting Diffusion Transformers with Autoregressive Models for Long Video Generation",
+      "authors": [],
+      "published": "2025-05-01",
+      "score": {
+        "final": 0.749264586764208,
+        "breakdown": {
+          "semantic_relevance": 0.71224237431798,
+          "must_keywords": 0.5,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.17795937234406978,
+          "practicality": 0,
+          "keyword_score": 0.5
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_high"
+      },
+      "tags": [
+        "SEMANTIC_HIGH_MATCH",
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "8pusxkLEQO",
+        "title": "ARLON: Boosting Diffusion Transformers with Autoregressive Models for Long Video Generation",
+        "abstract": "Text-to-video (T2V) models have recently undergone rapid and substantial advancements. Nevertheless, due to limitations in data and computational resources, achieving efficient generation of long videos with rich motion dynamics remains a significant challenge. \nTo generate high-quality, dynamic, and temporally consistent long videos, this paper presents ARLON,  a novel framework that boosts diffusion Transformers with autoregressive (\\textbf{AR}) models for long (\\textbf{LON}) video generation, by integrating the coarse spatial and long-range temporal information provided by the AR model to guide the DiT model effectively.\nSpecifically, ARLON incorporates several key innovations: \n1) A latent Vector Quantized Variational Autoencoder (VQ-VAE) compresses the input latent space of the DiT model into compact and highly quantized visual tokens, bridging the AR and DiT models and balancing the learning complexity and information density;\n2) An adaptive norm-based semantic injection module integrates the coarse discrete visual units from the AR model into the DiT model, ensuring effective guidance during video generation; \n3) To enhance the tolerance capability of noise introduced from the AR inference, the DiT model is trained with coarser visual latent tokens incorporated with an uncertainty sampling module. \nExperimental results demonstrate that ARLON significantly outperforms the baseline OpenSora-V1.2 on eight out of eleven metrics selected from VBench, with notable improvements in dynamic degree and aesthetic quality, while delivering competitive results on the remaining three and simultaneously accelerating the generation process. In addition, ARLON achieves state-of-the-art performance in long video generation, outperforming other open-source models in this domain. \nDetailed analyses of the improvements in inference efficiency are presented, alongside a practical application that demonstrates the generation of long videos using progressive text prompts. Project page: \\url{http://aka.ms/arlon}.",
+        "authors": [],
+        "published": "2025-05-01",
+        "categories": [
+          "ICLR 2025"
+        ],
+        "pdf_url": "https://openreview.net/pdf?id=8pusxkLEQO",
+        "github_url": null,
+        "semantic_score": 0.6516296863555908,
+        "keyword_score": 0.5,
+        "combined_score": 0.5454889059066772
+      }
+    },
+    {
+      "rank": 3,
+      "paper_id": "Y6LPWBo2HP",
+      "title": "Infinite-Resolution Integral Noise Warping for Diffusion Models",
+      "authors": [],
+      "published": "2025-05-01",
+      "score": {
+        "final": 0.7287812392472066,
+        "breakdown": {
+          "semantic_relevance": 0.727297882594642,
+          "must_keywords": 0.25,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.17795937234406978,
+          "practicality": 0,
+          "keyword_score": 0.5
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_high"
+      },
+      "tags": [
+        "SEMANTIC_HIGH_MATCH",
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "Y6LPWBo2HP",
+        "title": "Infinite-Resolution Integral Noise Warping for Diffusion Models",
+        "abstract": "Adapting pretrained image-based diffusion models to generate temporally consistent videos has become an impactful generative modeling research direction. Training-free noise-space manipulation has proven to be an effective technique, where the challenge is to preserve the Gaussian white noise distribution while adding in temporal consistency. Recently, Chang et al. (2024) formulated this problem using an integral noise representation with distribution-preserving guarantees, and proposed an upsampling-based algorithm to compute it. However, while their mathematical formulation is advantageous, the algorithm incurs a high computational cost. Through analyzing the limiting-case behavior of their algorithm as the upsampling resolution goes to infinity, we develop an alternative algorithm that, by gathering increments of multiple Brownian bridges, achieves their infinite-resolution accuracy while simultaneously reducing the computational cost by orders of magnitude. We prove and experimentally validate our theoretical claims, and demonstrate our method's effectiveness in real-world applications. We further show that our method can readily extend to the 3-dimensional space.",
+        "authors": [],
+        "published": "2025-05-01",
+        "categories": [
+          "ICLR 2025"
+        ],
+        "pdf_url": "https://openreview.net/pdf?id=Y6LPWBo2HP",
+        "github_url": null,
+        "semantic_score": 0.7021299004554749,
+        "keyword_score": 0.5,
+        "combined_score": 0.5606389701366424
+      }
+    },
+    {
+      "rank": 4,
+      "paper_id": "BgYbk6ZmeX",
+      "title": "What Matters When Repurposing Diffusion Models for General Dense Perception Tasks?",
+      "authors": [],
+      "published": "2025-05-01",
+      "score": {
+        "final": 0.7226906110824711,
+        "breakdown": {
+          "semantic_relevance": 0.7069957887121905,
+          "must_keywords": 0.25,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.17795937234406978,
+          "practicality": 0,
+          "keyword_score": 0.5
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_high"
+      },
+      "tags": [
+        "SEMANTIC_HIGH_MATCH",
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "BgYbk6ZmeX",
+        "title": "What Matters When Repurposing Diffusion Models for General Dense Perception Tasks?",
+        "abstract": "Extensive pre-training with large data is indispensable for downstream geometry and semantic visual perception tasks. Thanks to large-scale text-to-image (T2I) pretraining, recent works show promising results by simply fine-tuning T2I diffusion models for a few dense perception tasks. However, several crucial design decisions in this process still lack comprehensive justification, encompassing the necessity of the multi-step diffusion mechanism, training strategy, inference ensemble strategy, and fine-tuning data quality. In this work, we conduct a thorough investigation into critical factors that affect transfer efficiency and performance when using diffusion priors. Our key findings are: 1) High-quality fine-tuning data is paramount for both semantic and geometry perception tasks. 2) As a special case of the diffusion scheduler by setting its hyper-parameters, the multi-step generation can be simplified to a one-step fine-tuning paradigm without any loss of performance, while significantly speeding up inference. 3) Apart from fine-tuning the diffusion model with only latent space supervision, task-specific supervision can be beneficial to enhance fine-grained details. These observations culminate in the development of GenPercept, an effective deterministic one-step fine-tuning paradigm tailored for dense visual perception tasks exploiting diffusion priors. Different from the previous multi-step methods, our paradigm offers a much faster inference speed, and can be seamlessly integrated with customized perception decoders and loss functions for task-specific supervision, which can be critical for improving the fine-grained details of predictions. Comprehensive experiments on a diverse set of dense visual perceptual tasks, including monocular depth estimation, surface normal estimation, image segmentation, and matting, are performed to demonstrate the remarkable adaptability and effectiveness of our proposed method. Code: https://github.com/aim-uofa/GenPercept",
+        "authors": [],
+        "published": "2025-05-01",
+        "categories": [
+          "ICLR 2025"
+        ],
+        "pdf_url": "https://openreview.net/pdf?id=BgYbk6ZmeX",
+        "github_url": null,
+        "semantic_score": 0.6799545288085938,
+        "keyword_score": 0.5,
+        "combined_score": 0.5539863586425781
+      }
+    },
+    {
+      "rank": 5,
+      "paper_id": "Nb3a8aUGfj",
+      "title": "Text2PDE: Latent Diffusion Models for Accessible Physics Simulation",
+      "authors": [],
+      "published": "2025-05-01",
+      "score": {
+        "final": 0.7208606439156144,
+        "breakdown": {
+          "semantic_relevance": 0.7008958981560015,
+          "must_keywords": 0.25,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.17795937234406978,
+          "practicality": 0,
+          "keyword_score": 0.5
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_high"
+      },
+      "tags": [
+        "SEMANTIC_HIGH_MATCH",
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "Nb3a8aUGfj",
+        "title": "Text2PDE: Latent Diffusion Models for Accessible Physics Simulation",
+        "abstract": "Recent advances in deep learning have inspired numerous works on data-driven solutions to partial differential equation (PDE) problems. These neural PDE solvers can often be much faster than their numerical counterparts; however, each presents its unique limitations and generally balances training cost, numerical accuracy, and ease of applicability to different problem setups. To address these limitations, we introduce several methods to apply latent diffusion models to physics simulation. Firstly, we introduce a mesh autoencoder to compress arbitrarily discretized PDE data, allowing for efficient diffusion training across various physics. Furthermore, we investigate full spatiotemporal solution generation to mitigate autoregressive error accumulation. Lastly, we investigate conditioning on initial physical quantities, as well as conditioning solely on a text prompt to introduce text2PDE generation. We show that language can be a compact, interpretable, and accurate modality for generating physics simulations, paving the way for more usable and accessible PDE solvers. Through experiments on both uniform and structured grids, we show that the proposed approach is competitive with current neural PDE solvers in both accuracy and efficiency, with promising scaling behavior up to $\\sim$3 billion parameters. By introducing a scalable, accurate, and usable physics simulator, we hope to bring neural PDE solvers closer to practical use.",
+        "authors": [],
+        "published": "2025-05-01",
+        "categories": [
+          "ICLR 2025"
+        ],
+        "pdf_url": "https://openreview.net/pdf?id=Nb3a8aUGfj",
+        "github_url": null,
+        "semantic_score": 0.6876920461654663,
+        "keyword_score": 0.5,
+        "combined_score": 0.5563076138496399
+      }
+    },
+    {
+      "rank": 6,
+      "paper_id": "ftdJEiFudy",
+      "title": "Robust-PIFu: Robust Pixel-aligned Implicit Function for 3D Human Digitalization from a Single Image",
+      "authors": [],
+      "published": "2025-05-01",
+      "score": {
+        "final": 0.7180923191273484,
+        "breakdown": {
+          "semantic_relevance": 0.6916681488617815,
+          "must_keywords": 0.25,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.17795937234406978,
+          "practicality": 0,
+          "keyword_score": 0.5
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_only"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "ftdJEiFudy",
+        "title": "Robust-PIFu: Robust Pixel-aligned Implicit Function for 3D Human Digitalization from a Single Image",
+        "abstract": "Existing methods for 3D clothed human digitalization perform well when the input image is captured in ideal conditions that assume the lack of any occlusion. However, in reality, images may often have occlusion problems such as incomplete observation of the human subject's full body, self-occlusion by the human subject, and non-frontal body pose. When given such input images, these existing methods fail to perform adequately. Thus, we propose Robust-PIFu, a pixel-aligned implicit model that capitalized on large-scale, pretrained latent diffusion models to address the challenge of digitalizing human subjects from non-ideal images that suffer from occlusions.\n\nRobust-PIfu offers four new contributions. Firstly, we propose a 'disentangling' latent diffusion model. This diffusion model, pretrained on billions of images, takes in any input image and removes external occlusions, such as inter-person occlusions, from that image. Secondly, Robust-PIFu addresses internal occlusions like self-occlusion by introducing a `penetrating' latent diffusion model. This diffusion model outputs multi-layered normal maps that by-pass occlusions caused by the human subject's own limbs or other body parts (i.e. self-occlusion). Thirdly, in order to incorporate such multi-layered normal maps into a pixel-aligned implicit model, we introduce our Layered-Normals Pixel-aligned Implicit Model, which improves the structural accuracy of predicted clothed human meshes. Lastly, Robust-PIFu proposes an optional super-resolution mechanism for the multi-layered normal maps. This addresses scenarios where the input image is of low or inadequate resolution. Though not strictly related to occlusion, this is still an important subproblem. Our experiments show that Robust-PIFu outperforms current SOTA methods both qualitatively and quantitatively. Our code will be released to the public.",
+        "authors": [],
+        "published": "2025-05-01",
+        "categories": [
+          "ICLR 2025"
+        ],
+        "pdf_url": "https://openreview.net/pdf?id=ftdJEiFudy",
+        "github_url": null,
+        "semantic_score": 0.6472768783569336,
+        "keyword_score": 0.5,
+        "combined_score": 0.54418306350708
+      }
+    },
+    {
+      "rank": 7,
+      "paper_id": "tpYeermigp",
+      "title": "Physics-Informed Diffusion Models",
+      "authors": [],
+      "published": "2025-05-01",
+      "score": {
+        "final": 0.7089651381762282,
+        "breakdown": {
+          "semantic_relevance": 0.7445775456913809,
+          "must_keywords": 0,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.17795937234406978,
+          "practicality": 0,
+          "keyword_score": 0.5
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_high"
+      },
+      "tags": [
+        "SEMANTIC_HIGH_MATCH",
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "tpYeermigp",
+        "title": "Physics-Informed Diffusion Models",
+        "abstract": "Generative models such as denoising diffusion models are quickly advancing their ability to approximate highly complex data distributions. They are also increasingly leveraged in scientific machine learning, where samples from the implied data distribution are expected to adhere to specific governing equations. We present a framework that unifies generative modeling and partial differential equation fulfillment by introducing a first-principle-based loss term that enforces generated samples to fulfill the underlying physical constraints. Our approach reduces the residual error by up to two orders of magnitudes compared to previous work in a fluid flow case study and outperforms task-specific frameworks in relevant metrics for structural topology optimization. We also present numerical evidence that our extended training objective acts as a natural regularization mechanism against overfitting. Our framework is simple to implement and versatile in its applicability for imposing equality and inequality constraints as well as auxiliary optimization objectives. Code is available at https://github.com/jhbastek/PhysicsInformedDiffusionModels.",
+        "authors": [],
+        "published": "2025-05-01",
+        "categories": [
+          "ICLR 2025"
+        ],
+        "pdf_url": "https://openreview.net/pdf?id=tpYeermigp",
+        "github_url": null,
+        "semantic_score": 0.7188124656677246,
+        "keyword_score": 0.5,
+        "combined_score": 0.5656437397003173
+      }
+    },
+    {
+      "rank": 8,
+      "paper_id": "NGB6YNnO5o",
+      "title": "Generalization in VAE and Diffusion Models: A Unified Information-Theoretic Analysis",
+      "authors": [],
+      "published": "2025-05-01",
+      "score": {
+        "final": 0.7066261930487139,
+        "breakdown": {
+          "semantic_relevance": 0.7367810619329997,
+          "must_keywords": 0,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.17795937234406978,
+          "practicality": 0,
+          "keyword_score": 0.5
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_high"
+      },
+      "tags": [
+        "SEMANTIC_HIGH_MATCH",
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "NGB6YNnO5o",
+        "title": "Generalization in VAE and Diffusion Models: A Unified Information-Theoretic Analysis",
+        "abstract": "Despite the empirical success of Diffusion Models (DMs) and Variational Autoencoders (VAEs), their generalization performance remains theoretically underexplored, especially lacking a full consideration of the shared encoder-generator structure. Leveraging recent information-theoretic tools, we propose a unified theoretical framework that provides guarantees for the generalization of both the encoder and generator by treating them as randomized mappings. This framework further enables (1) a refined analysis for VAEs, accounting for the generator's generalization, which was previously overlooked; (2) illustrating an explicit trade-off in generalization terms for DMs that depends on the diffusion time $T$; and (3) providing computable bounds for DMs based solely on the training data, allowing the selection of the optimal $T$ and the integration of such bounds into the optimization process to improve model performance. Empirical results on both synthetic and real datasets illustrate the validity of the proposed theory.",
+        "authors": [],
+        "published": "2025-05-01",
+        "categories": [
+          "ICLR 2025"
+        ],
+        "pdf_url": "https://openreview.net/pdf?id=NGB6YNnO5o",
+        "github_url": null,
+        "semantic_score": 0.7044192552566528,
+        "keyword_score": 0.5,
+        "combined_score": 0.5613257765769958
+      }
+    },
+    {
+      "rank": 9,
+      "paper_id": "vgZDcUetWS",
+      "title": "Neural Approximate Mirror Maps for Constrained Diffusion Models",
+      "authors": [],
+      "published": "2025-05-01",
+      "score": {
+        "final": 0.6997418108080281,
+        "breakdown": {
+          "semantic_relevance": 0.713833121130714,
+          "must_keywords": 0,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.17795937234406978,
+          "practicality": 0,
+          "keyword_score": 0.5
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_high"
+      },
+      "tags": [
+        "SEMANTIC_HIGH_MATCH",
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "vgZDcUetWS",
+        "title": "Neural Approximate Mirror Maps for Constrained Diffusion Models",
+        "abstract": "Diffusion models excel at creating visually-convincing images, but they often struggle to meet subtle constraints inherent in the training data. Such constraints could be physics-based (e.g., satisfying a PDE), geometric (e.g., respecting symmetry), or semantic (e.g., including a particular number of objects). When the training data all satisfy a certain constraint, enforcing this constraint on a diffusion model makes it more reliable for generating valid synthetic data and solving constrained inverse problems. However, existing methods for constrained diffusion models are restricted in the constraints they can handle. For instance, recent work proposed to learn mirror diffusion models (MDMs), but analytical mirror maps only exist for convex constraints and can be challenging to derive. We propose *neural approximate mirror maps* (NAMMs) for general, possibly non-convex constraints. Our approach only requires a differentiable distance function from the constraint set. We learn an approximate mirror map that transforms data into an unconstrained space and a corresponding approximate inverse that maps data back to the constraint set. A generative model, such as an MDM, can then be trained in the learned mirror space and its samples restored to the constraint set by the inverse map. We validate our approach on a variety of constraints, showing that compared to an unconstrained diffusion model, a NAMM-based MDM substantially improves constraint satisfaction. We also demonstrate how existing diffusion-based inverse-problem solvers can be easily applied in the learned mirror space to solve constrained inverse problems.",
+        "authors": [],
+        "published": "2025-05-01",
+        "categories": [
+          "ICLR 2025"
+        ],
+        "pdf_url": "https://openreview.net/pdf?id=vgZDcUetWS",
+        "github_url": null,
+        "semantic_score": 0.7273405194282532,
+        "keyword_score": 0.5,
+        "combined_score": 0.5682021558284759
+      }
+    },
+    {
+      "rank": 10,
+      "paper_id": "Y8KK9kjgIK",
+      "title": "SigDiffusions: Score-Based Diffusion Models for Time Series via Log-Signature Embeddings",
+      "authors": [],
+      "published": "2025-05-01",
+      "score": {
+        "final": 0.6990540982144376,
+        "breakdown": {
+          "semantic_relevance": 0.7115407458187457,
+          "must_keywords": 0,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.17795937234406978,
+          "practicality": 0,
+          "keyword_score": 0.5
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_high"
+      },
+      "tags": [
+        "SEMANTIC_HIGH_MATCH",
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "Y8KK9kjgIK",
+        "title": "SigDiffusions: Score-Based Diffusion Models for Time Series via Log-Signature Embeddings",
+        "abstract": "Score-based diffusion models have recently emerged as state-of-the-art generative\nmodels for a variety of data modalities. Nonetheless, it remains unclear how to\nadapt these models to generate long multivariate time series. Viewing a time\nseries as the discretisation of an underlying continuous process, we introduce\nSigDiffusion, a novel diffusion model operating on log-signature embeddings\nof the data. The forward and backward processes gradually perturb and denoise\nlog-signatures while preserving their algebraic structure. To recover a signal from\nits log-signature, we provide new closed-form inversion formulae expressing the\ncoefficients obtained by expanding the signal in a given basis (e.g. Fourier or\northogonal polynomials) as explicit polynomial functions of the log-signature.\nFinally, we show that combining SigDiffusions with these inversion formulae\nresults in high-quality long time series generation, competitive with the current\nstate-of-the-art on various datasets of synthetic and real-world examples.",
+        "authors": [],
+        "published": "2025-05-01",
+        "categories": [
+          "ICLR 2025"
+        ],
+        "pdf_url": "https://openreview.net/pdf?id=Y8KK9kjgIK",
+        "github_url": null,
+        "semantic_score": 0.6781577467918396,
+        "keyword_score": 0.5,
+        "combined_score": 0.5534473240375518
+      }
+    }
+  ],
+  "filtered_papers": [],
+  "contrastive_paper": null,
+  "comparison_notes": [
+    {
+      "paper_ids": [
+        "Nb3a8aUGfj",
+        "tpYeermigp"
+      ],
+      "relation": "similar_approach",
+      "shared_traits": [
+        "diffusion",
+        "physics",
+        "models"
+      ],
+      "differentiator": "latent_vs_simulation_vs_informed",
+      "contrast_point": null
+    }
+  ],
+  "output_path": "/data/output/rankings/2026-01-30_2026-01-30T13-20-47_ranked.json",
+  "generated_at": "2026-01-30T13:20:47.404311"
+}

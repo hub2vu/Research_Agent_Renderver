@@ -53,7 +53,7 @@
   },
   "purpose": "literature_review",
   "ranking_mode": "balanced",
-  "top_k": 15,
-  "include_contrastive": true,
+  "top_k": 5,
+  "include_contrastive": false,
   "contrastive_type": "method"
 }

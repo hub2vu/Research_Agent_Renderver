@@ -1,0 +1,9 @@
+Q., Rubanova, Y., Bettencourt, J., and Duvenaud, D
+Torsional diffusion for molecular conformer generation
+Smooth Normalizing Flows
+Flow straight and fast: Learning to generate and transfer data with rectified flow
+A., Nakajima, S., and Kessel, P
+J., Papamakarios, G., Abercrombie, S., Racanière, S., Pritzel, A., Jimenez Rezende, D., and Blundell, C
+• The answer NA means that the abstract and introduction do not include the claims made in the paper
+Limitations
+The same holds true for equations on EQ-OT-, OT-, and standard FM in Section 2.3 • The answer NA means that the paper does not include theoretical results

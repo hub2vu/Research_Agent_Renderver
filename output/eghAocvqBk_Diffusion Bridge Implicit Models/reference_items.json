@@ -1,0 +1,33 @@
+[
+  {
+    "ref_no": 2018,
+    "title": "Conditional image generation with score-based diffusion models",
+    "ids": {
+      "arxiv": "2111.13606",
+      "year": "2021"
+    },
+    "graph_id": "10.48550_arxiv.2111.13606",
+    "raw_text": "Georgios Batzolis, Jan Stanczuk, Carola-Bibiane Sch¨onlieb, and Christian Etmann. Conditional image generation with score-based diffusion models. arXiv preprint arXiv:2111.13606, 2021. Christopher M B..."
+  },
+  {
+    "ref_no": 262,
+    "title": "Martin Gonzalez, Nelson Fernandez, Thuy Tran, Elies Gherbi, Hatem Hajri, and Nader Masmoudi",
+    "ids": {
+      "arxiv": "2305.14267",
+      "url": "https://openreview.net/forum?id=9_gsMA8MRKQ.Yang",
+      "year": "1984"
+    },
+    "graph_id": "10.48550_arxiv.2305.14267",
+    "raw_text": "Springer, 1984. Martin Gonzalez, Nelson Fernandez, Thuy Tran, Elies Gherbi, Hatem Hajri, and Nader Masmoudi. Seeds: Exponential sde solvers for fast high-quality sampling from diffusion models. arXiv ..."
+  },
+  {
+    "ref_no": 42389,
+    "title": "Kaiwen Zheng, Yongxin Chen, Hanzi Mao, Ming-Yu Liu, Jun Zhu, and Qinsheng Zhang",
+    "ids": {
+      "arxiv": "2409.02908",
+      "year": "2024"
+    },
+    "graph_id": "10.48550_arxiv.2409.02908",
+    "raw_text": "PMLR, 2023b. Kaiwen Zheng, Yongxin Chen, Hanzi Mao, Ming-Yu Liu, Jun Zhu, and Qinsheng Zhang. Masked diffusion models are secretly time-agnostic masked models and exploit inaccurate categorical sampli..."
+  }
+]
