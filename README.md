@@ -10,6 +10,12 @@ NOTION_PARENT_PAGE_ID=
 NOTION_API_TOKEN=
 https://www.notion.so/profile/integrations 링크에서 API 발급
 
+편집 권한에서 저장 원하는 페이지 지정
+<img width="2666" height="960" alt="image" src="https://github.com/user-attachments/assets/a232a1d3-2316-4c61-99dc-112391702c76" />
+
+
+
+
 # Research Agent
 
 A Docker-based research assistant with MCP (Model Context Protocol) architecture and paper graph visualization.
