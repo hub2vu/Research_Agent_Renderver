@@ -25,7 +25,7 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 
 class ListPDFsTool(MCPTool):
-    """List all PDF files in the configured directory."""
+    """List all PDF files in the configured directory (recursively)."""
 
     @property
     def name(self) -> str:
@@ -33,7 +33,7 @@ class ListPDFsTool(MCPTool):
 
     @property
     def description(self) -> str:
-        return "List all PDF files in the pdf directory with their sizes"
+        return "List all PDF files in the pdf directory (including subdirectories) with their sizes and extraction status"
 
     @property
     def category(self) -> str:
@@ -42,19 +42,37 @@ class ListPDFsTool(MCPTool):
     async def execute(self, **kwargs) -> Dict[str, Any]:
         pdfs = []
         if PDF_DIR.exists():
-            for pdf_file in PDF_DIR.glob("*.pdf"):
+            # Use rglob to recursively search all subdirectories
+            for pdf_file in PDF_DIR.rglob("*.pdf"):
                 stat = pdf_file.stat()
+                
+                # Get relative path from PDF_DIR for display
+                try:
+                    relative_path = pdf_file.relative_to(PDF_DIR)
+                    relative_path_str = str(relative_path)
+                except ValueError:
+                    # If PDF_DIR is not a parent, use full path
+                    relative_path_str = str(pdf_file)
+                
+                # Check if text has already been extracted
+                pdf_name = pdf_file.stem
+                text_file = OUTPUT_DIR / pdf_name / "extracted_text.txt"
+                json_file = OUTPUT_DIR / pdf_name / "extracted_text.json"
+                already_extracted = text_file.exists() or json_file.exists()
+                
                 pdfs.append({
                     "filename": pdf_file.name,
                     "path": str(pdf_file),
+                    "relative_path": relative_path_str,
                     "size_bytes": stat.st_size,
-                    "size_mb": round(stat.st_size / (1024 * 1024), 2)
+                    "size_mb": round(stat.st_size / (1024 * 1024), 2),
+                    "already_extracted": already_extracted
                 })
 
         return {
             "pdf_directory": str(PDF_DIR),
             "total_files": len(pdfs),
-            "files": sorted(pdfs, key=lambda x: x["filename"])
+            "files": sorted(pdfs, key=lambda x: x["relative_path"])
         }
 
 

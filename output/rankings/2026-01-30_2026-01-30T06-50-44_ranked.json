@@ -1,0 +1,472 @@
+{
+  "success": true,
+  "error": null,
+  "summary": {
+    "input_count": 99,
+    "filtered_count": 0,
+    "scored_count": 99,
+    "output_count": 10,
+    "purpose": "general",
+    "ranking_mode": "balanced",
+    "profile_used": "users/profile.json",
+    "llm_verification_used": false,
+    "llm_calls_made": 0
+  },
+  "ranked_papers": [
+    {
+      "rank": 1,
+      "paper_id": "1Z6PSw7OL8",
+      "title": "BiGR: Harnessing Binary Latent Codes for Image Generation and Improved Visual Representation Capabilities",
+      "authors": [],
+      "published": "2025-05-01",
+      "score": {
+        "final": 0.8005918744688139,
+        "breakdown": {
+          "semantic_relevance": 0.8,
+          "must_keywords": 0.75,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.17795937234406978,
+          "practicality": 0,
+          "keyword_score": 0.3333333333333333
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding+llm"
+      },
+      "tags": [
+        "SEMANTIC_HIGH_MATCH",
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "1Z6PSw7OL8",
+        "title": "BiGR: Harnessing Binary Latent Codes for Image Generation and Improved Visual Representation Capabilities",
+        "abstract": "We introduce BiGR, a novel conditional image generation model using compact binary latent codes for generative training, focusing on enhancing both generation and representation capabilities. BiGR is the first conditional generative model that unifies generation and discrimination within the same framework. \nBiGR features a binary tokenizer, a masked modeling mechanism, and a binary transcoder for binary code prediction. \nAdditionally, we introduce a novel entropy-ordered sampling method to enable efficient image generation. \nExtensive experiments validate BiGR's superior performance in generation quality, as measured by FID-50k, and representation capabilities, as evidenced by linear-probe accuracy. \nMoreover, BiGR showcases zero-shot generalization across various vision tasks, enabling applications such as image inpainting, outpainting, editing, interpolation, and enrichment, without the need for structural modifications. Our findings suggest that BiGR unifies generative and discriminative tasks effectively, paving the way for further advancements in the field. We further enable BiGR to perform text-to-image generation, showcasing its potential for broader applications.",
+        "authors": [],
+        "published": "2025-05-01",
+        "categories": [
+          "ICLR 2025"
+        ],
+        "pdf_url": "https://openreview.net/pdf?id=1Z6PSw7OL8",
+        "github_url": null,
+        "semantic_score": 0.4940110146999359,
+        "keyword_score": 0.3333333333333333,
+        "combined_score": 0.3815366377433141
+      }
+    },
+    {
+      "rank": 2,
+      "paper_id": "t9l63huPRt",
+      "title": "Lightning-Fast Image Inversion and Editing for Text-to-Image Diffusion Models",
+      "authors": [],
+      "published": "2025-05-01",
+      "score": {
+        "final": 0.7484424852259484,
+        "breakdown": {
+          "semantic_relevance": 0.7095020358571147,
+          "must_keywords": 0.5,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.17795937234406978,
+          "practicality": 0,
+          "keyword_score": 0.3333333333333333
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_high"
+      },
+      "tags": [
+        "SEMANTIC_HIGH_MATCH",
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "t9l63huPRt",
+        "title": "Lightning-Fast Image Inversion and Editing for Text-to-Image Diffusion Models",
+        "abstract": "Diffusion inversion is the problem of taking an image and a text prompt that describes it and finding a noise latent that would generate the exact same image. \nMost current deterministic inversion techniques operate by approximately solving an implicit equation and may converge slowly or yield poor reconstructed images.  We formulate the problem by finding the roots of an implicit equation and devlop a method to solve it efficiently. Our solution is based on Newton-Raphson (NR), a well-known technique in numerical analysis. We show that a vanilla application of NR is computationally infeasible while naively transforming it to a computationally tractable alternative tends to converge to out-of-distribution solutions, resulting in poor reconstruction and editing. We therefore derive an efficient guided formulation that fastly converges and provides high-quality reconstructions and editing. We showcase our method on real image editing with three popular open-sourced diffusion models: Stable Diffusion, SDXL-Turbo, and Flux with different deterministic schedulers. Our solution, **Guided Newton-Raphson Inversion**, inverts an image within 0.4 sec (on an A100 GPU) for few-step models (SDXL-Turbo and Flux.1),\nopening the door for interactive image editing. We further show improved results in image interpolation and generation of rare objects.",
+        "authors": [],
+        "published": "2025-05-01",
+        "categories": [
+          "ICLR 2025"
+        ],
+        "pdf_url": "https://openreview.net/pdf?id=t9l63huPRt",
+        "github_url": null,
+        "semantic_score": 0.5682392120361328,
+        "keyword_score": 0.3333333333333333,
+        "combined_score": 0.40380509694417316
+      }
+    },
+    {
+      "rank": 3,
+      "paper_id": "eghAocvqBk",
+      "title": "Diffusion Bridge Implicit Models",
+      "authors": [],
+      "published": "2025-05-01",
+      "score": {
+        "final": 0.7412935045454068,
+        "breakdown": {
+          "semantic_relevance": 0.7690054335886425,
+          "must_keywords": 0.25,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.17795937234406978,
+          "practicality": 0,
+          "keyword_score": 0.3333333333333333
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_high"
+      },
+      "tags": [
+        "SEMANTIC_HIGH_MATCH",
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "eghAocvqBk",
+        "title": "Diffusion Bridge Implicit Models",
+        "abstract": "Denoising diffusion bridge models (DDBMs) are a powerful variant of diffusion models for interpolating between two arbitrary paired distributions given as endpoints. Despite their promising performance in tasks like image translation, DDBMs require a computationally intensive sampling process that involves the simulation of a (stochastic) differential equation through hundreds of network evaluations. In this work, we take the first step in fast sampling of DDBMs without extra training, motivated by the well-established recipes in diffusion models. We generalize DDBMs via a class of non-Markovian diffusion bridges defined on the discretized timesteps concerning sampling, which share the same marginal distributions and training objectives, give rise to generative processes ranging from stochastic to deterministic, and result in diffusion bridge implicit models (DBIMs). DBIMs are not only up to 25$\\times$ faster than the vanilla sampler of DDBMs but also induce a novel, simple, and insightful form of ordinary differential equation (ODE) which inspires high-order numerical solvers. Moreover, DBIMs maintain the generation diversity in a distinguished way, by using a booting noise in the initial sampling step, which enables faithful encoding, reconstruction, and semantic interpolation in image translation tasks. Code is available at \\url{https://github.com/thu-ml/DiffusionBridge}.",
+        "authors": [],
+        "published": "2025-05-01",
+        "categories": [
+          "ICLR 2025"
+        ],
+        "pdf_url": "https://openreview.net/pdf?id=eghAocvqBk",
+        "github_url": null,
+        "semantic_score": 0.5763943195343018,
+        "keyword_score": 0.3333333333333333,
+        "combined_score": 0.40625162919362384
+      }
+    },
+    {
+      "rank": 4,
+      "paper_id": "4anfpHj0wf",
+      "title": "Unlocking Point Processes through Point Set Diffusion",
+      "authors": [],
+      "published": "2025-05-01",
+      "score": {
+        "final": 0.7374726599453383,
+        "breakdown": {
+          "semantic_relevance": 0.756269284921748,
+          "must_keywords": 0.25,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.17795937234406978,
+          "practicality": 0,
+          "keyword_score": 0.0
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_high"
+      },
+      "tags": [
+        "SEMANTIC_HIGH_MATCH",
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "4anfpHj0wf",
+        "title": "Unlocking Point Processes through Point Set Diffusion",
+        "abstract": "Point processes model the distribution of random point sets in mathematical spaces, such as spatial and temporal domains, with applications in fields like seismology, neuroscience, and economics.\nExisting statistical and machine learning models for point processes are predominantly constrained by their reliance on the characteristic intensity function, introducing an inherent trade-off between efficiency and flexibility.\nIn this paper, we introduce Point Set Diffusion, a diffusion-based latent variable model that can represent arbitrary point processes on general metric spaces without relying on the intensity function.\nBy directly learning to stochastically interpolate between noise and data point sets, our approach effectively captures the distribution of point processes and enables efficient, parallel sampling and flexible generation for complex conditional tasks.\nExperiments on synthetic and real-world datasets demonstrate that Point Set Diffusion achieves state-of-the-art performance in unconditional and conditional generation of spatial and spatiotemporal point processes while providing up to orders of magnitude faster sampling.",
+        "authors": [],
+        "published": "2025-05-01",
+        "categories": [
+          "ICLR 2025"
+        ],
+        "pdf_url": "https://openreview.net/pdf?id=4anfpHj0wf",
+        "github_url": null,
+        "semantic_score": 0.5667641162872314,
+        "keyword_score": 0,
+        "combined_score": 0.17002923488616942
+      }
+    },
+    {
+      "rank": 5,
+      "paper_id": "teE4pl9ftK",
+      "title": "Gradient-Free Generation for Hard-Constrained Systems",
+      "authors": [],
+      "published": "2025-05-01",
+      "score": {
+        "final": 0.7366839235888734,
+        "breakdown": {
+          "semantic_relevance": 0.753640163733531,
+          "must_keywords": 0.25,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.17795937234406978,
+          "practicality": 0,
+          "keyword_score": 0.3333333333333333
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_high"
+      },
+      "tags": [
+        "SEMANTIC_HIGH_MATCH",
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "teE4pl9ftK",
+        "title": "Gradient-Free Generation for Hard-Constrained Systems",
+        "abstract": "Generative models that satisfy hard constraints are critical in many scientific and engineering applications, where physical laws or system requirements must be strictly respected. Many existing constrained generative models, especially those developed for computer vision, rely heavily on gradient information, which is often sparse or computationally expensive in some fields, e.g., partial differential equations (PDEs). \nIn this work, we introduce a novel framework for adapting pre-trained, unconstrained flow-matching models to satisfy constraints exactly in a zero-shot manner without requiring expensive gradient computations or fine-tuning. \nOur framework, *ECI sampling*, alternates between extrapolation (E), correction (C), and interpolation (I) stages during each iterative sampling step of flow matching sampling to ensure accurate integration of constraint information while preserving the validity of the generation. \nWe demonstrate the effectiveness of our approach across various PDE systems, showing that ECI-guided generation strictly adheres to physical constraints and accurately captures complex distribution shifts induced by these constraints. \nEmpirical results demonstrate that our framework consistently outperforms baseline approaches in various zero-shot constrained generation tasks and also achieves competitive results in the regression tasks without additional fine-tuning.",
+        "authors": [],
+        "published": "2025-05-01",
+        "categories": [
+          "ICLR 2025"
+        ],
+        "pdf_url": "https://openreview.net/pdf?id=teE4pl9ftK",
+        "github_url": null,
+        "semantic_score": 0.5685083866119385,
+        "keyword_score": 0.3333333333333333,
+        "combined_score": 0.40388584931691485
+      }
+    },
+    {
+      "rank": 6,
+      "paper_id": "Y6LPWBo2HP",
+      "title": "Infinite-Resolution Integral Noise Warping for Diffusion Models",
+      "authors": [],
+      "published": "2025-05-01",
+      "score": {
+        "final": 0.7340928794297841,
+        "breakdown": {
+          "semantic_relevance": 0.7450033498699004,
+          "must_keywords": 0.25,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.17795937234406978,
+          "practicality": 0,
+          "keyword_score": 0.0
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_high"
+      },
+      "tags": [
+        "SEMANTIC_HIGH_MATCH",
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "Y6LPWBo2HP",
+        "title": "Infinite-Resolution Integral Noise Warping for Diffusion Models",
+        "abstract": "Adapting pretrained image-based diffusion models to generate temporally consistent videos has become an impactful generative modeling research direction. Training-free noise-space manipulation has proven to be an effective technique, where the challenge is to preserve the Gaussian white noise distribution while adding in temporal consistency. Recently, Chang et al. (2024) formulated this problem using an integral noise representation with distribution-preserving guarantees, and proposed an upsampling-based algorithm to compute it. However, while their mathematical formulation is advantageous, the algorithm incurs a high computational cost. Through analyzing the limiting-case behavior of their algorithm as the upsampling resolution goes to infinity, we develop an alternative algorithm that, by gathering increments of multiple Brownian bridges, achieves their infinite-resolution accuracy while simultaneously reducing the computational cost by orders of magnitude. We prove and experimentally validate our theoretical claims, and demonstrate our method's effectiveness in real-world applications. We further show that our method can readily extend to the 3-dimensional space.",
+        "authors": [],
+        "published": "2025-05-01",
+        "categories": [
+          "ICLR 2025"
+        ],
+        "pdf_url": "https://openreview.net/pdf?id=Y6LPWBo2HP",
+        "github_url": null,
+        "semantic_score": 0.5688871741294861,
+        "keyword_score": 0,
+        "combined_score": 0.17066615223884582
+      }
+    },
+    {
+      "rank": 7,
+      "paper_id": "hwnObmOTrV",
+      "title": "Modeling Complex System Dynamics with Flow Matching Across Time and Conditions",
+      "authors": [],
+      "published": "2025-05-01",
+      "score": {
+        "final": 0.7322138033222656,
+        "breakdown": {
+          "semantic_relevance": 0.7387397628448391,
+          "must_keywords": 0.25,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.17795937234406978,
+          "practicality": 0,
+          "keyword_score": 0.3333333333333333
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_high"
+      },
+      "tags": [
+        "SEMANTIC_HIGH_MATCH",
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "hwnObmOTrV",
+        "title": "Modeling Complex System Dynamics with Flow Matching Across Time and Conditions",
+        "abstract": "Modeling the dynamics of complex real-world systems from temporal snapshot data is crucial for understanding phenomena such as gene regulation, climate change, and financial market fluctuations. Researchers have recently proposed a few methods based either on the Schroedinger Bridge or Flow Matching to tackle this problem, but these approaches remain limited in their ability to effectively combine data from multiple time points and different experimental settings. This integration is essential in real-world scenarios where observations from certain combinations of time points and experimental conditions are missing, either because of experimental costs or sensory failure. To address this challenge, we propose a novel method named Multi-Marginal Flow Matching (MMFM). MMFM first constructs a flow using smooth spline-based interpolation across time points and conditions and regresses it with a neural network using the classifier-free guided Flow Matching framework. This framework allows for the sharing of contextual information about the dynamics across multiple trajectories. We demonstrate the effectiveness of our method on both synthetic and real-world datasets, including a recent single-cell genomics data set with around a hundred chemical perturbations across time points. Our results show that MMFM significantly outperforms existing methods at imputing data at missing time points.",
+        "authors": [],
+        "published": "2025-05-01",
+        "categories": [
+          "ICLR 2025"
+        ],
+        "pdf_url": "https://openreview.net/pdf?id=hwnObmOTrV",
+        "github_url": null,
+        "semantic_score": 0.5540094375610352,
+        "keyword_score": 0.3333333333333333,
+        "combined_score": 0.3995361646016439
+      }
+    },
+    {
+      "rank": 8,
+      "paper_id": "Jszf4et48m",
+      "title": "ToddlerDiffusion: Interactive Structured Image Generation with Cascaded Schrödinger Bridge",
+      "authors": [],
+      "published": "2025-05-01",
+      "score": {
+        "final": 0.7287722608480804,
+        "breakdown": {
+          "semantic_relevance": 0.7272679545975553,
+          "must_keywords": 0.25,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.17795937234406978,
+          "practicality": 0,
+          "keyword_score": 0.0
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_high"
+      },
+      "tags": [
+        "SEMANTIC_HIGH_MATCH",
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "Jszf4et48m",
+        "title": "ToddlerDiffusion: Interactive Structured Image Generation with Cascaded Schrödinger Bridge",
+        "abstract": "Diffusion models break down the challenging task of generating data from high-dimensional distributions into a series of easier denoising steps. Inspired by this paradigm, we propose a novel approach that extends the diffusion framework into modality space, decomposing the complex task of RGB image generation into simpler, interpretable stages. Our method, termed {\\papernameAbbrev}, cascades modality-specific models, each responsible for generating an intermediate representation, such as contours, palettes, and detailed textures, ultimately culminating in a high-quality RGB image.\nInstead of relying on the naive LDM concatenation conditioning mechanism to connect the different stages together, we employ Schr\\\"odinger Bridge to determine the optimal transport between different modalities.\nAlthough employing a cascaded pipeline introduces more stages, which could lead to a more complex architecture, each stage is meticulously formulated for efficiency and accuracy, surpassing Stable-Diffusion (LDM) performance.\nModality composition not only enhances overall performance but enables emerging proprieties such as consistent editing, interaction capabilities, high-level interpretability, and faster convergence and sampling rate. \nExtensive experiments on diverse datasets, including LSUN-Churches, ImageNet, CelebHQ, and LAION-Art, demonstrate the efficacy of our approach, consistently outperforming state-of-the-art methods.\nFor instance, {\\papernameAbbrev} achieves notable efficiency, matching LDM performance on LSUN-Churches while operating 2$\\times$ faster with a 3$\\times$ smaller architecture.\nThe project website is available at:\n\\href{https://toddlerdiffusion.github.io/website/}{$https://toddlerdiffusion.github.io/website/$}",
+        "authors": [],
+        "published": "2025-05-01",
+        "categories": [
+          "ICLR 2025"
+        ],
+        "pdf_url": "https://openreview.net/pdf?id=Jszf4et48m",
+        "github_url": null,
+        "semantic_score": 0.5829070806503296,
+        "keyword_score": 0,
+        "combined_score": 0.17487212419509887
+      }
+    },
+    {
+      "rank": 9,
+      "paper_id": "E77uvbOTtp",
+      "title": "CFG++: Manifold-constrained Classifier Free Guidance for Diffusion Models",
+      "authors": [],
+      "published": "2025-05-01",
+      "score": {
+        "final": 0.7284201060931266,
+        "breakdown": {
+          "semantic_relevance": 0.7260941054143756,
+          "must_keywords": 0.25,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.17795937234406978,
+          "practicality": 0,
+          "keyword_score": 0.3333333333333333
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_high"
+      },
+      "tags": [
+        "SEMANTIC_HIGH_MATCH",
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "E77uvbOTtp",
+        "title": "CFG++: Manifold-constrained Classifier Free Guidance for Diffusion Models",
+        "abstract": "Classifier-free guidance (CFG) is a fundamental tool in modern diffusion models for text-guided generation. Although effective, CFG has notable drawbacks. For instance, DDIM with CFG lacks invertibility, complicating image editing; furthermore, high guidance scales, essential for high-quality outputs, frequently result in issues like mode collapse. Contrary to the widespread belief that these are inherent limitations of diffusion models, this paper reveals that the problems actually stem from the off-manifold phenomenon associated with CFG, rather than the diffusion models themselves. More specifically, inspired by the recent advancements of diffusion model-based inverse problem solvers (DIS),  we reformulate text-guidance as an inverse problem with a text-conditioned score matching loss and develop CFG++, a novel approach that tackles the off-manifold challenges inherent in traditional CFG. CFG++ features a surprisingly simple fix to CFG, yet it offers significant improvements, including better sample quality for text-to-image generation, invertibility, smaller guidance scales,  reduced etc. Furthermore, CFG++ enables seamless interpolation between unconditional and conditional sampling at lower guidance scales, consistently outperforming traditional CFG at all scales. Moreover, CFG++ can be easily integrated into the high-order diffusion solvers and naturally extends to distilled diffusion models. Experimental results confirm that our method significantly enhances performance in text-to-image generation, DDIM inversion, editing, and solving inverse problems, suggesting a wide-ranging impact and potential applications in various fields that utilize text guidance. Project Page: https://cfgpp-diffusion.github.io/anon",
+        "authors": [],
+        "published": "2025-05-01",
+        "categories": [
+          "ICLR 2025"
+        ],
+        "pdf_url": "https://openreview.net/pdf?id=E77uvbOTtp",
+        "github_url": null,
+        "semantic_score": 0.5483430624008179,
+        "keyword_score": 0.3333333333333333,
+        "combined_score": 0.39783625205357864
+      }
+    },
+    {
+      "rank": 10,
+      "paper_id": "U1DjXQeJRx",
+      "title": "Poisson-Dirac Neural Networks for Modeling Coupled Dynamical Systems across Domains",
+      "authors": [],
+      "published": "2025-05-01",
+      "score": {
+        "final": 0.7257913256425457,
+        "breakdown": {
+          "semantic_relevance": 0.7173315039124394,
+          "must_keywords": 0.25,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.17795937234406978,
+          "practicality": 0,
+          "keyword_score": 0.0
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_high"
+      },
+      "tags": [
+        "SEMANTIC_HIGH_MATCH",
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "U1DjXQeJRx",
+        "title": "Poisson-Dirac Neural Networks for Modeling Coupled Dynamical Systems across Domains",
+        "abstract": "Deep learning has achieved great success in modeling dynamical systems, providing data-driven simulators to predict complex phenomena, even without known governing equations. However, existing models have two major limitations: their narrow focus on mechanical systems and their tendency to treat systems as monolithic. These limitations reduce their applicability to dynamical systems in other domains, such as electrical and hydraulic systems, and to coupled systems. To address these limitations, we propose Poisson-Dirac Neural Networks (PoDiNNs), a novel framework based on the Dirac structure that unifies the port-Hamiltonian and Poisson formulations from geometric mechanics. This framework enables a unified representation of various dynamical systems across multiple domains as well as their interactions and degeneracies arising from couplings. Our experiments demonstrate that PoDiNNs offer improved accuracy and interpretability in modeling unknown coupled dynamical systems from data.",
+        "authors": [],
+        "published": "2025-05-01",
+        "categories": [
+          "ICLR 2025"
+        ],
+        "pdf_url": "https://openreview.net/pdf?id=U1DjXQeJRx",
+        "github_url": null,
+        "semantic_score": 0.5601217746734619,
+        "keyword_score": 0,
+        "combined_score": 0.16803653240203856
+      }
+    }
+  ],
+  "filtered_papers": [],
+  "contrastive_paper": null,
+  "comparison_notes": [],
+  "output_path": "/data/output/rankings/2026-01-30_2026-01-30T06-50-44_ranked.json",
+  "generated_at": "2026-01-30T06:50:44.850769"
+}

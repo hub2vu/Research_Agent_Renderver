@@ -1,0 +1,19 @@
+{
+  "job_id": "job_20260130_110354_444f1629",
+  "goal": "understanding recent trends of interpolation",
+  "papers": [
+    "tyEyYT267x_Block Diffusion_ Interpolating Between Autoregressive and Diffusion Language Models.pdf",
+    "k03mB41vyM_Identifiable Exchangeable Mechanisms for Causal Structure and Representation Learning.pdf",
+    "n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond.pdf"
+  ],
+  "analysis_mode": "quick",
+  "status": "completed",
+  "current_paper_idx": 2,
+  "current_step": "Sending notifications...",
+  "progress_percent": 100.0,
+  "paper_results_count": 3,
+  "reasoning_log_count": 13,
+  "errors": [],
+  "created_at": "2026-01-30T11:03:54.935652",
+  "updated_at": "2026-01-30T11:09:08.411599"
+}

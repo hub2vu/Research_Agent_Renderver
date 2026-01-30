@@ -1,0 +1,184 @@
+{
+  "notes": [
+    {
+      "id": "note_1769780601898_22hqkc",
+      "title": "Abstract",
+      "pages": {
+        "manual": "",
+        "translation": "초록  \n볼츠만 생성기는 정규화 흐름(Normalizing Flows)과 중요도 가중치(importance weighting)를 사용하여 분자 시스템의 평형 분포에서 샘플을 생성하기 위한 유망한 기계 학습 도구로 부상하였습니다. 최근 흐름 일치(Flow Matching)는 연속 정규화 흐름(Continuous Normalizing Flows, CNFs)의 속도를 높이고, 더 복잡한 분자 시스템으로 확장하며, 흐름 적분 경로의 길이를 최소화하는 데 도움을 주었습니다. 우리는 목표 에너지가 알려진 설정에서 흐름 일치에 의해 초기 훈련된 CNFs를 미세 조정하기 위해 경로 기울기(Path Gradients)를 사용하는 이점을 조사합니다. 우리의 실험은 이 하이브리드 접근 방식이 동일한 모델을 사용하고 유사한 계산 예산으로 추가 샘플링 없이도 분자 시스템의 샘플링 효율성을 최대 세 배 증가시킨다는 것을 보여줍니다. 또한, 미세 조정 동안 흐름 경로의 길이를 측정함으로써 경로 기울기가 학습된 흐름 구조를 크게 보존한다는 것을 보여줍니다.",
+        "analysis": "- **3줄 핵심 요약**: \n  - Boltzmann Generators는 Normalizing Flows와 중요도 가중치를 사용하여 분자 시스템의 평형 분포에서 샘플을 생성하는 데 유망한 도구로 떠오르고 있습니다.\n  - Flow Matching은 연속적 Normalizing Flows(CNFs)의 속도를 높이고, 더 복잡한 분자 시스템으로 확장하며, 흐름 통합 경로의 길이를 최소화하는 데 기여했습니다.\n  - Path Gradients를 사용하여 Flow Matching으로 초기 훈련된 CNFs를 미세 조정하면, 동일한 모델과 유사한 계산 예산을 사용하면서도 최대 세 배의 샘플링 효율성을 얻을 수 있습니다.\n\n- **상세 해설**: \n  - 이 논문은 Boltzmann Generators라는 기계 학습 도구를 통해 분자 시스템의 평형 분포에서 샘플을 생성하는 방법을 다룹니다. Boltzmann Generators는 Normalizing Flows와 중요도 가중치를 사용하여 이러한 샘플을 생성하는데, 이는 전통적인 샘플링 방법보다 더 효율적입니다.\n  - 최근 Flow Matching 기법은 연속적 Normalizing Flows(CNFs)의 속도를 높이고, 더 복잡한 분자 시스템으로의 확장을 가능하게 하며, 흐름 통합 경로의 길이를 줄이는 데 중요한 역할을 했습니다. 이는 복잡한 시스템에서의 샘플링을 더 빠르고 효율적으로 만들어 줍니다.\n  - 이 연구에서는 Flow Matching으로 초기 훈련된 CNFs를 Path Gradients를 사용하여 미세 조정하는 방법을 탐구합니다. Path Gradients는 목표 에너지가 알려진 상황에서 CNFs의 성능을 향상시키며, 실험 결과에 따르면 이러한 하이브리드 접근 방식은 동일한 모델과 계산 예산을 사용하면서도 최대 세 배의 샘플링 효율성을 달성할 수 있음을 보여줍니다. 또한, 미세 조정 과정에서 흐름 경로의 길이를 측정하여 Path Gradients가 학습된 흐름의 구조를 크게 보존함을 확인했습니다.\n\n- **주요 개념/용어**: \n  - **Boltzmann Generators**: 분자 시스템의 평형 분포에서 샘플을 생성하기 위해 Normalizing Flows와 중요도 가중치를 사용하는 기계 학습 도구입니다.\n  - **Normalizing Flows**: 복잡한 분포를 간단한 분포로 변환하여 샘플링을 용이하게 하는 기계 학습 모델입니다.\n  - **Flow Matching**: 연속적 Normalizing Flows의 훈련 속도를 높이고, 복잡한 시스템으로의 확장을 가능하게 하며, 흐름 통합 경로의 길이를 줄이는 기법입니다.\n  - **Path Gradients**: 미세 조정 과정에서 사용되는 기법으로, 목표 에너지가 알려진 상황에서 CNFs의 성능을 향상시키는 데 사용됩니다."
+      },
+      "activePage": "analysis",
+      "isOpen": true,
+      "sectionBoundary": {
+        "startIndex": 133,
+        "endIndex": 1078,
+        "sourceFile": "json"
+      }
+    },
+    {
+      "id": "note_1769780601898_7bamii",
+      "title": "1 Introduction",
+      "pages": {
+        "manual": "",
+        "translation": "1  \n소개  \n생성 모델은 GAN (Goodfellow et al., 2014)과 VAE (Kingma & Welling, 2014)에서부터 정규화 흐름 (Normalizing Flows) (Rezende & Mohamed, 2015; Papamakarios et al., 2019) 및 확산 모델 (Diffusion Models) (Ho et al., 2020; Song et al., 2021)까지 최근 몇 년 동안 빠르게 발전해 왔으며, 미디어 생성 및 시뮬레이션 기반 추론과 같은 과학적 응용 분야에서의 발전을 이끌어 왔습니다. 과학적 워크플로우는 종종 도메인 특정 대칭을 포함하지만, 중요한 자원인 비정규화된 목표 밀도를 충분히 활용하지 않는 경향이 있습니다.  \n볼츠만 생성기 (Boltzmann Generators) (Noé et al., 2019)는 일반적으로 목표 분포로부터의 기울기를 활용하여 자기 샘플링 (Boyda et al., 2021; Nicoli et al., 2020; Invernizzi et al., 2022; Midgley et al., 2023) 또는 기울기 정보를 포함하지 않고 목표에서 샘플을 사용하는 방식으로 훈련됩니다 (Nicoli et al., 2023; Klein et al., 2023b; Draxler et al., 2024; Klein & Noé, 2024). 그러나 이러한 접근 방식은 각각 훈련 신호의 보완적인 부분인 데이터 또는 그 지역 기하학을 무시합니다. 특히, 목표 샘플에서 평가된 1차 정보는 훈련 개선의 잠재력에도 불구하고 여전히 충분히 활용되지 않고 있습니다. 본 연구에서는 흐름 일치를 통해 처음 훈련된 연속 정규화 흐름 (Continuous Normalizing Flows)을 목표 분포의 샘플에 대해 경로 기울기 (Path Gradients) (Roeder et al., 2017; Vaitl, 2024)를 사용하여 미세 조정함으로써 이 격차를 해소합니다. 또한, 우리의 접근 방식은 훈련 샘플당 목표 기울기를 한 번만 계산하면 되므로, 자기 샘플링을 위한 새로 생성된 샘플에 대해 기울기를 반복적으로 계산하는 데 드는 잠재적으로 높은 비용을 피할 수 있습니다.  \n흐름 일치 (Flow Matching)는 CNF 훈련을 위한 방법으로, 목표 샘플을 기반으로 합니다. 이는 확산 모델 훈련과 밀접하게 관련되어 있으며, 시뮬레이션 없는 훈련과 강력한 경험적 성능 덕분에 최근 주목받고 있습니다. 이는 생성 모델링 벤치마크 (Lipman et al., 2023; Esser et al., 2024; Jin et al., 2024)와 과학적 분야 (Stark et al., 2024; Jing et al., 2024; Klein & Noé, 2024) 모두에서 그렇습니다. 여기에서 우리는 목표 분포의 샘플에 경로 기울기를 포함함으로써 흐름 일치 이후 CNF 성능을 향상시키는 방법을 조사합니다.  \n경로 기울기는 낮은 분산의 기울기 추정기로, 최적에 가까운 강력한 이론적 보장을 가지고 있으며 (Roeder et al., 2017), 변분 분포와 목표 분포 모두에서 기울기 정보를 통합합니다 (Vaitl et al., 2024). 이들은 격자 게이지 이론 (Lattice Gauge Theory) 분야에서 정규화 흐름 훈련에 채택되었고 (Bacchio et al., 2023; Kanwar, 2024; Abbott et al., 2023), 변분 추론 (Agrawal & Domke, 2024; Andrade, 2023)에서도 사용되었지만, 생화학 분야에서는 여전히 충분히 활용되지 않고 있습니다. 본 연구에서는 볼츠만 생성기에 대한 경로 기울기 미세 조정의 잠재력을 탐구하며 유망한 결과를 얻었습니다. 이는 경로 기울기로 훈련하는 것이 반복당 수치적으로 훨씬 느리지만, 추가 정보를 활용하고 낮은 분산을 통해 미세 조정 시 동일한 계산 제약 내에서 흐름 일치를 초월할 수 있음을 나타냅니다.  \n우리는 다음과 같은 주요 기여를 합니다:  \n• 우리는 사전 훈련을 위한 흐름 일치와 미세 조정을 위한 경로 기울기를 사용한 하이브리드 훈련을 제안합니다. 우리는 데이터를 생성하는 데 이미 필요했던 원래의 힘 레이블 데이터 외에 추가 샘플을 요구하지 않습니다. 빠른 훈련을 보장하기 위해, 우리는 경로 기울기를 사용하여 전방 KL을 최적화하고 증강된 공액 방법 (Vaitl et al., 2022b)을 활용한 최초의 연구입니다.  \n• 우리는 많은 입자 시스템과 알라닌 이펩타이드에 대해 이 미세 조정 접근 방식이 동일한 계산 예산 내에서 중요 샘플링 효율성을 세 배로 증가시킬 수 있음을 보여줍니다.  \n• 우리는 흐름 일치 동안 훈련된 속성에 대한 경로 기울기의 영향을 조사하며, 흐름 궤적 길이와 MSE 흐름 일치 손실이 미세 조정에 의해 대부분 영향을 받지 않음을 보여줍니다.  \n0.0  \n15.0  \n30.0  \n45.0  \n60.0  \n시간 [초]  \n0.0  \n0.2  \nKL(P|Q)  \n흐름 일치  \n경로 기울기  \n하이브리드  \n미세 조정 시작  \n목표  \n흐름 일치  0.067  \n경로 기울기  0.021  \n하이브리드   0.001  \n그림 1: 간단한 2D 가우시안 혼합 모델에서 CNF 훈련. 흐름 일치로 순수 훈련, 흐름 일치로 사전 훈련 및 경로 기울기로 미세 조정, 경로 기울기로 순수 훈련 간의 비교. 동일한 벽 시간에서 하이브리드 훈련이 전방 KL 발산 측면에서 가장 잘 수행되는 것을 볼 수 있습니다. 하단 행은 훈련 후 목표 및 최종 모델을 보여줍니다.",
+        "analysis": "- **3줄 핵심 요약**: \n  - 생성 모델은 최근 미디어 생성과 과학적 응용에서 크게 발전했습니다.\n  - Boltzmann Generators는 분자 시스템의 평형 분포 샘플링을 위한 도구로, 데이터나 그 지역적 기하학을 충분히 활용하지 못하는 한계를 가지고 있습니다.\n  - 이 연구는 Flow Matching으로 초기 훈련된 연속 정규화 흐름을 Path Gradients로 미세 조정하여 이러한 한계를 극복하고자 합니다.\n\n- **상세 해설**:\n  - **첫 번째 문단**: 생성 모델의 발전은 GANs, VAEs, Normalizing Flows, Diffusion Models와 같은 다양한 접근 방식을 통해 이루어졌으며, 이는 미디어 생성뿐만 아니라 과학적 응용, 특히 시뮬레이션 기반 추론에서도 중요한 역할을 하고 있습니다. 그러나 이러한 과학적 워크플로우는 종종 비정규화된 목표 밀도라는 중요한 자원을 충분히 활용하지 못하는 경향이 있습니다.\n  \n  - **두 번째 문단**: Boltzmann Generators는 분자 시스템의 평형 분포에서 샘플을 생성하기 위해 개발된 도구로, 주로 두 가지 방식으로 훈련됩니다. 하나는 목표 분포의 그래디언트를 활용하는 자기 샘플링 방식이고, 다른 하나는 그래디언트 정보를 포함하지 않고 목표 샘플을 사용하는 방식입니다. 그러나 이 두 접근법은 각각 훈련 신호의 보완적인 부분, 즉 데이터나 그 지역적 기하학을 무시하는 한계를 가지고 있습니다. 특히, 목표 샘플에서 평가된 1차 정보는 훈련을 개선할 잠재력이 있음에도 불구하고 충분히 활용되지 않고 있습니다.\n  \n  - **세 번째 문단**: 이 연구에서는 Flow Matching으로 초기 훈련된 연속 정규화 흐름을 Path Gradients를 사용하여 미세 조정함으로써 이러한 문제를 해결하고자 합니다. 이 접근법은 각 훈련 샘플에 대해 목표 그래디언트를 한 번만 계산하면 되므로, 새로운 샘플을 생성할 때마다 그래디언트를 반복적으로 계산해야 하는 높은 비용을 피할 수 있습니다.\n\n- **주요 개념/용어**:\n  - **생성 모델 (Generative Models)**: 데이터의 분포를 학습하여 새로운 데이터를 생성할 수 있는 모델입니다. GANs, VAEs, Normalizing Flows, Diffusion Models 등이 포함됩니다.\n  - **Boltzmann Generators**: 분자 시스템의 평형 분포에서 샘플을 생성하기 위해 개발된 생성 모델의 일종입니다.\n  - **Flow Matching**: 연속 정규화 흐름(CNF)을 훈련하는 방법으로, 목표 샘플을 기반으로 합니다.\n  - **Path Gradients**: 목표 분포와 변분 분포의 그래디언트 정보를 모두 포함하는 저분산 그래디언트 추정기입니다."
+      },
+      "activePage": "analysis",
+      "isOpen": true,
+      "sectionBoundary": {
+        "startIndex": 1078,
+        "endIndex": 5580,
+        "sourceFile": "json"
+      }
+    },
+    {
+      "id": "note_1769780601898_azok9d",
+      "title": "2 Method",
+      "pages": {
+        "manual": ""
+      },
+      "activePage": "manual",
+      "isOpen": true,
+      "sectionBoundary": {
+        "startIndex": 5580,
+        "endIndex": 5844,
+        "sourceFile": "json"
+      }
+    },
+    {
+      "id": "note_1769780601898_4dtqpx",
+      "title": "2.1 Boltzmann Generators",
+      "pages": {
+        "manual": "",
+        "analysis": "- **3줄 핵심 요약**:  \n  Boltzmann Generators는 분자 시스템의 평형 분포에서 샘플을 생성하는 기계 학습 도구로, Normalizing Flow를 사용하여 샘플링 분포를 학습합니다. 이 기법은 기존의 마르코프 체인 몬테카를로(MCMC)나 분자 동역학(MD) 시뮬레이션과 달리 독립적인 샘플을 직접 생성할 수 있습니다. Boltzmann Generators는 비편향 추정치를 제공하며, 중요도 샘플링을 통해 관측치를 추정할 수 있습니다.\n\n- **상세 해설**:  \n  Boltzmann Generators는 물리 시스템의 열평형 상태에서 상태의 확률을 설명하는 Boltzmann 분포로부터 샘플을 생성하는 것을 목표로 합니다. 이 분포는 에너지 함수 U(x)와 알 수 없는 정규화 상수 Z로 정의됩니다. 전통적인 샘플링 방법인 MCMC나 MD 시뮬레이션은 순차적으로 샘플을 생성하지만, Boltzmann Generators는 독립적인 샘플을 직접 생성할 수 있도록 설계되었습니다. 이는 Normalizing Flow를 사용하여 간단한 기본 분포에서 학습된 샘플링 분포 qθ로 매핑함으로써 이루어집니다. 이 방법은 Boltzmann 분포로부터의 비편향 추정치를 제공하며, 중요도 샘플링을 통해 관측치를 추정할 수 있습니다. 중요도 샘플링의 효율성은 상대적 유효 샘플 크기(ESS)를 통해 측정할 수 있으며, 이는 목표 분포에서 샘플링하는 효율성을 나타냅니다.\n\n- **주요 개념/용어**:  \n  - **Boltzmann Generators**: 분자 시스템의 평형 분포에서 샘플을 생성하기 위한 기계 학습 도구로, Normalizing Flow를 사용하여 샘플링 분포를 학습합니다.\n  - **Normalizing Flow**: 복잡한 분포를 학습하기 위해 간단한 기본 분포를 복잡한 목표 분포로 매핑하는 기법입니다.\n  - **중요도 샘플링(Importance Sampling)**: 목표 분포에서의 비편향 추정치를 얻기 위해 샘플링 분포를 사용하는 방법입니다.\n  - **상대적 유효 샘플 크기(Relative Effective Sampling Size, ESS)**: 중요도 샘플링의 효율성을 측정하는 지표로, 목표 분포에서 샘플링하는 효율성을 나타냅니다."
+      },
+      "activePage": "analysis",
+      "isOpen": true,
+      "sectionBoundary": {
+        "startIndex": 5844,
+        "endIndex": 8603,
+        "sourceFile": "json"
+      }
+    },
+    {
+      "id": "note_1769780601898_vw766q",
+      "title": "2.2 Continuous Normalizing Flows",
+      "pages": {
+        "manual": "",
+        "analysis": "- **3줄 핵심 요약**: \n  - Continuous Normalizing Flows(CNFs)는 연속적인 시간 변환을 통해 확률 분포를 모델링하는 방법입니다.\n  - Neural ODEs를 사용하여 벡터 필드를 정의하고, 이를 통해 확률 변화와 샘플링을 수행합니다.\n  - 이러한 방법은 복잡한 분자 시스템에 적용할 수 있으며, 메모리를 효율적으로 사용하여 확률 변화를 계산합니다.\n\n- **상세 해설**: \n  - 이 섹션에서는 Continuous Normalizing Flows(CNFs)의 기본 개념을 설명하고 있습니다. CNFs는 연속적인 시간 변환을 통해 확률 분포를 모델링하는 기법으로, 이는 Neural ODEs(Ordinary Differential Equations)를 사용하여 구현됩니다. Neural ODEs는 신경망으로 정의된 벡터 필드를 사용하여 연속적인 시간 변환을 매개변수화합니다.\n  \n  - 이러한 변환은 기본 분포에서 샘플을 생성하고, 그 샘플의 확률을 계산하는 과정을 포함합니다. 이를 위해, 기본 분포 q0(x0)에서 시작하여 변환 Tθ(x0)를 통해 새로운 분포 qθ를 얻습니다. 이 과정에서 확률의 변화는 ODE의 발산을 계산하여 얻을 수 있습니다.\n  \n  - CNFs의 장점 중 하나는 adjoint sensitivity method를 사용하여 메모리를 효율적으로 사용하면서도, 백프로파게이션과 유사한 방식으로 그래디언트를 계산할 수 있다는 점입니다. 이는 복잡한 분자 시스템에서도 CNFs를 적용할 수 있게 해줍니다.\n\n- **주요 개념/용어**:\n  - **Continuous Normalizing Flows(CNFs)**: 연속적인 시간 변환을 통해 확률 분포를 모델링하는 기법으로, Neural ODEs를 사용하여 구현됩니다.\n  - **Neural ODEs**: 신경망으로 정의된 벡터 필드를 사용하여 연속적인 시간 변환을 매개변수화하는 방법입니다.\n  - **Adjoint Sensitivity Method**: 메모리를 효율적으로 사용하면서도 그래디언트를 계산할 수 있는 방법으로, CNFs에서 사용됩니다.\n  - **벡터 필드(Vector Field)**: 공간의 각 점에 벡터를 대응시키는 함수로, CNFs에서는 확률 분포의 변화를 정의하는 데 사용됩니다."
+      },
+      "activePage": "analysis",
+      "isOpen": true,
+      "sectionBoundary": {
+        "startIndex": 8603,
+        "endIndex": 9856,
+        "sourceFile": "json"
+      }
+    },
+    {
+      "id": "note_1769780601898_8dgsr7",
+      "title": "2.3 Flow Matching",
+      "pages": {
+        "manual": "",
+        "analysis": "- **3줄 핵심 요약**: \n  - Flow Matching은 연속 정규화 흐름(CNF)을 훈련하는 방법으로, 목표 샘플을 기반으로 하며 시뮬레이션이 필요 없는 훈련과 강력한 경험적 성능 덕분에 주목받고 있습니다.\n  - 이 방법은 확산 모델 훈련과 유사하며, 과학적 영역에서 특히 유용하게 사용됩니다.\n  - Path Gradients를 목표 분포의 샘플에 적용하여 Flow Matching 이후 CNF의 성능을 향상시킬 수 있습니다.\n\n- **상세 해설**:\n  - **Flow Matching의 개요**: Flow Matching은 연속 정규화 흐름(CNF)을 훈련하기 위한 방법으로, 목표 분포의 샘플을 활용합니다. 이 방법은 시뮬레이션이 필요 없고, 강력한 경험적 성능을 보여주어 최근 주목받고 있습니다. 특히, 생성 모델링 벤치마크와 과학적 도메인에서 좋은 성과를 내고 있습니다.\n  \n  - **Flow Matching과 확산 모델의 관계**: Flow Matching은 확산 모델 훈련과 밀접한 관련이 있습니다. 확산 모델은 데이터의 변환 과정을 모델링하는 데 사용되며, Flow Matching은 이러한 변환 과정을 효과적으로 학습할 수 있도록 돕습니다.\n  \n  - **Path Gradients의 역할**: Path Gradients는 목표 분포의 샘플에 적용되어 CNF의 성능을 향상시킵니다. 이는 Flow Matching으로 초기 훈련된 CNF를 미세 조정하는 데 사용되며, 목표 분포와 변분 분포 모두에서의 기울기 정보를 통합하여 성능을 최적화합니다.\n\n- **주요 개념/용어**:\n  - **Flow Matching**: 목표 분포의 샘플을 사용하여 연속 정규화 흐름을 훈련하는 방법으로, 시뮬레이션이 필요 없는 훈련 방식입니다.\n  - **연속 정규화 흐름(CNF)**: 확률 분포를 변환하여 샘플링하는 기법으로, 연속적인 시간 변환을 통해 확률 밀도를 조정합니다.\n  - **Path Gradients**: 목표 분포와 변분 분포 모두에서 기울기 정보를 통합하여, 모델의 성능을 최적화하는 데 사용되는 저분산 기울기 추정기입니다.\n  - **확산 모델**: 데이터의 변환 과정을 모델링하여, 데이터의 생성 및 샘플링을 가능하게 하는 기법입니다."
+      },
+      "activePage": "analysis",
+      "isOpen": true,
+      "sectionBoundary": {
+        "startIndex": 9856,
+        "endIndex": 12226,
+        "sourceFile": "json"
+      }
+    },
+    {
+      "id": "note_1769780601898_7nhrpw",
+      "title": "2.4 Path Gradients",
+      "pages": {
+        "manual": "",
+        "analysis": "- **3줄 핵심 요약**: Path Gradients는 Flow Matching으로 초기 훈련된 연속 정규화 흐름(CNF)을 미세 조정하여 샘플링 효율성을 크게 향상시킵니다. 이 방법은 추가 샘플링 없이 동일한 모델과 유사한 계산 예산 내에서 수행됩니다. Path Gradients는 낮은 분산의 경사 추정기로, 최적점 근처에서 강력한 이론적 보장을 제공합니다.\n\n- **상세 해설**: \n  Path Gradients는 Flow Matching으로 초기 훈련된 CNF를 미세 조정하는 데 사용됩니다. Flow Matching은 목표 샘플을 기반으로 하며, 시뮬레이션이 필요 없는 훈련 방식으로 주목받고 있습니다. Path Gradients는 변분 분포와 목표 분포 모두에서 경사 정보를 통합하여 낮은 분산을 가진 경사 추정기를 제공합니다. 이는 특히 Lattice Gauge Theory와 변분 추론 분야에서 사용되었지만, 생화학 분야에서는 아직 많이 사용되지 않았습니다. 이 연구에서는 Path Gradients를 사용하여 Boltzmann Generators를 미세 조정하는 가능성을 탐구합니다. 비록 Path Gradients를 사용한 훈련이 반복당 속도가 느리지만, 추가 정보를 활용하고 낮은 분산을 가지기 때문에 동일한 계산 제약 내에서 Flow Matching을 능가할 수 있습니다. 이 연구는 Flow Matching으로 사전 훈련 후 Path Gradients로 미세 조정하는 하이브리드 훈련 방법을 제안하며, 추가 샘플이 필요하지 않습니다. 또한, Path Gradients를 사용한 미세 조정이 Flow Matching 동안 훈련된 속성, 즉 흐름 궤적 길이와 MSE Flow Matching 손실에 미치는 영향을 조사하여 대부분 영향을 받지 않음을 보여줍니다.\n\n- **주요 개념/용어**:\n  - **Path Gradients**: 변분 분포와 목표 분포에서 경사 정보를 통합하여 낮은 분산을 가지는 경사 추정기. 최적점 근처에서 강력한 이론적 보장을 제공.\n  - **Flow Matching**: 목표 샘플을 기반으로 CNF를 훈련하는 방법으로, 시뮬레이션이 필요 없는 훈련 방식.\n  - **Continuous Normalizing Flows (CNF)**: 연속적인 시간 변환을 통해 확률 분포를 모델링하는 기법. Neural ODEs를 사용하여 구현.\n  - **Boltzmann Generators**: 분자 시스템의 평형 분포에서 샘플을 생성하기 위해 정규화 흐름과 중요도 가중치를 사용하는 기계 학습 도구."
+      },
+      "activePage": "analysis",
+      "isOpen": true,
+      "sectionBoundary": {
+        "startIndex": 12226,
+        "endIndex": 16984,
+        "sourceFile": "json"
+      }
+    },
+    {
+      "id": "note_1769780601898_7tku1e",
+      "title": "3.00 MSE loss",
+      "pages": {
+        "manual": ""
+      },
+      "activePage": "manual",
+      "isOpen": true,
+      "sectionBoundary": {
+        "startIndex": 16984,
+        "endIndex": 9585,
+        "sourceFile": "json"
+      }
+    },
+    {
+      "id": "note_1769780601898_lq0prq",
+      "title": "3 Path Gradients and Flow Matching",
+      "pages": {
+        "manual": "",
+        "analysis": "- **3줄 핵심 요약**:\n  1. 이 연구는 Flow Matching을 통한 사전 훈련과 Path Gradients를 활용한 미세 조정을 결합한 하이브리드 학습 방법을 제안합니다.\n  2. 이 방법은 추가적인 샘플 없이도 중요도 샘플링 효율성을 세 배로 증가시킬 수 있습니다.\n  3. Path Gradients는 Flow Matching으로 학습된 특성에 거의 영향을 미치지 않으며, 훈련 속도를 빠르게 유지합니다.\n\n- **상세 해설**:\n  이 섹션에서는 Flow Matching과 Path Gradients를 결합한 하이브리드 학습 방법을 소개합니다. Flow Matching은 사전 훈련 단계에서 사용되며, 이는 모델이 목표 분포에 대한 초기 근사치를 학습하는 데 도움을 줍니다. 그런 다음, Path Gradients를 사용하여 모델을 미세 조정합니다. Path Gradients는 추가적인 샘플을 요구하지 않으며, 이미 존재하는 힘이 라벨링된 데이터를 활용하여 훈련을 진행합니다. 이는 훈련 속도를 유지하면서도 효율성을 높이는 데 기여합니다. 연구 결과, 이 방법은 여러 입자 시스템과 알라닌 다이펩타이드와 같은 복잡한 시스템에서 중요도 샘플링 효율성을 세 배로 증가시킬 수 있음을 보여줍니다. 또한, Path Gradients가 Flow Matching으로 학습된 특성, 특히 흐름 궤적의 길이와 MSE Flow Matching 손실에 거의 영향을 미치지 않음을 확인했습니다. 이는 미세 조정이 모델의 기존 구조를 크게 변경하지 않으면서도 성능을 향상시킬 수 있음을 시사합니다.\n\n- **주요 개념/용어**:\n  - **Flow Matching**: 목표 분포의 샘플을 사용하여 연속 정규화 흐름(CNF)을 훈련하는 방법으로, 시뮬레이션 없이 훈련할 수 있는 장점이 있습니다.\n  - **Path Gradients**: 변분 분포와 목표 분포 모두의 기울기 정보를 활용하는 저분산 기울기 추정기로, 최적점 근처에서 강력한 이론적 보장을 제공합니다.\n  - **중요도 샘플링(Importance Sampling)**: 목표 분포에서의 기대값을 추정하기 위해 샘플링 분포를 사용하는 방법으로, 샘플의 가중치를 조정하여 추정의 정확성을 높입니다.\n  - **알라닌 다이펩타이드**: 생화학에서 자주 연구되는 작은 펩타이드로, 분자 동역학 시뮬레이션에서 자주 사용됩니다."
+      },
+      "activePage": "analysis",
+      "isOpen": true,
+      "sectionBoundary": {
+        "startIndex": 9585,
+        "endIndex": 21987,
+        "sourceFile": "json"
+      }
+    },
+    {
+      "id": "note_1769780601898_7mgwu3",
+      "title": "4 Experiments",
+      "pages": {
+        "manual": "",
+        "analysis": "- **3줄 핵심 요약**: \n  - 실험 결과, Flow Matching으로 사전 훈련된 CNFs를 Path Gradients로 미세 조정하면 분자 시스템에서 샘플링 효율성이 최대 세 배 증가합니다.\n  - 이 접근법은 동일한 모델과 유사한 계산 예산을 사용하면서 추가적인 샘플링 없이도 가능합니다.\n  - Path Gradients는 미세 조정 동안 흐름의 학습된 구조를 대부분 유지합니다.\n\n- **상세 해설**: \n  - 이 섹션에서는 Flow Matching으로 사전 훈련된 연속 정규화 흐름(CNFs)을 Path Gradients로 미세 조정하는 실험 결과를 다룹니다. 이 방법은 분자 시스템에서 샘플링 효율성을 최대 세 배까지 증가시키는 것으로 나타났습니다. 이는 동일한 모델과 유사한 계산 예산을 사용하면서도 추가적인 샘플링이 필요하지 않다는 점에서 매우 효율적입니다.\n  - 실험에서는 흐름 궤적의 길이를 측정하여 Path Gradients가 미세 조정 중에도 학습된 흐름의 구조를 대부분 유지한다는 것을 보여줍니다. 이는 Path Gradients가 기존의 Flow Matching에서 학습된 정보를 손상시키지 않으면서도 성능을 향상시킬 수 있음을 의미합니다.\n  - 이러한 결과는 Path Gradients가 낮은 분산의 경사 추정기를 사용하여 최적에 가까운 이론적 보장을 제공하며, 변분 분포와 목표 분포 모두에서 경사 정보를 통합한다는 점에서 그 유용성을 입증합니다.\n\n- **주요 개념/용어**:\n  - **Flow Matching**: 연속 정규화 흐름(CNF)을 훈련하는 방법으로, 목표 샘플을 기반으로 하며 시뮬레이션 없는 훈련과 강력한 경험적 성능으로 주목받고 있습니다.\n  - **Path Gradients**: 낮은 분산의 경사 추정기로, 변분 분포와 목표 분포 모두에서 경사 정보를 통합하여 최적에 가까운 이론적 보장을 제공합니다.\n  - **샘플링 효율성**: 목표 분포에서 얼마나 효율적으로 샘플링할 수 있는지를 나타내며, 중요 샘플링의 효율성을 평가하는 척도입니다."
+      },
+      "activePage": "analysis",
+      "isOpen": true,
+      "sectionBoundary": {
+        "startIndex": 21987,
+        "endIndex": 30325,
+        "sourceFile": "json"
+      }
+    },
+    {
+      "id": "note_1769780601898_umlryv",
+      "title": "5 Discussion",
+      "pages": {
+        "manual": "",
+        "analysis": "- **3줄 핵심 요약**: \n  - 이 논문에서는 Flow Matching으로 초기 훈련된 연속 정규화 흐름(CNF)을 Path Gradients로 미세 조정하는 방법을 제안합니다.\n  - 이 하이브리드 접근법은 분자 시스템의 샘플링 효율성을 최대 세 배까지 증가시킬 수 있습니다.\n  - Path Gradients는 흐름의 구조를 보존하면서도 추가적인 샘플링 없이 동일한 모델과 유사한 계산 예산으로 효율성을 높입니다.\n\n- **상세 해설**: \n  - 이 논문은 Boltzmann Generators를 사용하여 분자 시스템의 평형 분포에서 샘플을 생성하는 방법을 다룹니다. 특히, Flow Matching을 통해 초기 훈련된 연속 정규화 흐름(CNF)을 Path Gradients로 미세 조정하는 방법을 탐구합니다. \n  - Flow Matching은 CNF의 훈련을 가속화하고 더 복잡한 분자 시스템으로 확장할 수 있게 하며, 흐름 통합 궤적의 길이를 최소화하는 데 도움을 줍니다. \n  - Path Gradients는 낮은 분산의 경사 추정기로, 최적에 가까운 이론적 보장을 제공하며, 변분 분포와 목표 분포 모두의 경사 정보를 통합합니다. 이 방법은 특히 생화학에서 아직 충분히 활용되지 않았습니다.\n  - Path Gradients를 사용한 미세 조정은 초기 Flow Matching 훈련에서 학습된 흐름의 구조를 크게 보존하면서도 샘플링 효율성을 높이는 데 기여합니다. 이는 추가적인 샘플링 없이 동일한 모델과 유사한 계산 예산으로 이루어집니다.\n\n- **주요 개념/용어**:\n  - **Boltzmann Generators**: 분자 시스템의 평형 분포에서 샘플을 생성하기 위해 Normalizing Flows와 중요도 가중치를 사용하는 기계 학습 도구.\n  - **Continuous Normalizing Flows (CNFs)**: 연속적인 시간 변환을 통해 확률 분포를 모델링하는 방법으로, Neural ODEs를 사용하여 구현됩니다.\n  - **Flow Matching**: 목표 샘플을 기반으로 CNF를 훈련하는 방법으로, 시뮬레이션 없이 강력한 성능을 보입니다.\n  - **Path Gradients**: 낮은 분산의 경사 추정기로, 변분 분포와 목표 분포의 경사 정보를 통합하여 최적화하는 방법."
+      },
+      "activePage": "analysis",
+      "isOpen": true,
+      "sectionBoundary": {
+        "startIndex": 30325,
+        "endIndex": 32944,
+        "sourceFile": "json"
+      }
+    },
+    {
+      "id": "note_1769780601898_w52rbr",
+      "title": "Acknowledgements",
+      "pages": {
+        "manual": ""
+      },
+      "activePage": "manual",
+      "isOpen": true,
+      "sectionBoundary": {
+        "startIndex": 32944,
+        "endIndex": 33147,
+        "sourceFile": "json"
+      }
+    }
+  ],
+  "updated_at": "2026-01-30T13:47:53.695763"
+}

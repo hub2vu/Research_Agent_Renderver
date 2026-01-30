@@ -1,0 +1,472 @@
+{
+  "success": true,
+  "error": null,
+  "summary": {
+    "input_count": 99,
+    "filtered_count": 0,
+    "scored_count": 99,
+    "output_count": 10,
+    "purpose": "general",
+    "ranking_mode": "balanced",
+    "profile_used": "users/profile.json",
+    "llm_verification_used": false,
+    "llm_calls_made": 0
+  },
+  "ranked_papers": [
+    {
+      "rank": 1,
+      "paper_id": "nT2u0M0nf8",
+      "title": "CAMEx: Curvature-aware Merging of Experts",
+      "authors": [],
+      "published": "2025-05-01",
+      "score": {
+        "final": 0.7555918744688139,
+        "breakdown": {
+          "semantic_relevance": 0.9,
+          "must_keywords": 0,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.17795937234406978,
+          "practicality": 0,
+          "keyword_score": 0.3333333333333333
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding+llm"
+      },
+      "tags": [
+        "SEMANTIC_HIGH_MATCH",
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "nT2u0M0nf8",
+        "title": "CAMEx: Curvature-aware Merging of Experts",
+        "abstract": "Existing methods for merging experts during model training and fine-tuning predominantly rely on Euclidean geometry, which assumes a flat parameter space. This assumption can limit the model's generalization ability, especially during the pre-training phase, where the parameter manifold might exhibit more complex curvature. Curvature-aware merging methods typically require additional information and computational resources to approximate the Fisher Information Matrix, adding memory overhead. In this paper, we introduce CAMEx (Curvature-Aware Merging of Experts), a novel expert merging protocol that incorporates natural gradients to account for the non-Euclidean curvature of the parameter manifold. By leveraging natural gradients, CAMEx adapts more effectively to the structure of the parameter space, improving alignment between model updates and the manifold's geometry. This approach enhances both pre-training and fine-tuning, resulting in better optimization trajectories and improved generalization without the substantial memory overhead typically associated with curvature-aware methods. Our contributions are threefold: (1) CAMEx significantly outperforms traditional Euclidean-based expert merging techniques across various natural language processing tasks, leading to enhanced performance during pre-training and fine-tuning; (2) we introduce a dynamic merging architecture that optimizes resource utilization, achieving high performance while reducing computational costs, facilitating efficient scaling of large language models; and (3) we provide both theoretical and empirical evidence to demonstrate the efficiency of our proposed method. The code is publicly available at: https://github.com/kpup1710/CAMEx.",
+        "authors": [],
+        "published": "2025-05-01",
+        "categories": [
+          "ICLR 2025"
+        ],
+        "pdf_url": "https://openreview.net/pdf?id=nT2u0M0nf8",
+        "github_url": null,
+        "semantic_score": 0.6561657190322876,
+        "keyword_score": 0.3333333333333333,
+        "combined_score": 0.43018304904301957
+      }
+    },
+    {
+      "rank": 2,
+      "paper_id": "vQhn4wrQ6j",
+      "title": "Layer Swapping for Zero-Shot Cross-Lingual Transfer in Large Language Models",
+      "authors": [],
+      "published": "2025-05-01",
+      "score": {
+        "final": 0.750591874468814,
+        "breakdown": {
+          "semantic_relevance": 0.8,
+          "must_keywords": 0.25,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.17795937234406978,
+          "practicality": 0,
+          "keyword_score": 0.3333333333333333
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding+llm"
+      },
+      "tags": [
+        "SEMANTIC_HIGH_MATCH",
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "vQhn4wrQ6j",
+        "title": "Layer Swapping for Zero-Shot Cross-Lingual Transfer in Large Language Models",
+        "abstract": "Model merging, such as model souping, is the practice of combining different models with the same architecture together without further training. In this work, we present a model merging methodology that addresses the difficulty of fine-tuning Large Language Models (LLMs) for target tasks in non-English languages, where task-specific data is often unavailable. We focus on mathematical reasoning and without in-language math data, facilitate cross-lingual transfer by composing language and math capabilities. Starting from the same pretrained model, we fine-tune separate \"experts\" on math instruction data in English and on generic instruction data in the target language. We then replace the top and bottom transformer layers of the math expert directly with layers from the language expert, which consequently enhances math performance in the target language. The resulting merged models outperform the individual experts and other merging methods on the math benchmark, MGSM, by 10% across four major languages where math instruction data is scarce. In addition, this layer swapping is simple, inexpensive, and intuitive, as it is based on an interpretative analysis of the most important parameter changes during the fine-tuning of each expert. The ability to successfully re-compose LLMs for cross-lingual transfer in this manner opens up future possibilities to combine model expertise, create modular solutions, and transfer reasoning capabilities across languages all post hoc.",
+        "authors": [],
+        "published": "2025-05-01",
+        "categories": [
+          "ICLR 2025"
+        ],
+        "pdf_url": "https://openreview.net/pdf?id=vQhn4wrQ6j",
+        "github_url": null,
+        "semantic_score": 0.6703296899795532,
+        "keyword_score": 0.3333333333333333,
+        "combined_score": 0.4344322403271993
+      }
+    },
+    {
+      "rank": 3,
+      "paper_id": "j6fsbpAllN",
+      "title": "Merging LoRAs like Playing LEGO: Pushing the Modularity of LoRA to Extremes Through Rank-Wise Clustering",
+      "authors": [],
+      "published": "2025-05-01",
+      "score": {
+        "final": 0.7255918744688139,
+        "breakdown": {
+          "semantic_relevance": 0.8,
+          "must_keywords": 0,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.17795937234406978,
+          "practicality": 0,
+          "keyword_score": 0.39999999999999997
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding+llm"
+      },
+      "tags": [
+        "SEMANTIC_HIGH_MATCH",
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "j6fsbpAllN",
+        "title": "Merging LoRAs like Playing LEGO: Pushing the Modularity of LoRA to Extremes Through Rank-Wise Clustering",
+        "abstract": "Low-Rank Adaptation (LoRA) has emerged as a popular technique for fine-tuning large language models (LLMs) to various domains due to its modular design and widespread availability on platforms like Huggingface. This modularity has sparked interest in combining multiple LoRAs to significantly enhance LLM capabilities. However, existing methods for LoRA composition primarily focus on task-specific adaptations that require additional training, and current model merging techniques often fail to fully leverage LoRA's modular nature, leading to parameter interference and performance degradation.\nIn this paper, we explore the possibility of disassembling and reassembling multiple LoRAs at a finer granularity, much like assembling LEGO blocks. We introduce the concept of Minimal Semantic Units (MSUs), where the parameters corresponding to each rank in LoRA function as independent units. These MSUs exhibit properties such as permutation invariance and concatenation-summation equivalence, allowing for flexible combinations to form new LoRAs. Building on these insights, we propose the LoRA-LEGO framework. This framework conducts rank-wise parameter clustering by grouping MSUs from different LoRAs into $k$ clusters. The centroid of each cluster serves as a representative MSU, enabling the assembly of a merged LoRA with an adjusted rank of $k$. Additionally, we apply a dual reweighting strategy to optimize the scale of the merged LoRA. Experiments across various benchmarks demonstrate that our method outperforms existing approaches in LoRA merging.",
+        "authors": [],
+        "published": "2025-05-01",
+        "categories": [
+          "ICLR 2025"
+        ],
+        "pdf_url": "https://openreview.net/pdf?id=j6fsbpAllN",
+        "github_url": null,
+        "semantic_score": 0.6436734199523926,
+        "keyword_score": 0.39999999999999997,
+        "combined_score": 0.4731020259857177
+      }
+    },
+    {
+      "rank": 4,
+      "paper_id": "XoYdD3m0mv",
+      "title": "Deep Linear Probe Generators for Weight Space Learning",
+      "authors": [],
+      "published": "2025-05-01",
+      "score": {
+        "final": 0.7255918744688139,
+        "breakdown": {
+          "semantic_relevance": 0.8,
+          "must_keywords": 0,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.17795937234406978,
+          "practicality": 0,
+          "keyword_score": 0.3333333333333333
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding+llm"
+      },
+      "tags": [
+        "SEMANTIC_HIGH_MATCH",
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "XoYdD3m0mv",
+        "title": "Deep Linear Probe Generators for Weight Space Learning",
+        "abstract": "Weight space learning aims to extract information about a neural network, such as its training dataset or generalization error. Recent approaches learn directly from model weights, but this presents many challenges as weights are high-dimensional and include permutation symmetries between neurons. An alternative approach, Probing, represents a model by passing a set of learned inputs (probes) through the model, and training a predictor on top of the corresponding outputs. Although probing is typically not used as a stand alone approach, our preliminary experiment found that a vanilla probing baseline worked surprisingly well. However, we discover that current probe learning strategies are ineffective. We therefore propose Deep Linear Probe Generators (ProbeGen), a simple and effective modification to probing approaches. ProbeGen adds a shared generator module with a deep linear architecture, providing an inductive bias towards structured probes thus reducing overfitting. While simple, ProbeGen performs significantly better than the state-of-the-art and is very efficient, requiring between 30 to 1000 times fewer FLOPs than other top approaches.",
+        "authors": [],
+        "published": "2025-05-01",
+        "categories": [
+          "ICLR 2025"
+        ],
+        "pdf_url": "https://openreview.net/pdf?id=XoYdD3m0mv",
+        "github_url": null,
+        "semantic_score": 0.6623585224151611,
+        "keyword_score": 0.3333333333333333,
+        "combined_score": 0.43204089005788165
+      }
+    },
+    {
+      "rank": 5,
+      "paper_id": "lZNb1CVm5O",
+      "title": "Task Descriptors Help Transformers Learn Linear Models In-Context",
+      "authors": [],
+      "published": "2025-05-01",
+      "score": {
+        "final": 0.7229970259112207,
+        "breakdown": {
+          "semantic_relevance": 0.7080171714746893,
+          "must_keywords": 0.25,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.17795937234406978,
+          "practicality": 0,
+          "keyword_score": 0.3333333333333333
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_high"
+      },
+      "tags": [
+        "SEMANTIC_HIGH_MATCH",
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "lZNb1CVm5O",
+        "title": "Task Descriptors Help Transformers Learn Linear Models In-Context",
+        "abstract": "Large language models (LLMs) exhibit strong in-context learning (ICL) ability, which allows the model to make predictions on new examples based on the given prompt. Recently, a line of research (Von Oswald et al., 2023; Aky¨urek et al., 2023; Ahn et al., 2023; Mahankali et al., 2023; Zhang et al., 2024) considered ICL for a simple linear regression setting and showed that the forward pass of Transformers is simulating some variants of gradient descent (GD) algorithms on the in-context examples. In practice, the input prompt usually contains a task descriptor in addition to in-context examples. We investigate how the task description helps ICL in the linear regression setting. Consider a simple setting where the task descriptor describes the mean of input in linear regression. Our results show that gradient flow converges to a global minimum for a linear Transformer. At the global minimum, the Transformer learns to use the task descriptor effectively to improve its performance. Empirically, we verify our results by showing that the weights converge to the predicted global minimum and Transformers indeed perform better with task descriptors.",
+        "authors": [],
+        "published": "2025-05-01",
+        "categories": [
+          "ICLR 2025"
+        ],
+        "pdf_url": "https://openreview.net/pdf?id=lZNb1CVm5O",
+        "github_url": null,
+        "semantic_score": 0.6618431806564331,
+        "keyword_score": 0.3333333333333333,
+        "combined_score": 0.43188628753026326
+      }
+    },
+    {
+      "rank": 6,
+      "paper_id": "aKJr5NnN8U",
+      "title": "Toward Understanding In-context vs. In-weight Learning",
+      "authors": [],
+      "published": "2025-05-01",
+      "score": {
+        "final": 0.720591874468814,
+        "breakdown": {
+          "semantic_relevance": 0.7,
+          "must_keywords": 0.25,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.17795937234406978,
+          "practicality": 0,
+          "keyword_score": 0.3333333333333333
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding+llm"
+      },
+      "tags": [
+        "SEMANTIC_HIGH_MATCH",
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "aKJr5NnN8U",
+        "title": "Toward Understanding In-context vs. In-weight Learning",
+        "abstract": "It has recently been demonstrated empirically that in-context learning emerges in transformers when certain distributional properties are present in the training data, but this ability can also diminish upon further training. We provide a new theoretical understanding of these phenomena by identifying simplified distributional properties that give rise to the emergence and eventual disappearance of in-context learning. We do so by first analyzing a simplified model that uses a gating mechanism to choose between an in-weight and an in-context predictor. Through a combination of a generalization error and regret analysis we identify conditions where in-context and in-weight learning emerge. These theoretical findings are then corroborated experimentally by comparing the behaviour of a full transformer on the simplified distributions to that of the stylized model, demonstrating aligned results. We then extend the study to a full large language model, showing how fine-tuning on various collections of natural language prompts can elicit similar in-context and in-weight learning behaviour.",
+        "authors": [],
+        "published": "2025-05-01",
+        "categories": [
+          "ICLR 2025"
+        ],
+        "pdf_url": "https://openreview.net/pdf?id=aKJr5NnN8U",
+        "github_url": null,
+        "semantic_score": 0.6976231336593628,
+        "keyword_score": 0.3333333333333333,
+        "combined_score": 0.44262027343114213
+      }
+    },
+    {
+      "rank": 7,
+      "paper_id": "tyEyYT267x",
+      "title": "Block Diffusion: Interpolating Between Autoregressive and Diffusion Language Models",
+      "authors": [],
+      "published": "2025-05-01",
+      "score": {
+        "final": 0.6996869542879192,
+        "breakdown": {
+          "semantic_relevance": 0.7136502660636843,
+          "must_keywords": 0,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.17795937234406978,
+          "practicality": 0,
+          "keyword_score": 0.3333333333333333
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_high"
+      },
+      "tags": [
+        "SEMANTIC_HIGH_MATCH",
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "tyEyYT267x",
+        "title": "Block Diffusion: Interpolating Between Autoregressive and Diffusion Language Models",
+        "abstract": "Diffusion language models offer unique benefits over autoregressive models due to their potential for parallelized generation and controllability, yet they lag in likelihood modeling and are limited to fixed-length generation. In this work, we introduce a class of block diffusion language models that interpolate between discrete denoising diffusion and autoregressive models. Block diffusion overcomes key limitations of both approaches by supporting flexible-length generation and improving inference efficiency with KV caching and parallel token sampling. We propose a recipe for building effective block diffusion models that includes an efficient training algorithm, estimators of gradient variance, and data-driven noise schedules to minimize the variance. Block diffusion sets a new state-of-the-art performance among diffusion models on language modeling benchmarks and enables generation of arbitrary-length sequences. We provide the code, along with the model weights and blog post on the project page: https://m-arriola.com/bd3lms/",
+        "authors": [],
+        "published": "2025-05-01",
+        "categories": [
+          "ICLR 2025"
+        ],
+        "pdf_url": "https://openreview.net/pdf?id=tyEyYT267x",
+        "github_url": null,
+        "semantic_score": 0.6410674452781677,
+        "keyword_score": 0.3333333333333333,
+        "combined_score": 0.42565356691678363
+      }
+    },
+    {
+      "rank": 8,
+      "paper_id": "j8WHjM9aMm",
+      "title": "Diffusion-based Neural Network Weights Generation",
+      "authors": [],
+      "published": "2025-05-01",
+      "score": {
+        "final": 0.6963256531074358,
+        "breakdown": {
+          "semantic_relevance": 0.702445928795406,
+          "must_keywords": 0,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.17795937234406978,
+          "practicality": 0,
+          "keyword_score": 0.3333333333333333
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_high"
+      },
+      "tags": [
+        "SEMANTIC_HIGH_MATCH",
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "j8WHjM9aMm",
+        "title": "Diffusion-based Neural Network Weights Generation",
+        "abstract": "Transfer learning is a cornerstone of modern deep learning, yet it remains constrained by challenges in model selection and the overhead of extensive model storage. In this work, we present Diffusion-based Neural Network Weights Generation, D2NWG, a novel framework that leverages diffusion processes to synthesize task-specific network weights. By modeling the distribution of weights from a diverse ensemble of pretrained models and conditioning the generation process on dataset characteristics, task descriptions, and architectural specifications, D2NWG circumvents the need for storing and searching through massive model repositories. We evaluate D2NWG across multiple experimental settings. On in-distribution tasks, our framework achieves performance that is on par with or superior to conventional pretrained models, while also serving as an effective initialization strategy for novel domains, resulting in faster convergence and a 6\\% improvement in few-shot learning scenarios. Extensive ablation studies further indicate that our approach scales robustly with increased diversity and volume of pretrained models. Moreover, D2NWG demonstrates significant promise for large language model applications. In evaluations on the OpenLM leaderboard, our method improved LLaMA-3-2-1B-Instruct performance by 3\\% on challenging mathematical reasoning tasks, with a consistent gain of 0.36\\% across a range of benchmarks. These findings establish D2NWG as a versatile and powerful framework for neural network weight generation, offering a scalable solution to the limitations of traditional transfer learning.",
+        "authors": [],
+        "published": "2025-05-01",
+        "categories": [
+          "ICLR 2025"
+        ],
+        "pdf_url": "https://openreview.net/pdf?id=j8WHjM9aMm",
+        "github_url": null,
+        "semantic_score": 0.6624993085861206,
+        "keyword_score": 0.3333333333333333,
+        "combined_score": 0.4320831259091695
+      }
+    },
+    {
+      "rank": 9,
+      "paper_id": "5xwx1Myosu",
+      "title": "Expressivity of Neural Networks with Random Weights and Learned Biases",
+      "authors": [],
+      "published": "2025-05-01",
+      "score": {
+        "final": 0.696046225110531,
+        "breakdown": {
+          "semantic_relevance": 0.7015145021390568,
+          "must_keywords": 0,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.17795937234406978,
+          "practicality": 0,
+          "keyword_score": 0.3333333333333333
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_high"
+      },
+      "tags": [
+        "SEMANTIC_HIGH_MATCH",
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "5xwx1Myosu",
+        "title": "Expressivity of Neural Networks with Random Weights and Learned Biases",
+        "abstract": "Landmark universal function approximation results for neural networks with trained weights and biases provided the impetus for the ubiquitous use of neural networks as learning models in neuroscience and Artificial Intelligence (AI). Recent work has extended these results to networks in which a smaller subset of weights (e.g., output weights) are tuned, leaving other parameters random. However, it remains an open question whether universal approximation holds when only biases are learned, despite evidence from neuroscience and AI that biases significantly shape neural responses. The current paper answers this question. We provide theoretical and numerical evidence demonstrating that feedforward neural networks with fixed random weights can approximate any continuous function on compact sets. We further show an analogous result for the approximation of dynamical systems with recurrent neural networks. Our findings are relevant to neuroscience, where they demonstrate the potential for behaviourally relevant changes in dynamics without modifying synaptic weights, as well as for AI, where they shed light on recent fine-tuning methods for large language models, like bias and prefix-based approaches.",
+        "authors": [],
+        "published": "2025-05-01",
+        "categories": [
+          "ICLR 2025"
+        ],
+        "pdf_url": "https://openreview.net/pdf?id=5xwx1Myosu",
+        "github_url": null,
+        "semantic_score": 0.6310595870018005,
+        "keyword_score": 0.3333333333333333,
+        "combined_score": 0.42265120943387346
+      }
+    },
+    {
+      "rank": 10,
+      "paper_id": "wGVOxplEbf",
+      "title": "SaRA: High-Efficient Diffusion Model Fine-tuning with Progressive Sparse Low-Rank Adaptation",
+      "authors": [],
+      "published": "2025-05-01",
+      "score": {
+        "final": 0.6958677006349276,
+        "breakdown": {
+          "semantic_relevance": 0.7009194205537121,
+          "must_keywords": 0,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.17795937234406978,
+          "practicality": 0,
+          "keyword_score": 0.3333333333333333
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_high"
+      },
+      "tags": [
+        "SEMANTIC_HIGH_MATCH",
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "wGVOxplEbf",
+        "title": "SaRA: High-Efficient Diffusion Model Fine-tuning with Progressive Sparse Low-Rank Adaptation",
+        "abstract": "The development of diffusion models has led to significant progress in image and video generation tasks, with pre-trained models like the Stable Diffusion series playing a crucial role.\nHowever, a key challenge remains in downstream task applications: how to effectively and efficiently adapt pre-trained diffusion models to new tasks.\nInspired by model pruning which lightens large pre-trained models by removing unimportant parameters, we propose a novel model fine-tuning method to make full use of these ineffective parameters and enable the pre-trained model with new task-specified capabilities.\nIn this work, we first investigate the importance of parameters in pre-trained diffusion models and discover that parameters with the smallest absolute values do not contribute to the generation process due to training instabilities.\nBased on this observation, we propose a fine-tuning method termed SaRA that re-utilizes these temporarily ineffective parameters, equating to optimizing a sparse weight matrix to learn the task-specific knowledge.\nTo mitigate potential overfitting, we propose a nuclear-norm-based low-rank sparse training scheme for efficient fine-tuning.\nFurthermore, we design a new progressive parameter adjustment strategy to make full use of the finetuned parameters.\nFinally, we propose a novel unstructural backpropagation strategy, which significantly reduces memory costs during fine-tuning.\nOur method enhances the generative capabilities of pre-trained models in downstream applications and outperforms existing fine-tuning methods in maintaining model's generalization ability.  Source code is available at https://sjtuplayer.github.io/projects/SaRA.",
+        "authors": [],
+        "published": "2025-05-01",
+        "categories": [
+          "ICLR 2025"
+        ],
+        "pdf_url": "https://openreview.net/pdf?id=wGVOxplEbf",
+        "github_url": null,
+        "semantic_score": 0.60664302110672,
+        "keyword_score": 0.3333333333333333,
+        "combined_score": 0.4153262396653493
+      }
+    }
+  ],
+  "filtered_papers": [],
+  "contrastive_paper": null,
+  "comparison_notes": [],
+  "output_path": "/data/output/rankings/2026-01-30_2026-01-30T07-00-57_ranked.json",
+  "generated_at": "2026-01-30T07:00:57.962419"
+}

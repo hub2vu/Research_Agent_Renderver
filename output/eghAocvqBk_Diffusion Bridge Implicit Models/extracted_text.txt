@@ -1,0 +1,2695 @@
+=== Page 1 ===
+Published as a conference paper at ICLR 2025
+DIFFUSION BRIDGE IMPLICIT MODELS
+Kaiwen Zheng12∗,
+Guande He1∗,
+Jianfei Chen1,
+Fan Bao2,
+Jun Zhu†123
+1Dept. of Comp. Sci. & Tech., Institute for AI, BNRist Center
+1Tsinghua-Bosch Joint ML Center, Tsinghua University, Beijing, China
+2Shengshu Technology, Beijing
+3Pazhou Lab (Huangpu), Guangzhou, China
+zkwthu@gmail.com; guande.he17@outlook.com;
+fan.bao@shengshu.ai; {jianfeic, dcszj}@tsinghua.edu.cn
+ABSTRACT
+Denoising diffusion bridge models (DDBMs) are a powerful variant of diffu-
+sion models for interpolating between two arbitrary paired distributions given
+as endpoints. Despite their promising performance in tasks like image transla-
+tion, DDBMs require a computationally intensive sampling process that involves
+the simulation of a (stochastic) differential equation through hundreds of network
+evaluations. In this work, we take the first step in fast sampling of DDBMs with-
+out extra training, motivated by the well-established recipes in diffusion mod-
+els. We generalize DDBMs via a class of non-Markovian diffusion bridges de-
+fined on the discretized timesteps concerning sampling, which share the same
+marginal distributions and training objectives, give rise to generative processes
+ranging from stochastic to deterministic, and result in diffusion bridge implicit
+models (DBIMs). DBIMs are not only up to 25× faster than the vanilla sam-
+pler of DDBMs but also induce a novel, simple, and insightful form of ordinary
+differential equation (ODE) which inspires high-order numerical solvers. More-
+over, DBIMs maintain the generation diversity in a distinguished way, by using a
+booting noise in the initial sampling step, which enables faithful encoding, recon-
+struction, and semantic interpolation in image translation tasks. Code is available
+at https://github.com/thu-ml/DiffusionBridge.
+1
+INTRODUCTION
+Diffusion models (Song et al., 2021c; Sohl-Dickstein et al., 2015; Ho et al., 2020) represent a family
+of powerful generative models, with high-quality generation ability, stable training, and scalability
+to high dimensions. They have consistently obtained state-of-the-art performance in various do-
+mains, including image synthesis (Dhariwal & Nichol, 2021; Karras et al., 2022), speech and video
+generation (Chen et al., 2021a; Ho et al., 2022), controllable image manipulation (Nichol et al.,
+2022; Ramesh et al., 2022; Rombach et al., 2022; Meng et al., 2022), density estimation (Song
+et al., 2021b; Kingma et al., 2021; Lu et al., 2022a; Zheng et al., 2023b) and inverse problem solv-
+ing (Chung et al., 2022; Kawar et al., 2022). They also act as fundamental components of modern
+text-to-image (Rombach et al., 2022) and text-to-video (Gupta et al., 2023; Bao et al., 2024) synthe-
+sis systems, ushering in the era of AI-generated content.
+However, diffusion models are not well-suited for solving tasks like image translation or restoration,
+where the transport between two arbitrary probability distributions is to be modeled given paired
+endpoints. Diffusion models are rooted in a stochastic process that gradually transforms between
+data and noise, and the prior distribution is typically restricted to the “non-informative” random
+Gaussian noises. Adapting diffusion models to scenarios where a more informative prior natu-
+rally exists, such as image translation/restoration, involves modifying the generation pipeline (Meng
+et al., 2022; Su et al., 2022) or adding extra guidance terms during sampling (Chung et al., 2022;
+Kawar et al., 2022). On the one hand, these approaches are task-agnostic at training and adaptable
+to multiple tasks at inference time. On the other hand, despite recent advances in accelerated inverse
+problem solving (Liu et al., 2023a; Pandey et al., 2024), they inevitably deliver either sub-par perfor-
+mance or slow and resource-intensive inference compared to training-based ones. Tailored diffusion
+∗Equal contribution;
+†The corresponding author.
+1
+
+
+=== Page 2 ===
+Published as a conference paper at ICLR 2025
+(a) Condition
+(b)
+DDBM
+NFE=100 (FID 6.46)
+(c)
+DBIM (η = 0) (Ours)
+NFE=10 (FID 4.51)
+(c)
+DBIM (3rd-order) (Ours)
+NFE=10 (FID 4.34)
+Figure 1: Inpainting results on the ImageNet 256×256 dataset (Deng et al., 2009) by DDBM (Zhou et al.,
+2023) with 100 number of function evaluations (NFE), and DBIM (ours) with only 10 NFE.
+model variants become essential in task-specific scenarios where paired training data are available
+and fast inference is critical.
+Recently, denoising diffusion bridge models (DDBMs) (Zhou et al., 2023) have emerged as a scal-
+able and promising approach to solving the distribution translation tasks. By considering the reverse-
+time processes of a diffusion bridge, which represent diffusion processes conditioned on given end-
+points, DDBMs offer a general framework for distribution translation. While excelling in image
+translation tasks with exceptional quality and fidelity, sampling from DDBMs requires simulating a
+(stochastic) differential equation corresponding to the reverse-time process. Even with the introduc-
+tion of their hybrid sampler, achieving high-fidelity results for high-resolution images still demands
+over 100 steps. Compared to the efficient samplers for diffusion models (Song et al., 2021a; Zhang
+& Chen, 2022; Lu et al., 2022b), which require around 10 steps to generate reasonable samples,
+DDBMs are falling behind, urging the development of efficient variants.
+This work represents the first pioneering effort toward accelerated sampling of DDBMs. As sug-
+gested by well-established recipes in diffusion models, training-free accelerations of diffusion sam-
+pling primarily focus on reducing stochasticity (e.g., the prominent denoising diffusion implicit
+models, DDIMs) and utilizing higher-order information (e.g., high-order solvers). We present diffu-
+sion bridge implicit models (DBIMs) as an approach that explores both aspects within the diffusion
+bridge framework. Firstly, we investigate the continuous-time forward process of DDBMs on dis-
+cretized timesteps and generalize them to a series of non-Markovian diffusion bridges controlled by
+a variance parameter, while maintaining identical marginal distributions and training objectives as
+DDBMs. Secondly, the induced reverse generative processes correspond to sampling procedures of
+varying levels of stochasticity, including deterministic ones. Consequently, DBIMs can be viewed
+as a bridge counterpart and extension of DDIMs. Furthermore, in the continuous time limit, DBIMs
+can induce a novel form of ordinary differential equation (ODE), which is linked to the probability
+flow ODE (PF-ODE) in DDBMs while being simpler and significantly more efficient. The induced
+ODE also facilitates novel high-order numerical diffusion bridge solvers for faster convergence.
+We demonstrate the superiority of DBIMs by applying them in image translation and restoration
+tasks, where they offer up to 25× faster sampling compared to DDBMs and achieve state-of-the-art
+performance on challenging high-resolution datasets. Unlike conventional diffusion sampling, the
+initial step in DBIMs is forced to be stochastic with a booting noise to avoid singularity issues arising
+from the fixed starting point on a bridge. By viewing the booting noise as the latent variable, DBIMs
+maintain the generation diversity of typical generative models while enabling faithful encoding,
+reconstruction, and semantically meaningful interpolation in the data space.
+2
+BACKGROUND
+2.1
+DIFFUSION MODELS
+Given a d-dimensional data distribution q0(x0), diffusion models (Song et al., 2021c; Sohl-Dickstein
+et al., 2015; Ho et al., 2020) build a diffusion process by defining a forward stochastic differential
+equation (SDE) starting from x0 ∼q0:
+dxt = f(t)xtdt + g(t)dwt
+(1)
+2
+
+
+=== Page 3 ===
+Published as a conference paper at ICLR 2025
+where t ∈[0, T] for some finite horizon T, f, g : [0, T] →R is the scalar-valued drift and diffusion
+term, and wt ∈Rd is a standard Wiener process. As a linear SDE, the forward process owns an
+analytic Gaussian transition kernel
+qt|0(xt|x0) = N(αtx0, σ2
+t I)
+(2)
+by Itˆo’s formula (Itˆo, 1951), where αt, σt are called noise schedules satisfying f(t)
+=
+d log αt
+dt
+,
+g2(t) =
+dσ2
+t
+dt −2 d log αt
+dt
+σ2
+t (Kingma et al., 2021). The forward SDE is accompanied
+by a series of marginal distributions {qt}T
+t=0 of {xt}T
+t=0, and f, g are properly designed so that the
+terminal distribution is approximately a pure Gaussian, i.e., qT (xT ) ≈N(0, σ2
+T I).
+To sample from the data distribution q0(x0), we can solve the reverse SDE or probability flow
+ODE (Song et al., 2021c) from t = T to t = 0:
+dxt = [f(t)xt −g2(t)∇xt log qt(xt)]dt + g(t)d ¯wt,
+(3)
+dxt =
+
+f(t)xt −1
+2g2(t)∇xt log qt(xt)
+
+dt.
+(4)
+They share the same marginal distributions {qt}T
+t=0 with the forward SDE, where
+¯wt
+is the reverse-time Wiener process,
+and the only unknown term ∇xt log qt(xt) is the
+score function of the marginal density qt.
+By denoising score matching (DSM) (Vin-
+cent,
+2011),
+a
+score
+prediction
+network
+sθ(xt, t)
+can
+be
+parameterized
+to
+minimize
+EtEx0∼q0(x0)Ext∼qt|0(xt|x0)
+
+w(t)∥sθ(xt, t) −∇xt log qt|0(xt|x0)∥2
+2
+
+, where qt|0 is the analytic
+forward transition kernel and w(t) is a positive weighting function. sθ can be plugged into the re-
+verse SDE and the probability flow ODE to obtain the parameterized diffusion SDE and diffusion
+ODE. There are various dedicated solvers for diffusion SDE or ODE (Song et al., 2021a; Zhang &
+Chen, 2022; Lu et al., 2022b; Gonzalez et al., 2023).
+2.2
+DENOISING DIFFUSION BRIDGE MODELS
+Denoising diffusion bridge models (DDBMs) (Zhou et al., 2023) consider driving the diffusion
+process in Eqn. (1) to arrive at a particular point y ∈Rd almost surely via Doob’s h-transform (Doob
+& Doob, 1984):
+dxt = f(t)xtdt + g2(t)∇xt log q(xT = y|xt) + g(t)dwt,
+x0 ∼q0 = pdata, xT = y.
+(5)
+The endpoint y is not restricted to Gaussian noise as in diffusion models, but instead chosen as
+informative priors (such as the degraded image in image restoration tasks). Given a starting point
+x0, the process in Eqn. (5) also owns an analytic forward transition kernel
+q(xt|x0, xT ) = N(atxT +btx0, c2
+tI),
+at = αt
+αT
+SNRT
+SNRt
+, bt = αt(1−SNRT
+SNRt
+), c2
+t = σ2
+t (1−SNRT
+SNRt
+)
+(6)
+which forms a diffusion bridge, and SNRt = α2
+t/σ2
+t is the signal-to-noise ratio at time t. DDBMs
+show that the forward process Eqn. (5) is associated with a reverse SDE and a probability flow ODE
+starting from xT = y:
+dxt =
+
+f(t)xt −g2(t)
+ ∇xt log q(xt|xT = y) −∇xt log qT |t(xT = y|xt)
+
+dt + g(t)d ¯wt, (7)
+dxt =
+
+f(t)xt −g2(t)
+1
+2∇xt log q(xt|xT = y) −∇xt log qT |t(xT = y|xt)
+
+dt.
+(8)
+They share the same marginal distributions {q(xt|xT = y)}T
+t=0 with the forward process, where
+¯wt is the reverse-time Wiener process, qT |t is analytically known similar to Eqn. (2), and the only
+unknown term ∇xt log q(xt|xT = y) is the bridge score function. Denoising bridge score matching
+(DBSM) is proposed to learn the unknown score term q(xt|xT = y) with a parameterized network
+sθ(xt, t, y), by minimizing
+Lw(θ) = EtE(x0,y)∼pdata(x0,y)Ext∼q(xt|x0,xT =y)
+
+w(t)∥sθ(xt, t, y) −∇xt log q(xt|x0, xT = y)∥2
+2
+
+(9)
+where q(xt|x0, xT = y) is the forward transition kernel in Eqn. (6) and w(t) is a positive weighting
+function. To sample from diffusion bridges with Eqn. (7) and Eqn. (8), DDBMs propose a high-order
+hybrid sampler that alternately simulates the ODE and SDE steps to enhance the sample quality,
+inspired by the Heun sampler in diffusion models (Karras et al., 2022). However, it is not dedicated
+to diffusion bridges and lacks theoretical insights in developing efficient diffusion samplers.
+3
+
+
+=== Page 4 ===
+Published as a conference paper at ICLR 2025
+3
+GENERATIVE MODEL THROUGH NON-MARKOVIAN DIFFUSION BRIDGES
+We start by examining the forward process of the diffusion bridge (Eqn. (5)) on a set of discretized
+timesteps 0 = t0 < t1 < · · · < tN−1 < tN = T that will be used for reverse sampling. Since
+the bridge score ∇xt log q(xt|xT ) only depends on the marginal distribution q(xt|xT ), we can
+construct alternative probabilistic models that induce new sampling procedures while reusing the
+learned bridge score sθ(xt, t, xT ), as long as they agree on the N marginals {q(xtn|xT )}N−1
+n=0 .
+3.1
+NON-MARKOVIAN DIFFUSION BRIDGES AS FORWARD PROCESS
+We consider a family of probability distributions q(ρ)(xt0:N−1|xT ), controlled by a variance param-
+eter ρ ∈RN−1:
+q(ρ)(xt0:N−1|xT ) = q0(xt0)
+N−1
+Y
+n=1
+q(ρ)(xtn|x0, xtn+1, xT )
+(10)
+where q0 is the data distribution at time 0 and for 1 ≤n ≤N −1
+q(ρ)(xtn|x0, xtn+1, xT ) = N(atnxT + btnx0 +
+q
+c2
+tn −ρ2n
+xtn+1 −atn+1xT −btn+1x0
+ctn+1
+, ρ2
+nI)
+(11)
+where ρn is the n-th element of ρ satisfying ρN−1 = ctN−1, and at, bt, ct are terms related to the
+noise schedule, as defined in the original diffusion bridge (Eqn. (6)). Intuitively, this decreases the
+variance (noise level) of the bridge while incorporating additional noise components from the last
+step. Under this construction, we can prove that q(ρ) maintains consistency in marginal distributions
+with the original forward process q governed by Eqn. (5).
+Proposition 3.1 (Marginal Preservation, proof in Appendix B.1). For 0 ≤n ≤N −1, we have
+q(ρ)(xtn|xT ) = q(xtn|xT ).
+The definition of q(ρ) in Eqn. (10) represents the inference process, since it is factorized as
+the distribution of xtn given xtn+1 at the previous timestep.
+Conversely, the forward process
+q(ρ)(xtn+1|x0, xtn, xT ) can be induced by Bayes’ rule (Appendix C.1). As xtn+1 in q(ρ) can si-
+multaneously depend on xtn and x0, we refer to it as non-Markovian diffusion bridges, in contrast
+to Markovian ones (such as Brownian bridges, and the diffusion bridge defined by the forward SDE
+in Eqn. (5)) which should satisfy q(xtn+1|x0, xtn, xT ) = q(xtn+1|xtn, xT ).
+3.2
+REVERSE GENERATIVE PROCESS AND EQUIVALENT TRAINING OBJECTIVE
+Eqn. (10) can be naturally transformed into a parameterized and learnable generative model, by
+replacing the unknown x0 in Eqn. (10) with a data predictor xθ(xt, t, xT ). Intuitively, xt on the
+diffusion bridge is a weighted mixture of xT , x0 and some random Gaussian noise according to
+Eqn. (6), where the weightings at, bt, ct are determined by the timestep t. The network xθ is trained
+to recover the clean data x0 given xt, xT and t.
+Specifically, we define the generative process starting from xT as
+pθ(xtn|xtn+1, xT ) =
+N(xθ(xt1, t1, xT ), ρ2
+0I),
+n = 0
+q(ρ)(xtn|xθ(xtn+1, tn+1, xT ), xtn+1, xT ),
+1 ≤n ≤N −1
+(12)
+and the joint distribution as pθ(xt0:N−1|xT ) = QN−1
+n=0 pθ(xtn|xtn+1, xT ). To optimize the network
+parameter θ, we can adopt the common variational inference objective as in DDPMs (Ho et al.,
+2020), except that the distributions are conditioned on xT :
+J (ρ)(θ) = Eq(xT )Eq(ρ)(xt0:N−1|xT )
+h
+log q(ρ)(xt1:N−1|x0, xT ) −log pθ(xt0:N−1|xT )
+i
+(13)
+It seems that the DDBM objective Lw in Eqn. (9) is distinct from J (ρ): respectively, they are defined
+on continuous and discrete timesteps; they originate from score matching and variational inference;
+they have different parameterizations of score and data prediction1. However, we show they are
+equivalent by focusing on the discretized timesteps and transforming the parameterization.
+1The diffusion bridge models are usually parameterized differently from score prediction, but can be con-
+verted to score prediction. See Appendix F.1 for details.
+4
+
+
+=== Page 5 ===
+Published as a conference paper at ICLR 2025
+Table 1: Comparison between different diffusion models and diffusion bridge models.
+Diffusion Models
+Diffusion Bridge Models
+DDPM
+(Ho et al., 2020)
+ScoreSDE
+(Song et al., 2021c)
+DDIM
+(Song et al., 2021a)
+I2SB
+(Liu et al., 2023b)
+DDBM
+(Zhou et al., 2023)
+DBIM (Ours)
+Noise Schedule
+VP
+Any
+Any
+VE
+Any
+Any
+Timesteps
+Discrete
+Continuous
+Discrete
+Discrete
+Continuous
+Discrete
+Forward Distribution
+q(xn|x0)
+q(xt|x0)
+q(xn|xn−1, x0)
+q(xn|x0, xN)
+q(xt|x0, xT )
+q(xtn+1|x0, xtn, xT )
+Inference Process
+pθ(xn−1|xn)
+SDE/ODE
+pθ(xn−1|xn)
+pθ(xn−1|xn)
+SDE/ODE
+pθ(xtn|xtn+1, xT )
+Non-Markovian
+✗
+✗
+✓
+✗
+✗
+✓
+Proposition 3.2 (Training Equivalence, proof in Appendix B.2). For ρ > 0, there exists certain
+weights γ so that J (ρ)(θ) = Lγ(θ)+C on the discretized timesteps {tn}N
+n=1, where C is a constant
+irrelevant to θ. Besides, the bridge score predictor sθ in Lγ(θ) has the following relationship with
+the data predictor xθ in J (ρ)(θ):
+sθ(xt, t, xT ) = −xt −atxT −btxθ(xt, t, xT )
+c2
+t
+(14)
+Though the weighting γ may not precisely match the actual weighting w for training sθ, this dis-
+crepancy doesn’t affect our utilization of sθ (Appendix C.2). Hence, it is reasonable to reuse the
+network trained by L while leveraging various ρ for improved sampling efficiency.
+4
+SAMPLING WITH GENERALIZED DIFFUSION BRIDGES
+Now that we have confirmed the rationality and built the theoretical foundations for applying the
+generalized diffusion bridge pθ to pretrained DDBMs, a range of inference processes is now at our
+disposal, controlled by the variance parameter ρ. This positions us to explore the resultant sampling
+procedures and the effects of ρ in pursuit of better and more efficient generation.
+4.1
+DIFFUSION BRIDGE IMPLICIT MODELS
+Suppose we sample in reverse time on the discretized timesteps 0 = t0 < t1 < · · · < tN−1 <
+tN = T. The number N and the schedule of sampling steps can be made independently of the
+original timesteps on which the bridge model is trained, whether discrete (Liu et al., 2023b) or
+continuous (Zhou et al., 2023). According to the generative process of pθ in Eqn. (12), the updating
+rule from tn+1 to tn is described by
+xtn = atnxT + btn ˆx0 +
+q
+c2
+tn −ρ2n
+xtn+1 −atn+1xT −btn+1 ˆx0
+ctn+1
+|
+{z
+}
+predicted noise ˆϵ
++ρnϵ,
+ϵ ∼N(0, I)
+(15)
+where ˆx0 = xθ(xtn+1, tn+1, xT ) denotes the predicted clean data at time 0.
+Intuition of the Sampling Procedure
+Intuitively, the form of Eqn. (15) resembles the forward
+transition kernel of the diffusion bridge in Eqn. (6) (which can be rewritten as xt = atxT + btx0 +
+ctϵ, ϵ ∼N(0, I)). In comparison, x0 is substituted with the predicted ˆx0, and a portion of the
+standard Gaussian noise ϵ now stems from the predicted noise ˆϵ. The predicted noise ˆϵ is derived
+from xtn+1 at the previous timestep and can be expressed by the predicted clean data ˆx0.
+Effects of the Variance Parameter
+We investigate the effects of the variance parameter ρ
+from the theoretical perspective by considering two extreme cases. Firstly, we note that when
+ρn = σtn
+q
+1 −
+SNRtn+1
+SNRtn
+for each 0 ≤n ≤N −1, the xT term in Eqn. (15) is canceled out.
+In this scenario, the forward process in Eqn. (4.1) becomes a Markovian bridge (see details in
+Appendix C.1). Besides, the inference process will get rid of xT and simplify to pθ(xtn|xtn+1),
+akin to the sampling mechanism in DDPMs (Ho et al., 2020). Secondly, when ρn = 0 for each
+0 ≤n ≤N −1, the inference process will be free from random noise and composed of deterministic
+iterative updates, characteristic of an implicit probabilistic model (Mohamed & Lakshminarayanan,
+5
+
+
+=== Page 6 ===
+Published as a conference paper at ICLR 2025
+booting noise
+condition
+𝑡= 𝑇
+𝑡= 𝑇−𝜖
+𝑡= 0
+deterministic
+Figure 2: Illustration of the DBIM’s deterministic sampling procedure when ρ = 0.
+2016). Consequently, we name the resulting model diffusion bridge implicit models (DBIMs), draw-
+ing parallels with denoising diffusion implicit models (DDIMs) (Song et al., 2021a). DBIMs serve
+as the bridge counterpart and extension of DDIMs, as illustrated in Table 1.
+When we choose ρ that lies between these two boundary cases, we can obtain non-Markovian dif-
+fusion bridges with intermediate and non-zero stochastic levels. Such bridges may potentially yield
+superior sample quality. We present detailed ablations in Section 6.1.
+The Singularity at the Initial Step for Deterministic Sampling
+One important aspect to note
+regarding DBIMs is that its initial step exhibits singularity when ρ = 0, a property essentially
+distinct from DDIMs in diffusion models. Specifically, in the initial step we have tn+1 = T, and
+ctn+1 in the denominator in Eqn. (15) equals 0. This phenomenon can be understood intuitively:
+given a fixed starting point xT , the variable xt for t < T is typically still stochastically distributed
+(the marginal pθ(xt|xT ) is not a Dirac distribution). For instance, in inpainting tasks, there should
+be various plausible complete images corresponding to a fixed masked image. However, a fully
+deterministic sampling procedure disrupts such stochasticity.
+To be theoretically robust, we employ the other boundary choice ρn = σtn
+q
+1 −
+SNRtn+1
+SNRtn
+in the
+initial step2, which is aligned with our previous restriction that ρN−1 = ctN−1. This will introduce
+an additional standard Gaussian noise ϵ which we term as the booting noise. It accounts for the
+stochasticity of the final sample x0 under a given fixed xT and can be viewed as the latent variable.
+We illustrate the complete DBIM pipeline in Figure 2.
+4.2
+CONNECTION TO PROBABILITY FLOW ODE
+It is intuitive to perceive that the deterministic sampling can be related to solving an ODE. By setting
+ρ = 0, tn+1 = t and tn+1 −tn = ∆t in Eqn. (15), the DBIM updating rule can be reorganized
+as xt−∆t
+ct−∆t =
+xt
+ct +
+
+at−∆t
+ct−∆t −at
+ct
+
+xT +
+
+bt−∆t
+ct−∆t −bt
+ct
+
+xθ(xt, t, xT ). As at, bt, ct are continuous
+functions of time t defined in Eqn. (6), the ratios at
+ct and bt
+ct also remain continuous functions of
+t. Therefore, DBIM (ρ = 0) can be treated as an Euler discretization of the following ordinary
+differential equation (ODE):
+d
+xt
+ct
+
+= xT d
+at
+ct
+
++ xθ(xt, t, xT )d
+bt
+ct
+
+(16)
+Though it does not resemble a conventional ODE involving dt, the two infinitesimal terms d
+
+at
+ct
+
+and d
+
+bt
+ct
+
+can be expressed with dt by the chain rule of derivatives. The ODE form also suggests
+that with a sufficient number of discretization steps, we can reverse the sampling process and obtain
+encodings of the observed data, which can be useful for interpolation or other downstream tasks.
+In DDBMs, the PF-ODE (Eqn. (8)) involving dxt and dt is proposed and used for deterministic
+sampling. We reveal in the following proposition that our ODE in Eqn. (16) can exactly yield the
+PF-ODE without relying on the advanced Kolmogorov forward (or Fokker-Planck) equation.
+Proposition 4.1 (Equivalence to Probability Flow ODE, proof in Appendix B.3). Suppose
+sθ(xt, t, xT ) is learned as the ground-truth bridge score ∇xt log q(xt|xT ), and xθ is related to sθ
+through Eqn. (14), then Eqn. (16) can be converted to the PF-ODE (Eqn. (8)) proposed in DDBMs.
+2With this choice, at the initial step n = N −1, we have ρn = σtn
+q
+1 −
+SNRtT
+SNRtn = ctn ⇒
+q
+c2
+tn −ρ2n = 0,
+so ctn+1 in the denominator in Eqn. (15) will be canceled out.
+6
+
+
+=== Page 7 ===
+Published as a conference paper at ICLR 2025
+Condition
+Ground-truth
+DDBM (NFE=20)
+DDBM (NFE=100)
+DBIM (NFE=20)
+DBIM (NFE=100)
+Figure 3: Image translation results on the DIODE-Outdoor dataset with DDBM and DBIM.
+Though the conversion from our ODE to the PF-ODE is straightforward, the reverse conversion can
+be non-trivial and require complex tools such as exponential integrators (Calvo & Palencia, 2006;
+Hochbruck et al., 2009) (Appendix C.4). We highlight our differences from the PF-ODE in DDBMs:
+(1) Our ODE has a novel form with exceptional neatness. (2) Despite their theoretical equivalence,
+our ODE describes the evolution of xt
+ct rather than xt, and its discretization is performed with respect
+to d
+
+at
+ct
+
+and d
+
+bt
+ct
+
+instead of dt. (3) Empirically, DBIMs (ρ = 0) prove significantly more
+efficient than the Euler discretization of the PF-ODE, thereby accelerating DDBMs by a substantial
+margin. (4) In contrast to the fully deterministic ODE, DBIMs are capable of various stochastic
+levels to achieve the best generation quality under the same sampling steps.
+4.3
+EXTENSION TO HIGH-ORDER METHODS
+The simplicity and efficiency of our ODE (Eqn. (16)) also inspire novel high-order numerical solvers
+tailored for DDBMs, potentially bringing faster convergence than the first-order Euler discretization.
+Specifically, using the time change-of-variable λt = log
+
+bt
+ct
+
+= 1
+2 (SNRt −SNRT ), the solution
+of Eqn. (16) from time t to time s < t can be represented as
+xs = cs
+ct
+xt +
+
+as −cs
+ct
+at
+
+xT + cs
+Z λs
+λt
+eλxθ(xtλ, tλ, xT )dλ
+(17)
+where tλ is the inverse function of λt. The intractable integral can be approximated by Taylor ex-
+pansion of xθ and finite difference estimations of high-order derivatives, following well-established
+numerical methods (Hochbruck & Ostermann, 2005) and their extensive application in diffusion
+models (Zhang & Chen, 2022; Lu et al., 2022b; Gonzalez et al., 2023). We present the derivations
+of our high-order solvers in Appendix D, and the detailed algorithm in Appendix E.
+5
+RELATED WORK
+We present detailed related work in Appendix A, including diffusion models, diffusion bridge mod-
+els, and fast sampling techniques. We additionally discuss some special cases of DBIM and their
+connection to flow matching, DDIM and posterior sampling in Appendix C.3.
+6
+EXPERIMENTS
+In this section, we show that DBIMs surpass the original sampling procedure of DDBMs by a large
+margin, in terms of both sample quality and sample efficiency. We also showcase DBIM’s capabil-
+ities in latent-space encoding, reconstruction, and interpolation using deterministic sampling. All
+comparisons between DBIMs and DDBMs are conducted using identically trained models. For
+DDBMs, we employ their proposed hybrid sampler for sampling. For DBIMs, we control the vari-
+ance parameter ρ by interpolating between its boundary selections:
+ρn = ησtn
+s
+1 −SNRtn+1
+SNRtn
+,
+η ∈[0, 1]
+(18)
+where η = 0 and η = 1 correspond to deterministic sampling and Markovian stochastic sampling.
+We conduct experiments including (1) image-to-image translation tasks on Edges→Handbags (Isola
+et al., 2017) (64 × 64) and DIODE-Outdoor (Vasiljevic et al., 2019) (256 × 256) (2) image restora-
+tion task of inpainting on ImageNet (Deng et al., 2009) (256 × 256) with 128 × 128 center mask.
+7
+
+
+=== Page 8 ===
+Published as a conference paper at ICLR 2025
+Table 2: Quantitative results in the image translation task. †Baseline results are taken directly from
+DDBMs, where they did not report the exact NFE. Gray-colored rows denote methods that do not
+require paired training but only a prior diffusion model trained on the target domain.
+Edges→Handbags (64 × 64)
+DIODE-Outdoor (256 × 256)
+NFE
+FID ↓
+IS ↑
+LPIPS ↓
+MSE ↓
+FID ↓
+IS ↑
+LPIPS ↓
+MSE ↓
+DDIB (Su et al., 2022)
+≥40†
+186.84
+2.04
+0.869
+1.05
+242.3
+4.22
+0.798
+0.794
+SDEdit (Meng et al., 2022)
+≥40
+26.5
+3.58
+0.271
+0.510
+31.14
+5.70
+0.714
+0.534
+Pix2Pix (Isola et al., 2017)
+1
+74.8
+3.24
+0.356
+0.209
+82.4
+4.22
+0.556
+0.133
+I2SB (Liu et al., 2023b)
+≥40
+7.43
+3.40
+0.244
+0.191
+9.34
+5.77
+0.373
+0.145
+DDBM (Zhou et al., 2023)
+118
+1.83
+3.73
+0.142
+0.040
+4.43
+6.21
+0.244
+0.084
+DDBM (Zhou et al., 2023)
+200
+0.88
+3.69
+0.110
+0.006
+3.34
+5.95
+0.215
+0.020
+DBIM (Ours)
+20
+1.74
+3.63
+0.095
+0.005
+4.99
+6.10
+0.201
+0.017
+DBIM (Ours)
+100
+0.89
+3.62
+0.100
+0.006
+2.57
+6.06
+0.198
+0.018
+Table 3: Quantative results in the image
+restoration task.
+Inpainting
+ImageNet (256 × 256)
+Center (128 × 128)
+NFE
+FID ↓
+CA ↑
+DDRM (Kawar et al., 2022)
+20
+24.4
+62.1
+ΠGDM (Song et al., 2023a)
+100
+7.3
+72.6
+DDNM (Wang et al., 2023)
+100
+15.1
+55.9
+Palette (Saharia et al., 2022)
+1000
+6.1
+63.0
+I2SB (Liu et al., 2023b)
+10
+5.24
+66.1
+I2SB (Liu et al., 2023b)
+20
+4.98
+65.9
+I2SB (Liu et al., 2023b)
+1000
+4.9
+66.1
+DDBM (Zhou et al., 2023)
+500
+4.27
+71.8
+DBIM (Ours)
+10
+4.48
+71.3
+DBIM (Ours)
+20
+4.07
+72.3
+DBIM (Ours)
+100
+3.88
+72.7
+Table 4: Ablation of the variance parameter controlled
+by η for image restoration, measured by FID.
+Sampler
+NFE
+5
+10
+20
+50
+100
+200
+500
+Inpainting, ImageNet (256 × 256), Center (128 × 128)
+η
+0.0
+6.08
+4.51
+4.11
+3.95
+3.91
+3.91
+3.91
+0.3
+6.12
+4.48
+4.09
+3.95
+3.92
+3.90
+3.88
+0.5
+6.25
+4.52
+4.07
+3.92
+3.90
+3.84
+3.86
+0.8
+6.81
+4.79
+4.16
+3.91
+3.88
+3.84
+3.81
+1.0
+8.62
+5.61
+4.51
+4.05
+3.91
+3.80
+3.80
+DDBM
+275.25
+57.18
+29.65
+10.63
+6.46
+4.95
+4.27
+We report the Fr´echet inception distance (FID) (Heusel et al., 2017) for all experiments, and addi-
+tionally measure Inception Scores (IS) (Barratt & Sharma, 2018), Learned Perceptual Image Patch
+Similarity (LPIPS) (Zhang et al., 2018), Mean Square Error (MSE) (for image-to-image translation)
+and Classifier Accuracy (CA) (for image inpainting), following previous works (Liu et al., 2023b;
+Zhou et al., 2023). The metrics are computed using the complete training set for Edges→Handbags
+and DIODE-Outdoor, and 10k images from validation set for ImageNet. We provide the inference
+time comparison in Appendix G.1. Additional experiment details are provided in Appendix F.
+6.1
+SAMPLE QUALITY AND EFFICIENCY
+We present the quantitative results of DBIMs in Table 2 and Table 3, compared with baselines
+including GAN-based, diffusion-based and bridge-based methods3. We set the number of function
+evaluations (NFEs) of DBIM to 20 and 100 to demonstrate both efficiency at small NFEs and quality
+at large NFEs. We select η from the set [0.0, 0.3, 0.5, 0.8, 1.0] for DBIM and report the best results.
+In image translation tasks, DDBM achieves the best sample quality (measured by FID) among the
+baselines, but requires NFE > 100. In contrast, DBIM with only NFE = 20 already surpasses
+all baselines, performing better than or on par with DDBM at NFE = 118. When increasing the
+NFE to 100, DBIM further improves the sample quality and outperforms DDBM with NFE = 200
+on DIODE-Outdoor. In the more challenging image inpainting task on ImageNet 256 × 256, the
+superiority of DBIM is highlighted even further. In particular, DBIM with NFE = 20 outperforms
+all baselines, including DDBM with NFE = 500, achieving a 25× speed-up. With NFE = 100,
+DBIM continues to improve sample quality, reaching a FID lower than 4 for the first time.
+The comparison of visual quality is illustrated in Figure 1 and Figure 3, where DBIM produces
+smoother outputs with significantly fewer noisy artifacts compared to DDBM’s hybrid sampler.
+Additional samples are provided in Appendix H.
+Ablation of the Variance Parameter We investigate the impact of the variance parameter ρ (con-
+trolled by η) to identify how the level of stochasticity affects sample quality across various NFEs, as
+shown in Table 4 and Table 5. For image translation tasks, we consistently observe that employing
+3It is worth noting that, the released checkpoints of I2SB are actually flow matching/interpolant models
+instead of bridge models, as they (1) start with noisy conditions instead of clean conditions and (2) perform a
+straight interpolation between the condition and the sample without adding extra intermediate noise.
+8
+
+
+=== Page 9 ===
+Published as a conference paper at ICLR 2025
+Table 5: Ablation of the variance parameter controlled by η for image translation, measured by FID.
+Sampler
+NFE
+5
+10
+20
+50
+100
+200
+500
+5
+10
+20
+50
+100
+200
+500
+Image Translation, Edges→Handbags (64 × 64)
+Image Translation, DIODE-Outdoor (256 × 256)
+η
+0.0
+3.62
+2.49
+1.76
+1.17
+0.91
+0.75
+0.65
+14.25
+7.96
+4.97
+3.18
+2.56
+2.26
+2.10
+0.3
+3.64
+2.53
+1.81
+1.21
+0.94
+0.76
+0.65
+14.48
+8.25
+5.22
+3.37
+2.68
+2.33
+2.12
+0.5
+3.69
+2.61
+1.91
+1.30
+1.00
+0.81
+0.67
+14.93
+8.75
+5.68
+3.71
+2.92
+2.47
+2.17
+0.8
+3.87
+2.91
+2.25
+1.58
+1.23
+0.96
+0.76
+16.41
+10.30
+6.98
+4.63
+3.58
+2.90
+2.41
+1.0
+4.21
+3.38
+2.72
+1.96
+1.50
+1.15
+0.85
+19.17
+12.59
+8.85
+5.98
+4.55
+3.59
+2.82
+DDBM
+317.22
+137.15
+46.74
+7.79
+2.40
+0.88
+0.53
+328.33
+151.93
+41.03
+15.19
+6.54
+3.34
+2.26
+a deterministic sampler with η = 0 yields superior performance compared to stochastic samplers
+with η > 0. We attribute it to the characteristics of the datasets, where the target image is highly
+correlated with and dependent on the condition, resulting in a generative model that lacks diver-
+sity. In this case, a straightforward mapping without the involvement of stochasticity is preferred.
+Conversely, for image inpainting on the more diverse dataset ImageNet 256×256, the parameter η
+exhibits significance across different NFEs. When NFE ≤20, η = 0 is near the optimal choice, with
+FID steadily increasing as η ascends. However, when NFE ≥50, a relatively large level of stochas-
+ticity at η = 0.8 or even η = 1 yields optimal FID. Notably, the FID of η = 0 converges to 3.91
+at NFE = 100, with no further improvement at larger NFEs, indicating convergence to the ground-
+truth sample by the corresponding PF-ODE. This observation aligns with diffusion models, where
+deterministic sampling facilitates rapid convergence, while introducing stochasticity in sampling
+enhances diversity, ultimately culminating in the highest sample quality when NFE is substantial.
+Table 6: The effects of high-order methods, measured by FID.
+Sampler
+NFE
+5
+10
+20
+50
+100
+5
+10
+20
+50
+100
+5
+10
+20
+50
+100
+Image Translation
+Inpainting
+Edges→Handbags (64 × 64)
+DIODE-Outdoor (256 × 256)
+ImageNet (256 × 256)
+DBIM (η = 0)
+3.62
+2.49
+1.76
+1.17
+0.91
+14.25
+7.96
+4.97
+3.18
+2.56
+6.08
+4.51
+4.11
+3.95
+3.91
+DBIM (2nd-order)
+3.44
+2.16
+1.48
+0.99
+0.79
+13.54
+7.18
+4.34
+2.87
+2.41
+5.53
+4.33
+4.07
+3.94
+3.91
+DBIM (3rd-order)
+3.40
+2.12
+1.45
+0.97
+0.79
+13.41
+7.01
+4.20
+2.84
+2.40
+5.50
+4.34
+4.07
+3.93
+3.91
+High-Order Methods
+We further demonstrate the effects of high-order methods by comparing
+them to deterministic DBIM, the first-order case. As shown in Table 6, high-order methods consis-
+tently improve FID scores in image translation tasks, as well as in inpainting tasks when NFE≤50,
+resulting in enhanced generation quality in the low NFE regime. Besides, the 3rd-order variant
+performs slightly better than the 2nd-order variant. However, in contrast to the numerical solvers
+in diffusion models, the benefits of high-order extensions are relatively minor in diffusion bridges
+and less pronounced than the improvement when adjusting η from 1 to 0. Nevertheless, high-order
+DBIMs are significantly more efficient than DDBM’s PF-ODE-based high-order solvers.
+As illustrated in Figure 1, our high-order sampler produces images of similar semantic content to
+the first-order case, using the same booting noise. In contrast, the visual quality is improved with
+finer textures, resulting in better FID. This indicates that the high-order gradient information from
+past network outputs benefits the generation quality by adding high-frequency visual details.
+Generation Diversity
+We quantitatively measure the generation diversity by the diversity score,
+calculated as the pixel-level variance of multiple generations, following CMDE (Batzolis et al.,
+2021) and BBDM (Li et al., 2023). As detailed in Appendix G.2, increasing NFE or decreasing η
+can both increase the diversity score, confirming the effect of the booting noise.
+6.2
+RECONSTRUCTION AND INTERPOLATION
+As discussed in Section 4.2, the deterministic nature of DBIMs at η = 0 and its connection to neural
+ODEs enable faithful encoding and reconstruction by treating the booting noise as the latent variable.
+Furthermore, employing spherical linear interpolation in the latent space and subsequently decoding
+9
+
+
+=== Page 10 ===
+Published as a conference paper at ICLR 2025
+20 steps
+Condition
+20 steps
+100 steps
+100 steps
+(a) Encoding/Reconstruction
+(b) Semantic Interpolation
+Figure 4: Illustration of generation diversity with deterministic DBIMs.
+back to the image space allows for semantic image interpolation in image translation and image
+restoration tasks. These capabilities cannot be achieved by DBIMs with η > 0, or by DDBM’s hy-
+brid sampler which incorporates stochastic steps. We showcase the encoding and decoding results in
+Figure 4a, indicating that accurate reconstruction is achievable with a sufficient number of sampling
+steps. We also illustrate the interpolation process in Figure 4b.
+7
+CONCLUSION
+In this work, we introduce diffusion bridge implicit models (DBIMs) for accelerated sampling of
+DDBMs without extra training. In contrast to DDBM’s continuous-time generation processes, we
+concentrate on discretized sampling steps and propose a series of generalized diffusion bridge mod-
+els including non-Markovian variants. The induced sampling procedures serve as bridge counter-
+parts and extensions of DDIMs and are further extended to develop high-order numerical solvers,
+filling the missing perspectives in the context of diffusion bridges. Experiments on high-resolution
+datasets and challenging inpainting tasks demonstrate DBIM’s superiority in both the sample quality
+and sample efficiency, achieving state-of-the-art FID scores with 100 steps and providing up to 25×
+acceleration of DDBM’s sampling procedure.
+Figure 5: DBIM case
+(η = 0, NFE=500).
+Limitations and Failure Cases Despite the notable speed-up for diffusion
+bridge models, DBIMs still lag behind GAN-based methods in one-step gen-
+eration. The generation quality is unsatisfactory when NFE is small, and
+blurry regions still exist even using high-order methods (Figure 1). This is
+not fast enough for real-time applications. Besides, as a training-free infer-
+ence algorithm, DBIM cannot surpass the capability and quality upper bound
+of the pretrained diffusion bridge model. In difficult and delicate inpainting
+scenarios, such as human faces and hands, DBIM fails to fix the artifacts, even
+under large NFEs.
+ACKNOWLEDGMENTS
+This work was supported by the NSFC Projects (Nos. 62350080, 62106120, 92270001), the Na-
+tional Key Research and Development Program of China (No. 2021ZD0110502), Tsinghua Institute
+for Guo Qiang, and the High Performance Computing Center, Tsinghua University. J.Z was also
+supported by the XPlorer Prize.
+REFERENCES
+Michael S Albergo, Nicholas M Boffi, and Eric Vanden-Eijnden. Stochastic interpolants: A unifying
+framework for flows and diffusions. arXiv preprint arXiv:2303.08797, 2023.
+Fan Bao, Chendong Xiang, Gang Yue, Guande He, Hongzhou Zhu, Kaiwen Zheng, Min Zhao,
+Shilong Liu, Yaole Wang, and Jun Zhu. Vidu: a highly consistent, dynamic and skilled text-to-
+video generator with diffusion models. arXiv preprint arXiv:2405.04233, 2024.
+Shane Barratt and Rishi Sharma. A note on the inception score. arXiv preprint arXiv:1801.01973,
+2018.
+Georgios Batzolis, Jan Stanczuk, Carola-Bibiane Sch¨onlieb, and Christian Etmann. Conditional
+image generation with score-based diffusion models. arXiv preprint arXiv:2111.13606, 2021.
+10
+
+
+=== Page 11 ===
+Published as a conference paper at ICLR 2025
+Christopher M Bishop and Nasser M Nasrabadi. Pattern recognition and machine learning, vol-
+ume 4. Springer, 2006.
+Mari Paz Calvo and C´esar Palencia. A class of explicit multistep exponential integrators for semi-
+linear problems. Numerische Mathematik, 102:367–381, 2006.
+Nanxin Chen, Yu Zhang, Heiga Zen, Ron J. Weiss, Mohammad Norouzi, and William Chan. Wave-
+grad: Estimating gradients for waveform generation. In International Conference on Learning
+Representations, 2021a.
+Tianrong Chen, Guan-Horng Liu, and Evangelos A Theodorou.
+Likelihood training of schr\”
+odinger bridge using forward-backward sdes theory. arXiv preprint arXiv:2110.11291, 2021b.
+Zehua Chen, Guande He, Kaiwen Zheng, Xu Tan, and Jun Zhu. Schrodinger bridges beat diffusion
+models on text-to-speech synthesis. arXiv preprint arXiv:2312.03491, 2023.
+Zixiang Chen, Huizhuo Yuan, Yongqian Li, Yiwen Kou, Junkai Zhang, and Quanquan Gu. Fast
+sampling via discrete non-markov diffusion models with predetermined transition time. In The
+Thirty-eighth Annual Conference on Neural Information Processing Systems, 2024.
+Hyungjin Chung, Jeongsol Kim, Michael Thompson Mccann, Marc Louis Klasky, and Jong Chul
+Ye. Diffusion posterior sampling for general noisy inverse problems. In The Eleventh Interna-
+tional Conference on Learning Representations, 2022.
+Valentin De Bortoli, James Thornton, Jeremy Heng, and Arnaud Doucet. Diffusion schr¨odinger
+bridge with applications to score-based generative modeling. Advances in Neural Information
+Processing Systems, 34:17695–17709, 2021.
+Jia Deng, Wei Dong, Richard Socher, Li-Jia Li, Kai Li, and Li Fei-Fei. ImageNet: A large-scale hier-
+archical image database. In 2009 IEEE Conference on Computer Vision and Pattern Recognition,
+pp. 248–255. IEEE, 2009.
+Wei Deng, Weijian Luo, Yixin Tan, Marin Biloˇs, Yu Chen, Yuriy Nevmyvaka, and Ricky TQ Chen.
+Variational schr\” odinger diffusion models. arXiv preprint arXiv:2405.04795, 2024.
+Prafulla Dhariwal and Alexander Quinn Nichol. Diffusion models beat GANs on image synthesis.
+In Advances in Neural Information Processing Systems, volume 34, pp. 8780–8794, 2021.
+Joseph L Doob and JI Doob. Classical potential theory and its probabilistic counterpart, volume
+262. Springer, 1984.
+Martin Gonzalez, Nelson Fernandez, Thuy Tran, Elies Gherbi, Hatem Hajri, and Nader Masmoudi.
+Seeds: Exponential sde solvers for fast high-quality sampling from diffusion models.
+arXiv
+preprint arXiv:2305.14267, 2023.
+Agrim Gupta, Lijun Yu, Kihyuk Sohn, Xiuye Gu, Meera Hahn, Li Fei-Fei, Irfan Essa, Lu Jiang,
+and Jos´e Lezama.
+Photorealistic video generation with diffusion models.
+arXiv preprint
+arXiv:2312.06662, 2023.
+Guande He, Kaiwen Zheng, Jianfei Chen, Fan Bao, and Jun Zhu. Consistency diffusion bridge
+models. arXiv preprint arXiv:2410.22637, 2024.
+Martin Heusel, Hubert Ramsauer, Thomas Unterthiner, Bernhard Nessler, and Sepp Hochreiter.
+GANs trained by a two time-scale update rule converge to a local Nash equilibrium.
+In Is-
+abelle Guyon, Ulrike von Luxburg, Samy Bengio, Hanna M. Wallach, Rob Fergus, S. V. N.
+Vishwanathan, and Roman Garnett (eds.), Advances in Neural Information Processing Systems,
+volume 30, pp. 6626–6637, 2017.
+Jonathan Ho, Ajay Jain, and Pieter Abbeel. Denoising diffusion probabilistic models. In Advances
+in Neural Information Processing Systems, volume 33, pp. 6840–6851, 2020.
+Jonathan Ho, William Chan, Chitwan Saharia, Jay Whang, Ruiqi Gao, Alexey Gritsenko, Diederik P
+Kingma, Ben Poole, Mohammad Norouzi, David J Fleet, et al. Imagen video: High definition
+video generation with diffusion models. arXiv preprint arXiv:2210.02303, 2022.
+11
+
+
+=== Page 12 ===
+Published as a conference paper at ICLR 2025
+Marlis Hochbruck and Alexander Ostermann. Explicit exponential Runge-Kutta methods for semi-
+linear parabolic problems. SIAM Journal on Numerical Analysis, 43(3):1069–1090, 2005.
+Marlis Hochbruck, Alexander Ostermann, and Julia Schweitzer. Exponential rosenbrock-type meth-
+ods. SIAM Journal on Numerical Analysis, 47(1):786–803, 2009.
+Phillip Isola, Jun-Yan Zhu, Tinghui Zhou, and Alexei A Efros. Image-to-image translation with
+conditional adversarial networks. In Proceedings of the IEEE conference on computer vision and
+pattern recognition, pp. 1125–1134, 2017.
+Kiyosi Itˆo. On a formula concerning stochastic differentials. Nagoya Mathematical Journal, 3:
+55–65, 1951.
+Tero Karras, Miika Aittala, Timo Aila, and Samuli Laine. Elucidating the design space of diffusion-
+based generative models. In Advances in Neural Information Processing Systems, 2022.
+Bahjat Kawar, Michael Elad, Stefano Ermon, and Jiaming Song. Denoising diffusion restoration
+models. In Advances in Neural Information Processing Systems, 2022.
+Dongjun Kim, Chieh-Hsin Lai, Wei-Hsiang Liao, Naoki Murata, Yuhta Takida, Toshimitsu Uesaka,
+Yutong He, Yuki Mitsufuji, and Stefano Ermon. Consistency trajectory models: Learning prob-
+ability flow ode trajectory of diffusion. In The Twelfth International Conference on Learning
+Representations, 2023.
+Diederik P Kingma, Tim Salimans, Ben Poole, and Jonathan Ho. Variational diffusion models. In
+Advances in Neural Information Processing Systems, 2021.
+Bo Li, Kaitao Xue, Bin Liu, and Yu-Kun Lai. Bbdm: Image-to-image translation with brownian
+bridge diffusion models. In Proceedings of the IEEE/CVF conference on computer vision and
+pattern Recognition, pp. 1952–1961, 2023.
+Yaron Lipman, Ricky TQ Chen, Heli Ben-Hamu, Maximilian Nickel, and Matt Le. Flow matching
+for generative modeling. arXiv preprint arXiv:2210.02747, 2022.
+Gongye Liu, Haoze Sun, Jiayi Li, Fei Yin, and Yujiu Yang. Accelerating diffusion models for inverse
+problems through shortcut sampling. arXiv preprint arXiv:2305.16965, 2023a.
+Guan-Horng Liu, Arash Vahdat, De-An Huang, Evangelos Theodorou, Weili Nie, and Anima
+Anandkumar. I2sb: Image-to-image schr¨odinger bridge. In International Conference on Ma-
+chine Learning, pp. 22042–22062. PMLR, 2023b.
+Cheng Lu, Kaiwen Zheng, Fan Bao, Jianfei Chen, Chongxuan Li, and Jun Zhu. Maximum likelihood
+training for score-based diffusion odes by high order denoising score matching. In International
+Conference on Machine Learning, pp. 14429–14460. PMLR, 2022a.
+Cheng Lu, Yuhao Zhou, Fan Bao, Jianfei Chen, Chongxuan Li, and Jun Zhu. Dpm-solver: A fast
+ode solver for diffusion probabilistic model sampling in around 10 steps. In Advances in Neural
+Information Processing Systems, 2022b.
+Chenlin Meng, Yang Song, Jiaming Song, Jiajun Wu, Jun-Yan Zhu, and Stefano Ermon. SDEdit:
+Image synthesis and editing with stochastic differential equations. In International Conference
+on Learning Representations, 2022.
+Shakir Mohamed and Balaji Lakshminarayanan. Learning in implicit generative models. arXiv
+preprint arXiv:1610.03483, 2016.
+Alexander Quinn Nichol, Prafulla Dhariwal, Aditya Ramesh, Pranav Shyam, Pamela Mishkin, Bob
+Mcgrew, Ilya Sutskever, and Mark Chen. Glide: Towards photorealistic image generation and
+editing with text-guided diffusion models. In International Conference on Machine Learning, pp.
+16784–16804. PMLR, 2022.
+Kushagra Pandey, Maja Rudolph, and Stephan Mandt. Efficient integrators for diffusion generative
+models. arXiv preprint arXiv:2310.07894, 2023.
+12
+
+
+=== Page 13 ===
+Published as a conference paper at ICLR 2025
+Kushagra Pandey, Ruihan Yang, and Stephan Mandt. Fast samplers for inverse problems in iterative
+refinement models. arXiv preprint arXiv:2405.17673, 2024.
+Aditya Ramesh, Prafulla Dhariwal, Alex Nichol, Casey Chu, and Mark Chen. Hierarchical text-
+conditional image generation with CLIP latents. arXiv preprint arXiv:2204.06125, 2022.
+Robin Rombach, Andreas Blattmann, Dominik Lorenz, Patrick Esser, and Bj¨orn Ommer. High-
+resolution image synthesis with latent diffusion models. In Proceedings of the IEEE/CVF Con-
+ference on Computer Vision and Pattern Recognition, pp. 10684–10695, 2022.
+Chitwan Saharia, William Chan, Huiwen Chang, Chris Lee, Jonathan Ho, Tim Salimans, David
+Fleet, and Mohammad Norouzi. Palette: Image-to-image diffusion models. In ACM SIGGRAPH
+2022 Conference Proceedings, pp. 1–10, 2022.
+Axel Sauer, Dominik Lorenz, Andreas Blattmann, and Robin Rombach. Adversarial diffusion dis-
+tillation. arXiv preprint arXiv:2311.17042, 2023.
+Yuyang Shi, Valentin De Bortoli, Andrew Campbell, and Arnaud Doucet. Diffusion schr¨odinger
+bridge matching. Advances in Neural Information Processing Systems, 36, 2024.
+Jascha Sohl-Dickstein, Eric Weiss, Niru Maheswaranathan, and Surya Ganguli. Deep unsupervised
+learning using nonequilibrium thermodynamics. In International Conference on Machine Learn-
+ing, pp. 2256–2265. PMLR, 2015.
+Vignesh Ram Somnath, Matteo Pariset, Ya-Ping Hsieh, Maria Rodriguez Martinez, Andreas Krause,
+and Charlotte Bunne. Aligned diffusion schr¨odinger bridges. In Uncertainty in Artificial Intelli-
+gence, pp. 1985–1995. PMLR, 2023.
+Jiaming Song, Chenlin Meng, and Stefano Ermon. Denoising diffusion implicit models. In Interna-
+tional Conference on Learning Representations, 2021a.
+Jiaming Song, Arash Vahdat, Morteza Mardani, and Jan Kautz. Pseudoinverse-guided diffusion
+models for inverse problems. In International Conference on Learning Representations, 2023a.
+URL https://openreview.net/forum?id=9_gsMA8MRKQ.
+Yang Song, Conor Durkan, Iain Murray, and Stefano Ermon. Maximum likelihood training of score-
+based diffusion models. In Advances in Neural Information Processing Systems, volume 34, pp.
+1415–1428, 2021b.
+Yang Song, Jascha Sohl-Dickstein, Diederik P. Kingma, Abhishek Kumar, Stefano Ermon, and Ben
+Poole. Score-based generative modeling through stochastic differential equations. In Interna-
+tional Conference on Learning Representations, 2021c.
+Yang Song, Prafulla Dhariwal, Mark Chen, and Ilya Sutskever. Consistency models. In International
+Conference on Machine Learning, pp. 32211–32252. PMLR, 2023b.
+Xuan Su, Jiaming Song, Chenlin Meng, and Stefano Ermon. Dual diffusion implicit bridges for
+image-to-image translation. arXiv preprint arXiv:2203.08382, 2022.
+Igor Vasiljevic, Nick Kolkin, Shanyi Zhang, Ruotian Luo, Haochen Wang, Falcon Z Dai, Andrea F
+Daniele, Mohammadreza Mostajabi, Steven Basart, Matthew R Walter, et al. Diode: A dense
+indoor and outdoor depth dataset. arXiv preprint arXiv:1908.00463, 2019.
+Pascal Vincent. A connection between score matching and denoising autoencoders. Neural compu-
+tation, 23(7):1661–1674, 2011.
+Yinhuai Wang, Jiwen Yu, and Jian Zhang. Zero-shot image restoration using denoising diffusion
+null-space model. In The Eleventh International Conference on Learning Representations, 2023.
+URL https://openreview.net/forum?id=mRieQgMtNTQ.
+Yuang Wang, Siyeop Yoon, Pengfei Jin, Matthew Tivnan, Zhennong Chen, Rui Hu, Li Zhang,
+Zhiqiang Chen, Quanzheng Li, and Dufan Wu. Implicit image-to-image schrodinger bridge for
+image restoration. arXiv preprint arXiv:2403.06069, 2024a.
+13
+
+
+=== Page 14 ===
+Published as a conference paper at ICLR 2025
+Yufei Wang, Wenhan Yang, Xinyuan Chen, Yaohui Wang, Lanqing Guo, Lap-Pui Chau, Ziwei Liu,
+Yu Qiao, Alex C Kot, and Bihan Wen. Sinsr: diffusion-based image super-resolution in a single
+step. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition,
+pp. 25796–25805, 2024b.
+Jintao Zhang, Haofeng Huang, Pengle Zhang, Jia Wei, Jun Zhu, and Jianfei Chen.
+Sageatten-
+tion2: Efficient attention with thorough outlier smoothing and per-thread int4 quantization. arXiv
+preprint arXiv:2411.10958, 2024.
+Jintao Zhang, Jia Wei, Pengle Zhang, Jun Zhu, and Jianfei Chen. Sageattention: Accurate 8-bit
+attention for plug-and-play inference acceleration. In International Conference on Learning Rep-
+resentations (ICLR), 2025a.
+Jintao Zhang, Chendong Xiang, Haofeng Huang, Jia Wei, Haocheng Xi, Jun Zhu, and Jianfei
+Chen. Spargeattn: Accurate sparse attention accelerating any model inference. arXiv preprint
+arXiv:2502.18137, 2025b.
+Qinsheng Zhang and Yongxin Chen. Fast sampling of diffusion models with exponential integrator.
+In The Eleventh International Conference on Learning Representations, 2022.
+Qinsheng Zhang, Molei Tao, and Yongxin Chen. gddim: Generalized denoising diffusion implicit
+models. arXiv preprint arXiv:2206.05564, 2022.
+Richard Zhang, Phillip Isola, Alexei A Efros, Eli Shechtman, and Oliver Wang. The unreasonable
+effectiveness of deep features as a perceptual metric. In Proceedings of the IEEE conference on
+computer vision and pattern recognition, pp. 586–595, 2018.
+Kaiwen Zheng, Cheng Lu, Jianfei Chen, and Jun Zhu. Dpm-solver-v3: Improved diffusion ode
+solver with empirical model statistics. In Thirty-seventh Conference on Neural Information Pro-
+cessing Systems, 2023a.
+Kaiwen Zheng, Cheng Lu, Jianfei Chen, and Jun Zhu. Improved techniques for maximum likelihood
+estimation for diffusion odes. In International Conference on Machine Learning, pp. 42363–
+42389. PMLR, 2023b.
+Kaiwen Zheng, Yongxin Chen, Hanzi Mao, Ming-Yu Liu, Jun Zhu, and Qinsheng Zhang. Masked
+diffusion models are secretly time-agnostic masked models and exploit inaccurate categorical
+sampling. arXiv preprint arXiv:2409.02908, 2024.
+Linqi Zhou, Aaron Lou, Samar Khanna, and Stefano Ermon. Denoising diffusion bridge models.
+arXiv preprint arXiv:2309.16948, 2023.
+14
+
+
+=== Page 15 ===
+Published as a conference paper at ICLR 2025
+A
+RELATED WORK
+Fast Sampling of Diffusion Models
+Fast sampling of diffusion models can be classified into
+training-free and training-based methods. A prevalent training-free fast sampler is the denoising
+diffusion implicit models (DDIMs) (Song et al., 2021a) that employ alternative non-Markovian gen-
+eration processes in place of DDPMs, a discrete-time diffusion model. ScoreSDE (Song et al.,
+2021c) further links discrete-time DDPMs to continuous-time score-based models, unrevealing the
+generation process to be ordinary and stochastic differential equations (ODEs and SDEs). DDIM
+can be generalized to develop integrators for broader diffusion models (Zhang et al., 2022; Pandey
+et al., 2023). The concept of implicit sampling, in a broad sense, can also be extended to discrete
+diffusion models (Chen et al., 2024; Zheng et al., 2024), although there are fundamental differences
+in their underlying mechanisms. Subsequent training-free samplers concentrate on developing ded-
+icated numerical solvers to the diffusion ODE or SDE, particularly Heun’s methods (Karras et al.,
+2022) and exponential integrators (Zhang & Chen, 2022; Lu et al., 2022b; Zheng et al., 2023a; Gon-
+zalez et al., 2023). These methods typically require around 10 steps for high-quality generation. In
+contrast, training-based methods, particularly adversarial distillation (Sauer et al., 2023) and consis-
+tency distillation (Song et al., 2023b; Kim et al., 2023), become notable for their ability to achieve
+high-quality generation with just one or two steps. Our work serves as a thorough exploration of
+training-free fast sampling of DDBMs. Exploring bridge distillation methods, such as consistency
+bridge distillation (He et al., 2024), would be promising future research avenues to decrease the
+inference cost further. Infrastructure improvements, such as quantized or sparse attention (Zhang
+et al., 2025a;b; 2024), can also be used to accelerate the inference of diffusion bridge models.
+Diffusion Bridges
+Diffusion bridges (De Bortoli et al., 2021; Chen et al., 2021b; Liu et al., 2023b;
+Somnath et al., 2023; Zhou et al., 2023; Chen et al., 2023; Shi et al., 2024; Deng et al., 2024) are a
+promising generative variant of diffusion models for modeling the transport between two arbitrary
+distributions. One line of work is the diffusion Schrodinger bridge models (De Bortoli et al., 2021;
+Chen et al., 2021b; Shi et al., 2024; Deng et al., 2024), which solves an entropy-regularized opti-
+mal transport problem between two probability distributions. However, their reliance on expensive
+iterative procedures has limited their application scope, particularly for high-dimensional data. Sub-
+sequent works have endeavored to enhance the tractability of the Schrodinger bridge problem by
+making assumptions such as paired data (Liu et al., 2023b; Somnath et al., 2023; Chen et al., 2023).
+On the other hand, DDBMs (Zhou et al., 2023) construct diffusion bridges via Doob’s h-transform,
+offering a reverse-time perspective of a diffusion process conditioned on given endpoints. This ap-
+proach aligns the design spaces and training algorithms of DDBMs closely with those of score-based
+generative models, leading to state-of-the-art performance in image translation tasks. However, the
+sampling procedure of DDBMs still relies on inefficient simulations of differential equations, lack-
+ing theoretical insights to develop efficient samplers. BBDM (Li et al., 2023) and I3SB (Wang
+et al., 2024a) extend the concept of DDIM to the contexts of Brownian bridge and I2SB (Liu et al.,
+2023b), respectively. SinSR (Wang et al., 2024b) is also motivated by DDIM, while the application
+is concentrated on the mean-reverting diffusion process, which ends in a Gaussian instead of a delta
+distribution. In contrast to them, our work provides the first systematic exploration of implicit sam-
+pling within the broader DDBM framework, offering theoretical insights and connections while also
+proposing novel high-order diffusion bridge solvers.
+B
+PROOFS
+B.1
+PROOF OF PROPOSITION 3.1
+Proof. Since q(ρ) in Eqn. (10) is factorized as q(ρ)(xt0:N−1|xT ) = q0(x0)q(ρ)(xt1:N−1|x0, xT )
+where q(ρ)(xt1:N−1|x0, xT ) = QN−1
+n=1 q(ρ)(xtn|x0, xtn+1, xT ), we have q(ρ)(x0|xT ) = q0(x0) =
+q(x0|xT ), which proves the case for n = 0. For 1 ≤n ≤N −1, we have
+q(ρ)(xtn|xT ) =
+Z
+q(ρ)(xtn|x0, xT )q(ρ)(x0|xT )dx0
+(19)
+and
+q(xtn|xT ) =
+Z
+q(xtn|x0, xT )q(x0|xT )dx0
+(20)
+15
+
+
+=== Page 16 ===
+Published as a conference paper at ICLR 2025
+Since q(ρ)(x0|xT ) = q(x0|xT ), we only need to prove q(ρ)(xtn|x0, xT ) = q(xtn|x0, xT ).
+Firstly, when n = N −1, we have tn+1 = T. Note that ρ is restricted by ρN−1 = ctN−1, and
+Eqn. (11) becomes
+q(ρ)(xtN−1|x0, xT ) = N(atN−1xT + btN−1x0, c2
+tN−1I)
+(21)
+which is exactly the same as the forward transition kernel of q in Eqn. (6).
+Therefore,
+q(ρ)(xtn|x0, xT ) = q(xtn|x0, xT ) holds for n = N −1.
+Secondly, suppose q(ρ)(xtn|x0, xT ) = q(xtn|x0, xT ) holds for n = k, we aim to prove that it
+holds for n = k −1. Specifically, q(ρ)(xtk−1|x0, xT ) can be expressed as
+q(ρ)(xtk−1|x0, xT ) =
+Z
+q(ρ)(xtk−1|x0, xtk, xT )q(ρ)(xtk|x0, xT )dxtk
+=
+Z
+q(ρ)(xtk−1|x0, xtk, xT )q(xtk|x0, xT )dxtk
+=
+Z
+N(xtk−1; µk−1|k, ρ2
+k−1I)N(xtk; atkxT + btkx0, c2
+tkI)dxtk
+(22)
+where
+µk−1|k = atk−1xT + btk−1x0 +
+q
+c2
+tk−1 −ρ2
+k−1
+xtk −atkxT −btkx0
+ctk
+(23)
+From (Bishop & Nasrabadi, 2006) (2.115), q(ρ)(xtk−1|x0, xT ) is a Gaussian, denoted as
+N(µk−1, Σk−1), where
+µk−1 = atk−1xT + btk−1x0 +
+q
+c2
+tk−1 −ρ2
+k−1
+atkxT + btkx0 −atkxT −btkx0
+ctk
+= atk−1xT + btk−1x0
+(24)
+and
+Σk−1 = ρ2
+k−1I +
+q
+c2
+tk−1 −ρ2
+k−1
+ctk
+c2
+tk
+q
+c2
+tk−1 −ρ2
+k−1
+ctk
+I
+= c2
+tk−1I
+(25)
+Therefore, q(ρ)(xtk−1|x0, xT ) = q(xtk−1|x0, xT ) = N(atk−1xT + btk−1x0, c2
+tk−1I). By math-
+ematical deduction, q(ρ)(xtn|x0, xT ) = q(xtn|x0, xT ) holds for every 1 ≤n ≤N −1, which
+completes the proof.
+B.2
+PROOF OF PROPOSITION 3.2
+Proof. Substituting Eqn. (10) and the joint distribution into Eqn. (13), we have
+J (ρ)(θ)
+=Eq(xT )Eq(ρ)(xt0:N−1|xT )
+h
+log q(ρ)(xt1:N−1|x0, xT ) −log pθ(xt0:N−1|xT )
+i
+=Eq(xT )Eq(ρ)(xt0:N−1|xT )
+"N−1
+X
+n=1
+log q(ρ)(xtn|x0, xtn+1, xT ) −
+N−1
+X
+n=0
+log pθ(xtn|xtn+1, xT )
+#
+=
+N−1
+X
+n=1
+Eq(xT )Eq(ρ)(x0,xtn+1|xT )
+h
+DKL(q(ρ)(xtn|x0, xtn+1, xT ) ∥pθ(xtn|xtn+1, xT ))
+i
+−Eq(xT )Eq(ρ)(x0,xt1|xT ) [log pθ(x0|xt1, xT )]
+(26)
+where
+DKL(q(ρ)(xtn|x0, xtn+1, xT ) ∥pθ(xtn|xtn+1, xT ))
+=DKL(q(ρ)(xtn|x0, xtn+1, xT ) ∥q(ρ)(xtn|xθ(xtn+1, tn+1, xT ), xtn+1, xT ))
+=d2
+n∥xθ(xtn+1, tn+1, xT ) −x0∥2
+2
+2ρ2n
+(27)
+16
+
+
+=== Page 17 ===
+Published as a conference paper at ICLR 2025
+where we have denoted dn := btn −
+q
+c2
+tn −ρ2n
+btn+1
+ctn+1 . Besides, we have
+log pθ(x0|xt1, xT ) = log q(ρ)(x0|xθ(xt1, t1, xT ), xt1, xT )
+= log N(xθ(xt1, t1, xT ), ρ2
+0I)
+= −∥xθ(xt1, t1, xT ) −x0∥2
+2
+2ρ2
+0
++ C
+(28)
+where C is irrelevant to θ. According to Eqn. (6), the conditional score is
+∇xt log q(xt|x0, xT ) = −xt −atxT −btx0
+c2
+t
+(29)
+Therefore,
+∥xθ(xtn, tn, xT ) −x0∥2
+2
+=c4
+tn
+b2
+tn
+−xtn −atnxT −btnxθ(xtn, tn, xT )
+c2
+tn
+−
+
+−xtn −atnxT −btnx0
+c2
+tn
+
+2
+2
+=c4
+tn
+b2
+tn
+∥sθ(xtn, tn, xT ) −∇xtn log q(xtn|x0, xT )∥2
+2
+(30)
+where sθ is related to xθ by
+sθ(xt, t, xT ) = −xt −atxT −btxθ(xt, t, xT )
+c2
+t
+(31)
+Define d0 = 1, the loss J (ρ)(θ) is further simplified to
+J (ρ)(θ) −C
+=
+N−1
+X
+n=0
+Eq(xT )q(ρ)(x0,xtn+1|xT )
+d2
+n∥xθ(xtn+1, tn+1, xT ) −x0∥2
+2
+2ρ2n
+
+=
+N
+X
+n=1
+d2
+n−1
+2ρ2
+n−1
+Eq(xT )q(x0|xT )q(xtn|x0,xT )
+
+∥xθ(xtn, tn, xT ) −x0∥2
+2
+
+=
+N
+X
+n=1
+d2
+n−1c4
+tn
+2ρ2
+n−1b2
+tn
+Eq(xT )q(x0|xT )q(xtn|x0,xT )
+
+∥sθ(xtn, tn, xT ) −∇xtn log q(xtn|x0, xT )∥2
+2
+
+(32)
+Compared to the training objective of DDBMs in Eqn. (9), J (ρ)(θ) is totally equivalent up to a
+constant, by concentrating on the discretized timesteps {tn}N
+n=1, choosing q(xT )q(x0|xT ) as the
+paired data distribution and using the weighting function γ that satisfies γ(tn) =
+d2
+n−1c4
+tn
+2ρ2
+n−1b2
+tn .
+B.3
+PROOF OF PROPOSITION 4.1
+Proof. We first represent the PF-ODE (Eqn. (8))
+dxt =
+
+f(t)xt −g2(t)
+1
+2∇xt log q(xt|xT ) −∇xt log qT |t(xT |xt)
+
+dt
+(33)
+with the data predictor xθ(xt, t, xT ). We replace the bridge score ∇xt log q(xt|xT ) with the net-
+work sθ(xt, t, xT ), which is related to xθ(xt, t, xT ) by Eqn. (14). Besides, ∇xt log qT |t(xT |xt)
+17
+
+
+=== Page 18 ===
+Published as a conference paper at ICLR 2025
+can be analytically computed as
+∇xt log qT |t(xT |xt) = ∇xt log q(xt|x0, xT )q(xT |x0)
+q(xt|x0)
+= ∇xt log q(xt|x0, xT ) −∇xt log q(xt|x0)
+= −xt −atxT −btx0
+c2
+t
++ xt −αtx0
+σ2
+t
+= −
+SNRT
+SNRt (xt −αt
+αT xT )
+σ2
+t (1 −SNRT
+SNRt )
+= −
+at( αT
+αt xt −xT )
+c2
+t
+(34)
+Substituting Eqn. (14) and Eqn. (34) into Eqn. (33), the PF-ODE is transformed to
+dxt =
+"
+f(t)xt −g2(t)
+ 
+−xt −atxT −btxθ(xt, t, xT )
+2c2
+t
++
+at( αT
+αt xt −xT )
+c2
+t
+!#
+dt
+=
+
+f(t) + g2(t)
+1 −2at
+αT
+αt
+2c2
+t
+
+xt + g2(t) at
+2c2
+t
+xT −g2(t) bt
+2c2
+t
+xθ(xt, t, xT )
+
+dt
+=
+
+f(t) + g2(t)
+σ2
+t
+−g2(t)
+2c2
+t
+
+xt + g2(t) at
+2c2
+t
+xT −g2(t) bt
+2c2
+t
+xθ(xt, t, xT )
+
+dt
+(35)
+On the other hand, the ODE corresponding to DBIMs (Eqn. (16)) can be expanded as
+dxt
+ct
+−c′
+t
+c2
+t
+xtdt =
+"at
+ct
+′
+xT +
+bt
+ct
+′
+xθ(xt, t, xT )
+#
+dt
+(36)
+where we have denoted (·)′ := d(·)
+dt . Further simplification gives
+dxt =
+c′
+t
+ct
+xt +
+
+a′
+t −at
+c′
+t
+ct
+
+xT +
+
+b′
+t −bt
+c′
+t
+ct
+
+xθ(xt, t, xT )
+
+dt
+(37)
+The coefficients at, bt, ct are determined by the noise schedule αt, σt in diffusion models. Comput-
+ing their derivatives will produce terms involving f(t), g(t), which are used to define the forward
+SDE. As revealed in diffusion models, f(t), g(t) are related to αt, σt by f(t) = d log αt
+dt
+,
+g2(t) =
+dσ2
+t
+dt −2 d log αt
+dt
+σ2
+t . We can derive the reverse relation of αt, σt and f(t), g(t):
+αt = e
+R t
+0 f(τ)dτ,
+σ2
+t = α2
+t
+Z t
+0
+g2(τ)
+α2τ
+dτ
+(38)
+which can facilitate subsequent calculation. We first compute the derivative of a common term in
+at, bt, ct:
+
+1
+SNRt
+′
+=
+σ2
+t
+α2
+t
+′
+= g2(t)
+α2
+t
+(39)
+For ct, since c2
+t = σ2
+t (1 −SNRT
+SNRt ), we have
+c′
+t
+ct
+= (log ct)′ = 1
+2(log c2
+t)′ = 1
+2(log σ2
+t + log(1 −SNRT
+SNRt
+))′
+(40)
+where
+(log σ2
+t )′ = (log σ2
+t
+α2
+t
+)′ + (log α2
+t)′ = g2(t)
+α2
+t
+α2
+t
+σ2
+t
++ 2f(t) = g2(t)
+σ2
+t
++ 2f(t)
+(41)
+and
+(log(1 −SNRT
+SNRt
+))′ = −SNRT
+1 −SNRT
+SNRt
+
+1
+SNRt
+′
+= −SNRT
+c2
+t
+σ2
+t
+g2(t)
+α2
+t
+= −g2(t)
+c2
+t
+SNRT
+SNRt
+(42)
+18
+
+
+=== Page 19 ===
+Published as a conference paper at ICLR 2025
+Substituting Eqn. (41) and Eqn. (42) into Eqn. (40), and using the relation SNRT
+SNRt = 1 −c2
+t
+σ2
+t , we have
+c′
+t
+ct
+= f(t) + g2(t)
+2σ2
+t
+−g2(t)
+2c2
+t
+SNRT
+SNRt
+= f(t) + g2(t)
+σ2
+t
+−g2(t)
+2c2
+t
+(43)
+For at, since at = αt
+αT
+SNRT
+SNRt , we have
+a′
+t
+at
+= (log at)′ = (log αt)′ + (log SNRT
+SNRt
+)′ = f(t) + SNRt
+g2(t)
+α2
+t
+= f(t) + g2(t)
+σ2
+t
+(44)
+For bt, since bt = αt(1 −SNRT
+SNRt ), we have
+b′
+t
+bt
+= (log bt)′ = (log αt)′+(log(1−SNRT
+SNRt
+))′ = f(t)−g2(t)
+c2
+t
+SNRT
+SNRt
+= f(t)+g2(t)
+σ2
+t
+−g2(t)
+c2
+t
+(45)
+Therefore,
+a′
+t −at
+c′
+t
+ct
+= at(a′
+t
+at
+−c′
+t
+ct
+) = g2(t)
+2c2
+t
+at
+(46)
+and
+b′
+t −bt
+c′
+t
+ct
+= bt(b′
+t
+bt
+−c′
+t
+ct
+) = −g2(t)
+2c2
+t
+bt
+(47)
+Substituting Eqn. (43), Eqn. (46) and Eqn. (47) into the ODE of DBIMs in Eqn. (37), we obtain
+exactly the PF-ODE in Eqn. (35).
+C
+MORE THEORETICAL DISCUSSIONS
+C.1
+MARKOV PROPERTY OF THE GENERALIZED DIFFUSION BRIDGES
+We aim to analyze the Markov property of the forward process corresponding to our generalized
+diffusion bridge in Section 3.1. The forward process of q(ρ) can be induced by Bayes’ rule as
+q(ρ)(xtn+1|x0, xtn, xT ) = q(ρ)(xtn|x0, xtn+1, xT )q(ρ)(xtn+1|x0, xT )
+q(ρ)(xtn|x0, xT )
+(48)
+where q(ρ)(xt|x0, xT ) = q(xt|x0, xT ) is the marginal distribution of the diffusion bridge in
+Eqn. (6), and q(ρ)(xtn|x0, xtn+1, xT ) is defined in Eqn. (11) as
+q(ρ)(xtn|x0, xtn+1, xT ) = N(atnxT + btnx0 +
+q
+c2
+tn −ρ2n
+xtn+1 −atn+1xT −btn+1x0
+ctn+1
+, ρ2
+nI).
+(49)
+Due to the marginal preservation property (Proposition 3.1), we have q(ρ)(xtn+1|x0, xT ) =
+q(xtn+1|x0, xT ) and q(ρ)(xtn|x0, xT ) = q(xtn|x0, xT ), where q(xt|x0, xT ) = N(atxT +
+btx0, c2
+tI) is the forward transition kernel in Eqn. (6). To identify whether q(ρ)(xtn+1|x0, xtn, xT )
+is Markovian, we only need to examine the dependence of xtn+1 on x0. To this end, we proceed to
+derive conditions under which ∇xtn+1 log q(ρ)(xtn+1|x0, xtn, xT ) involves terms concerning x0.
+Specifically, ∇xtn+1 log q(ρ)(xtn+1|x0, xtn, xT ) can be calculated as
+∇xtn+1 log q(ρ)(xtn+1|x0, xtn, xT )
+=∇xtn+1 log q(ρ)(xtn|x0, xtn+1, xT ) + ∇xtn+1 log q(ρ)(xtn+1|x0, xT )
+= −
+q
+c2
+tn −ρ2n(atnxT + btnx0 +
+q
+c2
+tn −ρ2n
+xtn+1−atn+1xT −btn+1x0
+ctn+1
+−xtn)
+ctn+1ρ2n
+−xtn+1 −atn+1xT −btn+1x0
+c2
+tn+1
+=
+btn+1c2
+tn −btnctn+1
+q
+c2
+tn −ρ2n
+c2
+tn+1ρ2n
+x0 + C(xtn, xtn+1, xT )
+(50)
+19
+
+
+=== Page 20 ===
+Published as a conference paper at ICLR 2025
+where C(xtn, xtn+1, xT ) are terms irrelevant to x0. Therefore,
+q(ρ)(xtn+1|x0, xtn, xT ) is Markovian ⇐⇒
+btn+1c2
+tn −btnctn+1
+q
+c2
+tn −ρ2n
+c2
+tn+1ρ2n
+= 0
+⇐⇒ρn = σtn
+s
+1 −SNRtn+1
+SNRtn
+(51)
+which is exactly a boundary choice of the variance parameter ρ. Under the other boundary choice
+ρn = 0 and intermediate ones satisfying 0 < ρn < σtn
+q
+1 −
+SNRtn+1
+SNRtn , the forward process
+q(ρ)(xtn+1|x0, xtn, xT ) is non-Markovian.
+C.2
+THE INSIGNIFICANCE OF LOSS WEIGHTING IN TRAINING
+The insignificance of the weighting mismatch in Proposition 3.2 can be interpreted from two aspects.
+On the one hand, L consists of independent terms concerning individual timesteps (as long as the
+network’s parameters are not shared across different t), ensuring that the global minimum remains
+the same as minimizing the loss at each timestep, regardless of the weighting. On the other hand, L
+under different weightings are mutually bounded by mint wt
+maxt γt Lγ(θ) ≤Lw(θ) ≤maxt wt
+mint γt Lγ(θ). Be-
+sides, it is widely acknowledged that in diffusion models, the weighting corresponding to variational
+inference may yield superior likelihood but suboptimal sample quality (Ho et al., 2020; Song et al.,
+2021c), which is not preferred in practice.
+C.3
+SPECIAL CASES AND RELATIONSHIP WITH PRIOR WORKS
+Connection to Flow Matching
+When the noise schedule αt = 1, T = 1 and σt = √βt, the
+forward process becomes q(xt|x0, x1) = N(txT + (1 −t)x0, βt(1 −t)) which is a Brownian
+bridge. When β →0, there will be no intermediate noise and the forward process is similar to flow
+matching (Lipman et al., 2022; Albergo et al., 2023). In this limit, the DBIM (η = 1) updating
+rule from time t to time s < t will become xs = sxT + (1 −s)xθ(xt, t, xT ) =
+s
+t xt + (1 −
+s
+t )xθ(xt, t) = xt −(t −s)vθ(xt, t). Here we define vθ(xt, t) :=
+xt−xθ(xt,t)
+t
+as the velocity
+function of the probability flow (i.e., the drift of the ODE) in flow matching methods. Therefore, in
+the flow matching case, DBIM is a simple Euler step of the flow.
+Connection to DDIM
+In the regions where t is small and SNRT
+SNRt is close to 0, we have at ≈0, bt ≈
+αt, ct ≈σt. Therefore, the forward process of DDBM in this case is approximately q(xt|x0, xT ) =
+N(αtx0, σ2
+t I), which is the forward process of the corresponding diffusion model. Moreover, in
+this case, the DBIM (η = 0) step is approximately
+xs ≈σs
+σt
+xt + σs
+αs
+σs
+−αt
+σt
+
+xθ(xt, t, xT )
+(52)
+which is exactly DDIM (Song et al., 2021a), except that the data prediction network xθ is dependent
+on xT . This indicates that when t is small so that the component of xT in xt is negligible, DBIM
+recovers DDIM.
+Connection to Posterior Sampling
+The previous work I2SB (Liu et al., 2023b) also employs
+diffusion bridges with discrete timesteps, though their noise schedule is restricted to the variance
+exploding (VE) type with f(t) = 0 in the forward process. For generation, they adopt a sim-
+ilar approach to DDPM (Ho et al., 2020) by iterative sampling from the posterior distribution
+pθ(xn−1|xn), which is a parameterized and shortened diffusion bridge between the endpoints
+ˆx0 = xθ(xn, tn, xN) and xn.
+Since the posterior distribution is not conditioned on xT (ex-
+cept through the parameterized network), the corresponding forward diffusion bridge is Markovian.
+Thus, the posterior sampling in I2SB is a special case of DBIM by setting η = 0 and f(t) = 0.
+C.4
+PERSPECTIVE OF EXPONENTIAL INTEGRATORS
+Exponential integrators (Calvo & Palencia, 2006; Hochbruck et al., 2009) are widely adopted in
+recent works concerning fast sampling of diffusion models (Zhang & Chen, 2022; Zheng et al.,
+20
+
+
+=== Page 21 ===
+Published as a conference paper at ICLR 2025
+2023a; Gonzalez et al., 2023). Suppose we have an ODE
+dxt = [a(t)xt + b(t)Fθ(xt, t)]dt
+(53)
+where Fθ is the parameterized prediction function that we want to approximate with Taylor ex-
+pansion. The usual way of representing its analytic solution xt at time t with respect to an initial
+condition xs at time s is
+xt = xs +
+Z t
+s
+[a(τ)xτ + b(τ)Fθ(xτ, τ)]dτ
+(54)
+By approximating the involved integrals in Eqn. (54), we can obtain direct discretizations of
+Eqn. (53) such as Euler’s method. The key insight of exponential integrators is that, it is often bet-
+ter to utilize the “semi-linear” structure of Eqn. (53) and analytically cancel the linear term a(t)xt.
+This way, we can obtain solutions that only involve integrals of Fθ and result in lower discretization
+errors. Specifically, by the “variation-of-constants” formula, the exact solution of Eqn. (53) can be
+alternatively given by
+xt = e
+R t
+s a(τ)dτxs +
+Z t
+s
+e
+R t
+τ a(r)drb(τ)Fθ(xτ, τ)dτ
+(55)
+We can apply this transformation to the PF-ODE in DDBMs. By collecting the linear terms w.r.t.
+xt, Eqn. (8) can be rewritten as (already derived in Appendix B.3)
+dxt =
+
+f(t) + g2(t)
+σ2
+t
+−g2(t)
+2c2
+t
+
+xt + g2(t) at
+2c2
+t
+xT −g2(t) bt
+2c2
+t
+xθ(xt, t, xT )
+
+dt
+(56)
+By corresponding it to Eqn. (53), we have
+a(t) = f(t) + g2(t)
+σ2
+t
+−g2(t)
+2c2
+t
+,
+b1(t) = g2(t) at
+2c2
+t
+,
+b2(t) = −g2(t) bt
+2c2
+t
+(57)
+From Eqn. (43), Eqn. (46) and Eqn. (47), we know
+a(t) = d log ct
+dt
+,
+b1(t) = at
+d log(at/ct)
+dt
+,
+b2(t) = bt
+d log(bt/ct)
+dt
+(58)
+Note that these relations are known in advance when converting from our ODE to the PF-ODE.
+Otherwise, finding them in this inverse conversion will be challenging. The integrals in Eqn. (55)
+can then be calculated as
+R t
+s a(τ)dτ = log ct −log cs. Thus
+e
+R t
+s a(τ)dτ = ct
+cs
+,
+e
+R t
+τ a(r)dr = ct
+cτ
+(59)
+Therefore, the exact solution in Eqn. (55) becomes
+xt = ct
+cs
+xs + ct
+Z t
+s
+aτ
+cτ
+xT d log
+aτ
+cτ
+
++ ct
+Z t
+s
+bτ
+cτ
+xθ(xτ, τ, xT )d log
+bτ
+cτ
+
+= ct
+cs
+xs +
+
+at −ct
+cs
+as
+
+xT + ct
+Z t
+s
+bτ
+cτ
+xθ(xτ, τ, xT )d log
+bτ
+cτ
+
+(60)
+which is the same as Eqn. (17) after exchanging s and t and changing the time variable in the integral
+to λt = log
+
+bt
+ct
+
+.
+Lastly, we emphasize the advantage of DBIM over employing exponential integrators. First, deriving
+our ODE via exponential integrators requires the PF-ODE as preliminary. However, the PF-ODE
+alone cannot handle the singularity at the start point and presents theoretical challenges. Moreover,
+the conversion process from the PF-ODE to our ODE is intricate, while DBIM retains the overall
+simplicity. Additionally, DBIM supports varying levels of stochasticity during sampling, unlike the
+deterministic nature of ODE-based methods. This stochasticity can mitigate sampling errors via the
+Langevin mechanism (Song et al., 2021c), potentially enhancing the generation quality.
+21
+
+
+=== Page 22 ===
+Published as a conference paper at ICLR 2025
+D
+DERIVATION OF OUR HIGH-ORDER NUMERICAL SOLVERS
+High-order solvers of Eqn. (17) can be developed by approximating xθ in the integral with Tay-
+lor expansion.
+Specifically, as a function of λ, we have xθ(xtλ, tλ, xT ) ≈xθ(xt, t, xT ) +
+Pn
+k=1
+(λ−λt)k
+k!
+x(k)
+θ (xt, t, xT ), where x(k)
+θ (xt, t, xT ) =
+dkxθ(xtλ,tλ,xT )
+dλk
+
+λ=λt is the k-th order
+derivative w.r.t. λ, which can be estimated with finite difference of past network outputs.
+2nd-Order Case
+With the Taylor expansion xθ(xtλ, tλ, xT )
+≈
+xθ(xt, t, xT ) + (λ −
+λt)x(1)
+θ (xt, t, xT ), we have
+Z λs
+λt
+eλxθ(xtλ, tλ, xT )dλ ≈
+ Z λs
+λt
+eλdλ
+!
+xθ(xt, t, xT ) +
+ Z λs
+λt
+(λ −λt)eλdλ
+!
+x(1)
+θ (xt, t, xT )
+≈eλs h
+(1 −e−h)ˆxt + (h −1 + e−h)ˆx(1)
+t
+i
+(61)
+where we use ˆxt to denote the network output at time t, and h = λs −λt > 0. Suppose we have
+used a previous timestep u (s < t < u), the first-order derivative can be estimated by
+ˆx(1)
+t
+≈ˆxt −ˆxu
+h1
+,
+h1 = λt −λu
+(62)
+3rd-Order Case
+With the Taylor expansion xθ(xtλ, tλ, xT )
+≈
+xθ(xt, t, xT ) + (λ −
+λt)x(1)
+θ (xt, t, xT ) + (λ−λt)2
+2
+x(2)
+θ (xt, t, xT ), we have
+Z λs
+λt
+eλxθ(xtλ, tλ, xT )dλ
+≈
+ Z λs
+λt
+eλdλ
+!
+xθ(xt, t, xT ) +
+ Z λs
+λt
+(λ −λt)eλdλ
+!
+x(1)
+θ (xt, t, xT )
++
+ Z λs
+λt
+(λ −λt)2
+2
+eλdλ
+!
+x(2)
+θ (xt, t, xT )
+≈eλs
+
+(1 −e−h)ˆxt + (h −1 + e−h)ˆx(1)
+t
++
+h2
+2 −h + 1 −e−h
+
+ˆx(2)
+t
+
+(63)
+Similarly, suppose we have two previous timesteps u1, u2 (s < t < u1 < u2), and denote h1 :=
+λt −λu1, h2 := λu1 −λu2, the first-order and second-order derivatives can be estimated by
+ˆx(1)
+t
+≈
+ˆxt−ˆxu1
+h1
+(2h1 + h2) −
+ˆxu1−ˆxu2
+h2
+h1
+h1 + h2
+,
+ˆx(2)
+t
+≈2
+ˆxt−ˆxu1
+h1
+−
+ˆxu1−ˆxu2
+h2
+h1 + h2
+(64)
+The high-order samplers for DDBMs also theoretically guarantee the order of convergence, similar
+to those for diffusion models (Zhang & Chen, 2022; Lu et al., 2022b; Zheng et al., 2023a). We omit
+the proofs here as they deviate from our main contributions.
+22
+
+
+=== Page 23 ===
+Published as a conference paper at ICLR 2025
+E
+ALGORITHM
+Algorithm 1 DBIM (high-order)
+Require: condition xT , timesteps 0 ≤t0 < t1 < · · · < tN−1 < tN = T, data prediction model
+xθ, booting noise ϵ ∼N(0, I), noise schedule at, bt, ct, λt = log(bt/ct), order o (2 or 3).
+1: ˆxT ←xθ(xT , T, xT )
+2: xtN−1 ←atxT + bt ˆxT + ctϵ
+3: for i ←N −1 to 1 do
+4:
+s, t ←ti−1, ti; h ←λs −λt
+5:
+ˆxt ←xθ(xt, t, xT )
+6:
+if o = 2 or i = N −1 then
+7:
+u ←ti+1; h1 ←λt −λu
+8:
+Estimate ˆx(1)
+t
+with Eqn. (62)
+9:
+ˆI ←eλs
+h
+(1 −e−h)ˆxt + (h −1 + e−h)ˆx(1)
+t
+i
+10:
+else
+11:
+u1, u2 ←ti+1, ti+2; h1 ←λt −λu1; h2 ←λu1 −λu2
+12:
+Estimate ˆx(1)
+t , ˆx(2)
+t
+with Eqn. (64)
+13:
+ˆI ←eλs
+h
+(1 −e−h)ˆxt + (h −1 + e−h)ˆx(1)
+t
++
+
+h2
+2 −h + 1 −e−h
+ˆx(2)
+t
+i
+14:
+end if
+15:
+xs ←cs
+ct xt +
+
+as −cs
+ct at
+
+xT + cs ˆI
+16: end for
+17: return xt0
+F
+EXPERIMENT DETAILS
+F.1
+MODEL DETAILS
+DDBMs and DBIMs are assessed using the same trained diffusion bridge models. For image trans-
+lation tasks, we directly adopt the pretrained checkpoints provided by DDBMs. The data pre-
+diction model xθ(xt, t, xT ) mentioned in the main text is parameterized by the network Fθ as
+xθ(xt, t, xT ) = cskip(t)xt + cout(t)Fθ(cin(t)xt, cnoise(t), xT ), where
+cin(t) =
+1
+p
+a2
+tσ2
+T + b2
+tσ2
+0 + 2atbtσ0T + ct
+,
+cout(t) =
+q
+a2
+t(σ2
+T σ2
+0 −σ2
+0T ) + σ2
+0ctcin(t)
+cskip(t) = (btσ2
+0 + atσ0T )c2
+in(t),
+cnoise(t) = 1
+4 log t
+(65)
+and
+σ2
+0 = Var[x0], σ2
+T = Var[xT ], σ0T = Cov[x0, xT ]
+(66)
+For the image inpainting task on ImageNet 256×256 with 128×128 center mask, DDBMs do not
+provide available checkpoints. Therefore, we train a new model from scratch using the noise sched-
+ule of I2SB (Liu et al., 2023b). The network is initialized from the pretrained class-conditional
+diffusion model on ImageNet 256×256 provided by (Dhariwal & Nichol, 2021), while addition-
+ally conditioned on xT .
+The data prediction model in this case is parameterized by the net-
+work Fθ as xθ(xt, t, xT ) = xt −σtFθ(xt, t, xT ) and trained by minimizing the loss L(θ) =
+Et,x0,xT
+h
+1
+σ2
+t ∥xθ(xt, t, xT ) −x0∥2
+2
+i
+. We train the model on 8 NVIDIA A800 GPU cards with a
+batch size of 256 for 400k iterations, which takes around 19 days.
+F.2
+SAMPLING DETAILS
+We elaborate on the sampling configurations of different approaches, including the choice of
+timesteps {ti}N
+i=0 and details of the samplers. In this work, we adopt tmin = 0.0001 and tmax = 1
+following (Zhou et al., 2023). For the DDBM baseline, we use the hybrid, high-order Heun sampler
+23
+
+
+=== Page 24 ===
+Published as a conference paper at ICLR 2025
+proposed in their work with an Euler step ratio of 0.33, which is the best performing configuration for
+the image-to-image translation task. We use the same timesteps distributed according to EDM (Kar-
+ras et al., 2022)’s scheduling (t1/ρ
+max + i
+N (t1/ρ
+min −t1/ρ
+max))ρ, consistent with the official implementation
+of DDBM. For DBIM, since the initial sampling step is distinctly forced to be stochastic, we specif-
+ically set it to transition from tmax to tmax −0.0001, and employ a simple uniformly distributed
+timestep scheme in [tmin, tmax −0.0001) for the remaining timesteps, across all settings. For inter-
+polation experiments, to enhance diversity, we increase the step size of the first step from 0.0001 to
+0.01.
+F.3
+LICENSE
+Table 7: The used datasets, codes and their licenses.
+Name
+URL
+Citation
+License
+Edges→Handbags
+https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix
+Isola et al. (2017)
+BSD
+DIODE-Outdoor
+https://diode-dataset.org/
+Vasiljevic et al. (2019)
+MIT
+ImageNet
+https://www.image-net.org
+Deng et al. (2009)
+\
+Guided-Diffusion
+https://github.com/openai/guided-diffusion
+Dhariwal & Nichol (2021)
+MIT
+I2SB
+https://github.com/NVlabs/I2SB
+Liu et al. (2023b)
+CC-BY-NC-SA-4.0
+DDBM
+https://github.com/alexzhou907/DDBM
+Zhou et al. (2023)
+\
+We list the used datasets, codes and their licenses in Table 7.
+G
+ADDITIONAL RESULTS
+G.1
+RUNTIME COMPARISON
+Table 8 shows the inference time of DBIM and previous methods on a single NVIDIA A100 under
+different settings. We use torch.cuda.Event and torch.cuda.synchronize to accu-
+rately compute the runtime. We evaluate the runtime on 8 batches (dropping the first batch since
+it contains extra initializations) and report the mean and std. We can see that the runtime is pro-
+portional to NFE. This is because the main computation costs are the serial evaluations of the large
+neural network, and the calculation of other coefficients requires neglectable costs. Therefore, the
+speedup for the NFE is approximately the actual speedup of the inference time.
+Table 8: Runtime of different methods to generate a single batch (second / batch, ±std) on a single
+NVIDIA A100, varying the number of function evaluations (NFE).
+Method
+NFE
+5
+10
+15
+20
+Center 128 × 128 Inpainting, ImageNet 256 × 256 (batch size = 16)
+I2SB (Liu et al., 2023b)
+2.8128 ± 0.0111
+5.6049 ± 0.0152
+8.3919 ± 0.0166
+11.1494 ± 0.0259
+DDBM (Zhou et al., 2023)
+2.8711 ± 0.0318
+5.7283 ± 0.0572
+8.3787 ± 0.1667
+11.0678 ± 0.3061
+DBIM (η = 0)
+2.8755 ± 0.0706
+5.7810 ± 0.1494
+8.5890 ± 0.2730
+11.1613 ± 0.3372
+DBIM (2nd-order)
+2.8859 ± 0.0675
+5.7884 ± 0.1734
+8.6284 ± 0.1907
+11.5898 ± 0.2260
+DBIM (3rd-order)
+2.9234 ± 0.0361
+5.8109 ± 0.2982
+8.6449 ± 0.2118
+11.3710 ± 0.3237
+G.2
+DIVERSITY SCORE
+We measure the diversity score (Batzolis et al., 2021; Li et al., 2023) on the ImageNet center inpaint-
+ing task. We calculate the standard deviation of 5 generated samples (numerical range 0 ∼255)
+given each observation (condition) xT , averaged over all pixels and 1000 conditions.
+As shown in Table 9, the diversity score keeps increasing with larger NFE. DBIM (η = 0) consis-
+tently surpasses the flow matching baseline I2SB, and DDBM’s hybrid sampler which introduces
+diversity through SDE steps. Surprisingly, we find that the DBIM η = 0 case exhibits a larger di-
+versity score than the η = 1 case. This demonstrates that the booting noise can introduce enough
+24
+
+
+=== Page 25 ===
+Published as a conference paper at ICLR 2025
+Table 9:
+Diversity scores on the ImageNet center inpainting task, varying η and the NFE. We
+exclude statistics for DDBM (NFE≤10) as they correspond to severely degraded nonsense samples.
+Method
+NFE
+5
+10
+20
+50
+100
+200
+500
+I2SB (Liu et al., 2023b)
+3.27
+4.45
+5.21
+5.75
+5.95
+6.04
+6.15
+DDBM (Zhou et al., 2023)
+-
+-
+2.96
+4.03
+4.69
+5.29
+5.83
+DBIM
+η = 0
+3.74
+4.56
+5.20
+5.80
+6.10
+6.29
+6.42
+η = 1
+2.62
+3.40
+4.18
+5.01
+5.45
+5.81
+6.16
+stochasticity to ensure diverse generation. Moreover, the η = 0 case tends to generate sharper
+images, which may favor the diversity score measured by pixel-level variance.
+H
+ADDITIONAL SAMPLES
+25
+
+
+=== Page 26 ===
+Published as a conference paper at ICLR 2025
+(a) Condition
+(b) Ground-truth
+(c) DDBM (NFE=20), FID 46.74
+(d) DBIM (NFE=20 , η = 0.0), FID 1.76
+(e) DDBM (NFE=100), FID 2.40
+(f) DBIM (NFE=100 , η = 0.0), FID 0.91
+(g) DDBM (NFE=200), FID 0.88
+(h) DBIM (NFE=200 , η = 0.0), FID 0.75
+Figure 6: Edges→Handbags samples on the translation task.
+26
+
+
+=== Page 27 ===
+Published as a conference paper at ICLR 2025
+(a) Condition
+(b) Ground-truth
+(c) DDBM (NFE=20), FID 41.03
+(d) DDBM (NFE=500), FID 2.26
+(e) DBIM (NFE=20 , η = 0.0), FID 4.97
+(f) DBIM (NFE=200 , η = 0.0), FID 2.26
+Figure 7: DIODE-Outdoor samples on the translation task.
+27
+
+
+=== Page 28 ===
+Published as a conference paper at ICLR 2025
+(a) Condition
+(b) Ground-truth
+(c) DDBM (NFE=10), FID 57.18
+(d) DDBM (NFE=500), FID 4.27
+(e) DBIM (NFE=10 , η = 0.0), FID 4.51
+(f) DBIM (NFE=100 , η = 0.0), FID 3.91
+(g) DBIM (NFE=100 , η = 0.8), FID 3.88
+(h) DBIM (NFE=500 , η = 1.0), FID 3.80
+Figure 8: ImageNet 256 × 256 samples on the inpainting task with center 128 × 128 mask.
+28
+
+

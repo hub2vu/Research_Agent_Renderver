@@ -1,0 +1,628 @@
+{
+  "success": true,
+  "error": null,
+  "summary": {
+    "input_count": 95,
+    "filtered_count": 0,
+    "scored_count": 95,
+    "output_count": 10,
+    "purpose": "general",
+    "ranking_mode": "balanced",
+    "profile_used": "users/profile.json",
+    "llm_verification_used": false,
+    "llm_calls_made": 0
+  },
+  "ranked_papers": [
+    {
+      "rank": 1,
+      "paper_id": "118962",
+      "title": "Mesh Interpolation Graph Network for Dynamic and Spatially Irregular Global Weather Forecasting",
+      "authors": [
+        "Zinan Zheng",
+        "Yang Liu",
+        "Jia Li"
+      ],
+      "published": "2025-12-01",
+      "score": {
+        "final": 1.0,
+        "breakdown": {
+          "semantic_relevance": 0.1,
+          "must_keywords": 0.25,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.6852305006658703,
+          "practicality": 0,
+          "keyword_score": 1.0
+        },
+        "soft_penalty": 0.0,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding+llm"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "118962",
+        "title": "Mesh Interpolation Graph Network for Dynamic and Spatially Irregular Global Weather Forecasting",
+        "abstract": "Graph neural networks have shown promising results in weather forecasting, which is critical for human activity such as agriculture planning and extreme weather preparation. However, most studies focus on finite and local areas for training, overlooking the influence of broader areas and limiting their ability to generalize effectively. Thus, in this work, we study global weather forecasting that is irregularly distributed and dynamically varying in practice, requiring the model to generalize to unobserved locations. To address such challenges, we propose a general Mesh Interpolation Graph Network (MIGN) that models the irregular weather station forecasting, consisting of two key designs: (1) learning spatially irregular data with regular mesh interpolation network to align the data; (2) leveraging parametric spherical harmonics location embedding to further enhance spatial generalization ability. Extensive experiments on an up-to-date observation dataset show that MIGN significantly outperforms existing data-driven models. Besides, we show that MIGN has spatial generalization ability, and is capable of generalizing to previously unseen stations.",
+        "authors": [
+          "Zinan Zheng",
+          "Yang Liu",
+          "Jia Li"
+        ],
+        "published": "2025-12-01",
+        "categories": [
+          "NeurIPS 2025"
+        ],
+        "pdf_url": null,
+        "github_url": null,
+        "semantic_score": 0,
+        "keyword_score": 1,
+        "combined_score": 1
+      }
+    },
+    {
+      "rank": 2,
+      "paper_id": "118394",
+      "title": "Permutation Equivariant Neural Controlled Differential Equations for Dynamic Graph Representation Learning",
+      "authors": [
+        "Torben Berndt",
+        "Benjamin Walker",
+        "Tiexin Qin",
+        "Jan Stühmer",
+        "Andrey Kormilitzin"
+      ],
+      "published": "2025-12-01",
+      "score": {
+        "final": 0.8485501150008117,
+        "breakdown": {
+          "semantic_relevance": 0.705013382892125,
+          "must_keywords": 0.5,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.6852305006658703,
+          "practicality": 0,
+          "keyword_score": 0.3333333333333333
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_high"
+      },
+      "tags": [
+        "SEMANTIC_HIGH_MATCH",
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "118394",
+        "title": "Permutation Equivariant Neural Controlled Differential Equations for Dynamic Graph Representation Learning",
+        "abstract": "Dynamic graphs exhibit complex temporal dynamics due to the interplay between evolving node features and changing network structures. Recently, Graph Neural Controlled Differential Equations (Graph Neural CDEs) successfully adapted Neural CDEs from paths on Euclidean domains to paths on graph domains. Building on this foundation, we introduce \\textit{Permutation Equivariant Graph Neural CDEs}, which project Graph Neural CDEs onto permutation equivariant function spaces. This significantly reduces the model's parameter count without compromising representational power, resulting in more efficient training and improved generalisation. We empirically demonstrate the advantages of our approach through experiments on simulated dynamical systems and real-world tasks, showing improved performance in both interpolation and extrapolation scenarios.",
+        "authors": [
+          "Torben Berndt",
+          "Benjamin Walker",
+          "Tiexin Qin",
+          "Jan Stühmer",
+          "Andrey Kormilitzin"
+        ],
+        "published": "2025-12-01",
+        "categories": [
+          "NeurIPS 2025"
+        ],
+        "pdf_url": null,
+        "github_url": null,
+        "semantic_score": 0,
+        "keyword_score": 0.3333333333333333,
+        "combined_score": 0.2333333333333333
+      }
+    },
+    {
+      "rank": 3,
+      "paper_id": "115626",
+      "title": "Latent Mixture of Symmetries for Sample-Efficient Dynamic Learning",
+      "authors": [
+        "Haoran Li",
+        "CHENHAN XIAO",
+        "Muhao Guo",
+        "Yang Weng"
+      ],
+      "published": "2025-12-01",
+      "score": {
+        "final": 0.812046100133174,
+        "breakdown": {
+          "semantic_relevance": 0.5,
+          "must_keywords": 0.75,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.6852305006658703,
+          "practicality": 0,
+          "keyword_score": 0.3333333333333333
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding+llm"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "115626",
+        "title": "Latent Mixture of Symmetries for Sample-Efficient Dynamic Learning",
+        "abstract": "Learning dynamics is essential for model-based control and Reinforcement Learning in systems operating in changing environments, such as robotics, autonomous vehicles, and power systems. However, limited system measurements, such as those from low-resolution meters, demand sample-efficient learning. Symmetry provides a powerful inductive bias by characterizing equivalent relations in system behavior to improve sample efficiency. While recent methods attempt to discover symmetries from data, they typically assume a single global symmetry group and treat symmetry discovery and dynamic learning as separate tasks, leading to limited expressiveness and error accumulation. In this paper, we propose the Latent Mixture of Symmetries (Latent MoS), an expressive model that captures symmetry-governed latent factors from complex dynamical measurements. Latent MoS focuses on dynamic learning while locally preserving the underlying symmetric transformations. To further capture long-range temporal equivalence, we introduce a hierarchical architecture that stacks Latent MoS blocks across multiple time scales. Numerical experiments across diverse physical systems demonstrate that Latent MoS significantly outperforms state-of-the-art baselines in interpolation and extrapolation tasks while offering interpretable latent representations suitable for future geometric and safety-critical analysis.",
+        "authors": [
+          "Haoran Li",
+          "CHENHAN XIAO",
+          "Muhao Guo",
+          "Yang Weng"
+        ],
+        "published": "2025-12-01",
+        "categories": [
+          "NeurIPS 2025"
+        ],
+        "pdf_url": null,
+        "github_url": null,
+        "semantic_score": 0,
+        "keyword_score": 0.3333333333333333,
+        "combined_score": 0.2333333333333333
+      }
+    },
+    {
+      "rank": 4,
+      "paper_id": "119306",
+      "title": "AMBER: Adaptive Mesh Generation by Iterative Mesh Resolution Prediction",
+      "authors": [
+        "Niklas Freymuth",
+        "Tobias Würth",
+        "Nicolas Schreiber",
+        "Balázs Gyenes",
+        "Andreas Boltres",
+        "Johannes Mitsch",
+        "Aleksandar Taranovic",
+        "Tai Hoang",
+        "Philipp Dahlinger",
+        "Philipp Becker",
+        "Luise Kärger",
+        "Gerhard Neumann"
+      ],
+      "published": "2025-12-01",
+      "score": {
+        "final": 0.7872198853012735,
+        "breakdown": {
+          "semantic_relevance": 0.6672459505603313,
+          "must_keywords": 0,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.6852305006658703,
+          "practicality": 0,
+          "keyword_score": 0.0
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_only"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "119306",
+        "title": "AMBER: Adaptive Mesh Generation by Iterative Mesh Resolution Prediction",
+        "abstract": "The cost and accuracy of simulating complex physical systems using the Finite Element Method (FEM) scales with the resolution of the underlying mesh. Adaptive meshes improve computational efficiency by refining resolution in critical regions, but typically require task-specific heuristics or cumbersome manual design by a human expert. We propose Adaptive Meshing By Expert Reconstruction (AMBER), a supervised learning approach to mesh adaptation. Starting from a coarse mesh, AMBER iteratively predicts the sizing field, i.e., a function mapping from the geometry to the local element size of the target mesh, and uses this prediction to produce a new intermediate mesh using an out-of-the-box mesh generator. This process is enabled through a hierarchical graph neural network, and relies on data augmentation by automatically projecting expert labels onto AMBER-generated data during training. We evaluate AMBER on 2D and 3D datasets, including classical physics problems, mechanical components, and real-world industrial designs with human expert meshes. AMBER generalizes to unseen geometries and consistently outperforms multiple recent baselines, including ones using Graph and Convolutional Neural Networks, and Reinforcement Learning-based approaches.",
+        "authors": [
+          "Niklas Freymuth",
+          "Tobias Würth",
+          "Nicolas Schreiber",
+          "Balázs Gyenes",
+          "Andreas Boltres",
+          "Johannes Mitsch",
+          "Aleksandar Taranovic",
+          "Tai Hoang",
+          "Philipp Dahlinger",
+          "Philipp Becker",
+          "Luise Kärger",
+          "Gerhard Neumann"
+        ],
+        "published": "2025-12-01",
+        "categories": [
+          "NeurIPS 2025"
+        ],
+        "pdf_url": null,
+        "github_url": null,
+        "semantic_score": 0.04103601723909378,
+        "keyword_score": 0,
+        "combined_score": 0.012310805171728135
+      }
+    },
+    {
+      "rank": 5,
+      "paper_id": "121593",
+      "title": "OpenLex3D: A Tiered Benchmark for Open-Vocabulary 3D Scene Representations",
+      "authors": [
+        "Christina Kassab",
+        "Sacha Morin",
+        "Martin Büchner",
+        "Matias Mattamala",
+        "Kumaraditya Gupta",
+        "Abhinav Valada",
+        "Liam Paull",
+        "Maurice Fallon"
+      ],
+      "published": "2025-12-01",
+      "score": {
+        "final": 0.7807055533025666,
+        "breakdown": {
+          "semantic_relevance": 0.5621981772313087,
+          "must_keywords": 0.25,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.6852305006658703,
+          "practicality": 0,
+          "keyword_score": 0.0
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_only"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "121593",
+        "title": "OpenLex3D: A Tiered Benchmark for Open-Vocabulary 3D Scene Representations",
+        "abstract": "3D scene understanding has been transformed by open-vocabulary language models that enable interaction via natural language. However, at present the evaluation of these representations is limited to datasets with closed-set semantics that do not capture the richness of language. This work presents OpenLex3D, a dedicated benchmark for evaluating 3D open-vocabulary scene representations. OpenLex3D provides entirely new label annotations for scenes from Replica, ScanNet++, and HM3D, which capture real-world linguistic variability by introducing synonymical object categories and additional nuanced descriptions. Our label sets provide 13 times more labels per scene than the original datasets. By introducing an open-set 3D semantic segmentation task and an object retrieval task, we evaluate various existing 3D open-vocabulary methods on OpenLex3D, showcasing failure cases, and avenues for improvement. Our experiments provide insights on feature precision, segmentation, and downstream capabilities. The benchmark is publicly available at: https://openlex3d.github.io/.",
+        "authors": [
+          "Christina Kassab",
+          "Sacha Morin",
+          "Martin Büchner",
+          "Matias Mattamala",
+          "Kumaraditya Gupta",
+          "Abhinav Valada",
+          "Liam Paull",
+          "Maurice Fallon"
+        ],
+        "published": "2025-12-01",
+        "categories": [
+          "NeurIPS 2025"
+        ],
+        "pdf_url": null,
+        "github_url": null,
+        "semantic_score": 0.042067255824804306,
+        "keyword_score": 0,
+        "combined_score": 0.012620176747441291
+      }
+    },
+    {
+      "rank": 6,
+      "paper_id": "117609",
+      "title": "Path Gradients after Flow Matching",
+      "authors": [
+        "Lorenz Vaitl",
+        "Leon Klein"
+      ],
+      "published": "2025-12-01",
+      "score": {
+        "final": 0.7670461001331741,
+        "breakdown": {
+          "semantic_relevance": 0.6,
+          "must_keywords": 0,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.6852305006658703,
+          "practicality": 0,
+          "keyword_score": 0.0
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding+llm"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "117609",
+        "title": "Path Gradients after Flow Matching",
+        "abstract": "Boltzmann Generators have emerged as a promising machine learning tool for generating samples from equilibrium distributions of molecular systems using Normalizing Flows and importance weighting. Recently, Flow Matching has helped speed up Continuous Normalizing Flows (CNFs), scale them to more complex molecular systems, and minimize the length of the flow integration trajectories. We investigate the benefits of using path gradients to fine-tune CNFs initially trained by Flow Matching, in the setting where a target energy is known. Our experiments show that this hybrid approach yields up to a threefold increase in sampling efficiency for molecular systems, all while using the same model, a similar computational budget and without the need for additional sampling. Furthermore, by measuring the length of the flow trajectories during fine-tuning, we show that path gradients largely preserve the learned structure of the flow.",
+        "authors": [
+          "Lorenz Vaitl",
+          "Leon Klein"
+        ],
+        "published": "2025-12-01",
+        "categories": [
+          "NeurIPS 2025"
+        ],
+        "pdf_url": null,
+        "github_url": null,
+        "semantic_score": 0.043750640004873276,
+        "keyword_score": 0,
+        "combined_score": 0.013125192001461982
+      }
+    },
+    {
+      "rank": 7,
+      "paper_id": "121614",
+      "title": "OCRBench v2: An Improved Benchmark for Evaluating Large Multimodal Models on Visual Text Localization and Reasoning",
+      "authors": [
+        "Ling Fu",
+        "Zhebin Kuang",
+        "Jiajun Song",
+        "Mingxin Huang",
+        "Biao Yang",
+        "Yuzhe Li",
+        "Linghao Zhu",
+        "Qidi Luo",
+        "Xinyu Wang",
+        "Hao Lu",
+        "Zhang Li",
+        "Guozhi Tang",
+        "Bin Shan",
+        "Chunhui Lin",
+        "Qi Liu",
+        "Binghong Wu",
+        "Hao Feng",
+        "Hao Liu",
+        "Can Huang",
+        "Jingqun Tang",
+        "Wei Chen",
+        "Lianwen Jin",
+        "Yuliang Liu",
+        "Xiang Bai"
+      ],
+      "published": "2025-12-01",
+      "score": {
+        "final": 0.7663302532465588,
+        "breakdown": {
+          "semantic_relevance": 0.5976138437112826,
+          "must_keywords": 0,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.6852305006658703,
+          "practicality": 0,
+          "keyword_score": 0.0
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_only"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "121614",
+        "title": "OCRBench v2: An Improved Benchmark for Evaluating Large Multimodal Models on Visual Text Localization and Reasoning",
+        "abstract": "Scoring the Optical Character Recognition (OCR) capabilities of Large Multimodal Models (LMMs) has witnessed growing interest. Existing benchmarks have highlighted the impressive performance of LMMs in text recognition; however, their abilities in certain challenging tasks, such as text localization, handwritten content extraction, and logical reasoning, remain underexplored. To bridge this gap, we introduce OCRBench v2, a large-scale bilingual text-centric benchmark with currently the most comprehensive set of tasks ($4\\times$ more tasks than the previous multi-scene benchmark OCRBench), the widest coverage of scenarios ($31$ diverse scenarios), and thorough evaluation metrics, with $10,000$ human-verified question-answering pairs and a high proportion of difficult samples. Moreover, we construct a private test set with $1,500$ manually annotated images. The consistent evaluation trends observed across both public and private test sets validate the OCRBench v2's reliability. After carefully benchmarking state-of-the-art LMMs, we find that most LMMs score below $50$ ($100$ in total) and suffer from five-type limitations, including less frequently encountered text recognition, fine-grained perception, layout perception, complex element parsing, and logical reasoning. The benchmark and evaluation scripts are available at https://github.com/Yuliang-Liu/MultimodalOCR.",
+        "authors": [
+          "Ling Fu",
+          "Zhebin Kuang",
+          "Jiajun Song",
+          "Mingxin Huang",
+          "Biao Yang",
+          "Yuzhe Li",
+          "Linghao Zhu",
+          "Qidi Luo",
+          "Xinyu Wang",
+          "Hao Lu",
+          "Zhang Li",
+          "Guozhi Tang",
+          "Bin Shan",
+          "Chunhui Lin",
+          "Qi Liu",
+          "Binghong Wu",
+          "Hao Feng",
+          "Hao Liu",
+          "Can Huang",
+          "Jingqun Tang",
+          "Wei Chen",
+          "Lianwen Jin",
+          "Yuliang Liu",
+          "Xiang Bai"
+        ],
+        "published": "2025-12-01",
+        "categories": [
+          "NeurIPS 2025"
+        ],
+        "pdf_url": null,
+        "github_url": null,
+        "semantic_score": 0.04259171336889267,
+        "keyword_score": 0,
+        "combined_score": 0.0127775140106678
+      }
+    },
+    {
+      "rank": 8,
+      "paper_id": "117843",
+      "title": "A Reliable Cryptographic Framework for Empirical Machine Unlearning Evaluation",
+      "authors": [
+        "Yiwen Tu",
+        "Pingbang Hu",
+        "Jiaqi Ma"
+      ],
+      "published": "2025-12-01",
+      "score": {
+        "final": 0.7564721499961142,
+        "breakdown": {
+          "semantic_relevance": 0.564753499543134,
+          "must_keywords": 0,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.6852305006658703,
+          "practicality": 0,
+          "keyword_score": 0.0
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_only"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "117843",
+        "title": "A Reliable Cryptographic Framework for Empirical Machine Unlearning Evaluation",
+        "abstract": "Machine unlearning updates machine learning models to remove information from specific training data samples, complying with data protection regulations that allow individuals to request the removal of their personal data. Despite the recent development of numerous unlearning algorithms, reliable evaluation of these algorithms remains an open research question. In this work, we focus on membership inference attack (MIA) based evaluation, one of the most common approaches for evaluating unlearning algorithms, and address various pitfalls of existing evaluation metrics that lack theoretical understanding and reliability. Specifically, by modeling the proposed evaluation process as a cryptographic game between unlearning algorithms and MIA adversaries, the naturally-induced evaluation metric measures the data removal efficacy of unlearning algorithms and enjoys provable guarantees that existing evaluation metrics fail to satisfy. Furthermore, we propose a practical and efficient approximation of the induced evaluation metric and demonstrate its effectiveness through both theoretical analysis and empirical experiments. Overall, this work presents a novel and reliable approach to empirically evaluating unlearning algorithms, paving the way for the development of more effective unlearning techniques.",
+        "authors": [
+          "Yiwen Tu",
+          "Pingbang Hu",
+          "Jiaqi Ma"
+        ],
+        "published": "2025-12-01",
+        "categories": [
+          "NeurIPS 2025"
+        ],
+        "pdf_url": null,
+        "github_url": null,
+        "semantic_score": 0.04201924428343773,
+        "keyword_score": 0,
+        "combined_score": 0.012605773285031319
+      }
+    },
+    {
+      "rank": 9,
+      "paper_id": "118594",
+      "title": "Generalized Linear Mode Connectivity for Transformers",
+      "authors": [
+        "Alexander Theus",
+        "Alessandro Cabodi",
+        "Sotiris Anagnostidis",
+        "Antonio Orvieto",
+        "Sidak Pal Singh",
+        "Valentina Boeva"
+      ],
+      "published": "2025-12-01",
+      "score": {
+        "final": 0.7501697266650402,
+        "breakdown": {
+          "semantic_relevance": 0.7104120884395535,
+          "must_keywords": 0.5,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.6852305006658703,
+          "practicality": 0,
+          "keyword_score": 0.3333333333333333
+        },
+        "soft_penalty": 0.2,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_high"
+      },
+      "tags": [
+        "SEMANTIC_HIGH_MATCH",
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "118594",
+        "title": "Generalized Linear Mode Connectivity for Transformers",
+        "abstract": "Understanding the geometry of neural network loss landscapes is a central question in deep learning, with implications for generalization and optimization. A striking phenomenon is $\\textit{linear mode connectivity}$ (LMC), where independently trained models can be connected by low- or zero-barrier paths, despite appearing to lie in separate loss basins. However, this is often obscured by symmetries in parameter space—such as neuron permutations—which make functionally equivalent models appear dissimilar. Prior work has predominantly focused on neuron reordering through permutations, but such approaches are limited in scope and fail to capture the richer symmetries exhibited by modern architectures such as Transformers. In this work, we introduce a unified framework that captures four symmetry classes—permutations, semi-permutations, orthogonal transformations, and general invertible maps—broadening the set of valid reparameterizations and subsuming many previous approaches as special cases. Crucially, this generalization enables, for the first time, the discovery of low- and zero-barrier linear interpolation paths between independently trained Vision Transformers and GPT-2 models. Furthermore, our framework extends beyond pairwise alignment, to multi-model and width-heterogeneous settings, enabling alignment across architectures of different sizes. These results reveal deeper structure in the loss landscape and underscore the importance of symmetry-aware analysis for understanding model space geometry.",
+        "authors": [
+          "Alexander Theus",
+          "Alessandro Cabodi",
+          "Sotiris Anagnostidis",
+          "Antonio Orvieto",
+          "Sidak Pal Singh",
+          "Valentina Boeva"
+        ],
+        "published": "2025-12-01",
+        "categories": [
+          "NeurIPS 2025"
+        ],
+        "pdf_url": null,
+        "github_url": null,
+        "semantic_score": 0.00034624990075826645,
+        "keyword_score": 0.3333333333333333,
+        "combined_score": 0.2334372083035608
+      }
+    },
+    {
+      "rank": 10,
+      "paper_id": "116538",
+      "title": "Fast Last-Iterate Convergence of SGD in the Smooth Interpolation Regime",
+      "authors": [
+        "Amit Attia",
+        "Matan Schliserman",
+        "Uri Sherman",
+        "Tomer Koren"
+      ],
+      "published": "2025-12-01",
+      "score": {
+        "final": 1.0,
+        "breakdown": {
+          "semantic_relevance": 0.3,
+          "must_keywords": 0.25,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.6852305006658703,
+          "practicality": 0,
+          "keyword_score": 1.0
+        },
+        "soft_penalty": -0.15,
+        "penalty_keywords": [
+          "attention"
+        ],
+        "evaluation_method": "embedding+llm"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "116538",
+        "title": "Fast Last-Iterate Convergence of SGD in the Smooth Interpolation Regime",
+        "abstract": "We study population convergence guarantees of stochastic gradient descent (SGD) for smooth convex objectives in the interpolation regime, where the noise at optimum is zero or near zero. The behavior of the last iterate of SGD in this setting---particularly with large (constant) stepsizes---has received growing attention in recent years due to implications for the training of over-parameterized models, as well as to analyzing forgetting in continual learning and to understanding the convergence of the randomized Kaczmarz method for solving linear systems. We establish that after $T$ steps of SGD on $\\beta$-smooth convex loss functions with stepsize $0 < \\eta < 2/\\beta$, the last iterate exhibits expected excess risk $\\widetilde{O}(\\tfrac{1}{\\eta (2-\\beta \\eta) T^{1-\\beta\\eta/2}} + \\tfrac{\\eta}{(2-\\beta\\eta)^2} T^{\\beta\\eta/2} \\sigma_\\star^2)$, where $\\sigma_\\star^2$ denotes the variance of the stochastic gradients at the optimum. In particular, for a well-tuned stepsize we obtain a near optimal $\\widetilde{O}(1/T + \\sigma_\\star/\\sqrt T)$ rate for the last iterate, extending the results of Varre et al. (2021) beyond least squares regression; and when $\\sigma_\\star=0$ we obtain a rate of $O(1/\\sqrt T)$ with $\\eta=1/\\beta$, improving upon the best-known $O(T^{-1/4})$ rate recently established by Evron et al. (2025) in the special case of realizable linear regression.",
+        "authors": [
+          "Amit Attia",
+          "Matan Schliserman",
+          "Uri Sherman",
+          "Tomer Koren"
+        ],
+        "published": "2025-12-01",
+        "categories": [
+          "NeurIPS 2025"
+        ],
+        "pdf_url": null,
+        "github_url": null,
+        "semantic_score": 0,
+        "keyword_score": 1,
+        "combined_score": 1
+      }
+    }
+  ],
+  "filtered_papers": [],
+  "contrastive_paper": null,
+  "comparison_notes": [],
+  "output_path": "/data/output/rankings/2026-01-30_2026-01-30T12-38-27_ranked.json",
+  "generated_at": "2026-01-30T12:38:27.502282"
+}

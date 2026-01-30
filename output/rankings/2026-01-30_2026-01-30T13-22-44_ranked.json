@@ -1,0 +1,468 @@
+{
+  "success": true,
+  "error": null,
+  "summary": {
+    "input_count": 97,
+    "filtered_count": 0,
+    "scored_count": 97,
+    "output_count": 10,
+    "purpose": "general",
+    "ranking_mode": "balanced",
+    "profile_used": "users/profile.json",
+    "llm_verification_used": false,
+    "llm_calls_made": 0
+  },
+  "ranked_papers": [
+    {
+      "rank": 1,
+      "paper_id": "NRYgUzSPZz",
+      "title": "Beyond Autoregression: Discrete Diffusion for Complex Reasoning and Planning",
+      "authors": [],
+      "published": "2025-05-01",
+      "score": {
+        "final": 0.7255918744688139,
+        "breakdown": {
+          "semantic_relevance": 0.8,
+          "must_keywords": 0,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.17795937234406978,
+          "practicality": 0,
+          "keyword_score": 0.40740740740740744
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding+llm"
+      },
+      "tags": [
+        "SEMANTIC_HIGH_MATCH",
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "NRYgUzSPZz",
+        "title": "Beyond Autoregression: Discrete Diffusion for Complex Reasoning and Planning",
+        "abstract": "Autoregressive language models, despite their impressive capabilities, struggle with complex reasoning and long-term planning tasks. We introduce discrete diffusion models as a novel solution to these challenges. Through the lens of subgoal imbalance, we demonstrate how diffusion models effectively learn difficult subgoals that elude autoregressive approaches. We propose Multi-Granularity Diffusion Modeling (MGDM), which prioritizes subgoals based on difficulty during learning. On complex tasks like Countdown, Sudoku, and Boolean Satisfiability Problems, MGDM significantly outperforms autoregressive models without using search techniques. For instance, MGDM achieves 91.5\\% and 100\\% accuracy on Countdown and Sudoku, respectively, compared to 45.8\\% and 20.7\\% for autoregressive models. Our work highlights the potential of diffusion-based approaches in advancing AI capabilities for sophisticated language understanding and problem-solving tasks. All associated codes are available at \\href{https://github.com/HKUNLP/diffusion-vs-ar}{https://github.com/HKUNLP/diffusion-vs-ar}.",
+        "authors": [],
+        "published": "2025-05-01",
+        "categories": [
+          "ICLR 2025"
+        ],
+        "pdf_url": "https://openreview.net/pdf?id=NRYgUzSPZz",
+        "github_url": null,
+        "semantic_score": 0.7565352320671082,
+        "keyword_score": 0.40740740740740744,
+        "combined_score": 0.5121457548053177
+      }
+    },
+    {
+      "rank": 2,
+      "paper_id": "QowsEic1sc",
+      "title": "Linear Combination of Saved Checkpoints Makes Consistency and Diffusion Models Better",
+      "authors": [],
+      "published": "2025-05-01",
+      "score": {
+        "final": 0.7255918744688139,
+        "breakdown": {
+          "semantic_relevance": 0.8,
+          "must_keywords": 0,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.17795937234406978,
+          "practicality": 0,
+          "keyword_score": 0.4444444444444444
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding+llm"
+      },
+      "tags": [
+        "SEMANTIC_HIGH_MATCH",
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "QowsEic1sc",
+        "title": "Linear Combination of Saved Checkpoints Makes Consistency and Diffusion Models Better",
+        "abstract": "Diffusion Models (DM) and Consistency Models (CM) are two types of popular generative models with good generation quality on various tasks. When training DM and CM, intermediate weight checkpoints are not fully utilized and only the last converged checkpoint is used. In this work, we find proper checkpoint merging can significantly improve the training convergence and final performance. Specifically, we propose LCSC, a simple but effective and efficient method to enhance the performance of DM and CM, by combining checkpoints along the training trajectory with coefficients deduced from evolutionary search. We demonstrate the value of LCSC through two use cases: (a) Reducing training cost. With LCSC, we only need to train DM/CM with fewer number of iterations and/or lower batch sizes to obtain comparable sample quality with the fully trained model. For example, LCSC achieves considerable training speedups for CM (23$\\times$ on CIFAR-10 and 15$\\times$ on ImageNet-64). (b) Enhancing pre-trained models. When full training is already done, LCSC can further improve the generation quality or efficiency of the final converged models. For example,  LCSC achieves better FID using 1 number of function evaluation (NFE) than the base model with 2 NFE on consistency distillation, and decreases the NFE of DM from 15 to 9 while maintaining the generation quality. Applying LCSC to large text-to-image models, we also observe clearly enhanced generation quality.",
+        "authors": [],
+        "published": "2025-05-01",
+        "categories": [
+          "ICLR 2025"
+        ],
+        "pdf_url": "https://openreview.net/pdf?id=QowsEic1sc",
+        "github_url": null,
+        "semantic_score": 0.6181510090827942,
+        "keyword_score": 0.4444444444444444,
+        "combined_score": 0.4965564138359493
+      }
+    },
+    {
+      "rank": 3,
+      "paper_id": "NGB6YNnO5o",
+      "title": "Generalization in VAE and Diffusion Models: A Unified Information-Theoretic Analysis",
+      "authors": [],
+      "published": "2025-05-01",
+      "score": {
+        "final": 0.7066261930487139,
+        "breakdown": {
+          "semantic_relevance": 0.7367810619329997,
+          "must_keywords": 0,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.17795937234406978,
+          "practicality": 0,
+          "keyword_score": 0.4444444444444444
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_high"
+      },
+      "tags": [
+        "SEMANTIC_HIGH_MATCH",
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "NGB6YNnO5o",
+        "title": "Generalization in VAE and Diffusion Models: A Unified Information-Theoretic Analysis",
+        "abstract": "Despite the empirical success of Diffusion Models (DMs) and Variational Autoencoders (VAEs), their generalization performance remains theoretically underexplored, especially lacking a full consideration of the shared encoder-generator structure. Leveraging recent information-theoretic tools, we propose a unified theoretical framework that provides guarantees for the generalization of both the encoder and generator by treating them as randomized mappings. This framework further enables (1) a refined analysis for VAEs, accounting for the generator's generalization, which was previously overlooked; (2) illustrating an explicit trade-off in generalization terms for DMs that depends on the diffusion time $T$; and (3) providing computable bounds for DMs based solely on the training data, allowing the selection of the optimal $T$ and the integration of such bounds into the optimization process to improve model performance. Empirical results on both synthetic and real datasets illustrate the validity of the proposed theory.",
+        "authors": [],
+        "published": "2025-05-01",
+        "categories": [
+          "ICLR 2025"
+        ],
+        "pdf_url": "https://openreview.net/pdf?id=NGB6YNnO5o",
+        "github_url": null,
+        "semantic_score": 0.6893518567085266,
+        "keyword_score": 0.4444444444444444,
+        "combined_score": 0.5179166681236691
+      }
+    },
+    {
+      "rank": 4,
+      "paper_id": "wmmDvZGFK7",
+      "title": "PFDiff: Training-Free Acceleration of Diffusion Models Combining Past and Future Scores",
+      "authors": [],
+      "published": "2025-05-01",
+      "score": {
+        "final": 0.6962292252507627,
+        "breakdown": {
+          "semantic_relevance": 0.7021245026064962,
+          "must_keywords": 0,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.17795937234406978,
+          "practicality": 0,
+          "keyword_score": 0.4444444444444444
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding_high"
+      },
+      "tags": [
+        "SEMANTIC_HIGH_MATCH",
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "wmmDvZGFK7",
+        "title": "PFDiff: Training-Free Acceleration of Diffusion Models Combining Past and Future Scores",
+        "abstract": "Diffusion Probabilistic Models (DPMs) have shown remarkable potential in image generation, but their sampling efficiency is hindered by the need for numerous denoising steps. Most existing solutions accelerate the sampling process by proposing fast ODE solvers. However, the inevitable discretization errors of the ODE solvers are significantly magnified when the number of function evaluations (NFE) is fewer. In this work, we propose PFDiff, a novel training-free and orthogonal timestep-skipping strategy, which enables existing fast ODE solvers to operate with fewer NFE. Specifically, PFDiff initially utilizes score replacement from past time steps to predict a springboard. Subsequently, it employs this ``springboard\" along with foresight updates inspired by Nesterov momentum to rapidly update current intermediate states. This approach effectively reduces unnecessary NFE while correcting for discretization errors inherent in first-order ODE solvers. Experimental results demonstrate that PFDiff exhibits flexible applicability across various pre-trained DPMs, particularly excelling in conditional DPMs and surpassing previous state-of-the-art training-free methods. For instance, using DDIM as a baseline, we achieved 16.46 FID (4 NFE) compared to 138.81 FID with DDIM on ImageNet 64x64 with classifier guidance, and 13.06 FID (10 NFE) on Stable Diffusion with 7.5 guidance scale. Code is available at https://github.com/onefly123/PFDiff.",
+        "authors": [],
+        "published": "2025-05-01",
+        "categories": [
+          "ICLR 2025"
+        ],
+        "pdf_url": "https://openreview.net/pdf?id=wmmDvZGFK7",
+        "github_url": null,
+        "semantic_score": 0.6533048152923584,
+        "keyword_score": 0.4444444444444444,
+        "combined_score": 0.5071025556988186
+      }
+    },
+    {
+      "rank": 5,
+      "paper_id": "NltQraRnbW",
+      "title": "Conditional Diffusion Models are Minimax-Optimal and Manifold-Adaptive for Conditional Distribution Estimation",
+      "authors": [],
+      "published": "2025-05-01",
+      "score": {
+        "final": 0.6955918744688139,
+        "breakdown": {
+          "semantic_relevance": 0.7,
+          "must_keywords": 0,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.17795937234406978,
+          "practicality": 0,
+          "keyword_score": 0.4444444444444444
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding+llm"
+      },
+      "tags": [
+        "SEMANTIC_HIGH_MATCH",
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "NltQraRnbW",
+        "title": "Conditional Diffusion Models are Minimax-Optimal and Manifold-Adaptive for Conditional Distribution Estimation",
+        "abstract": "We consider a class of conditional forward-backward diffusion models for conditional generative modeling, that is, generating new data given a covariate (or control variable). To formally study the theoretical properties of these conditional generative models, we adopt a statistical framework of distribution regression to characterize the large sample properties of the conditional distribution estimators induced by these conditional forward-backward diffusion models. Here, the conditional distribution of data is assumed to smoothly change over the covariate. In particular, our derived convergence rate is minimax-optimal under the total variation metric within the regimes covered by the existing literature. Additionally, we extend our theory by allowing both the data and the covariate variable to potentially admit a low-dimensional manifold structure. In this scenario, we demonstrate that the conditional forward-backward diffusion model can adapt to both manifold structures, meaning that the derived estimation error bound (under the Wasserstein metric) depends only on the intrinsic dimensionalities of the data and the covariate.",
+        "authors": [],
+        "published": "2025-05-01",
+        "categories": [
+          "ICLR 2025"
+        ],
+        "pdf_url": "https://openreview.net/pdf?id=NltQraRnbW",
+        "github_url": null,
+        "semantic_score": 0.6598401665687561,
+        "keyword_score": 0.4444444444444444,
+        "combined_score": 0.5090631610817379
+      }
+    },
+    {
+      "rank": 6,
+      "paper_id": "Ombm8S40zN",
+      "title": "Steering Masked Discrete Diffusion Models via Discrete Denoising Posterior Prediction",
+      "authors": [],
+      "published": "2025-05-01",
+      "score": {
+        "final": 0.6955918744688139,
+        "breakdown": {
+          "semantic_relevance": 0.7,
+          "must_keywords": 0,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.17795937234406978,
+          "practicality": 0,
+          "keyword_score": 0.4444444444444444
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding+llm"
+      },
+      "tags": [
+        "SEMANTIC_HIGH_MATCH",
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "Ombm8S40zN",
+        "title": "Steering Masked Discrete Diffusion Models via Discrete Denoising Posterior Prediction",
+        "abstract": "Generative modeling of discrete data underlies important applications spanning text-based agents like ChatGPT to the design of the very building blocks of life in protein sequences. However, application domains need to exert control over the generated data by steering the generative process—typically via RLHF—to satisfy a specified property, reward, or affinity metric. In this paper, we study the problem of steering Masked Diffusion Models (MDMs), a recent class of discrete diffusion models that offer a compelling alternative to traditional autoregressive models. We introduce Discrete Denoising Posterior Prediction (DDPP), a novel framework that casts the task of steering pretrained MDMs as a problem of probabilistic inference by learning to sample from a target Bayesian posterior. Our DDPP framework leads to a family of three novel objectives that are all simulation-free, and thus scalable while applying to general non-differentiable reward functions. Empirically, we instantiate DDPP by steering MDMs to perform class-conditional pixel-level image modeling, RLHF-based alignment of MDMs using text based rewards, and finetuning protein language models to generate more diverse secondary structures and shorter proteins. We substantiate our designs via wet-lab validation, where we observe transient expression of reward-optimized protein sequences.",
+        "authors": [],
+        "published": "2025-05-01",
+        "categories": [
+          "ICLR 2025"
+        ],
+        "pdf_url": "https://openreview.net/pdf?id=Ombm8S40zN",
+        "github_url": null,
+        "semantic_score": 0.6371462941169739,
+        "keyword_score": 0.4444444444444444,
+        "combined_score": 0.5022549993462032
+      }
+    },
+    {
+      "rank": 7,
+      "paper_id": "SKW10XJlAI",
+      "title": "Towards Understanding Text Hallucination of Diffusion Models via Local Generation Bias",
+      "authors": [],
+      "published": "2025-05-01",
+      "score": {
+        "final": 0.690591874468814,
+        "breakdown": {
+          "semantic_relevance": 0.6,
+          "must_keywords": 0.25,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.17795937234406978,
+          "practicality": 0,
+          "keyword_score": 0.4444444444444444
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding+llm"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "SKW10XJlAI",
+        "title": "Towards Understanding Text Hallucination of Diffusion Models via Local Generation Bias",
+        "abstract": "Score-based diffusion models have achieved incredible performance in generating realistic images, audio, and video data. While these models produce high-quality samples with impressive details, they often introduce unrealistic artifacts, such as distorted fingers or hallucinated texts with no meaning. This paper focuses on textual hallucinations, where diffusion models correctly generate individual symbols but assemble them in a nonsensical manner. Through experimental probing, we consistently observe that such phenomenon is attributed it to the network's local generation bias. Denoising networks tend to produce outputs that rely heavily on highly correlated local regions, particularly when different dimensions of the data distribution are nearly pairwise independent. This behavior leads to a generation process that decomposes the global distribution into separate, independent distributions for each symbol, ultimately failing to capture the global structure, including underlying grammar. Intriguingly, this bias persists across various denoising network architectures including MLP and transformers which have the structure to model global dependency. These findings also provide insights into understanding other types of hallucinations, extending beyond text, as a result of implicit biases in the denoising models. Additionally, we theoretically analyze the training dynamics for a specific case involving a two-layer MLP learning parity points on a hypercube, offering an explanation of its underlying mechanism.",
+        "authors": [],
+        "published": "2025-05-01",
+        "categories": [
+          "ICLR 2025"
+        ],
+        "pdf_url": "https://openreview.net/pdf?id=SKW10XJlAI",
+        "github_url": null,
+        "semantic_score": 0.6430015563964844,
+        "keyword_score": 0.4444444444444444,
+        "combined_score": 0.5040115780300564
+      }
+    },
+    {
+      "rank": 8,
+      "paper_id": "VipcVxaTnG",
+      "title": "Correlation and Navigation in the Vocabulary Key Representation Space of Language Models",
+      "authors": [],
+      "published": "2025-05-01",
+      "score": {
+        "final": 0.6855918744688139,
+        "breakdown": {
+          "semantic_relevance": 0.5,
+          "must_keywords": 0.5,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.17795937234406978,
+          "practicality": 0,
+          "keyword_score": 0.4444444444444444
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding+llm"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "VipcVxaTnG",
+        "title": "Correlation and Navigation in the Vocabulary Key Representation Space of Language Models",
+        "abstract": "Language model (LM) decoding is based on the next-token prediction (NTP) probability distribution. For neural LMs (e.g., Transformer-based), NTP distribution is\nessentially a softmax-regularized dot product between an encoded input context\n(query) and fixed vocabulary representations (keys). In this paper, we study the\neffect of the key distribution on the NTP distribution, with a focus on whether\nthe similarity between keys will trigger spurious correlations in NTP. Through\nknowledge-probing tasks, we show that in the NTP distribution, the few top-ranked\ntokens are typically accurate. However, the middle-ranked prediction is highly biased\ntowards the tokens that are distributionally (not necessarily semantically) similar to\nthese top ones. For instance, if “P” is predicted as the top-1 token, “A”-“Z” will all\nbe ranked high in NTP, no matter whether they can lead to correct decoding results.\nThis hurts the sampling diversity and makes the sampling of correct, long-tail\nresults hopeless and noisy. We attempt to alleviate this issue via a novel in-context\nmethod that iteratively pushes the query representation away from explored regions.\nSpecifically, we include the explored decoding results in the context and prompt\nthe LM to generate something else, which encourages the LM to produce a query\nrepresentation that has small dot products with explored keys. Experiments on\nknowledge-probing tasks show that our method leads to efficient navigation away\nfrom explored keys to correct new keys. We further extend our method to open-ended and chain-of-thought (for reasoning) generation. Experiment results show\nthat ICN contributes to better generation diversity and improved self-consistency\nvoting performance. Finally, we discuss potential training issues caused by the\nfixed key space together with the challenges and possible ways to address them in\nfuture research.",
+        "authors": [],
+        "published": "2025-05-01",
+        "categories": [
+          "ICLR 2025"
+        ],
+        "pdf_url": "https://openreview.net/pdf?id=VipcVxaTnG",
+        "github_url": null,
+        "semantic_score": 0.655586302280426,
+        "keyword_score": 0.4444444444444444,
+        "combined_score": 0.5077870017952388
+      }
+    },
+    {
+      "rank": 9,
+      "paper_id": "t9l63huPRt",
+      "title": "Lightning-Fast Image Inversion and Editing for Text-to-Image Diffusion Models",
+      "authors": [],
+      "published": "2025-05-01",
+      "score": {
+        "final": 0.6855918744688139,
+        "breakdown": {
+          "semantic_relevance": 0.5,
+          "must_keywords": 0.5,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.17795937234406978,
+          "practicality": 0,
+          "keyword_score": 0.4444444444444444
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding+llm"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "t9l63huPRt",
+        "title": "Lightning-Fast Image Inversion and Editing for Text-to-Image Diffusion Models",
+        "abstract": "Diffusion inversion is the problem of taking an image and a text prompt that describes it and finding a noise latent that would generate the exact same image. \nMost current deterministic inversion techniques operate by approximately solving an implicit equation and may converge slowly or yield poor reconstructed images.  We formulate the problem by finding the roots of an implicit equation and devlop a method to solve it efficiently. Our solution is based on Newton-Raphson (NR), a well-known technique in numerical analysis. We show that a vanilla application of NR is computationally infeasible while naively transforming it to a computationally tractable alternative tends to converge to out-of-distribution solutions, resulting in poor reconstruction and editing. We therefore derive an efficient guided formulation that fastly converges and provides high-quality reconstructions and editing. We showcase our method on real image editing with three popular open-sourced diffusion models: Stable Diffusion, SDXL-Turbo, and Flux with different deterministic schedulers. Our solution, **Guided Newton-Raphson Inversion**, inverts an image within 0.4 sec (on an A100 GPU) for few-step models (SDXL-Turbo and Flux.1),\nopening the door for interactive image editing. We further show improved results in image interpolation and generation of rare objects.",
+        "authors": [],
+        "published": "2025-05-01",
+        "categories": [
+          "ICLR 2025"
+        ],
+        "pdf_url": "https://openreview.net/pdf?id=t9l63huPRt",
+        "github_url": null,
+        "semantic_score": 0.6257672905921936,
+        "keyword_score": 0.4444444444444444,
+        "combined_score": 0.4988412982887691
+      }
+    },
+    {
+      "rank": 10,
+      "paper_id": "nWT6LxbuGi",
+      "title": "Theory on Score-Mismatched Diffusion Models and Zero-Shot Conditional Samplers",
+      "authors": [],
+      "published": "2025-05-01",
+      "score": {
+        "final": 0.6655918744688138,
+        "breakdown": {
+          "semantic_relevance": 0.6,
+          "must_keywords": 0,
+          "author_trust": 1,
+          "institution_trust": 0,
+          "recency": 0.17795937234406978,
+          "practicality": 0,
+          "keyword_score": 0.48148148148148145
+        },
+        "soft_penalty": 0.3,
+        "penalty_keywords": [],
+        "evaluation_method": "embedding+llm"
+      },
+      "tags": [
+        "PREFERRED_AUTHOR"
+      ],
+      "local_status": {
+        "already_downloaded": false,
+        "local_path": null
+      },
+      "original_data": {
+        "paper_id": "nWT6LxbuGi",
+        "title": "Theory on Score-Mismatched Diffusion Models and Zero-Shot Conditional Samplers",
+        "abstract": "The denoising diffusion model has recently emerged as a powerful generative technique, capable of transforming noise into meaningful data. While theoretical convergence guarantees for diffusion models are well established when the target distribution aligns with the training distribution, practical scenarios often present mismatches. One common case is in the zero-shot conditional diffusion sampling, where the target conditional distribution is different from the (unconditional) training distribution. These score-mismatched diffusion models remain largely unexplored from a theoretical perspective. In this paper, we present the first performance guarantee with explicit dimensional dependencies for general score-mismatched diffusion samplers, focusing on target distributions with finite second moments. We show that score mismatches result in an asymptotic distributional bias between the target and sampling distributions, proportional to the accumulated mismatch between the target and training distributions. This result can be directly applied to zero-shot conditional samplers for any conditional model, irrespective of measurement noise. Interestingly, the derived convergence upper bound offers useful guidance for designing a novel bias-optimal zero-shot sampler in linear conditional models that minimizes the asymptotic bias. For such bias-optimal samplers, we further establish convergence guarantees with explicit dependencies on dimension and conditioning, applied to several interesting target distributions, including those with bounded support and Gaussian mixtures. Our findings are supported by numerical studies.",
+        "authors": [],
+        "published": "2025-05-01",
+        "categories": [
+          "ICLR 2025"
+        ],
+        "pdf_url": "https://openreview.net/pdf?id=nWT6LxbuGi",
+        "github_url": null,
+        "semantic_score": 0.644235372543335,
+        "keyword_score": 0.48148148148148145,
+        "combined_score": 0.5303076488000376
+      }
+    }
+  ],
+  "filtered_papers": [],
+  "contrastive_paper": null,
+  "comparison_notes": [],
+  "output_path": "/data/output/rankings/2026-01-30_2026-01-30T13-22-44_ranked.json",
+  "generated_at": "2026-01-30T13:22:44.473367"
+}
