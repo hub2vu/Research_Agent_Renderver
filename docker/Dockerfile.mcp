@@ -13,8 +13,9 @@ COPY requirements/base.txt requirements/base.txt
 COPY requirements/mcp.txt requirements/mcp.txt
 RUN pip install --no-cache-dir -r requirements/mcp.txt
 
-# Copy MCP source code
+# Copy MCP source code and shared modules
 COPY mcp/ /app/mcp/
+COPY logs/ /app/logs/
 
 # Create data directories
 RUN mkdir -p /data/pdf /data/output
