@@ -1,3 +1,11 @@
+# Notion Save 사용법
+
+NOTION_PARENT_PAGE_ID=
+<img width="2054" height="784" alt="스크린샷 2026-01-30 111953" src="https://github.com/user-attachments/assets/23f23abd-2b32-443c-a325-cb5a42db8ff2" />
+
+NOTION_API_TOKEN=
+https://www.notion.so/profile/integrations 링크에서 API 발급
+
 # Research Agent
 
 A Docker-based research assistant with MCP (Model Context Protocol) architecture and paper graph visualization.
