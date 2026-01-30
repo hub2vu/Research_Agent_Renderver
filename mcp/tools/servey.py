@@ -101,6 +101,15 @@ class GenerateClusterSurveyTool(MCPTool):
             latency_plan = (time.time() - start_time_plan) * 1000
             taxonomy_plan = plan_response.choices[0].message.content
 
+            # Extract token usage for Phase 1
+            token_usage_plan = {}
+            if hasattr(plan_response, 'usage') and plan_response.usage:
+                token_usage_plan = {
+                    "prompt_tokens": plan_response.usage.prompt_tokens,
+                    "completion_tokens": plan_response.usage.completion_tokens,
+                    "total_tokens": plan_response.usage.total_tokens
+                }
+
             # LLM Logging - Log taxonomy planning
             try:
                 llm_logger = get_llm_logger()
@@ -111,6 +120,7 @@ class GenerateClusterSurveyTool(MCPTool):
                     response=taxonomy_plan[:5000],
                     tool_name="generate_cluster_survey_plan",
                     temperature=0.2,
+                    token_usage=token_usage_plan,
                     latency_ms=latency_plan,
                     metadata={"topic": topic, "phase": "taxonomy_planning"}
                 )
@@ -186,6 +196,15 @@ class GenerateClusterSurveyTool(MCPTool):
             latency_write = (time.time() - start_time_write) * 1000
             survey_content = final_response.choices[0].message.content
 
+            # Extract token usage for Phase 2
+            token_usage_write = {}
+            if hasattr(final_response, 'usage') and final_response.usage:
+                token_usage_write = {
+                    "prompt_tokens": final_response.usage.prompt_tokens,
+                    "completion_tokens": final_response.usage.completion_tokens,
+                    "total_tokens": final_response.usage.total_tokens
+                }
+
             # LLM Logging - Log survey writing
             try:
                 llm_logger = get_llm_logger()
@@ -212,6 +231,7 @@ class GenerateClusterSurveyTool(MCPTool):
                     response=survey_content[:5000],
                     tool_name="generate_cluster_survey_write",
                     temperature=0.4,
+                    token_usage=token_usage_write,
                     latency_ms=latency_write,
                     metadata={"topic": topic, "phase": "survey_writing"}
                 )

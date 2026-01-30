@@ -219,6 +219,15 @@ class GenerateReportTool(MCPTool):
             latency_ms = (time.time() - start_time) * 1000
             content = response.choices[0].message.content
 
+            # Extract token usage
+            token_usage = {}
+            if hasattr(response, 'usage') and response.usage:
+                token_usage = {
+                    "prompt_tokens": response.usage.prompt_tokens,
+                    "completion_tokens": response.usage.completion_tokens,
+                    "total_tokens": response.usage.total_tokens
+                }
+
             # LLM Logging - Log report generation
             try:
                 llm_logger = get_llm_logger()
@@ -242,6 +251,7 @@ class GenerateReportTool(MCPTool):
                     response=content[:5000],
                     tool_name="generate_report",
                     temperature=0.3,
+                    token_usage=token_usage,
                     latency_ms=latency_ms,
                     paper_id=paper_id
                 )
