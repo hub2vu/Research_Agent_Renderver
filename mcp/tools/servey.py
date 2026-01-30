@@ -5,10 +5,17 @@ Generates high-quality survey papers using a Two-Pass (Plan -> Write) approach.
 
 import os
 import logging
+import time
+from pathlib import Path
 from typing import Any, Dict, List
 from openai import AsyncOpenAI
 
 from ..base import MCPTool, ToolParameter, ExecutionError
+
+# LLM Logging
+import sys
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+from logs.llm_logger import get_logger as get_llm_logger, SummaryType
 
 logger = logging.getLogger("mcp.tools.survey")
 logger.setLevel(logging.INFO)
@@ -85,12 +92,42 @@ class GenerateClusterSurveyTool(MCPTool):
             ...
             """
 
+            start_time_plan = time.time()
             plan_response = await aclient.chat.completions.create(
                 model="gpt-4o",
                 messages=[{"role": "user", "content": plan_prompt}],
                 temperature=0.2,  # 기획은 냉철하게
             )
+            latency_plan = (time.time() - start_time_plan) * 1000
             taxonomy_plan = plan_response.choices[0].message.content
+
+            # LLM Logging - Log taxonomy planning
+            try:
+                llm_logger = get_llm_logger()
+
+                llm_logger.log_llm_call(
+                    model="gpt-4o",
+                    prompt=plan_prompt[:5000],
+                    response=taxonomy_plan[:5000],
+                    tool_name="generate_cluster_survey_plan",
+                    temperature=0.2,
+                    latency_ms=latency_plan,
+                    metadata={"topic": topic, "phase": "taxonomy_planning"}
+                )
+
+                # Log the decision about taxonomy structure
+                llm_logger.log_decision(
+                    decision_id=f"survey_taxonomy_{int(time.time())}",
+                    decision="Survey taxonomy categorization",
+                    options=["methodology-based", "problem-based", "chronological", "hybrid"],
+                    chosen="methodology/problem-based",
+                    rationale=f"Grouped papers into logical categories for topic: {topic}",
+                    agent_name="SurveyGenerator",
+                    context=f"Topic: {topic}, Papers context length: {len(papers_context)}",
+                    metadata={"taxonomy_plan_length": len(taxonomy_plan)}
+                )
+            except Exception as log_error:
+                logger.warning(f"Failed to log taxonomy planning: {log_error}")
 
             # ====================================================
             # PHASE 2: The Writer (Deep Dive & Synthesis)
@@ -99,14 +136,14 @@ class GenerateClusterSurveyTool(MCPTool):
 
             write_prompt = f"""
             You are a Distinguished Researcher writing a Survey Paper.
-            
+
             **Topic:** {topic}
             **Language:** {language}
-            
+
             **Instructions:**
             Write a comprehensive survey paper following the **Taxonomy Plan** below.
             Your tone must be highly academic, critical, and insightful.
-            
+
             **Taxonomy Plan (Use this structure):**
             {taxonomy_plan}
 
@@ -114,7 +151,7 @@ class GenerateClusterSurveyTool(MCPTool):
             {papers_context}
 
             **Required Structure (Markdown):**
-            
+
             # {topic}: A Comprehensive Survey
 
             ## 1. Introduction
@@ -140,16 +177,51 @@ class GenerateClusterSurveyTool(MCPTool):
             - If possible, include a textual representation of a diagram (e.g., Mermaid or ASCII) to explain the taxonomy.
             """
 
+            start_time_write = time.time()
             final_response = await aclient.chat.completions.create(
                 model="gpt-4o",
                 messages=[{"role": "user", "content": write_prompt}],
                 temperature=0.4,  # 글쓰기는 약간 창의적으로
             )
+            latency_write = (time.time() - start_time_write) * 1000
+            survey_content = final_response.choices[0].message.content
+
+            # LLM Logging - Log survey writing
+            try:
+                llm_logger = get_llm_logger()
+
+                llm_logger.log_summary(
+                    paper_id=f"survey_{topic[:30].replace(' ', '_')}",
+                    summary_type="survey",
+                    summary_prompt=write_prompt[:5000],
+                    summary_response=survey_content,
+                    source_text_length=len(papers_context),
+                    model="gpt-4o",
+                    temperature=0.4,
+                    metadata={
+                        "topic": topic,
+                        "language": language,
+                        "taxonomy_used": True,
+                        "phase": "survey_writing"
+                    }
+                )
+
+                llm_logger.log_llm_call(
+                    model="gpt-4o",
+                    prompt=write_prompt[:5000],
+                    response=survey_content[:5000],
+                    tool_name="generate_cluster_survey_write",
+                    temperature=0.4,
+                    latency_ms=latency_write,
+                    metadata={"topic": topic, "phase": "survey_writing"}
+                )
+            except Exception as log_error:
+                logger.warning(f"Failed to log survey writing: {log_error}")
 
             return {
                 "topic": topic,
                 "status": "success",
-                "survey_content": final_response.choices[0].message.content,
+                "survey_content": survey_content,
                 "taxonomy_debug": taxonomy_plan,  # 디버깅용 (필요시 확인 가능)
             }
 

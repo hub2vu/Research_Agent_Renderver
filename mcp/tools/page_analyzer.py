@@ -10,6 +10,11 @@ from openai import AsyncOpenAI
 
 from ..base import MCPTool, ToolParameter, ExecutionError
 
+# LLM Logging
+import sys
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+from logs.llm_logger import get_logger as get_llm_logger, SummaryType
+
 # PDF 라이브러리
 try:
     from pypdf import PdfReader
@@ -142,6 +147,7 @@ async def interpret_paper_page(paper_id: str, page_num: int) -> Dict[str, Any]:
            - **🧠 주요 개념/용어**
         """
 
+        start_time = time.time()
         response = await aclient.chat.completions.create(
             model="gpt-4o",
             messages=[
@@ -154,7 +160,24 @@ async def interpret_paper_page(paper_id: str, page_num: int) -> Dict[str, Any]:
             temperature=0.3,
         )
 
+        latency_ms = (time.time() - start_time) * 1000
         interpretation = response.choices[0].message.content
+
+        # LLM Logging
+        try:
+            llm_logger = get_llm_logger()
+            llm_logger.log_llm_call(
+                model="gpt-4o",
+                prompt=prompt[:5000],
+                response=interpretation[:5000],
+                tool_name="interpret_paper_page",
+                temperature=0.3,
+                latency_ms=latency_ms,
+                paper_id=paper_id,
+                metadata={"page_num": page_num, "page_text_length": len(page_text)}
+            )
+        except Exception as log_error:
+            logger.warning(f"Failed to log page interpretation: {log_error}")
 
         return {
             "page": page_num,
@@ -359,6 +382,7 @@ class AnalyzeSectionTool(MCPTool):
 4. **톤앤매너**: 전문적이지만 이해하기 쉽게 한국어로 작성하세요.
 """
 
+        start_time = time.time()
         response = await aclient.chat.completions.create(
             model="gpt-4o",
             messages=[
@@ -371,7 +395,40 @@ class AnalyzeSectionTool(MCPTool):
             temperature=0.3,
         )
 
+        latency_ms = (time.time() - start_time) * 1000
         analysis_text = response.choices[0].message.content
+
+        # LLM Logging - Log section analysis
+        try:
+            llm_logger = get_llm_logger()
+
+            llm_logger.log_summary(
+                paper_id=paper_id,
+                summary_type=SummaryType.SECTION_WISE,
+                summary_prompt=prompt[:5000],
+                summary_response=analysis_text,
+                source_text_length=len(section_text),
+                model="gpt-4o",
+                temperature=0.3,
+                metadata={
+                    "section_title": section_title,
+                    "next_section_title": next_section_title,
+                    "full_text_context_length": len(full_text)
+                }
+            )
+
+            llm_logger.log_llm_call(
+                model="gpt-4o",
+                prompt=prompt[:5000],
+                response=analysis_text[:5000],
+                tool_name="analyze_section",
+                temperature=0.3,
+                latency_ms=latency_ms,
+                paper_id=paper_id,
+                metadata={"section_title": section_title}
+            )
+        except Exception as log_error:
+            logger.warning(f"Failed to log section analysis: {log_error}")
 
         # Save to file system
         notes_dir = paper_dir / "notes"
@@ -537,6 +594,7 @@ class PaperQATool(MCPTool):
 """
 
         # 5. LLM 호출
+        start_time = time.time()
         response = await aclient.chat.completions.create(
             model="gpt-4o",
             messages=[
@@ -549,7 +607,28 @@ class PaperQATool(MCPTool):
             temperature=0.3,
         )
 
+        latency_ms = (time.time() - start_time) * 1000
         answer = response.choices[0].message.content
+
+        # LLM Logging - Log QA interaction
+        try:
+            llm_logger = get_llm_logger()
+            llm_logger.log_llm_call(
+                model="gpt-4o",
+                prompt=prompt[:5000],
+                response=answer[:5000],
+                tool_name="paper_qa",
+                temperature=0.3,
+                latency_ms=latency_ms,
+                paper_id=paper_id,
+                metadata={
+                    "question": question,
+                    "has_section_context": bool(section_context),
+                    "abstract_length": len(abstract)
+                }
+            )
+        except Exception as log_error:
+            logger.warning(f"Failed to log paper QA: {log_error}")
 
         return {
             "status": "success",
