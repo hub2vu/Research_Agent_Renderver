@@ -10,6 +10,14 @@ import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+import logging
+
+# LLM Logging
+import sys
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+from logs.llm_logger import get_logger as get_llm_logger
+
+logger = logging.getLogger("mcp.tools.translate")
 
 # [1] pdf.py와 똑같은 경로 설정 방식 사용
 OUTPUT_DIR = Path(os.getenv("OUTPUT_DIR", "/data/output"))
@@ -159,19 +167,49 @@ Your task:
 Return ONLY the JSON object, no other text."""
 
     try:
+        start_time = time.time()
+        user_content = f"Extract technical terms from this text:\n\n{text_for_glossary}"
+
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": system_prompt},
-                {
-                    "role": "user",
-                    "content": f"Extract technical terms from this text:\n\n{text_for_glossary}",
-                },
+                {"role": "user", "content": user_content},
             ],
             temperature=0.3,
         )
-        
+
+        latency_ms = (time.time() - start_time) * 1000
         content = response.choices[0].message.content.strip()
+
+        # Extract token usage
+        token_usage = {}
+        if hasattr(response, 'usage') and response.usage:
+            token_usage = {
+                "prompt_tokens": response.usage.prompt_tokens,
+                "completion_tokens": response.usage.completion_tokens,
+                "total_tokens": response.usage.total_tokens
+            }
+
+        # LLM Logging
+        try:
+            llm_logger = get_llm_logger()
+            llm_logger.log_llm_call(
+                model="gpt-4o-mini",
+                prompt=(system_prompt + "\n\n" + user_content)[:5000],
+                response=content[:5000],
+                tool_name="extract_glossary",
+                temperature=0.3,
+                token_usage=token_usage,
+                latency_ms=latency_ms,
+                metadata={
+                    "source_lang": source_lang,
+                    "target_lang": target_lang,
+                    "text_length": len(text_for_glossary)
+                }
+            )
+        except Exception as log_error:
+            logger.warning(f"Failed to log glossary extraction: {log_error}")
         
         # JSON 추출 (코드 블록 제거)
         content = re.sub(r"```json\s*", "", content)
@@ -196,7 +234,9 @@ Return ONLY the JSON object, no other text."""
 
 
 async def _translate_with_retry(
-    client, messages: List[Dict], max_retries: int = 3
+    client, messages: List[Dict], max_retries: int = 3,
+    paper_id: Optional[str] = None, tool_name: str = "translate_chunk",
+    chunk_index: Optional[int] = None, total_chunks: Optional[int] = None
 ) -> str:
     """
     OpenAI API 호출 시 재시도 로직
@@ -205,12 +245,49 @@ async def _translate_with_retry(
     """
     for attempt in range(max_retries):
         try:
+            start_time = time.time()
+
             response = client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=messages,
                 temperature=0.3,
             )
-            return response.choices[0].message.content
+
+            latency_ms = (time.time() - start_time) * 1000
+            result_content = response.choices[0].message.content
+
+            # Extract token usage
+            token_usage = {}
+            if hasattr(response, 'usage') and response.usage:
+                token_usage = {
+                    "prompt_tokens": response.usage.prompt_tokens,
+                    "completion_tokens": response.usage.completion_tokens,
+                    "total_tokens": response.usage.total_tokens
+                }
+
+            # LLM Logging
+            try:
+                llm_logger = get_llm_logger()
+                prompt_text = "\n".join([m.get("content", "")[:2000] for m in messages])
+                llm_logger.log_llm_call(
+                    model="gpt-4o-mini",
+                    prompt=prompt_text[:5000],
+                    response=result_content[:5000],
+                    tool_name=tool_name,
+                    temperature=0.3,
+                    token_usage=token_usage,
+                    latency_ms=latency_ms,
+                    paper_id=paper_id,
+                    metadata={
+                        "chunk_index": chunk_index,
+                        "total_chunks": total_chunks,
+                        "attempt": attempt + 1
+                    }
+                )
+            except Exception as log_error:
+                logger.warning(f"Failed to log translation: {log_error}")
+
+            return result_content
             
         except openai.RateLimitError:
             if attempt < max_retries - 1:
@@ -411,7 +488,13 @@ CRITICAL: Do not translate or modify any text inside $...$ or $$...$$ (LaTeX for
                 ]
 
                 # 번역 실행 (재시도 로직 포함)
-                translated_chunk = await _translate_with_retry(client, messages)
+                translated_chunk = await _translate_with_retry(
+                    client, messages,
+                    paper_id=paper_id,
+                    tool_name="translate_paper",
+                    chunk_index=i,
+                    total_chunks=total_chunks
+                )
                 translated_chunks.append(translated_chunk)
 
                 # 진행 상태 업데이트
@@ -879,7 +962,13 @@ Translate the following text from {source_language} to {target_language}.
                 {"role": "user", "content": user_prompt},
             ]
 
-            translated_chunk = await _translate_with_retry(client, messages)
+            translated_chunk = await _translate_with_retry(
+                client, messages,
+                paper_id=paper_id,
+                tool_name="translate_section",
+                chunk_index=i,
+                total_chunks=len(chunks)
+            )
             translated_chunks.append(translated_chunk)
 
             if i < len(chunks) - 1:
