@@ -1,4 +1,8 @@
 # Notion Save 사용법
+.env에 다음 2개 추가
+    NOTION_PARENT_PAGE_ID=
+    NOTION_API_TOKEN=
+
 
 NOTION_PARENT_PAGE_ID=
 <img width="2054" height="784" alt="스크린샷 2026-01-30 111953" src="https://github.com/user-attachments/assets/23f23abd-2b32-443c-a325-cb5a42db8ff2" />
