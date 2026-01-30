@@ -1,0 +1,2095 @@
+{
+  "filename": "n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond.pdf",
+  "total_pages": 30,
+  "images": [
+    {
+      "page_number": 2,
+      "image_index": 1,
+      "filename": "page2_img1.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page2_img1.jpeg",
+      "format": "jpeg",
+      "size_bytes": 59526
+    },
+    {
+      "page_number": 2,
+      "image_index": 2,
+      "filename": "page2_img2.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page2_img2.jpeg",
+      "format": "jpeg",
+      "size_bytes": 62838
+    },
+    {
+      "page_number": 2,
+      "image_index": 3,
+      "filename": "page2_img3.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page2_img3.jpeg",
+      "format": "jpeg",
+      "size_bytes": 85530
+    },
+    {
+      "page_number": 2,
+      "image_index": 4,
+      "filename": "page2_img4.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page2_img4.jpeg",
+      "format": "jpeg",
+      "size_bytes": 66018
+    },
+    {
+      "page_number": 2,
+      "image_index": 5,
+      "filename": "page2_img5.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page2_img5.jpeg",
+      "format": "jpeg",
+      "size_bytes": 129044
+    },
+    {
+      "page_number": 2,
+      "image_index": 6,
+      "filename": "page2_img6.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page2_img6.jpeg",
+      "format": "jpeg",
+      "size_bytes": 1742741
+    },
+    {
+      "page_number": 2,
+      "image_index": 7,
+      "filename": "page2_img7.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page2_img7.jpeg",
+      "format": "jpeg",
+      "size_bytes": 1557408
+    },
+    {
+      "page_number": 3,
+      "image_index": 1,
+      "filename": "page3_img1.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page3_img1.jpeg",
+      "format": "jpeg",
+      "size_bytes": 61957
+    },
+    {
+      "page_number": 3,
+      "image_index": 2,
+      "filename": "page3_img2.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page3_img2.jpeg",
+      "format": "jpeg",
+      "size_bytes": 19723
+    },
+    {
+      "page_number": 3,
+      "image_index": 3,
+      "filename": "page3_img3.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page3_img3.jpeg",
+      "format": "jpeg",
+      "size_bytes": 112977
+    },
+    {
+      "page_number": 3,
+      "image_index": 4,
+      "filename": "page3_img4.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page3_img4.jpeg",
+      "format": "jpeg",
+      "size_bytes": 108862
+    },
+    {
+      "page_number": 3,
+      "image_index": 5,
+      "filename": "page3_img5.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page3_img5.jpeg",
+      "format": "jpeg",
+      "size_bytes": 117661
+    },
+    {
+      "page_number": 3,
+      "image_index": 6,
+      "filename": "page3_img6.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page3_img6.jpeg",
+      "format": "jpeg",
+      "size_bytes": 93517
+    },
+    {
+      "page_number": 3,
+      "image_index": 7,
+      "filename": "page3_img7.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page3_img7.jpeg",
+      "format": "jpeg",
+      "size_bytes": 59614
+    },
+    {
+      "page_number": 3,
+      "image_index": 8,
+      "filename": "page3_img8.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page3_img8.jpeg",
+      "format": "jpeg",
+      "size_bytes": 104689
+    },
+    {
+      "page_number": 3,
+      "image_index": 9,
+      "filename": "page3_img9.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page3_img9.jpeg",
+      "format": "jpeg",
+      "size_bytes": 102549
+    },
+    {
+      "page_number": 3,
+      "image_index": 10,
+      "filename": "page3_img10.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page3_img10.jpeg",
+      "format": "jpeg",
+      "size_bytes": 18264
+    },
+    {
+      "page_number": 3,
+      "image_index": 11,
+      "filename": "page3_img11.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page3_img11.jpeg",
+      "format": "jpeg",
+      "size_bytes": 108109
+    },
+    {
+      "page_number": 3,
+      "image_index": 12,
+      "filename": "page3_img12.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page3_img12.jpeg",
+      "format": "jpeg",
+      "size_bytes": 104264
+    },
+    {
+      "page_number": 3,
+      "image_index": 13,
+      "filename": "page3_img13.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page3_img13.jpeg",
+      "format": "jpeg",
+      "size_bytes": 110399
+    },
+    {
+      "page_number": 3,
+      "image_index": 14,
+      "filename": "page3_img14.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page3_img14.jpeg",
+      "format": "jpeg",
+      "size_bytes": 98800
+    },
+    {
+      "page_number": 3,
+      "image_index": 15,
+      "filename": "page3_img15.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page3_img15.jpeg",
+      "format": "jpeg",
+      "size_bytes": 170984
+    },
+    {
+      "page_number": 3,
+      "image_index": 16,
+      "filename": "page3_img16.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page3_img16.jpeg",
+      "format": "jpeg",
+      "size_bytes": 113410
+    },
+    {
+      "page_number": 4,
+      "image_index": 1,
+      "filename": "page4_img1.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page4_img1.jpeg",
+      "format": "jpeg",
+      "size_bytes": 130470
+    },
+    {
+      "page_number": 4,
+      "image_index": 2,
+      "filename": "page4_img2.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page4_img2.jpeg",
+      "format": "jpeg",
+      "size_bytes": 132785
+    },
+    {
+      "page_number": 4,
+      "image_index": 3,
+      "filename": "page4_img3.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page4_img3.jpeg",
+      "format": "jpeg",
+      "size_bytes": 16241
+    },
+    {
+      "page_number": 4,
+      "image_index": 4,
+      "filename": "page4_img4.png",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page4_img4.png",
+      "format": "png",
+      "size_bytes": 148043
+    },
+    {
+      "page_number": 4,
+      "image_index": 5,
+      "filename": "page4_img5.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page4_img5.jpeg",
+      "format": "jpeg",
+      "size_bytes": 118543
+    },
+    {
+      "page_number": 4,
+      "image_index": 6,
+      "filename": "page4_img6.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page4_img6.jpeg",
+      "format": "jpeg",
+      "size_bytes": 120396
+    },
+    {
+      "page_number": 4,
+      "image_index": 7,
+      "filename": "page4_img7.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page4_img7.jpeg",
+      "format": "jpeg",
+      "size_bytes": 169471
+    },
+    {
+      "page_number": 4,
+      "image_index": 8,
+      "filename": "page4_img8.png",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page4_img8.png",
+      "format": "png",
+      "size_bytes": 162595
+    },
+    {
+      "page_number": 5,
+      "image_index": 1,
+      "filename": "page5_img1.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page5_img1.jpeg",
+      "format": "jpeg",
+      "size_bytes": 94372
+    },
+    {
+      "page_number": 5,
+      "image_index": 2,
+      "filename": "page5_img2.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page5_img2.jpeg",
+      "format": "jpeg",
+      "size_bytes": 19220
+    },
+    {
+      "page_number": 5,
+      "image_index": 3,
+      "filename": "page5_img3.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page5_img3.jpeg",
+      "format": "jpeg",
+      "size_bytes": 18941
+    },
+    {
+      "page_number": 5,
+      "image_index": 4,
+      "filename": "page5_img4.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page5_img4.jpeg",
+      "format": "jpeg",
+      "size_bytes": 15999
+    },
+    {
+      "page_number": 5,
+      "image_index": 5,
+      "filename": "page5_img5.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page5_img5.jpeg",
+      "format": "jpeg",
+      "size_bytes": 116298
+    },
+    {
+      "page_number": 5,
+      "image_index": 6,
+      "filename": "page5_img6.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page5_img6.jpeg",
+      "format": "jpeg",
+      "size_bytes": 92128
+    },
+    {
+      "page_number": 5,
+      "image_index": 7,
+      "filename": "page5_img7.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page5_img7.jpeg",
+      "format": "jpeg",
+      "size_bytes": 84440
+    },
+    {
+      "page_number": 5,
+      "image_index": 8,
+      "filename": "page5_img8.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page5_img8.jpeg",
+      "format": "jpeg",
+      "size_bytes": 74696
+    },
+    {
+      "page_number": 5,
+      "image_index": 9,
+      "filename": "page5_img9.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page5_img9.jpeg",
+      "format": "jpeg",
+      "size_bytes": 80335
+    },
+    {
+      "page_number": 5,
+      "image_index": 10,
+      "filename": "page5_img10.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page5_img10.jpeg",
+      "format": "jpeg",
+      "size_bytes": 77051
+    },
+    {
+      "page_number": 5,
+      "image_index": 11,
+      "filename": "page5_img11.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page5_img11.jpeg",
+      "format": "jpeg",
+      "size_bytes": 74416
+    },
+    {
+      "page_number": 5,
+      "image_index": 12,
+      "filename": "page5_img12.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page5_img12.jpeg",
+      "format": "jpeg",
+      "size_bytes": 76694
+    },
+    {
+      "page_number": 5,
+      "image_index": 13,
+      "filename": "page5_img13.png",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page5_img13.png",
+      "format": "png",
+      "size_bytes": 279148
+    },
+    {
+      "page_number": 5,
+      "image_index": 14,
+      "filename": "page5_img14.png",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page5_img14.png",
+      "format": "png",
+      "size_bytes": 41368
+    },
+    {
+      "page_number": 6,
+      "image_index": 1,
+      "filename": "page6_img1.png",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page6_img1.png",
+      "format": "png",
+      "size_bytes": 179411
+    },
+    {
+      "page_number": 6,
+      "image_index": 2,
+      "filename": "page6_img2.png",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page6_img2.png",
+      "format": "png",
+      "size_bytes": 207403
+    },
+    {
+      "page_number": 6,
+      "image_index": 3,
+      "filename": "page6_img3.png",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page6_img3.png",
+      "format": "png",
+      "size_bytes": 74219
+    },
+    {
+      "page_number": 6,
+      "image_index": 4,
+      "filename": "page6_img4.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page6_img4.jpeg",
+      "format": "jpeg",
+      "size_bytes": 23530
+    },
+    {
+      "page_number": 6,
+      "image_index": 5,
+      "filename": "page6_img5.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page6_img5.jpeg",
+      "format": "jpeg",
+      "size_bytes": 20186
+    },
+    {
+      "page_number": 6,
+      "image_index": 6,
+      "filename": "page6_img6.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page6_img6.jpeg",
+      "format": "jpeg",
+      "size_bytes": 13861
+    },
+    {
+      "page_number": 6,
+      "image_index": 7,
+      "filename": "page6_img7.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page6_img7.jpeg",
+      "format": "jpeg",
+      "size_bytes": 107639
+    },
+    {
+      "page_number": 6,
+      "image_index": 8,
+      "filename": "page6_img8.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page6_img8.jpeg",
+      "format": "jpeg",
+      "size_bytes": 44139
+    },
+    {
+      "page_number": 6,
+      "image_index": 9,
+      "filename": "page6_img9.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page6_img9.jpeg",
+      "format": "jpeg",
+      "size_bytes": 79108
+    },
+    {
+      "page_number": 6,
+      "image_index": 10,
+      "filename": "page6_img10.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page6_img10.jpeg",
+      "format": "jpeg",
+      "size_bytes": 81945
+    },
+    {
+      "page_number": 6,
+      "image_index": 11,
+      "filename": "page6_img11.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page6_img11.jpeg",
+      "format": "jpeg",
+      "size_bytes": 67950
+    },
+    {
+      "page_number": 6,
+      "image_index": 12,
+      "filename": "page6_img12.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page6_img12.jpeg",
+      "format": "jpeg",
+      "size_bytes": 63960
+    },
+    {
+      "page_number": 6,
+      "image_index": 13,
+      "filename": "page6_img13.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page6_img13.jpeg",
+      "format": "jpeg",
+      "size_bytes": 54972
+    },
+    {
+      "page_number": 6,
+      "image_index": 14,
+      "filename": "page6_img14.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page6_img14.jpeg",
+      "format": "jpeg",
+      "size_bytes": 50056
+    },
+    {
+      "page_number": 6,
+      "image_index": 15,
+      "filename": "page6_img15.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page6_img15.jpeg",
+      "format": "jpeg",
+      "size_bytes": 51065
+    },
+    {
+      "page_number": 6,
+      "image_index": 16,
+      "filename": "page6_img16.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page6_img16.jpeg",
+      "format": "jpeg",
+      "size_bytes": 48988
+    },
+    {
+      "page_number": 6,
+      "image_index": 17,
+      "filename": "page6_img17.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page6_img17.jpeg",
+      "format": "jpeg",
+      "size_bytes": 63254
+    },
+    {
+      "page_number": 6,
+      "image_index": 18,
+      "filename": "page6_img18.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page6_img18.jpeg",
+      "format": "jpeg",
+      "size_bytes": 37495
+    },
+    {
+      "page_number": 9,
+      "image_index": 1,
+      "filename": "page9_img1.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page9_img1.jpeg",
+      "format": "jpeg",
+      "size_bytes": 72110
+    },
+    {
+      "page_number": 9,
+      "image_index": 2,
+      "filename": "page9_img2.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page9_img2.jpeg",
+      "format": "jpeg",
+      "size_bytes": 95143
+    },
+    {
+      "page_number": 9,
+      "image_index": 3,
+      "filename": "page9_img3.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page9_img3.jpeg",
+      "format": "jpeg",
+      "size_bytes": 73016
+    },
+    {
+      "page_number": 9,
+      "image_index": 4,
+      "filename": "page9_img4.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page9_img4.jpeg",
+      "format": "jpeg",
+      "size_bytes": 91855
+    },
+    {
+      "page_number": 9,
+      "image_index": 5,
+      "filename": "page9_img5.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page9_img5.jpeg",
+      "format": "jpeg",
+      "size_bytes": 75267
+    },
+    {
+      "page_number": 9,
+      "image_index": 6,
+      "filename": "page9_img6.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page9_img6.jpeg",
+      "format": "jpeg",
+      "size_bytes": 1636552
+    },
+    {
+      "page_number": 9,
+      "image_index": 7,
+      "filename": "page9_img7.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page9_img7.jpeg",
+      "format": "jpeg",
+      "size_bytes": 1769891
+    },
+    {
+      "page_number": 9,
+      "image_index": 8,
+      "filename": "page9_img8.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page9_img8.jpeg",
+      "format": "jpeg",
+      "size_bytes": 44354
+    },
+    {
+      "page_number": 9,
+      "image_index": 9,
+      "filename": "page9_img9.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page9_img9.jpeg",
+      "format": "jpeg",
+      "size_bytes": 38924
+    },
+    {
+      "page_number": 9,
+      "image_index": 10,
+      "filename": "page9_img10.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page9_img10.jpeg",
+      "format": "jpeg",
+      "size_bytes": 43430
+    },
+    {
+      "page_number": 9,
+      "image_index": 11,
+      "filename": "page9_img11.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page9_img11.jpeg",
+      "format": "jpeg",
+      "size_bytes": 365475
+    },
+    {
+      "page_number": 9,
+      "image_index": 12,
+      "filename": "page9_img12.png",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page9_img12.png",
+      "format": "png",
+      "size_bytes": 213696
+    },
+    {
+      "page_number": 22,
+      "image_index": 1,
+      "filename": "page22_img1.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page22_img1.jpeg",
+      "format": "jpeg",
+      "size_bytes": 63473
+    },
+    {
+      "page_number": 22,
+      "image_index": 2,
+      "filename": "page22_img2.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page22_img2.jpeg",
+      "format": "jpeg",
+      "size_bytes": 12392
+    },
+    {
+      "page_number": 22,
+      "image_index": 3,
+      "filename": "page22_img3.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page22_img3.jpeg",
+      "format": "jpeg",
+      "size_bytes": 13846
+    },
+    {
+      "page_number": 22,
+      "image_index": 4,
+      "filename": "page22_img4.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page22_img4.jpeg",
+      "format": "jpeg",
+      "size_bytes": 12392
+    },
+    {
+      "page_number": 22,
+      "image_index": 5,
+      "filename": "page22_img5.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page22_img5.jpeg",
+      "format": "jpeg",
+      "size_bytes": 16543
+    },
+    {
+      "page_number": 22,
+      "image_index": 6,
+      "filename": "page22_img6.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page22_img6.jpeg",
+      "format": "jpeg",
+      "size_bytes": 11628
+    },
+    {
+      "page_number": 22,
+      "image_index": 7,
+      "filename": "page22_img7.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page22_img7.jpeg",
+      "format": "jpeg",
+      "size_bytes": 23967
+    },
+    {
+      "page_number": 22,
+      "image_index": 8,
+      "filename": "page22_img8.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page22_img8.jpeg",
+      "format": "jpeg",
+      "size_bytes": 153860
+    },
+    {
+      "page_number": 22,
+      "image_index": 9,
+      "filename": "page22_img9.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page22_img9.jpeg",
+      "format": "jpeg",
+      "size_bytes": 43860
+    },
+    {
+      "page_number": 22,
+      "image_index": 10,
+      "filename": "page22_img10.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page22_img10.jpeg",
+      "format": "jpeg",
+      "size_bytes": 60245
+    },
+    {
+      "page_number": 23,
+      "image_index": 1,
+      "filename": "page23_img1.png",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page23_img1.png",
+      "format": "png",
+      "size_bytes": 114078
+    },
+    {
+      "page_number": 23,
+      "image_index": 2,
+      "filename": "page23_img2.png",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page23_img2.png",
+      "format": "png",
+      "size_bytes": 125250
+    },
+    {
+      "page_number": 24,
+      "image_index": 1,
+      "filename": "page24_img1.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page24_img1.jpeg",
+      "format": "jpeg",
+      "size_bytes": 59526
+    },
+    {
+      "page_number": 24,
+      "image_index": 2,
+      "filename": "page24_img2.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page24_img2.jpeg",
+      "format": "jpeg",
+      "size_bytes": 62838
+    },
+    {
+      "page_number": 24,
+      "image_index": 3,
+      "filename": "page24_img3.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page24_img3.jpeg",
+      "format": "jpeg",
+      "size_bytes": 85530
+    },
+    {
+      "page_number": 24,
+      "image_index": 4,
+      "filename": "page24_img4.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page24_img4.jpeg",
+      "format": "jpeg",
+      "size_bytes": 66018
+    },
+    {
+      "page_number": 24,
+      "image_index": 5,
+      "filename": "page24_img5.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page24_img5.jpeg",
+      "format": "jpeg",
+      "size_bytes": 129044
+    },
+    {
+      "page_number": 24,
+      "image_index": 6,
+      "filename": "page24_img6.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page24_img6.jpeg",
+      "format": "jpeg",
+      "size_bytes": 1557408
+    },
+    {
+      "page_number": 24,
+      "image_index": 7,
+      "filename": "page24_img7.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page24_img7.jpeg",
+      "format": "jpeg",
+      "size_bytes": 156286
+    },
+    {
+      "page_number": 24,
+      "image_index": 8,
+      "filename": "page24_img8.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page24_img8.jpeg",
+      "format": "jpeg",
+      "size_bytes": 117882
+    },
+    {
+      "page_number": 24,
+      "image_index": 9,
+      "filename": "page24_img9.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page24_img9.jpeg",
+      "format": "jpeg",
+      "size_bytes": 139697
+    },
+    {
+      "page_number": 24,
+      "image_index": 10,
+      "filename": "page24_img10.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page24_img10.jpeg",
+      "format": "jpeg",
+      "size_bytes": 155997
+    },
+    {
+      "page_number": 24,
+      "image_index": 11,
+      "filename": "page24_img11.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page24_img11.jpeg",
+      "format": "jpeg",
+      "size_bytes": 156711
+    },
+    {
+      "page_number": 24,
+      "image_index": 12,
+      "filename": "page24_img12.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page24_img12.jpeg",
+      "format": "jpeg",
+      "size_bytes": 490221
+    },
+    {
+      "page_number": 24,
+      "image_index": 13,
+      "filename": "page24_img13.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page24_img13.jpeg",
+      "format": "jpeg",
+      "size_bytes": 1887565
+    },
+    {
+      "page_number": 24,
+      "image_index": 14,
+      "filename": "page24_img14.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page24_img14.jpeg",
+      "format": "jpeg",
+      "size_bytes": 1701756
+    },
+    {
+      "page_number": 25,
+      "image_index": 1,
+      "filename": "page25_img1.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page25_img1.jpeg",
+      "format": "jpeg",
+      "size_bytes": 19222
+    },
+    {
+      "page_number": 25,
+      "image_index": 2,
+      "filename": "page25_img2.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page25_img2.jpeg",
+      "format": "jpeg",
+      "size_bytes": 24332
+    },
+    {
+      "page_number": 25,
+      "image_index": 3,
+      "filename": "page25_img3.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page25_img3.jpeg",
+      "format": "jpeg",
+      "size_bytes": 21859
+    },
+    {
+      "page_number": 25,
+      "image_index": 4,
+      "filename": "page25_img4.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page25_img4.jpeg",
+      "format": "jpeg",
+      "size_bytes": 51660
+    },
+    {
+      "page_number": 25,
+      "image_index": 5,
+      "filename": "page25_img5.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page25_img5.jpeg",
+      "format": "jpeg",
+      "size_bytes": 142781
+    },
+    {
+      "page_number": 25,
+      "image_index": 6,
+      "filename": "page25_img6.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page25_img6.jpeg",
+      "format": "jpeg",
+      "size_bytes": 158065
+    },
+    {
+      "page_number": 25,
+      "image_index": 7,
+      "filename": "page25_img7.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page25_img7.jpeg",
+      "format": "jpeg",
+      "size_bytes": 158404
+    },
+    {
+      "page_number": 25,
+      "image_index": 8,
+      "filename": "page25_img8.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page25_img8.jpeg",
+      "format": "jpeg",
+      "size_bytes": 156457
+    },
+    {
+      "page_number": 25,
+      "image_index": 9,
+      "filename": "page25_img9.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page25_img9.jpeg",
+      "format": "jpeg",
+      "size_bytes": 153246
+    },
+    {
+      "page_number": 25,
+      "image_index": 10,
+      "filename": "page25_img10.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page25_img10.jpeg",
+      "format": "jpeg",
+      "size_bytes": 153082
+    },
+    {
+      "page_number": 25,
+      "image_index": 11,
+      "filename": "page25_img11.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page25_img11.jpeg",
+      "format": "jpeg",
+      "size_bytes": 157517
+    },
+    {
+      "page_number": 25,
+      "image_index": 12,
+      "filename": "page25_img12.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page25_img12.jpeg",
+      "format": "jpeg",
+      "size_bytes": 161103
+    },
+    {
+      "page_number": 25,
+      "image_index": 13,
+      "filename": "page25_img13.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page25_img13.jpeg",
+      "format": "jpeg",
+      "size_bytes": 151332
+    },
+    {
+      "page_number": 25,
+      "image_index": 14,
+      "filename": "page25_img14.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page25_img14.jpeg",
+      "format": "jpeg",
+      "size_bytes": 142781
+    },
+    {
+      "page_number": 25,
+      "image_index": 15,
+      "filename": "page25_img15.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page25_img15.jpeg",
+      "format": "jpeg",
+      "size_bytes": 158133
+    },
+    {
+      "page_number": 25,
+      "image_index": 16,
+      "filename": "page25_img16.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page25_img16.jpeg",
+      "format": "jpeg",
+      "size_bytes": 172498
+    },
+    {
+      "page_number": 25,
+      "image_index": 17,
+      "filename": "page25_img17.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page25_img17.jpeg",
+      "format": "jpeg",
+      "size_bytes": 165168
+    },
+    {
+      "page_number": 25,
+      "image_index": 18,
+      "filename": "page25_img18.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page25_img18.jpeg",
+      "format": "jpeg",
+      "size_bytes": 165518
+    },
+    {
+      "page_number": 25,
+      "image_index": 19,
+      "filename": "page25_img19.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page25_img19.jpeg",
+      "format": "jpeg",
+      "size_bytes": 165757
+    },
+    {
+      "page_number": 25,
+      "image_index": 20,
+      "filename": "page25_img20.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page25_img20.jpeg",
+      "format": "jpeg",
+      "size_bytes": 169297
+    },
+    {
+      "page_number": 25,
+      "image_index": 21,
+      "filename": "page25_img21.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page25_img21.jpeg",
+      "format": "jpeg",
+      "size_bytes": 172414
+    },
+    {
+      "page_number": 25,
+      "image_index": 22,
+      "filename": "page25_img22.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page25_img22.jpeg",
+      "format": "jpeg",
+      "size_bytes": 167279
+    },
+    {
+      "page_number": 25,
+      "image_index": 23,
+      "filename": "page25_img23.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page25_img23.jpeg",
+      "format": "jpeg",
+      "size_bytes": 142826
+    },
+    {
+      "page_number": 25,
+      "image_index": 24,
+      "filename": "page25_img24.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page25_img24.jpeg",
+      "format": "jpeg",
+      "size_bytes": 158065
+    },
+    {
+      "page_number": 25,
+      "image_index": 25,
+      "filename": "page25_img25.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page25_img25.jpeg",
+      "format": "jpeg",
+      "size_bytes": 157182
+    },
+    {
+      "page_number": 25,
+      "image_index": 26,
+      "filename": "page25_img26.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page25_img26.jpeg",
+      "format": "jpeg",
+      "size_bytes": 154581
+    },
+    {
+      "page_number": 25,
+      "image_index": 27,
+      "filename": "page25_img27.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page25_img27.jpeg",
+      "format": "jpeg",
+      "size_bytes": 149744
+    },
+    {
+      "page_number": 25,
+      "image_index": 28,
+      "filename": "page25_img28.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page25_img28.jpeg",
+      "format": "jpeg",
+      "size_bytes": 147589
+    },
+    {
+      "page_number": 25,
+      "image_index": 29,
+      "filename": "page25_img29.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page25_img29.jpeg",
+      "format": "jpeg",
+      "size_bytes": 154185
+    },
+    {
+      "page_number": 25,
+      "image_index": 30,
+      "filename": "page25_img30.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page25_img30.jpeg",
+      "format": "jpeg",
+      "size_bytes": 155877
+    },
+    {
+      "page_number": 25,
+      "image_index": 31,
+      "filename": "page25_img31.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page25_img31.jpeg",
+      "format": "jpeg",
+      "size_bytes": 147379
+    },
+    {
+      "page_number": 25,
+      "image_index": 32,
+      "filename": "page25_img32.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page25_img32.jpeg",
+      "format": "jpeg",
+      "size_bytes": 142781
+    },
+    {
+      "page_number": 25,
+      "image_index": 33,
+      "filename": "page25_img33.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page25_img33.jpeg",
+      "format": "jpeg",
+      "size_bytes": 3456401
+    },
+    {
+      "page_number": 25,
+      "image_index": 34,
+      "filename": "page25_img34.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page25_img34.jpeg",
+      "format": "jpeg",
+      "size_bytes": 3264964
+    },
+    {
+      "page_number": 25,
+      "image_index": 35,
+      "filename": "page25_img35.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page25_img35.jpeg",
+      "format": "jpeg",
+      "size_bytes": 156286
+    },
+    {
+      "page_number": 25,
+      "image_index": 36,
+      "filename": "page25_img36.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page25_img36.jpeg",
+      "format": "jpeg",
+      "size_bytes": 117882
+    },
+    {
+      "page_number": 25,
+      "image_index": 37,
+      "filename": "page25_img37.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page25_img37.jpeg",
+      "format": "jpeg",
+      "size_bytes": 139697
+    },
+    {
+      "page_number": 25,
+      "image_index": 38,
+      "filename": "page25_img38.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page25_img38.jpeg",
+      "format": "jpeg",
+      "size_bytes": 155997
+    },
+    {
+      "page_number": 25,
+      "image_index": 39,
+      "filename": "page25_img39.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page25_img39.jpeg",
+      "format": "jpeg",
+      "size_bytes": 156711
+    },
+    {
+      "page_number": 25,
+      "image_index": 40,
+      "filename": "page25_img40.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page25_img40.jpeg",
+      "format": "jpeg",
+      "size_bytes": 158065
+    },
+    {
+      "page_number": 25,
+      "image_index": 41,
+      "filename": "page25_img41.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page25_img41.jpeg",
+      "format": "jpeg",
+      "size_bytes": 53813
+    },
+    {
+      "page_number": 25,
+      "image_index": 42,
+      "filename": "page25_img42.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page25_img42.jpeg",
+      "format": "jpeg",
+      "size_bytes": 25659
+    },
+    {
+      "page_number": 25,
+      "image_index": 43,
+      "filename": "page25_img43.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page25_img43.jpeg",
+      "format": "jpeg",
+      "size_bytes": 20172
+    },
+    {
+      "page_number": 26,
+      "image_index": 1,
+      "filename": "page26_img1.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page26_img1.jpeg",
+      "format": "jpeg",
+      "size_bytes": 81465
+    },
+    {
+      "page_number": 26,
+      "image_index": 2,
+      "filename": "page26_img2.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page26_img2.jpeg",
+      "format": "jpeg",
+      "size_bytes": 112022
+    },
+    {
+      "page_number": 26,
+      "image_index": 3,
+      "filename": "page26_img3.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page26_img3.jpeg",
+      "format": "jpeg",
+      "size_bytes": 89280
+    },
+    {
+      "page_number": 26,
+      "image_index": 4,
+      "filename": "page26_img4.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page26_img4.jpeg",
+      "format": "jpeg",
+      "size_bytes": 77602
+    },
+    {
+      "page_number": 26,
+      "image_index": 5,
+      "filename": "page26_img5.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page26_img5.jpeg",
+      "format": "jpeg",
+      "size_bytes": 131618
+    },
+    {
+      "page_number": 26,
+      "image_index": 6,
+      "filename": "page26_img6.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page26_img6.jpeg",
+      "format": "jpeg",
+      "size_bytes": 2253325
+    },
+    {
+      "page_number": 26,
+      "image_index": 7,
+      "filename": "page26_img7.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page26_img7.jpeg",
+      "format": "jpeg",
+      "size_bytes": 2096775
+    },
+    {
+      "page_number": 27,
+      "image_index": 1,
+      "filename": "page27_img1.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page27_img1.jpeg",
+      "format": "jpeg",
+      "size_bytes": 47734
+    },
+    {
+      "page_number": 27,
+      "image_index": 2,
+      "filename": "page27_img2.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page27_img2.jpeg",
+      "format": "jpeg",
+      "size_bytes": 152840
+    },
+    {
+      "page_number": 27,
+      "image_index": 3,
+      "filename": "page27_img3.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page27_img3.jpeg",
+      "format": "jpeg",
+      "size_bytes": 162408
+    },
+    {
+      "page_number": 27,
+      "image_index": 4,
+      "filename": "page27_img4.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page27_img4.jpeg",
+      "format": "jpeg",
+      "size_bytes": 149169
+    },
+    {
+      "page_number": 27,
+      "image_index": 5,
+      "filename": "page27_img5.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page27_img5.jpeg",
+      "format": "jpeg",
+      "size_bytes": 154165
+    },
+    {
+      "page_number": 27,
+      "image_index": 6,
+      "filename": "page27_img6.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page27_img6.jpeg",
+      "format": "jpeg",
+      "size_bytes": 154116
+    },
+    {
+      "page_number": 27,
+      "image_index": 7,
+      "filename": "page27_img7.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page27_img7.jpeg",
+      "format": "jpeg",
+      "size_bytes": 149490
+    },
+    {
+      "page_number": 28,
+      "image_index": 1,
+      "filename": "page28_img1.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page28_img1.jpeg",
+      "format": "jpeg",
+      "size_bytes": 20908
+    },
+    {
+      "page_number": 28,
+      "image_index": 2,
+      "filename": "page28_img2.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page28_img2.jpeg",
+      "format": "jpeg",
+      "size_bytes": 6853
+    },
+    {
+      "page_number": 28,
+      "image_index": 3,
+      "filename": "page28_img3.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page28_img3.jpeg",
+      "format": "jpeg",
+      "size_bytes": 12001
+    },
+    {
+      "page_number": 28,
+      "image_index": 4,
+      "filename": "page28_img4.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page28_img4.jpeg",
+      "format": "jpeg",
+      "size_bytes": 21341
+    },
+    {
+      "page_number": 28,
+      "image_index": 5,
+      "filename": "page28_img5.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page28_img5.jpeg",
+      "format": "jpeg",
+      "size_bytes": 20511
+    },
+    {
+      "page_number": 28,
+      "image_index": 6,
+      "filename": "page28_img6.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page28_img6.jpeg",
+      "format": "jpeg",
+      "size_bytes": 20435
+    },
+    {
+      "page_number": 28,
+      "image_index": 7,
+      "filename": "page28_img7.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page28_img7.jpeg",
+      "format": "jpeg",
+      "size_bytes": 16257
+    },
+    {
+      "page_number": 28,
+      "image_index": 8,
+      "filename": "page28_img8.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page28_img8.jpeg",
+      "format": "jpeg",
+      "size_bytes": 5987
+    },
+    {
+      "page_number": 28,
+      "image_index": 9,
+      "filename": "page28_img9.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page28_img9.jpeg",
+      "format": "jpeg",
+      "size_bytes": 2823
+    },
+    {
+      "page_number": 28,
+      "image_index": 10,
+      "filename": "page28_img10.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page28_img10.jpeg",
+      "format": "jpeg",
+      "size_bytes": 2956
+    },
+    {
+      "page_number": 28,
+      "image_index": 11,
+      "filename": "page28_img11.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page28_img11.jpeg",
+      "format": "jpeg",
+      "size_bytes": 2997
+    },
+    {
+      "page_number": 28,
+      "image_index": 12,
+      "filename": "page28_img12.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page28_img12.jpeg",
+      "format": "jpeg",
+      "size_bytes": 2993
+    },
+    {
+      "page_number": 28,
+      "image_index": 13,
+      "filename": "page28_img13.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page28_img13.jpeg",
+      "format": "jpeg",
+      "size_bytes": 20903
+    },
+    {
+      "page_number": 28,
+      "image_index": 14,
+      "filename": "page28_img14.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page28_img14.jpeg",
+      "format": "jpeg",
+      "size_bytes": 6115
+    },
+    {
+      "page_number": 28,
+      "image_index": 15,
+      "filename": "page28_img15.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page28_img15.jpeg",
+      "format": "jpeg",
+      "size_bytes": 7734
+    },
+    {
+      "page_number": 28,
+      "image_index": 16,
+      "filename": "page28_img16.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page28_img16.jpeg",
+      "format": "jpeg",
+      "size_bytes": 16536
+    },
+    {
+      "page_number": 28,
+      "image_index": 17,
+      "filename": "page28_img17.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page28_img17.jpeg",
+      "format": "jpeg",
+      "size_bytes": 16190
+    },
+    {
+      "page_number": 28,
+      "image_index": 18,
+      "filename": "page28_img18.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page28_img18.jpeg",
+      "format": "jpeg",
+      "size_bytes": 16743
+    },
+    {
+      "page_number": 28,
+      "image_index": 19,
+      "filename": "page28_img19.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page28_img19.jpeg",
+      "format": "jpeg",
+      "size_bytes": 21367
+    },
+    {
+      "page_number": 28,
+      "image_index": 20,
+      "filename": "page28_img20.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page28_img20.jpeg",
+      "format": "jpeg",
+      "size_bytes": 10197
+    },
+    {
+      "page_number": 28,
+      "image_index": 21,
+      "filename": "page28_img21.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page28_img21.jpeg",
+      "format": "jpeg",
+      "size_bytes": 18712
+    },
+    {
+      "page_number": 28,
+      "image_index": 22,
+      "filename": "page28_img22.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page28_img22.jpeg",
+      "format": "jpeg",
+      "size_bytes": 19777
+    },
+    {
+      "page_number": 28,
+      "image_index": 23,
+      "filename": "page28_img23.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page28_img23.jpeg",
+      "format": "jpeg",
+      "size_bytes": 18767
+    },
+    {
+      "page_number": 28,
+      "image_index": 24,
+      "filename": "page28_img24.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page28_img24.jpeg",
+      "format": "jpeg",
+      "size_bytes": 18481
+    },
+    {
+      "page_number": 28,
+      "image_index": 25,
+      "filename": "page28_img25.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page28_img25.jpeg",
+      "format": "jpeg",
+      "size_bytes": 21654
+    },
+    {
+      "page_number": 28,
+      "image_index": 26,
+      "filename": "page28_img26.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page28_img26.jpeg",
+      "format": "jpeg",
+      "size_bytes": 6217
+    },
+    {
+      "page_number": 28,
+      "image_index": 27,
+      "filename": "page28_img27.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page28_img27.jpeg",
+      "format": "jpeg",
+      "size_bytes": 7805
+    },
+    {
+      "page_number": 28,
+      "image_index": 28,
+      "filename": "page28_img28.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page28_img28.jpeg",
+      "format": "jpeg",
+      "size_bytes": 16598
+    },
+    {
+      "page_number": 28,
+      "image_index": 29,
+      "filename": "page28_img29.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page28_img29.jpeg",
+      "format": "jpeg",
+      "size_bytes": 16206
+    },
+    {
+      "page_number": 28,
+      "image_index": 30,
+      "filename": "page28_img30.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page28_img30.jpeg",
+      "format": "jpeg",
+      "size_bytes": 16814
+    },
+    {
+      "page_number": 28,
+      "image_index": 31,
+      "filename": "page28_img31.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page28_img31.jpeg",
+      "format": "jpeg",
+      "size_bytes": 23676
+    },
+    {
+      "page_number": 28,
+      "image_index": 32,
+      "filename": "page28_img32.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page28_img32.jpeg",
+      "format": "jpeg",
+      "size_bytes": 7127
+    },
+    {
+      "page_number": 28,
+      "image_index": 33,
+      "filename": "page28_img33.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page28_img33.jpeg",
+      "format": "jpeg",
+      "size_bytes": 16899
+    },
+    {
+      "page_number": 28,
+      "image_index": 34,
+      "filename": "page28_img34.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page28_img34.jpeg",
+      "format": "jpeg",
+      "size_bytes": 23441
+    },
+    {
+      "page_number": 28,
+      "image_index": 35,
+      "filename": "page28_img35.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page28_img35.jpeg",
+      "format": "jpeg",
+      "size_bytes": 22775
+    },
+    {
+      "page_number": 28,
+      "image_index": 36,
+      "filename": "page28_img36.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page28_img36.jpeg",
+      "format": "jpeg",
+      "size_bytes": 22757
+    },
+    {
+      "page_number": 29,
+      "image_index": 1,
+      "filename": "page29_img1.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page29_img1.jpeg",
+      "format": "jpeg",
+      "size_bytes": 46932
+    },
+    {
+      "page_number": 29,
+      "image_index": 2,
+      "filename": "page29_img2.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page29_img2.jpeg",
+      "format": "jpeg",
+      "size_bytes": 116787
+    },
+    {
+      "page_number": 29,
+      "image_index": 3,
+      "filename": "page29_img3.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page29_img3.jpeg",
+      "format": "jpeg",
+      "size_bytes": 134161
+    },
+    {
+      "page_number": 29,
+      "image_index": 4,
+      "filename": "page29_img4.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page29_img4.jpeg",
+      "format": "jpeg",
+      "size_bytes": 121429
+    },
+    {
+      "page_number": 29,
+      "image_index": 5,
+      "filename": "page29_img5.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page29_img5.jpeg",
+      "format": "jpeg",
+      "size_bytes": 96898
+    },
+    {
+      "page_number": 29,
+      "image_index": 6,
+      "filename": "page29_img6.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page29_img6.jpeg",
+      "format": "jpeg",
+      "size_bytes": 105766
+    },
+    {
+      "page_number": 29,
+      "image_index": 7,
+      "filename": "page29_img7.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page29_img7.jpeg",
+      "format": "jpeg",
+      "size_bytes": 101299
+    },
+    {
+      "page_number": 29,
+      "image_index": 8,
+      "filename": "page29_img8.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page29_img8.jpeg",
+      "format": "jpeg",
+      "size_bytes": 116904
+    },
+    {
+      "page_number": 29,
+      "image_index": 9,
+      "filename": "page29_img9.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page29_img9.jpeg",
+      "format": "jpeg",
+      "size_bytes": 108673
+    },
+    {
+      "page_number": 29,
+      "image_index": 10,
+      "filename": "page29_img10.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page29_img10.jpeg",
+      "format": "jpeg",
+      "size_bytes": 123516
+    },
+    {
+      "page_number": 29,
+      "image_index": 11,
+      "filename": "page29_img11.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page29_img11.jpeg",
+      "format": "jpeg",
+      "size_bytes": 114162
+    },
+    {
+      "page_number": 29,
+      "image_index": 12,
+      "filename": "page29_img12.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page29_img12.jpeg",
+      "format": "jpeg",
+      "size_bytes": 89875
+    },
+    {
+      "page_number": 29,
+      "image_index": 13,
+      "filename": "page29_img13.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page29_img13.jpeg",
+      "format": "jpeg",
+      "size_bytes": 12308
+    },
+    {
+      "page_number": 29,
+      "image_index": 14,
+      "filename": "page29_img14.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page29_img14.jpeg",
+      "format": "jpeg",
+      "size_bytes": 123193
+    },
+    {
+      "page_number": 29,
+      "image_index": 15,
+      "filename": "page29_img15.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page29_img15.jpeg",
+      "format": "jpeg",
+      "size_bytes": 116312
+    },
+    {
+      "page_number": 29,
+      "image_index": 16,
+      "filename": "page29_img16.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page29_img16.jpeg",
+      "format": "jpeg",
+      "size_bytes": 131001
+    },
+    {
+      "page_number": 29,
+      "image_index": 17,
+      "filename": "page29_img17.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page29_img17.jpeg",
+      "format": "jpeg",
+      "size_bytes": 99022
+    },
+    {
+      "page_number": 29,
+      "image_index": 18,
+      "filename": "page29_img18.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page29_img18.jpeg",
+      "format": "jpeg",
+      "size_bytes": 50635
+    },
+    {
+      "page_number": 29,
+      "image_index": 19,
+      "filename": "page29_img19.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page29_img19.jpeg",
+      "format": "jpeg",
+      "size_bytes": 117733
+    },
+    {
+      "page_number": 29,
+      "image_index": 20,
+      "filename": "page29_img20.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page29_img20.jpeg",
+      "format": "jpeg",
+      "size_bytes": 112244
+    },
+    {
+      "page_number": 29,
+      "image_index": 21,
+      "filename": "page29_img21.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page29_img21.jpeg",
+      "format": "jpeg",
+      "size_bytes": 54378
+    },
+    {
+      "page_number": 29,
+      "image_index": 22,
+      "filename": "page29_img22.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page29_img22.jpeg",
+      "format": "jpeg",
+      "size_bytes": 67045
+    },
+    {
+      "page_number": 29,
+      "image_index": 23,
+      "filename": "page29_img23.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page29_img23.jpeg",
+      "format": "jpeg",
+      "size_bytes": 20752
+    },
+    {
+      "page_number": 29,
+      "image_index": 24,
+      "filename": "page29_img24.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page29_img24.jpeg",
+      "format": "jpeg",
+      "size_bytes": 53998
+    },
+    {
+      "page_number": 29,
+      "image_index": 25,
+      "filename": "page29_img25.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page29_img25.jpeg",
+      "format": "jpeg",
+      "size_bytes": 50526
+    },
+    {
+      "page_number": 29,
+      "image_index": 26,
+      "filename": "page29_img26.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page29_img26.jpeg",
+      "format": "jpeg",
+      "size_bytes": 57359
+    },
+    {
+      "page_number": 29,
+      "image_index": 27,
+      "filename": "page29_img27.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page29_img27.jpeg",
+      "format": "jpeg",
+      "size_bytes": 53295
+    },
+    {
+      "page_number": 30,
+      "image_index": 1,
+      "filename": "page30_img1.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page30_img1.jpeg",
+      "format": "jpeg",
+      "size_bytes": 40378
+    },
+    {
+      "page_number": 30,
+      "image_index": 2,
+      "filename": "page30_img2.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page30_img2.jpeg",
+      "format": "jpeg",
+      "size_bytes": 77113
+    },
+    {
+      "page_number": 30,
+      "image_index": 3,
+      "filename": "page30_img3.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page30_img3.jpeg",
+      "format": "jpeg",
+      "size_bytes": 30742
+    },
+    {
+      "page_number": 30,
+      "image_index": 4,
+      "filename": "page30_img4.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page30_img4.jpeg",
+      "format": "jpeg",
+      "size_bytes": 77822
+    },
+    {
+      "page_number": 30,
+      "image_index": 5,
+      "filename": "page30_img5.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page30_img5.jpeg",
+      "format": "jpeg",
+      "size_bytes": 58081
+    },
+    {
+      "page_number": 30,
+      "image_index": 6,
+      "filename": "page30_img6.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page30_img6.jpeg",
+      "format": "jpeg",
+      "size_bytes": 12081
+    },
+    {
+      "page_number": 30,
+      "image_index": 7,
+      "filename": "page30_img7.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page30_img7.jpeg",
+      "format": "jpeg",
+      "size_bytes": 59208
+    },
+    {
+      "page_number": 30,
+      "image_index": 8,
+      "filename": "page30_img8.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page30_img8.jpeg",
+      "format": "jpeg",
+      "size_bytes": 30159
+    },
+    {
+      "page_number": 30,
+      "image_index": 9,
+      "filename": "page30_img9.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page30_img9.jpeg",
+      "format": "jpeg",
+      "size_bytes": 32114
+    },
+    {
+      "page_number": 30,
+      "image_index": 10,
+      "filename": "page30_img10.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page30_img10.jpeg",
+      "format": "jpeg",
+      "size_bytes": 33150
+    },
+    {
+      "page_number": 30,
+      "image_index": 11,
+      "filename": "page30_img11.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page30_img11.jpeg",
+      "format": "jpeg",
+      "size_bytes": 92821
+    },
+    {
+      "page_number": 30,
+      "image_index": 12,
+      "filename": "page30_img12.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page30_img12.jpeg",
+      "format": "jpeg",
+      "size_bytes": 75001
+    },
+    {
+      "page_number": 30,
+      "image_index": 13,
+      "filename": "page30_img13.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page30_img13.jpeg",
+      "format": "jpeg",
+      "size_bytes": 84243
+    },
+    {
+      "page_number": 30,
+      "image_index": 14,
+      "filename": "page30_img14.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page30_img14.jpeg",
+      "format": "jpeg",
+      "size_bytes": 56160
+    },
+    {
+      "page_number": 30,
+      "image_index": 15,
+      "filename": "page30_img15.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page30_img15.jpeg",
+      "format": "jpeg",
+      "size_bytes": 83662
+    },
+    {
+      "page_number": 30,
+      "image_index": 16,
+      "filename": "page30_img16.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page30_img16.jpeg",
+      "format": "jpeg",
+      "size_bytes": 13352
+    },
+    {
+      "page_number": 30,
+      "image_index": 17,
+      "filename": "page30_img17.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page30_img17.jpeg",
+      "format": "jpeg",
+      "size_bytes": 63436
+    },
+    {
+      "page_number": 30,
+      "image_index": 18,
+      "filename": "page30_img18.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page30_img18.jpeg",
+      "format": "jpeg",
+      "size_bytes": 63865
+    },
+    {
+      "page_number": 30,
+      "image_index": 19,
+      "filename": "page30_img19.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page30_img19.jpeg",
+      "format": "jpeg",
+      "size_bytes": 75360
+    },
+    {
+      "page_number": 30,
+      "image_index": 20,
+      "filename": "page30_img20.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page30_img20.jpeg",
+      "format": "jpeg",
+      "size_bytes": 59939
+    },
+    {
+      "page_number": 30,
+      "image_index": 21,
+      "filename": "page30_img21.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page30_img21.jpeg",
+      "format": "jpeg",
+      "size_bytes": 54829
+    },
+    {
+      "page_number": 30,
+      "image_index": 22,
+      "filename": "page30_img22.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page30_img22.jpeg",
+      "format": "jpeg",
+      "size_bytes": 91596
+    },
+    {
+      "page_number": 30,
+      "image_index": 23,
+      "filename": "page30_img23.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page30_img23.jpeg",
+      "format": "jpeg",
+      "size_bytes": 85433
+    },
+    {
+      "page_number": 30,
+      "image_index": 24,
+      "filename": "page30_img24.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page30_img24.jpeg",
+      "format": "jpeg",
+      "size_bytes": 81207
+    },
+    {
+      "page_number": 30,
+      "image_index": 25,
+      "filename": "page30_img25.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page30_img25.jpeg",
+      "format": "jpeg",
+      "size_bytes": 70212
+    },
+    {
+      "page_number": 30,
+      "image_index": 26,
+      "filename": "page30_img26.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page30_img26.jpeg",
+      "format": "jpeg",
+      "size_bytes": 12681
+    },
+    {
+      "page_number": 30,
+      "image_index": 27,
+      "filename": "page30_img27.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page30_img27.jpeg",
+      "format": "jpeg",
+      "size_bytes": 19742
+    },
+    {
+      "page_number": 30,
+      "image_index": 28,
+      "filename": "page30_img28.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page30_img28.jpeg",
+      "format": "jpeg",
+      "size_bytes": 22106
+    },
+    {
+      "page_number": 30,
+      "image_index": 29,
+      "filename": "page30_img29.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page30_img29.jpeg",
+      "format": "jpeg",
+      "size_bytes": 22904
+    },
+    {
+      "page_number": 30,
+      "image_index": 30,
+      "filename": "page30_img30.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page30_img30.jpeg",
+      "format": "jpeg",
+      "size_bytes": 23416
+    },
+    {
+      "page_number": 30,
+      "image_index": 31,
+      "filename": "page30_img31.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page30_img31.jpeg",
+      "format": "jpeg",
+      "size_bytes": 111084
+    },
+    {
+      "page_number": 30,
+      "image_index": 32,
+      "filename": "page30_img32.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page30_img32.jpeg",
+      "format": "jpeg",
+      "size_bytes": 75883
+    },
+    {
+      "page_number": 30,
+      "image_index": 33,
+      "filename": "page30_img33.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page30_img33.jpeg",
+      "format": "jpeg",
+      "size_bytes": 117956
+    },
+    {
+      "page_number": 30,
+      "image_index": 34,
+      "filename": "page30_img34.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page30_img34.jpeg",
+      "format": "jpeg",
+      "size_bytes": 159577
+    },
+    {
+      "page_number": 30,
+      "image_index": 35,
+      "filename": "page30_img35.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page30_img35.jpeg",
+      "format": "jpeg",
+      "size_bytes": 110518
+    },
+    {
+      "page_number": 30,
+      "image_index": 36,
+      "filename": "page30_img36.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page30_img36.jpeg",
+      "format": "jpeg",
+      "size_bytes": 13443
+    },
+    {
+      "page_number": 30,
+      "image_index": 37,
+      "filename": "page30_img37.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page30_img37.jpeg",
+      "format": "jpeg",
+      "size_bytes": 73301
+    },
+    {
+      "page_number": 30,
+      "image_index": 38,
+      "filename": "page30_img38.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page30_img38.jpeg",
+      "format": "jpeg",
+      "size_bytes": 66358
+    },
+    {
+      "page_number": 30,
+      "image_index": 39,
+      "filename": "page30_img39.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page30_img39.jpeg",
+      "format": "jpeg",
+      "size_bytes": 85648
+    },
+    {
+      "page_number": 30,
+      "image_index": 40,
+      "filename": "page30_img40.jpeg",
+      "path": "/data/output/n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond/images/page30_img40.jpeg",
+      "format": "jpeg",
+      "size_bytes": 73153
+    }
+  ],
+  "total_images_extracted": 261
+}

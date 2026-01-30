@@ -1,32 +1,59 @@
 {
   "interests": {
-    "primary": [],
-    "secondary": [],
-    "exploratory": []
+    "primary": [
+      "Latent Space Interpolation in Transformers",
+      "Continuous Representation Learning",
+      "Model Merging & Weight Interpolation"
+    ],
+    "secondary": [
+      "Diffusion vs Autoregressive Hybrid",
+      "Geometric Analysis of Weight Spaces",
+      "Flow Matching"
+    ],
+    "exploratory": [
+      "Mechanistic Interpretability of Interpolated Weights",
+      "Efficient Model Scaling via Weight Interpolation"
+    ]
   },
   "keywords": {
     "must_include": [
-      "transformer"
+      "transformer",
+      "latent",
+      "interpolation",
+      "representation"
     ],
     "exclude": {
       "hard": [
-        "medical"
+        "medical",
+        "clinical",
+        "healthcare",
+        "biology"
       ],
       "soft": [
-        "attention"
+        "attention",
+        "saliency map",
+        "visualization",
+        "GAN"
       ]
     }
   },
-  "preferred_authors": [],
-  "preferred_institutions": [],
+  "preferred_institutions": [
+    "DeepMind",
+    "OpenAI",
+    "Stanford University",
+    "MIT",
+    "Carnegie Mellon University",
+    "Google Research",
+    "Anthropic"
+  ],
   "constraints": {
     "min_year": 2000,
     "require_code": false,
     "exclude_local_papers": true
   },
-  "purpose": "general",
+  "purpose": "literature_review",
   "ranking_mode": "balanced",
-  "top_k": 10,
+  "top_k": 15,
   "include_contrastive": true,
   "contrastive_type": "method"
 }

@@ -21,7 +21,9 @@ type AnalysisMode = 'quick' | 'standard' | 'deep';
 interface LocalPdf {
   filename: string;
   path: string;
+  relative_path?: string;
   size_mb: number;
+  already_extracted?: boolean;
 }
 
 interface PipelineResult {
@@ -238,25 +240,35 @@ export default function PipelineModal({ isOpen, onClose }: PipelineModalProps) {
     }
   };
 
-  const handlePaperSelect = (filename: string) => {
+  const handlePaperSelect = (pdf: LocalPdf) => {
+    // Use relative_path if available, otherwise use filename
+    const identifier = pdf.relative_path || pdf.filename;
     setSelectedPapers(prev => {
-      if (prev.includes(filename)) {
-        return prev.filter(p => p !== filename);
+      if (prev.includes(identifier)) {
+        return prev.filter(p => p !== identifier);
       }
       if (prev.length >= 3) {
         return prev; // Max 3 papers
       }
-      return [...prev, filename];
+      return [...prev, identifier];
     });
   };
 
   const handleRunPipeline = async () => {
     // Validate based on source type
+    let paperIds: string[] = [];
     if (source === 'local') {
       if (selectedPapers.length === 0) {
         setError('Please select at least one paper');
         return;
       }
+      // Convert relative_path identifiers back to filenames for the API
+      // The API expects filenames, but we use relative_path for uniqueness
+      paperIds = selectedPapers.map(id => {
+        // If it's a relative path, extract just the filename
+        const pdf = localPdfs.find(p => (p.relative_path || p.filename) === id);
+        return pdf ? pdf.filename : id;
+      });
     } else {
       // arxiv or neurips
       if (!searchQuery.trim()) {
@@ -278,7 +290,7 @@ export default function PipelineModal({ isOpen, onClose }: PipelineModalProps) {
       if (source === 'local') {
         // Use the original research agent for local PDFs
         response = await runResearchAgent({
-          paper_ids: selectedPapers,
+          paper_ids: paperIds,
           goal: goal || 'general understanding',
           analysis_mode: analysisMode,
           discord_webhook_full: discordWebhookFull || '',
@@ -421,36 +433,62 @@ export default function PipelineModal({ isOpen, onClose }: PipelineModalProps) {
               border: '1px solid #2d3748',
               borderRadius: '6px',
             }}>
-              {localPdfs.map(pdf => (
-                <div
-                  key={pdf.filename}
-                  onClick={() => handlePaperSelect(pdf.filename)}
-                  style={{
-                    padding: '10px 12px',
-                    borderBottom: '1px solid #2d3748',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    cursor: 'pointer',
-                    backgroundColor: selectedPapers.includes(pdf.filename) ? '#2d3748' : 'transparent',
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedPapers.includes(pdf.filename)}
-                    onChange={() => {}}
-                    style={{ cursor: 'pointer' }}
-                  />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ color: '#fff', fontSize: '13px' }}>
-                      {pdf.filename}
-                    </div>
-                    <div style={{ color: '#718096', fontSize: '11px' }}>
-                      {pdf.size_mb} MB
+              {localPdfs.map(pdf => {
+                const identifier = pdf.relative_path || pdf.filename;
+                const isSelected = selectedPapers.includes(identifier);
+                return (
+                  <div
+                    key={pdf.path}
+                    onClick={() => handlePaperSelect(pdf)}
+                    style={{
+                      padding: '10px 12px',
+                      borderBottom: '1px solid #2d3748',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      cursor: 'pointer',
+                      backgroundColor: isSelected ? '#2d3748' : 'transparent',
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => {}}
+                      style={{ cursor: 'pointer' }}
+                    />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ 
+                        color: '#fff', 
+                        fontSize: '13px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                      }}>
+                        <span>{pdf.filename}</span>
+                        {pdf.already_extracted && (
+                          <span style={{
+                            fontSize: '10px',
+                            padding: '2px 6px',
+                            backgroundColor: '#48bb78',
+                            color: '#fff',
+                            borderRadius: '3px',
+                          }}>
+                            ✓ Extracted
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ color: '#718096', fontSize: '11px' }}>
+                        {pdf.relative_path && pdf.relative_path !== pdf.filename && (
+                          <span style={{ marginRight: '8px' }}>
+                            📁 {pdf.relative_path}
+                          </span>
+                        )}
+                        <span>{pdf.size_mb} MB</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
           <div style={{ marginTop: '8px', color: '#718096', fontSize: '11px' }}>

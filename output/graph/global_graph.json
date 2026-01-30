@@ -106,8 +106,29 @@
       "year": null
     },
     {
+      "id": "k03mB41vyM_Identifiable Exchangeable Mechanisms for Causal Structure and Representation Learning",
+      "title": "IDENTIFIABLE EXCHANGEABLE MECHANISMS FOR CAUSAL STRUCTURE AND REPRESENTATION LEARN- ING",
+      "cluster": 0,
+      "authors": [],
+      "year": null
+    },
+    {
+      "id": "n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond",
+      "title": "LINEAR COMBINATIONS OF LATENTS IN GENERATIVE MODELS: SUBSPACES AND BEYOND Erik Bodin1",
+      "cluster": 0,
+      "authors": [],
+      "year": null
+    },
+    {
       "id": "SpaceTimePilot",
       "title": "SpaceTimePilot: Generative Rendering of Dynamic Scenes Across Space and Time Zhening Huang1,2",
+      "cluster": 0,
+      "authors": [],
+      "year": null
+    },
+    {
+      "id": "tyEyYT267x_Block Diffusion_ Interpolating Between Autoregressive and Diffusion Language Models",
+      "title": "BLOCK DIFFUSION: INTERPOLATING BETWEEN AU- TOREGRESSIVE AND DIFFUSION LANGUAGE MODELS Marianne Arriola† ∗",
       "cluster": 0,
       "authors": [],
       "year": null
@@ -117,14 +138,14 @@
     {
       "source": "10.48550_arxiv.2506.07976",
       "target": "2506.07976",
-      "weight": 1.0,
+      "weight": 1.000000238418579,
       "type": "similarity"
     }
   ],
   "meta": {
-    "total_papers": 16,
+    "total_papers": 19,
     "total_edges": 1,
-    "similarity_threshold": 0.95,
+    "similarity_threshold": 0.75,
     "used_embeddings": true,
     "titles": {
       "10.48550_arxiv.2201.07207": "Language Models as Zero-Shot Planners: Extracting Actionable Knowledge for Embodied Agents",
@@ -142,7 +163,10 @@
       "1706.03762": "1706.03762",
       "1809.04281": "MUSIC TRANSFORMER: GENERATING MUSIC WITH LONG-TERM STRUCTURE Cheng-Zhi Anna Huang∗Ashish Vaswani",
       "2506.07976": "Thinking vs. Doing: Agents that Reason by Scaling Test-Time Interaction",
-      "SpaceTimePilot": "SpaceTimePilot: Generative Rendering of Dynamic Scenes Across Space and Time Zhening Huang1,2"
+      "k03mB41vyM_Identifiable Exchangeable Mechanisms for Causal Structure and Representation Learning": "IDENTIFIABLE EXCHANGEABLE MECHANISMS FOR CAUSAL STRUCTURE AND REPRESENTATION LEARN- ING",
+      "n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond": "LINEAR COMBINATIONS OF LATENTS IN GENERATIVE MODELS: SUBSPACES AND BEYOND Erik Bodin1",
+      "SpaceTimePilot": "SpaceTimePilot: Generative Rendering of Dynamic Scenes Across Space and Time Zhening Huang1,2",
+      "tyEyYT267x_Block Diffusion_ Interpolating Between Autoregressive and Diffusion Language Models": "BLOCK DIFFUSION: INTERPOLATING BETWEEN AU- TOREGRESSIVE AND DIFFUSION LANGUAGE MODELS Marianne Arriola† ∗"
     }
   }
 }

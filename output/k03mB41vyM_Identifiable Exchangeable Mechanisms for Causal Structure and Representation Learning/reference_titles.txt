@@ -1,0 +1,4 @@
+Analyse des liaisons de probabilité
+de Finetti
+Mendelian randomization as an instrumental variable approach to causal inference
+ISSN: 2640-3498

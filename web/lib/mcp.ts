@@ -707,8 +707,10 @@ export async function executeICLRSearchAndRank(
 export interface LocalPdfInfo {
   filename: string;
   path: string;
+  relative_path?: string;
   size_bytes: number;
   size_mb: number;
+  already_extracted?: boolean;
 }
 
 export interface PipelineConfig {
