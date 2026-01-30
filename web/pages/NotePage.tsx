@@ -1,12 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
-import workerSrc from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+import { getDocument, GlobalWorkerOptions, version as pdfjsVersion } from 'pdfjs-dist';
 import ReactMarkdown from 'react-markdown';
 import { executeTool, saveToNotion } from '../lib/mcp';
 
-// Vite 호환 worker 설정
-GlobalWorkerOptions.workerSrc = workerSrc;
+// PDF.js worker 설정 - CDN에서 로드 (Vite node_modules 접근 문제 해결)
+GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsVersion}/pdf.worker.min.mjs`;
 
 type PdfDoc = {
   numPages: number;
