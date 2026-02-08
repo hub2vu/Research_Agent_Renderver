@@ -264,8 +264,8 @@ export default defineConfig({
             const body = await readJsonBody(req);
             const message = body.message || '';
 
-            // [수정됨] Agent 서버(8001)로 요청 전달
-            const agentUrl = 'http://research-agent:8001';
+            // Agent server URL (in single-container Render mode, this should be localhost)
+            const agentUrl = process.env.AGENT_SERVER_URL || 'http://127.0.0.1:8001';
             
             const chatRes = await fetch(`${agentUrl}/chat`, {
               method: 'POST',
@@ -505,6 +505,8 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 3000,
     strictPort: true,
+    // Fix: allow Render host to access Vite dev server
+    allowedHosts: ['research-agent-tyua.onrender.com'],
     proxy: {
       '/api': {
         target: process.env.MCP_SERVER_URL || 'http://localhost:8000',

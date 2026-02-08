@@ -1,3 +1,9 @@
+# 이거 2개 삭제하면 원상복귀
+Dockerfile.render
+docker/render-start.sh
+
+
+
 # Notion Save 사용법
 .env에 다음 2개 추가
 - NOTION_PARENT_PAGE_ID=
