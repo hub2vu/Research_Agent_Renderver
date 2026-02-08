@@ -142,7 +142,7 @@ export default defineConfig({
       name: 'node-colors-api',
       configureServer(server) {
         // API: GET /api/node-colors - Load colors
-        server.middlewares.use('/api/node-colors', async (req: IncomingMessage, res: ServerResponse, next) => {
+        server.middlewares.use('/api/node-colors', async (req: IncomingMessage, res: ServerResponse) => {
           // Handle CORS preflight
           if (req.method === 'OPTIONS') {
             res.setHeader('Access-Control-Allow-Origin', '*');
@@ -158,7 +158,6 @@ export default defineConfig({
 
           try {
             if (req.method === 'GET') {
-              // Load colors from file
               if (fs.existsSync(NODE_COLORS_PATH)) {
                 const stat = fs.statSync(NODE_COLORS_PATH);
                 const data = fs.readFileSync(NODE_COLORS_PATH, 'utf-8');
@@ -168,13 +167,9 @@ export default defineConfig({
                 res.end(JSON.stringify({ colors: {}, timestamp: 0 }));
               }
             } else if (req.method === 'POST') {
-              // Save colors to file
               ensureGraphDir();
               const body = await readJsonBody(req);
-              const data = {
-                colors: body.colors || {},
-                timestamp: Date.now()
-              };
+              const data = { colors: body.colors || {}, timestamp: Date.now() };
               fs.writeFileSync(NODE_COLORS_PATH, JSON.stringify(data, null, 2));
               res.end(JSON.stringify({ success: true, timestamp: data.timestamp }));
             } else {
@@ -188,10 +183,9 @@ export default defineConfig({
         });
 
         // API: GET /api/node-colors/check - Check for updates (lightweight)
-        server.middlewares.use('/api/node-colors/check', (req: IncomingMessage, res: ServerResponse, next) => {
+        server.middlewares.use('/api/node-colors/check', (req: IncomingMessage, res: ServerResponse) => {
           res.setHeader('Access-Control-Allow-Origin', '*');
           res.setHeader('Content-Type', 'application/json');
-
           try {
             if (fs.existsSync(NODE_COLORS_PATH)) {
               const stat = fs.statSync(NODE_COLORS_PATH);
@@ -209,8 +203,7 @@ export default defineConfig({
     {
       name: 'neurips-api',
       configureServer(server) {
-        // API: GET /api/neurips/papers - Load NeurIPS metadata
-        server.middlewares.use('/api/neurips/papers', (req: IncomingMessage, res: ServerResponse, next) => {
+        server.middlewares.use('/api/neurips/papers', (req: IncomingMessage, res: ServerResponse) => {
           if (req.method === 'OPTIONS') {
             res.setHeader('Access-Control-Allow-Origin', '*');
             res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -232,7 +225,6 @@ export default defineConfig({
 
             const content = fs.readFileSync(NEURIPS_METADATA_PATH, 'utf-8');
             const papers = parseCSV(content);
-
             res.end(JSON.stringify({ papers, count: papers.length }));
           } catch (err) {
             res.statusCode = 500;
@@ -241,7 +233,7 @@ export default defineConfig({
         });
 
         // API: POST /api/chat - Forward chat to Agent server
-        server.middlewares.use('/api/chat', async (req: IncomingMessage, res: ServerResponse, next) => {
+        server.middlewares.use('/api/chat', async (req: IncomingMessage, res: ServerResponse) => {
           if (req.method === 'OPTIONS') {
             res.setHeader('Access-Control-Allow-Origin', '*');
             res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -264,9 +256,7 @@ export default defineConfig({
             const body = await readJsonBody(req);
             const message = body.message || '';
 
-            // Agent server URL (in single-container Render mode, this should be localhost)
             const agentUrl = process.env.AGENT_SERVER_URL || 'http://127.0.0.1:8001';
-            
             const chatRes = await fetch(`${agentUrl}/chat`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -277,19 +267,14 @@ export default defineConfig({
               const data = await chatRes.json();
               res.end(JSON.stringify(data));
             } else {
-              res.end(JSON.stringify({
-                response: `Agent server returned error: ${chatRes.statusText}`
-              }));
+              res.end(JSON.stringify({ response: `Agent server returned error: ${chatRes.statusText}` }));
             }
           } catch (err) {
-            res.end(JSON.stringify({
-              response: `Chat service unavailable. Error: ${String(err)}`
-            }));
+            res.end(JSON.stringify({ response: `Chat service unavailable. Error: ${String(err)}` }));
           }
         });
 
-        // API: GET /api/neurips/similarities - Get pre-computed similarities
-        server.middlewares.use('/api/neurips/similarities', (req: IncomingMessage, res: ServerResponse, next) => {
+        server.middlewares.use('/api/neurips/similarities', (req: IncomingMessage, res: ServerResponse) => {
           if (req.method === 'OPTIONS') {
             res.setHeader('Access-Control-Allow-Origin', '*');
             res.statusCode = 204;
@@ -314,8 +299,7 @@ export default defineConfig({
           }
         });
 
-        // API: GET /api/neurips/clusters?k=15 - Get KMeans clusters
-        server.middlewares.use('/api/neurips/clusters', (req: IncomingMessage, res: ServerResponse, next) => {
+        server.middlewares.use('/api/neurips/clusters', (req: IncomingMessage, res: ServerResponse) => {
           if (req.method === 'OPTIONS') {
             res.setHeader('Access-Control-Allow-Origin', '*');
             res.statusCode = 204;
@@ -349,8 +333,7 @@ export default defineConfig({
     {
       name: 'iclr-api',
       configureServer(server) {
-        // API: GET /api/iclr/papers - Load ICLR metadata
-        server.middlewares.use('/api/iclr/papers', (req: IncomingMessage, res: ServerResponse, next) => {
+        server.middlewares.use('/api/iclr/papers', (req: IncomingMessage, res: ServerResponse) => {
           if (req.method === 'OPTIONS') {
             res.setHeader('Access-Control-Allow-Origin', '*');
             res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -370,14 +353,9 @@ export default defineConfig({
               return;
             }
 
-            // Read with BOM handling
             let content = fs.readFileSync(ICLR_METADATA_PATH, 'utf-8');
-            // Remove BOM if present
-            if (content.charCodeAt(0) === 0xFEFF) {
-              content = content.slice(1);
-            }
+            if (content.charCodeAt(0) === 0xFEFF) content = content.slice(1);
             const papers = parseCSV(content);
-
             res.end(JSON.stringify({ papers, count: papers.length }));
           } catch (err) {
             res.statusCode = 500;
@@ -385,8 +363,7 @@ export default defineConfig({
           }
         });
 
-        // API: GET /api/iclr/similarities - Get pre-computed similarities
-        server.middlewares.use('/api/iclr/similarities', (req: IncomingMessage, res: ServerResponse, next) => {
+        server.middlewares.use('/api/iclr/similarities', (req: IncomingMessage, res: ServerResponse) => {
           if (req.method === 'OPTIONS') {
             res.setHeader('Access-Control-Allow-Origin', '*');
             res.statusCode = 204;
@@ -411,8 +388,7 @@ export default defineConfig({
           }
         });
 
-        // API: GET /api/iclr/clusters?k=15 - Get KMeans clusters
-        server.middlewares.use('/api/iclr/clusters', (req: IncomingMessage, res: ServerResponse, next) => {
+        server.middlewares.use('/api/iclr/clusters', (req: IncomingMessage, res: ServerResponse) => {
           if (req.method === 'OPTIONS') {
             res.setHeader('Access-Control-Allow-Origin', '*');
             res.statusCode = 204;
@@ -474,7 +450,7 @@ export default defineConfig({
           }
         });
       }
-        },
+    },
     {
       name: 'serve-pdf-files',
       configureServer(server) {
@@ -496,7 +472,7 @@ export default defineConfig({
             next(err);
           }
         });
-      }  
+      }
     }
   ],
   root: '.',
@@ -505,13 +481,13 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 3000,
     strictPort: true,
-    // Fix: allow Render host to access Vite dev server
-    allowedHosts: ['research-agent-tyua.onrender.com'],
+    // Render/Reverse proxies may use varying Host headers. Allow all hosts for deployment.
+    allowedHosts: 'all',
     proxy: {
       '/api': {
         target: process.env.MCP_SERVER_URL || 'http://localhost:8000',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '')
+        rewrite: (p) => p.replace(/^\/api/, '')
       }
     },
     fs: {
