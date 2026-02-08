@@ -1,0 +1,53 @@
+[
+  {
+    "ref_no": 1,
+    "title": "Harmonising chorales by probabilistic inference",
+    "ids": {
+      "arxiv": "1609.05152",
+      "year": "2005"
+    },
+    "graph_id": "10.48550_arxiv.1609.05152",
+    "raw_text": "Moray Allan and Christopher KI Williams. Harmonising chorales by probabilistic inference. Advances in neural information processing systems, 17:25–32, 2005. Nicolas Boulanger-Lewandowski, Yoshua Bengi..."
+  },
+  {
+    "ref_no": 2,
+    "title": "Counterpoint by convolution",
+    "ids": {
+      "arxiv": "1808.03715",
+      "url": "https://magenta.tensorflow.org/2016/07/15/lookback-rnn-attention-rnn",
+      "year": "2017"
+    },
+    "graph_id": "10.48550_arxiv.1808.03715",
+    "raw_text": "Cheng-Zhi Anna Huang, Tim Cooijmans, Adam Roberts, Aaron Courville, and Doug Eck. Counterpoint by convolution. In Proceedings of the International Conference on Music Information Retrieval, 2017. Hugo..."
+  },
+  {
+    "ref_no": 3,
+    "title": "The data type, whether score or performance, makes certain representations more natural for encoding all the information needed while still resulting in reasonable sequence lengths",
+    "ids": {
+      "year": "2017"
+    },
+    "graph_id": "",
+    "raw_text": "A DOMAIN-SPECIFIC REPRESENTATIONS Adapting sequence models for music requires making decisions on how to serialize a polyphonic texture. The data type, whether score or performance, makes certain repr..."
+  },
+  {
+    "ref_no": 4,
+    "title": "A C Major chord is arpeggiated with the sustain pedal active",
+    "ids": {},
+    "graph_id": "",
+    "raw_text": "SET_VELOCITY<80>, NOTE_ON<60> TIME_SHIFT<500>, NOTE_ON<64> TIME_SHIFT<500>, NOTE_ON<67> TIME_SHIFT<1000>, NOTE_OFF<60>, NOTE_OFF<64>, NOTE_OFF<67> TIME_SHIFT<500>, SET_VELOCITY<100>, NOTE_ON<65> TIME_..."
+  },
+  {
+    "ref_no": 5,
+    "title": "p value less than 0.01/6=0.0016 yields a statistically signiﬁcant difference and is marked by asterisk",
+    "ids": {},
+    "graph_id": "",
+    "raw_text": "Table 5: A post-hoc comparison of each pair on their pairwise comparisons with each other, using the Wilcoxon signed-rank test for matched samples. p value less than 0.01/6=0.0016 yields a statistical..."
+  },
+  {
+    "ref_no": 6,
+    "title": "",
+    "ids": {},
+    "graph_id": "",
+    "raw_text": "D PREVIOUS FIGURES FOR THE “SKEWING” PROCEDURE . . . . . . . . . Steps 1 Steps 2,3: Figure 10: Relative global attention: Steps (from left to right) for “skewing” an absolute-by-relative (iq, r) index..."
+  }
+]

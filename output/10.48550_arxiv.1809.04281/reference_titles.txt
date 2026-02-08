@@ -1,0 +1,5 @@
+Harmonising chorales by probabilistic inference
+Counterpoint by convolution
+The data type, whether score or performance, makes certain representations more natural for encoding all the information needed while still resulting in reasonable sequence lengths
+A C Major chord is arpeggiated with the sustain pedal active
+p value less than 0.01/6=0.0016 yields a statistically signiﬁcant difference and is marked by asterisk

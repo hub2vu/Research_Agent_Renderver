@@ -202,6 +202,12 @@ export default function GlobalGraphPage() {
     }
   }, [state.nodes]);
 
+  const handleDeletePaper = useCallback((paperId: string) => {
+    // Close sidebar and reload graph after deletion
+    setSelectedNode(null);
+    loadGraph();
+  }, [loadGraph]);
+
   const selectedKey = selectedNode ? getStableKey(selectedNode as any) : '';
 
   return (
@@ -284,6 +290,7 @@ export default function GlobalGraphPage() {
           onAction={() => { if (selectedNode?.id) handleViewPaperGraph(selectedNode.id); }}
           onNavigate={(node) => handleViewPaperGraph(node.id)}
           onClose={() => setSelectedNode(null)}
+          onDeletePaper={handleDeletePaper}
           nodeColorMap={nodeColorMap}
           nodeColor={selectedNode ? (nodeColorMap[selectedKey] ?? nodeColorMap[selectedNode.id]) : undefined}
           onNodeColorChange={(keyOrId, color) => { const k = selectedNode ? getStableKey(selectedNode as any) : keyOrId; handleNodeColorChange(k, color); }}

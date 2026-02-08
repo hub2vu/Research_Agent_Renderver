@@ -1,0 +1,375 @@
+[
+  {
+    "ref_no": 1,
+    "title": "Layer normalization",
+    "ids": {
+      "arxiv": "1607.06450",
+      "year": "2016"
+    },
+    "graph_id": "10.48550_arxiv.1607.06450",
+    "raw_text": "Jimmy Lei Ba, Jamie Ryan Kiros, and Geoffrey E Hinton. Layer normalization. arXiv preprint arXiv:1607.06450, 2016."
+  },
+  {
+    "ref_no": 2,
+    "title": "Neural machine translation by jointly learning to align and translate",
+    "ids": {
+      "year": "2014"
+    },
+    "graph_id": "",
+    "raw_text": "Dzmitry Bahdanau, Kyunghyun Cho, and Yoshua Bengio. Neural machine translation by jointly learning to align and translate. CoRR, abs/1409.0473, 2014."
+  },
+  {
+    "ref_no": 3,
+    "title": "",
+    "ids": {
+      "year": "2017"
+    },
+    "graph_id": "",
+    "raw_text": "Denny Britz, Anna Goldie, Minh-Thang Luong, and Quoc V. Le. Massive exploration of neural machine translation architectures. CoRR, abs/1703.03906, 2017."
+  },
+  {
+    "ref_no": 4,
+    "title": "Long short-term memory-networks for machine reading",
+    "ids": {
+      "arxiv": "1601.06733",
+      "year": "2016"
+    },
+    "graph_id": "10.48550_arxiv.1601.06733",
+    "raw_text": "Jianpeng Cheng, Li Dong, and Mirella Lapata. Long short-term memory-networks for machine reading. arXiv preprint arXiv:1601.06733, 2016."
+  },
+  {
+    "ref_no": 5,
+    "title": "Learning phrase representations using rnn encoder-decoder for statistical machine translation",
+    "ids": {
+      "year": "2014"
+    },
+    "graph_id": "",
+    "raw_text": "Kyunghyun Cho, Bart van Merrienboer, Caglar Gulcehre, Fethi Bougares, Holger Schwenk, and Yoshua Bengio. Learning phrase representations using rnn encoder-decoder for statistical machine translation. ..."
+  },
+  {
+    "ref_no": 6,
+    "title": "Xception: Deep learning with depthwise separable convolutions",
+    "ids": {
+      "arxiv": "1610.02357",
+      "year": "2016"
+    },
+    "graph_id": "10.48550_arxiv.1610.02357",
+    "raw_text": "Francois Chollet. Xception: Deep learning with depthwise separable convolutions. arXiv preprint arXiv:1610.02357, 2016."
+  },
+  {
+    "ref_no": 7,
+    "title": "Empirical evaluation of gated recurrent neural networks on sequence modeling",
+    "ids": {
+      "year": "2014"
+    },
+    "graph_id": "",
+    "raw_text": "Junyoung Chung, Çaglar Gülçehre, Kyunghyun Cho, and Yoshua Bengio. Empirical evaluation of gated recurrent neural networks on sequence modeling. CoRR, abs/1412.3555, 2014."
+  },
+  {
+    "ref_no": 8,
+    "title": "of NAACL",
+    "ids": {
+      "year": "2016"
+    },
+    "graph_id": "",
+    "raw_text": "Chris Dyer, Adhiguna Kuncoro, Miguel Ballesteros, and Noah A. Smith. Recurrent neural network grammars. In Proc. of NAACL, 2016."
+  },
+  {
+    "ref_no": 9,
+    "title": "",
+    "ids": {
+      "arxiv": "1705.03122v2",
+      "year": "2017"
+    },
+    "graph_id": "10.48550_arxiv.1705.03122",
+    "raw_text": "Jonas Gehring, Michael Auli, David Grangier, Denis Yarats, and Yann N. Dauphin. Convolutional sequence to sequence learning. arXiv preprint arXiv:1705.03122v2, 2017."
+  },
+  {
+    "ref_no": 10,
+    "title": "Generating sequences with recurrent neural networks",
+    "ids": {
+      "arxiv": "1308.0850",
+      "year": "2013"
+    },
+    "graph_id": "10.48550_arxiv.1308.0850",
+    "raw_text": "Alex Graves. Generating sequences with recurrent neural networks. arXiv preprint arXiv:1308.0850, 2013."
+  },
+  {
+    "ref_no": 11,
+    "title": "Deep residual learning for image recognition",
+    "ids": {
+      "year": "2016"
+    },
+    "graph_id": "",
+    "raw_text": "Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun. Deep residual learning for image recognition. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition, pages 770–778, 20..."
+  },
+  {
+    "ref_no": 12,
+    "title": "Gradient flow in recurrent nets: the difficulty of learning long-term dependencies",
+    "ids": {
+      "year": "2001"
+    },
+    "graph_id": "",
+    "raw_text": "Sepp Hochreiter, Yoshua Bengio, Paolo Frasconi, and Jürgen Schmidhuber. Gradient flow in recurrent nets: the difficulty of learning long-term dependencies, 2001."
+  },
+  {
+    "ref_no": 13,
+    "title": "Long short-term memory",
+    "ids": {
+      "year": "1997"
+    },
+    "graph_id": "",
+    "raw_text": "Sepp Hochreiter and Jürgen Schmidhuber. Long short-term memory. Neural computation, 9(8):1735–1780, 1997."
+  },
+  {
+    "ref_no": 14,
+    "title": "Self-training PCFG grammars with latent annotations across languages",
+    "ids": {
+      "year": "2009"
+    },
+    "graph_id": "",
+    "raw_text": "Zhongqiang Huang and Mary Harper. Self-training PCFG grammars with latent annotations across languages. In Proceedings of the 2009 Conference on Empirical Methods in Natural Language Processing, pages..."
+  },
+  {
+    "ref_no": 15,
+    "title": "Exploring the limits of language modeling",
+    "ids": {
+      "arxiv": "1602.02410",
+      "year": "2016"
+    },
+    "graph_id": "10.48550_arxiv.1602.02410",
+    "raw_text": "Rafal Jozefowicz, Oriol Vinyals, Mike Schuster, Noam Shazeer, and Yonghui Wu. Exploring the limits of language modeling. arXiv preprint arXiv:1602.02410, 2016."
+  },
+  {
+    "ref_no": 16,
+    "title": "Can active memory replace attention? In Advances in Neural Information Processing Systems, (NIPS",
+    "ids": {
+      "year": "2016"
+    },
+    "graph_id": "",
+    "raw_text": "Łukasz Kaiser and Samy Bengio. Can active memory replace attention? In Advances in Neural Information Processing Systems, (NIPS), 2016."
+  },
+  {
+    "ref_no": 17,
+    "title": "Neural GPUs learn algorithms",
+    "ids": {
+      "year": "2016"
+    },
+    "graph_id": "",
+    "raw_text": "Łukasz Kaiser and Ilya Sutskever. Neural GPUs learn algorithms. In International Conference on Learning Representations (ICLR), 2016."
+  },
+  {
+    "ref_no": 18,
+    "title": "Neural machine translation in linear time",
+    "ids": {
+      "arxiv": "1610.10099v2"
+    },
+    "graph_id": "10.48550_arxiv.1610.10099",
+    "raw_text": "Nal Kalchbrenner, Lasse Espeholt, Karen Simonyan, Aaron van den Oord, Alex Graves, and Koray Kavukcuoglu. Neural machine translation in linear time. arXiv preprint arXiv:1610.10099v2,"
+  },
+  {
+    "ref_no": 19,
+    "title": "In International Conference on Learning Representations",
+    "ids": {
+      "year": "2017"
+    },
+    "graph_id": "",
+    "raw_text": "Yoon Kim, Carl Denton, Luong Hoang, and Alexander M. Rush. Structured attention networks. In International Conference on Learning Representations, 2017."
+  },
+  {
+    "ref_no": 20,
+    "title": "Adam: A method for stochastic optimization",
+    "ids": {
+      "year": "2015"
+    },
+    "graph_id": "",
+    "raw_text": "Diederik Kingma and Jimmy Ba. Adam: A method for stochastic optimization. In ICLR, 2015."
+  },
+  {
+    "ref_no": 21,
+    "title": "Factorization tricks for LSTM networks",
+    "ids": {
+      "arxiv": "1703.10722",
+      "year": "2017"
+    },
+    "graph_id": "10.48550_arxiv.1703.10722",
+    "raw_text": "Oleksii Kuchaiev and Boris Ginsburg. Factorization tricks for LSTM networks. arXiv preprint arXiv:1703.10722, 2017."
+  },
+  {
+    "ref_no": 22,
+    "title": "A structured self-attentive sentence embedding",
+    "ids": {
+      "arxiv": "1703.03130",
+      "year": "2017"
+    },
+    "graph_id": "10.48550_arxiv.1703.03130",
+    "raw_text": "Zhouhan Lin, Minwei Feng, Cicero Nogueira dos Santos, Mo Yu, Bing Xiang, Bowen Zhou, and Yoshua Bengio. A structured self-attentive sentence embedding. arXiv preprint arXiv:1703.03130, 2017."
+  },
+  {
+    "ref_no": 23,
+    "title": "Le, Ilya Sutskever, Oriol Vinyals, and Lukasz Kaiser",
+    "ids": {
+      "arxiv": "1511.06114",
+      "year": "2015"
+    },
+    "graph_id": "10.48550_arxiv.1511.06114",
+    "raw_text": "Minh-Thang Luong, Quoc V. Le, Ilya Sutskever, Oriol Vinyals, and Lukasz Kaiser. Multi-task sequence to sequence learning. arXiv preprint arXiv:1511.06114, 2015."
+  },
+  {
+    "ref_no": 24,
+    "title": "Effective approaches to attentionbased neural machine translation",
+    "ids": {
+      "arxiv": "1508.04025",
+      "year": "2015"
+    },
+    "graph_id": "10.48550_arxiv.1508.04025",
+    "raw_text": "Minh-Thang Luong, Hieu Pham, and Christopher D Manning. Effective approaches to attentionbased neural machine translation. arXiv preprint arXiv:1508.04025, 2015."
+  },
+  {
+    "ref_no": 25,
+    "title": "Building a large annotated corpus of english: The penn treebank",
+    "ids": {
+      "year": "1993"
+    },
+    "graph_id": "",
+    "raw_text": "Mitchell P Marcus, Mary Ann Marcinkiewicz, and Beatrice Santorini. Building a large annotated corpus of english: The penn treebank. Computational linguistics, 19(2):313–330, 1993."
+  },
+  {
+    "ref_no": 26,
+    "title": "Effective self-training for parsing",
+    "ids": {
+      "year": "2006"
+    },
+    "graph_id": "",
+    "raw_text": "David McClosky, Eugene Charniak, and Mark Johnson. Effective self-training for parsing. In Proceedings of the Human Language Technology Conference of the NAACL, Main Conference, pages 152–159. ACL, Ju..."
+  },
+  {
+    "ref_no": 27,
+    "title": "A decomposable attention model",
+    "ids": {
+      "year": "2016"
+    },
+    "graph_id": "",
+    "raw_text": "Ankur Parikh, Oscar Täckström, Dipanjan Das, and Jakob Uszkoreit. A decomposable attention model. In Empirical Methods in Natural Language Processing, 2016."
+  },
+  {
+    "ref_no": 28,
+    "title": "A deep reinforced model for abstractive summarization",
+    "ids": {
+      "arxiv": "1705.04304",
+      "year": "2017"
+    },
+    "graph_id": "10.48550_arxiv.1705.04304",
+    "raw_text": "Romain Paulus, Caiming Xiong, and Richard Socher. A deep reinforced model for abstractive summarization. arXiv preprint arXiv:1705.04304, 2017."
+  },
+  {
+    "ref_no": 29,
+    "title": "Learning accurate, compact, and interpretable tree annotation",
+    "ids": {},
+    "graph_id": "",
+    "raw_text": "Slav Petrov, Leon Barrett, Romain Thibaux, and Dan Klein. Learning accurate, compact, and interpretable tree annotation. In Proceedings of the 21st International Conference on Computational Linguistic..."
+  },
+  {
+    "ref_no": 30,
+    "title": "Using the output embedding to improve language models",
+    "ids": {
+      "arxiv": "1608.05859",
+      "year": "2016"
+    },
+    "graph_id": "10.48550_arxiv.1608.05859",
+    "raw_text": "Ofir Press and Lior Wolf. Using the output embedding to improve language models. arXiv preprint arXiv:1608.05859, 2016."
+  },
+  {
+    "ref_no": 31,
+    "title": "Neural machine translation of rare words with subword units",
+    "ids": {
+      "arxiv": "1508.07909",
+      "year": "2015"
+    },
+    "graph_id": "10.48550_arxiv.1508.07909",
+    "raw_text": "Rico Sennrich, Barry Haddow, and Alexandra Birch. Neural machine translation of rare words with subword units. arXiv preprint arXiv:1508.07909, 2015."
+  },
+  {
+    "ref_no": 32,
+    "title": "Outrageously large neural networks: The sparsely-gated mixture-of-experts layer",
+    "ids": {
+      "arxiv": "1701.06538",
+      "year": "2017"
+    },
+    "graph_id": "10.48550_arxiv.1701.06538",
+    "raw_text": "Noam Shazeer, Azalia Mirhoseini, Krzysztof Maziarz, Andy Davis, Quoc Le, Geoffrey Hinton, and Jeff Dean. Outrageously large neural networks: The sparsely-gated mixture-of-experts layer. arXiv preprint..."
+  },
+  {
+    "ref_no": 33,
+    "title": "Dropout: a simple way to prevent neural networks from overfitting",
+    "ids": {
+      "year": "1929"
+    },
+    "graph_id": "",
+    "raw_text": "Nitish Srivastava, Geoffrey E Hinton, Alex Krizhevsky, Ilya Sutskever, and Ruslan Salakhutdinov. Dropout: a simple way to prevent neural networks from overfitting. Journal of Machine Learning Research..."
+  },
+  {
+    "ref_no": 34,
+    "title": "End-to-end memory networks",
+    "ids": {
+      "year": "2015"
+    },
+    "graph_id": "",
+    "raw_text": "Sainbayar Sukhbaatar, Arthur Szlam, Jason Weston, and Rob Fergus. End-to-end memory networks. In C. Cortes, N. D. Lawrence, D. D. Lee, M. Sugiyama, and R. Garnett, editors, Advances in Neural Informat..."
+  },
+  {
+    "ref_no": 35,
+    "title": "Sequence to sequence learning with neural networks",
+    "ids": {
+      "year": "2014"
+    },
+    "graph_id": "",
+    "raw_text": "Ilya Sutskever, Oriol Vinyals, and Quoc VV Le. Sequence to sequence learning with neural networks. In Advances in Neural Information Processing Systems, pages 3104–3112, 2014."
+  },
+  {
+    "ref_no": 36,
+    "title": "Rethinking the inception architecture for computer vision",
+    "ids": {
+      "year": "2015"
+    },
+    "graph_id": "",
+    "raw_text": "Christian Szegedy, Vincent Vanhoucke, Sergey Ioffe, Jonathon Shlens, and Zbigniew Wojna. Rethinking the inception architecture for computer vision. CoRR, abs/1512.00567, 2015."
+  },
+  {
+    "ref_no": 37,
+    "title": "Grammar as a foreign language",
+    "ids": {
+      "year": "2015"
+    },
+    "graph_id": "",
+    "raw_text": "Vinyals & Kaiser, Koo, Petrov, Sutskever, and Hinton. Grammar as a foreign language. In Advances in Neural Information Processing Systems, 2015."
+  },
+  {
+    "ref_no": 38,
+    "title": "Google’s neural machine translation system: Bridging the gap between human and machine translation",
+    "ids": {
+      "arxiv": "1609.08144",
+      "year": "2016"
+    },
+    "graph_id": "10.48550_arxiv.1609.08144",
+    "raw_text": "Yonghui Wu, Mike Schuster, Zhifeng Chen, Quoc V Le, Mohammad Norouzi, Wolfgang Macherey, Maxim Krikun, Yuan Cao, Qin Gao, Klaus Macherey, et al. Google’s neural machine translation system: Bridging th..."
+  },
+  {
+    "ref_no": 39,
+    "title": "Deep recurrent models with fast-forward connections for neural machine translation",
+    "ids": {
+      "year": "2016"
+    },
+    "graph_id": "",
+    "raw_text": "Jie Zhou, Ying Cao, Xuguang Wang, Peng Li, and Wei Xu. Deep recurrent models with fast-forward connections for neural machine translation. CoRR, abs/1606.04199, 2016."
+  },
+  {
+    "ref_no": 40,
+    "title": "Fast and accurate shift-reduce constituent parsing",
+    "ids": {
+      "year": "2013"
+    },
+    "graph_id": "",
+    "raw_text": "Muhua Zhu, Yue Zhang, Wenliang Chen, Min Zhang, and Jingbo Zhu. Fast and accurate shift-reduce constituent parsing. In Proceedings of the 51st Annual Meeting of the ACL (Volume 1: Long Papers), pages ..."
+  }
+]

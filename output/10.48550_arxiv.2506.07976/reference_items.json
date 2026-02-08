@@ -8,153 +8,43 @@
   },
   {
     "ref_no": 2024,
-    "title": "",
-    "ids": {
-      "url": "https://arxiv.org/abs/2401.13919"
-    },
-    "graph_id": "",
-    "raw_text": "URL https://arxiv.org/abs/2401.13919."
-  },
-  {
-    "ref_no": 2,
     "title": "Xu, Hao Zhu, Xuhui Zhou, Robert Lo, Abishek Sridhar, Xianyi Cheng, Tianyue Ou, Yonatan Bisk, Daniel Fried, Uri Alon, and Graham Neubig",
     "ids": {
-      "url": "https://openreview.net/forum?id=oKn9c6ytLx",
+      "url": "https://arxiv.org/abs/2401.13919.[2]",
       "year": "2024"
     },
     "graph_id": "",
-    "raw_text": "Shuyan Zhou, Frank F. Xu, Hao Zhu, Xuhui Zhou, Robert Lo, Abishek Sridhar, Xianyi Cheng, Tianyue Ou, Yonatan Bisk, Daniel Fried, Uri Alon, and Graham Neubig. Webarena: A realistic web environment for ..."
-  },
-  {
-    "ref_no": 3,
-    "title": "Introducing computer use, a new claude 3.5 sonnet, and claude 3.5 haiku, 2024",
-    "ids": {
-      "url": "https://www.anthropic.com/news/3-5-models-and-computer-use",
-      "year": "2024"
-    },
-    "graph_id": "",
-    "raw_text": "Claude. Introducing computer use, a new claude 3.5 sonnet, and claude 3.5 haiku, 2024. URL https://www.anthropic.com/news/3-5-models-and-computer-use."
-  },
-  {
-    "ref_no": 4,
-    "title": "",
-    "ids": {},
-    "graph_id": "",
-    "raw_text": "OpenAI. Introducing operator,"
+    "raw_text": "URL https://arxiv.org/abs/2401.13919.[2] Shuyan Zhou, Frank F. Xu, Hao Zhu, Xuhui Zhou, Robert Lo, Abishek Sridhar, Xianyi Cheng, Tianyue Ou, Yonatan Bisk, Daniel Fried, Uri Alon, and Graham Neubig. W..."
   },
   {
     "ref_no": 2025,
-    "title": "",
-    "ids": {
-      "url": "https://openai.com/index/"
-    },
-    "graph_id": "",
-    "raw_text": "URL https://openai.com/index/ introducing-operator/."
-  },
-  {
-    "ref_no": 5,
     "title": "Browser use: Enable ai to control your browser, 2024",
     "ids": {
-      "url": "https://github.com/browser-use/browser-use",
+      "url": "https://openai.com/index/introducing-operator/.[5]",
       "year": "2024"
     },
     "graph_id": "",
-    "raw_text": "Magnus Müller and Gregor Žunič. Browser use: Enable ai to control your browser, 2024. URL https://github.com/browser-use/browser-use."
-  },
-  {
-    "ref_no": 6,
-    "title": "",
-    "ids": {},
-    "graph_id": "",
-    "raw_text": "Wenyi Hong, Weihan Wang, Qingsong Lv, Jiazheng Xu, Wenmeng Yu, Junhui Ji, Yan Wang, Zihan Wang, Yuxiao Dong, Ming Ding, and Jie Tang. Cogagent: A visual language model for gui agents,"
+    "raw_text": "URL https://openai.com/index/introducing-operator/.[5] Magnus Müller and Gregor Žunič. Browser use: Enable ai to control your browser, 2024. URL https://github.com/browser-use/browser-use.[6] Wenyi Ho..."
   },
   {
     "ref_no": 7,
     "title": "Your code’s new collaborator, 2025",
     "ids": {
-      "url": "https://www.anthropic.com/",
+      "url": "https://www.anthropic.com/claude-code.[8]",
       "year": "2025"
     },
     "graph_id": "",
-    "raw_text": "Claude. Your code’s new collaborator, 2025. URL https://www.anthropic.com/ claude-code."
-  },
-  {
-    "ref_no": 8,
-    "title": "Galliker, Dibya Ghosh, Lachy Groom, Karol Hausman, Brian Ichter, Szymon Jakubczak, Tim Jones, Liyiming Ke, Devin LeBlanc, Sergey Levine, Adrian Li-Bell, Mohith Mothukuri, Suraj Nair, Karl Pertsch, Allen Z",
-    "ids": {
-      "year": "2025"
-    },
-    "graph_id": "",
-    "raw_text": "Physical Intelligence, Kevin Black, Noah Brown, James Darpinian, Karan Dhabalia, Danny Driess, Adnan Esmail, Michael Equi, Chelsea Finn, Niccolo Fusai, Manuel Y. Galliker, Dibya Ghosh, Lachy Groom, Ka..."
+    "raw_text": "Claude. Your code’s new collaborator, 2025. URL https://www.anthropic.com/claude-code.[8] Physical Intelligence, Kevin Black, Noah Brown, James Darpinian, Karan Dhabalia, Danny Driess, Adnan Esmail, M..."
   },
   {
     "ref_no": 9,
     "title": "Fine-tuning large vision-language models as decisionmaking agents via reinforcement learning",
     "ids": {
-      "url": "https://api",
+      "url": "https://api.semanticscholar.org/CorpusID:269790773.[10]",
       "year": "2024"
     },
     "graph_id": "",
     "raw_text": "Yuexiang Zhai, Hao Bai, Zipeng Lin, Jiayi Pan, Shengbang Tong, Yifei Zhou, Alane Suhr, Saining Xie, Yann LeCun, Yi Ma, and Sergey Levine. Fine-tuning large vision-language models as decisionmaking age..."
-  },
-  {
-    "ref_no": 10,
-    "title": "Emergence of pragmatics from referential game between theory of mind agents, 2021",
-    "ids": {
-      "url": "https://arxiv",
-      "year": "2021"
-    },
-    "graph_id": "",
-    "raw_text": "Luyao Yuan, Zipeng Fu, Jingyue Shen, Lu Xu, Junhong Shen, and Song-Chun Zhu. Emergence of pragmatics from referential game between theory of mind agents, 2021. URL https://arxiv. org/abs/2001.07752."
-  },
-  {
-    "ref_no": 11,
-    "title": "Iterative teacher-aware learning",
-    "ids": {
-      "url": "https://proceedings.neurips.cc/paper_files/paper/2021/file/",
-      "year": "2021"
-    },
-    "graph_id": "",
-    "raw_text": "Luyao Yuan, Dongruo Zhou, Junhong Shen, Jingdong Gao, Jeffrey L Chen, Quanquan Gu, Ying Nian Wu, and Song-Chun Zhu. Iterative teacher-aware learning. In M. Ranzato, A. Beygelzimer, Y. Dauphin, P.S. Li..."
-  },
-  {
-    "ref_no": 12,
-    "title": "Mixtureof-mamba: Enhancing multi-modal state-space models with modality-aware sparsity, 2025",
-    "ids": {
-      "url": "https://arxiv.org/abs/2501.16295",
-      "year": "2025"
-    },
-    "graph_id": "",
-    "raw_text": "Weixin Liang, Junhong Shen, Genghan Zhang, Ning Dong, Luke Zettlemoyer, and Lili Yu. Mixtureof-mamba: Enhancing multi-modal state-space models with modality-aware sparsity, 2025. URL https://arxiv.org..."
-  },
-  {
-    "ref_no": 13,
-    "title": "Hi robot: Open-ended instruction following with hierarchical vision-language-action models",
-    "ids": {
-      "url": "https://api",
-      "year": "2025"
-    },
-    "graph_id": "",
-    "raw_text": "Lucy Xiaoyang Shi, Brian Ichter, Michael Equi, Liyiming Ke, Karl Pertsch, Quan Vuong, James Tanner, Anna Walling, Haohuan Wang, Niccolo Fusai, Adrian Li-Bell, Danny Driess, Lachy Groom, Sergey Levine,..."
-  },
-  {
-    "ref_no": 14,
-    "title": "Scribeagent: Towards specialized web agents using production-scale workflow data",
-    "ids": {
-      "url": "https://api.semanticscholar.org/CorpusID:",
-      "year": "2024"
-    },
-    "graph_id": "",
-    "raw_text": "Junhong Shen, Atishay Jain, Zedian Xiao, Ishan Amlekar, Mouad Hadji, Aaron Podolny, and Ameet Talwalkar. Scribeagent: Towards specialized web agents using production-scale workflow data. ArXiv, abs/24..."
-  },
-  {
-    "ref_no": 15,
-    "title": "Mind2web: Towards a generalist agent for the web",
-    "ids": {
-      "year": "2023"
-    },
-    "graph_id": "",
-    "raw_text": "Xiang Deng, Yu Gu, Boyuan Zheng, Shijie Chen, Samuel Stevens, Boshi Wang, Huan Sun, and Yu Su. Mind2web: Towards a generalist agent for the web. In Thirty-seventh Conference on Neural Information Proc..."
   },
   {
     "ref_no": 16,
@@ -215,7 +105,7 @@
     "title": "Proceedings of the AAAI Conference on Artificial Intelligence, 35(11):9558– 9566, May",
     "ids": {
       "doi": "10.1609/aaai.v35i11.17151",
-      "url": "https://ojs.aaai.org/index",
+      "url": "https://ojs.aaai.org/index.php/AAAI/article/view/17151.16===",
       "year": "2021"
     },
     "graph_id": "",
@@ -225,96 +115,21 @@
     "ref_no": 23,
     "title": "Webrl: Training llm web agents via self-evolving online curriculum reinforcement learning, 2025",
     "ids": {
-      "url": "https://arxiv.org/abs/2411.02337",
+      "url": "https://arxiv.org/abs/2411.02337.[24]",
       "year": "2025"
     },
     "graph_id": "",
     "raw_text": "Zehan Qi, Xiao Liu, Iat Long Iong, Hanyu Lai, Xueqiao Sun, Wenyi Zhao, Yu Yang, Xinyue Yang, Jiadai Sun, Shuntian Yao, Tianjie Zhang, Wei Xu, Jie Tang, and Yuxiao Dong. Webrl: Training llm web agents ..."
   },
   {
-    "ref_no": 24,
-    "title": "Claude takes research to new places, 2025",
-    "ids": {
-      "url": "https://www.anthropic.com/",
-      "year": "2025"
-    },
-    "graph_id": "",
-    "raw_text": "Claude. Claude takes research to new places, 2025. URL https://www.anthropic.com/ news/research."
-  },
-  {
-    "ref_no": 25,
-    "title": "",
-    "ids": {},
-    "graph_id": "",
-    "raw_text": "OpenAI. Introducing deep research,"
-  },
-  {
     "ref_no": 2025,
-    "title": "",
-    "ids": {
-      "url": "https://openai.com/index/"
-    },
-    "graph_id": "",
-    "raw_text": "URL https://openai.com/index/ introducing-deep-research/."
-  },
-  {
-    "ref_no": 26,
     "title": "Gemini deep research, 2025",
     "ids": {
-      "url": "https://gemini.google/overview/",
+      "url": "https://openai.com/index/introducing-deep-research/.[26]",
       "year": "2025"
     },
     "graph_id": "",
-    "raw_text": "Google Gemini. Gemini deep research, 2025. URL https://gemini.google/overview/ deep-research/?hl=en."
-  },
-  {
-    "ref_no": 27,
-    "title": "Zettlemoyer, Percy Liang, Emmanuel J",
-    "ids": {
-      "url": "https://api.semanticscholar.org/",
-      "year": "2025"
-    },
-    "graph_id": "",
-    "raw_text": "Niklas Muennighoff, Zitong Yang, Weijia Shi, Xiang Lisa Li, Fei-Fei Li, Hanna Hajishirzi, Luke S. Zettlemoyer, Percy Liang, Emmanuel J. Candes, and Tatsunori Hashimoto. s1: Simple testtime scaling. Ar..."
-  },
-  {
-    "ref_no": 28,
-    "title": "Inference scaling laws: An empirical analysis of compute-optimal inference for LLM problem-solving",
-    "ids": {
-      "url": "https://openreview.net/",
-      "year": "2025"
-    },
-    "graph_id": "",
-    "raw_text": "Yangzhen Wu, Zhiqing Sun, Shanda Li, Sean Welleck, and Yiming Yang. Inference scaling laws: An empirical analysis of compute-optimal inference for LLM problem-solving. In The Thirteenth International ..."
-  },
-  {
-    "ref_no": 29,
-    "title": "Inference-aware finetuning for best-of-n sampling in large language models",
-    "ids": {
-      "url": "https://api.semanticscholar.org/CorpusID:274965054",
-      "year": "2024"
-    },
-    "graph_id": "",
-    "raw_text": "Yinlam Chow, Guy Tennenholtz, Izzeddin Gur, Vincent Zhuang, Bo Dai, Sridhar Thiagarajan, Craig Boutilier, Rishabh Agarwal, Aviral Kumar, and Aleksandra Faust. Inference-aware finetuning for best-of-n ..."
-  },
-  {
-    "ref_no": 30,
-    "title": "Scaling LLM test-time compute optimally can be more effective than scaling parameters for reasoning",
-    "ids": {
-      "url": "https://openreview.net/forum?",
-      "year": "2025"
-    },
-    "graph_id": "",
-    "raw_text": "Charlie Victor Snell, Jaehoon Lee, Kelvin Xu, and Aviral Kumar. Scaling LLM test-time compute optimally can be more effective than scaling parameters for reasoning. In The Thirteenth International Con..."
-  },
-  {
-    "ref_no": 31,
-    "title": "Webglm: Towards an efficient web-enhanced question answering system with human preferences",
-    "ids": {
-      "year": "2023"
-    },
-    "graph_id": "",
-    "raw_text": "Xiao Liu, Hanyu Lai, Hao Yu, Yifan Xu, Aohan Zeng, Zhengxiao Du, Peng Zhang, Yuxiao Dong, and Jie Tang. Webglm: Towards an efficient web-enhanced question answering system with human preferences, 2023..."
+    "raw_text": "URL https://openai.com/index/introducing-deep-research/.[26] Google Gemini. Gemini deep research, 2025. URL https://gemini.google/overview/deep-research/?hl=en.[27] Niklas Muennighoff, Zitong Yang, We..."
   },
   {
     "ref_no": 32,
@@ -325,121 +140,35 @@
   },
   {
     "ref_no": 2024,
-    "title": "",
-    "ids": {
-      "url": "https://arxiv.org/abs/2305.11854"
-    },
-    "graph_id": "",
-    "raw_text": "URL https://arxiv.org/abs/2305.11854."
-  },
-  {
-    "ref_no": 33,
     "title": "Agentoccam: A simple yet strong baseline for llm-based web agents, 2024",
     "ids": {
-      "url": "https://arxiv.org/abs/2410.13825",
+      "url": "https://arxiv.org/abs/2305.11854.[33]",
       "year": "2024"
     },
     "graph_id": "",
-    "raw_text": "Ke Yang, Yao Liu, Sapana Chaudhary, Rasool Fakoor, Pratik Chaudhari, George Karypis, and Huzefa Rangwala. Agentoccam: A simple yet strong baseline for llm-based web agents, 2024. URL https://arxiv.org..."
-  },
-  {
-    "ref_no": 34,
-    "title": "Webpilot: A versatile and autonomous multi-agent system for web task execution with strategic exploration, 2024",
-    "ids": {
-      "url": "https://arxiv.org/abs/2408.15978",
-      "year": "2024"
-    },
-    "graph_id": "",
-    "raw_text": "Yao Zhang, Zijian Ma, Yunpu Ma, Zhen Han, Yu Wu, and Volker Tresp. Webpilot: A versatile and autonomous multi-agent system for web task execution with strategic exploration, 2024. URL https://arxiv.or..."
+    "raw_text": "URL https://arxiv.org/abs/2305.11854.[33] Ke Yang, Yao Liu, Sapana Chaudhary, Rasool Fakoor, Pratik Chaudhari, George Karypis, and Huzefa Rangwala. Agentoccam: A simple yet strong baseline for llm-bas..."
   },
   {
     "ref_no": 35,
     "title": "UPS: Efficiently building foundation models for PDE solving via cross-modal adaptation",
     "ids": {
-      "url": "https://openreview.net/forum?id=0r9mhjRv1E",
+      "url": "https://openreview.net/forum?id=0r9mhjRv1E.[36]",
       "year": "2024"
     },
     "graph_id": "",
     "raw_text": "Junhong Shen, Tanya Marwah, and Ameet Talwalkar. UPS: Efficiently building foundation models for PDE solving via cross-modal adaptation. Transactions on Machine Learning Research, 2024. ISSN 2835-8856..."
   },
   {
-    "ref_no": 36,
-    "title": "Cat: Content-adaptive image tokenization, 2025",
-    "ids": {
-      "url": "https://arxiv.org/",
-      "year": "2025"
-    },
-    "graph_id": "",
-    "raw_text": "Junhong Shen, Kushal Tirumala, Michihiro Yasunaga, Ishan Misra, Luke Zettlemoyer, Lili Yu, and Chunting Zhou. Cat: Content-adaptive image tokenization, 2025. URL https://arxiv.org/ abs/2501.03120."
-  },
-  {
-    "ref_no": 37,
-    "title": "Agenttrek: Agent trajectory synthesis via guiding replay with web tutorials",
-    "ids": {
-      "year": "2024"
-    },
-    "graph_id": "",
-    "raw_text": "Yiheng Xu, Dunjie Lu, Zhennan Shen, Junli Wang, Zekun Wang, Yuchen Mao, Caiming Xiong, and Tao Yu. Agenttrek: Agent trajectory synthesis via guiding replay with web tutorials. ArXiv, abs/2412.09605, 2..."
-  },
-  {
     "ref_no": 38,
     "title": "Beyond browsing: Api-based web agents, 2024",
     "ids": {
-      "url": "https://arxiv.org/abs/2410.16464",
-      "year": "2024"
-    },
-    "graph_id": "",
-    "raw_text": "Yueqi Song, Frank Xu, Shuyan Zhou, and Graham Neubig. Beyond browsing: Api-based web agents, 2024. URL https://arxiv.org/abs/2410.16464."
-  },
-  {
-    "ref_no": 39,
-    "title": "Specialized foundation models struggle to beat supervised baselines, 2024",
-    "ids": {
-      "url": "https://arxiv.org/abs/2411.02796",
-      "year": "2024"
-    },
-    "graph_id": "",
-    "raw_text": "Zongzhe Xu, Ritvik Gupta, Wenduo Cheng, Alexander Shen, Junhong Shen, Ameet Talwalkar, and Mikhail Khodak. Specialized foundation models struggle to beat supervised baselines, 2024. URL https://arxiv...."
-  },
-  {
-    "ref_no": 40,
-    "title": "Mathematical reconstruction of patient-specific vascular networks based on clinical images and global optimization",
-    "ids": {
-      "doi": "10.1109/ACCESS.2021.3052501",
-      "year": "2021"
-    },
-    "graph_id": "",
-    "raw_text": "Junhong Shen, Abdul Hannan Faruqi, Yifan Jiang, and Nima Maftoon. Mathematical reconstruction of patient-specific vascular networks based on clinical images and global optimization. IEEE Access, 9:206..."
-  },
-  {
-    "ref_no": 41,
-    "title": "Codepde: An inference framework for llm-driven pde solver generation, 2025",
-    "ids": {
-      "url": "https://arxiv.org/abs/2505.08783",
-      "year": "2025"
-    },
-    "graph_id": "",
-    "raw_text": "Shanda Li, Tanya Marwah, Junhong Shen, Weiwei Sun, Andrej Risteski, Yiming Yang, and Ameet Talwalkar. Codepde: An inference framework for llm-driven pde solver generation, 2025. URL https://arxiv.org/..."
-  },
-  {
-    "ref_no": 42,
-    "title": "Fatemi, Xiaolong Jin, Zora Zhiruo Wang, Apurva Gandhi, Yueqi Song, Yu Gu, Jayanth Srinivasa, Gaowen Liu, Graham Neubig, and Yu Su",
-    "ids": {
-      "url": "https://api.semanticscholar",
-      "year": "2025"
-    },
-    "graph_id": "",
-    "raw_text": "Boyuan Zheng, Michael Y. Fatemi, Xiaolong Jin, Zora Zhiruo Wang, Apurva Gandhi, Yueqi Song, Yu Gu, Jayanth Srinivasa, Gaowen Liu, Graham Neubig, and Yu Su. Skillweaver: Web agents can self-improve by ..."
-  },
-  {
-    "ref_no": 43,
-    "title": "Autonomous evaluation and refinement of digital agents",
-    "ids": {
+      "doi": "10.1109/ACCESS.2021.3052501.[41",
       "arxiv": "2404.06474",
+      "url": "https://arxiv.org/abs/2410.16464.[39]",
       "year": "2024"
     },
     "graph_id": "10.48550_arxiv.2404.06474",
-    "raw_text": "Jiayi Pan, Yichi Zhang, Nicholas Tomlin, Yifei Zhou, Sergey Levine, and Alane Suhr. Autonomous evaluation and refinement of digital agents. arXiv preprint arXiv:2404.06474, 2024."
+    "raw_text": "Yueqi Song, Frank Xu, Shuyan Zhou, and Graham Neubig. Beyond browsing: Api-based web agents, 2024. URL https://arxiv.org/abs/2410.16464.[39] Zongzhe Xu, Ritvik Gupta, Wenduo Cheng, Alexander Shen, Jun..."
   },
   {
     "ref_no": 44,
@@ -473,60 +202,32 @@
     "ref_no": 47,
     "title": "Gpt-4 technical report, 2024",
     "ids": {
-      "url": "https://arxiv.org/abs/2303.08774",
+      "url": "https://arxiv.org/abs/2303.08774.[48]",
       "year": "2024"
     },
     "graph_id": "",
-    "raw_text": "OpenAI. Gpt-4 technical report, 2024. URL https://arxiv.org/abs/2303.08774."
-  },
-  {
-    "ref_no": 48,
-    "title": "Introducing the next generation of claude, 2024",
-    "ids": {
-      "url": "https://www.anthropic",
-      "year": "2024"
-    },
-    "graph_id": "",
-    "raw_text": "Anthropic. Introducing the next generation of claude, 2024. URL https://www.anthropic. com/news/claude-3-family."
+    "raw_text": "OpenAI. Gpt-4 technical report, 2024. URL https://arxiv.org/abs/2303.08774.[48] Anthropic. Introducing the next generation of claude, 2024. URL https://www.anthropic.com/news/claude-3-family.18=== Pag..."
   },
   {
     "ref_no": 49,
     "title": "In Conference on Language Modeling (COLM",
     "ids": {
-      "url": "https://arxiv.org/",
+      "url": "https://arxiv.org/abs/2310.03720.[50]",
       "year": "2024"
     },
     "graph_id": "",
-    "raw_text": "Paloma Sodhi, S. R. K. Branavan, Yoav Artzi, and Ryan McDonald. Step: Stacked llm policies for web actions. In Conference on Language Modeling (COLM), 2024. URL https://arxiv.org/ abs/2310.03720."
-  },
-  {
-    "ref_no": 50,
-    "title": "Agent-e: From autonomous web navigation to foundational design principles in agentic systems",
-    "ids": {
-      "year": "2024"
-    },
-    "graph_id": "",
-    "raw_text": "Tamer Abuelsaad, Deepak Akkil, Prasenjit Dey, Ashish Jagmohan, Aditya Vempaty, and Ravi Kokku. Agent-e: From autonomous web navigation to foundational design principles in agentic systems. ArXiv, abs/..."
+    "raw_text": "Paloma Sodhi, S. R. K. Branavan, Yoav Artzi, and Ryan McDonald. Step: Stacked llm policies for web actions. In Conference on Language Modeling (COLM), 2024. URL https://arxiv.org/abs/2310.03720.[50] T..."
   },
   {
     "ref_no": 51,
     "title": "L2g: Repurposing language models for genomics tasks",
     "ids": {
       "doi": "10.1101/2024.12.09.627422",
-      "url": "https://www.biorxiv.org/content/early/2024/12/11/2024.12.09.627422",
+      "url": "https://www.biorxiv.org/content/early/2024/12/11/2024.12.09.627422.[52]",
       "year": "2024"
     },
     "graph_id": "",
     "raw_text": "Wenduo Cheng, Junhong Shen, Mikhail Khodak, Jian Ma, and Ameet Talwalkar. L2g: Repurposing language models for genomics tasks. bioRxiv, 2024. doi: 10.1101/2024.12.09.627422. URL https://www.biorxiv.or..."
-  },
-  {
-    "ref_no": 52,
-    "title": "Plan-and-act: Improving planning of agents for long-horizon tasks",
-    "ids": {
-      "year": "2025"
-    },
-    "graph_id": "",
-    "raw_text": "Lutfi Eren Erdogan, Nicholas Lee, Sehoon Kim, Suhong Moon, Hiroki Furuta, Gopala Anumanchipalli, Kurt Keutzer, and Amir Gholami. Plan-and-act: Improving planning of agents for long-horizon tasks, 2025..."
   },
   {
     "ref_no": 53,
@@ -549,21 +250,12 @@
     "ref_no": 55,
     "title": "Synapse: Trajectory-as-exemplar prompting with memory for computer control",
     "ids": {
-      "url": "https://openreview.net/forum?id=Pc8AU1aF5e",
-      "year": "2024"
-    },
-    "graph_id": "",
-    "raw_text": "Longtao Zheng, Rundong Wang, Xinrun Wang, and Bo An. Synapse: Trajectory-as-exemplar prompting with memory for computer control. In The Twelfth International Conference on Learning Representations, 20..."
-  },
-  {
-    "ref_no": 56,
-    "title": "Agent workflow memory",
-    "ids": {
       "arxiv": "2409.07429",
+      "url": "https://openreview.net/forum?id=Pc8AU1aF5e.[56]",
       "year": "2024"
     },
     "graph_id": "10.48550_arxiv.2409.07429",
-    "raw_text": "Zhiruo Wang, Jiayuan Mao, Daniel Fried, and Graham Neubig. Agent workflow memory. arXiv preprint arXiv:2409.07429, 2024."
+    "raw_text": "Longtao Zheng, Rundong Wang, Xinrun Wang, and Bo An. Synapse: Trajectory-as-exemplar prompting with memory for computer control. In The Twelfth International Conference on Learning Representations, 20..."
   },
   {
     "ref_no": 57,
@@ -588,31 +280,11 @@
     "ref_no": 59,
     "title": "Nnetscape navigator: Complex demonstrations for web agents without a demonstrator",
     "ids": {
-      "url": "https://arxiv.org/abs/",
+      "url": "https://arxiv.org/abs/2410.02907.[60]",
       "year": "2024"
     },
     "graph_id": "",
-    "raw_text": "Shikhar Murty, Dzmitry Bahdanau, and Christopher D. Manning. Nnetscape navigator: Complex demonstrations for web agents without a demonstrator, 2024. URL https://arxiv.org/abs/ 2410.02907."
-  },
-  {
-    "ref_no": 60,
-    "title": "Towards internet-scale training for agents",
-    "ids": {
-      "url": "https://api",
-      "year": "2025"
-    },
-    "graph_id": "",
-    "raw_text": "Brandon Trabucco, Gunnar Sigurdsson, Robinson Piramuthu, and Ruslan Salakhutdinov. Towards internet-scale training for agents. ArXiv, abs/2502.06776, 2025. URL https://api. semanticscholar.org/CorpusI..."
-  },
-  {
-    "ref_no": 61,
-    "title": "Agent q: Advanced reasoning and learning for autonomous ai agents",
-    "ids": {
-      "url": "https://api.semanticscholar.org/CorpusID:271865516",
-      "year": "2024"
-    },
-    "graph_id": "",
-    "raw_text": "Pranav Putta, Edmund Mills, Naman Garg, Sumeet Ramesh Motwani, Chelsea Finn, Divyansh Garg, and Rafael Rafailov. Agent q: Advanced reasoning and learning for autonomous ai agents. ArXiv, abs/2408.0719..."
+    "raw_text": "Shikhar Murty, Dzmitry Bahdanau, and Christopher D. Manning. Nnetscape navigator: Complex demonstrations for web agents without a demonstrator, 2024. URL https://arxiv.org/abs/2410.02907.[60] Brandon ..."
   },
   {
     "ref_no": 62,
@@ -627,20 +299,11 @@
     "ref_no": 63,
     "title": "Distrl: An asynchronous distributed reinforcement learning framework for on-device control agents",
     "ids": {
-      "url": "https://api.semanticscholar.org/CorpusID:273501605",
+      "url": "https://api.semanticscholar.org/CorpusID:273501605.[64]",
       "year": "2024"
     },
     "graph_id": "",
     "raw_text": "Taiyi Wang, Zhihao Wu, Jianheng Liu, Jianye Hao, Jun Wang, and Kun Shao. Distrl: An asynchronous distributed reinforcement learning framework for on-device control agents. ArXiv, abs/2410.14803, 2024...."
-  },
-  {
-    "ref_no": 64,
-    "title": "",
-    "ids": {
-      "year": "2025"
-    },
-    "graph_id": "",
-    "raw_text": "Hongjin Su, Ruoxi Sun, Jinsung Yoon, Pengcheng Yin, Tao Yu, and Sercan Ö. Arik. Learn-byinteract: A data-centric framework for self-adaptive agents in realistic environments. ArXiv, abs/2501.10893, 20..."
   },
   {
     "ref_no": 65,
@@ -655,36 +318,21 @@
     "ref_no": 66,
     "title": "Scaling llm test-time compute optimally can be more effective than scaling model parameters",
     "ids": {
-      "url": "https://api.semanticscholar.org/CorpusID:271719990",
+      "url": "https://api.semanticscholar.org/CorpusID:271719990.[67]",
       "year": "2024"
     },
     "graph_id": "",
     "raw_text": "Charlie Snell, Jaehoon Lee, Kelvin Xu, and Aviral Kumar. Scaling llm test-time compute optimally can be more effective than scaling model parameters. ArXiv, abs/2408.03314, 2024. URL https://api.seman..."
   },
   {
-    "ref_no": 67,
-    "title": "",
-    "ids": {},
-    "graph_id": "",
-    "raw_text": "Yangzhen Wu, Zhiqing Sun, Shanda Li, Sean Welleck, and Yiming Yang. Inference scaling laws: An empirical analysis of compute-optimal inference for problem-solving with language models."
-  },
-  {
     "ref_no": 2024,
-    "title": "",
-    "ids": {
-      "url": "https://api.semanticscholar.org/CorpusID:271601023"
-    },
-    "graph_id": "",
-    "raw_text": "URL https://api.semanticscholar.org/CorpusID:271601023."
-  },
-  {
-    "ref_no": 68,
     "title": "Training verifiers to solve math word problems",
     "ids": {
+      "url": "https://api.semanticscholar.org/CorpusID:271601023.[68]",
       "year": "2021"
     },
     "graph_id": "",
-    "raw_text": "Karl Cobbe, Vineet Kosaraju, Mo Bavarian, Mark Chen, Heewoo Jun, Lukasz Kaiser, Matthias Plappert, Jerry Tworek, Jacob Hilton, Reiichiro Nakano, Christopher Hesse, and John Schulman. Training verifier..."
+    "raw_text": "URL https://api.semanticscholar.org/CorpusID:271601023.[68] Karl Cobbe, Vineet Kosaraju, Mo Bavarian, Mark Chen, Heewoo Jun, Lukasz Kaiser, Matthias Plappert, Jerry Tworek, Jacob Hilton, Reiichiro Nak..."
   },
   {
     "ref_no": 69,
@@ -699,144 +347,41 @@
     "ref_no": 70,
     "title": "Scaling testtime compute without verification or rl is suboptimal",
     "ids": {
-      "url": "https://api.semanticscholar.org/CorpusID:276422443",
+      "url": "https://api.semanticscholar.org/CorpusID:276422443.[71]",
       "year": "2025"
     },
     "graph_id": "",
     "raw_text": "Amrith Rajagopal Setlur, Nived Rajaraman, Sergey Levine, and Aviral Kumar. Scaling testtime compute without verification or rl is suboptimal. ArXiv, abs/2502.12118, 2025. URL https://api.semanticschol..."
   },
   {
-    "ref_no": 71,
-    "title": "Deepseek-r1: Incentivizing reasoning capability in llms via reinforcement learning",
-    "ids": {
-      "url": "https://api.semanticscholar.org/CorpusID:",
-      "year": "2025"
-    },
-    "graph_id": "",
-    "raw_text": "DeepSeek-AI. Deepseek-r1: Incentivizing reasoning capability in llms via reinforcement learning. ArXiv, abs/2501.12948, 2025. URL https://api.semanticscholar.org/CorpusID:"
-  },
-  {
-    "ref_no": 72,
-    "title": "",
-    "ids": {
-      "url": "https://api.semanticscholar.org/CorpusID:",
-      "year": "2025"
-    },
-    "graph_id": "",
-    "raw_text": "Yuxiao Qu, Matthew Y. R. Yang, Amrith Rajagopal Setlur, Lewis Tunstall, Edward Beeching, Ruslan Salakhutdinov, and Aviral Kumar. Optimizing test-time compute via meta reinforcement finetuning. ArXiv, ..."
-  },
-  {
-    "ref_no": 73,
-    "title": "Ragen: Understanding self-evolution in llm agents via multi-turn reinforcement learning, 2025",
-    "ids": {
-      "url": "https://arxiv.org/abs/2504",
-      "year": "2025"
-    },
-    "graph_id": "",
-    "raw_text": "Zihan Wang, Kangrui Wang, Qineng Wang, Pingyue Zhang, Linjie Li, Zhengyuan Yang, Xing Jin, Kefan Yu, Minh Nhat Nguyen, Licheng Liu, Eli Gottlieb, Yiping Lu, Kyunghyun Cho, Jiajun Wu, Li Fei-Fei, Lijua..."
-  },
-  {
-    "ref_no": 74,
-    "title": "React: Synergizing reasoning and acting in language models, 2023",
-    "ids": {
-      "url": "https://arxiv.org/",
-      "year": "2023"
-    },
-    "graph_id": "",
-    "raw_text": "Shunyu Yao, Jeffrey Zhao, Dian Yu, Nan Du, Izhak Shafran, Karthik Narasimhan, and Yuan Cao. React: Synergizing reasoning and acting in language models, 2023. URL https://arxiv.org/ abs/2210.03629."
-  },
-  {
-    "ref_no": 75,
-    "title": "Exact: Teaching ai agents to explore with reflective-mcts and exploratory learning",
-    "ids": {},
-    "graph_id": "",
-    "raw_text": "Xiao Yu, Baolin Peng, Vineeth Vajipey, Hao Cheng, Michel Galley, Jianfeng Gao, and Zhou Yu. Exact: Teaching ai agents to explore with reflective-mcts and exploratory learning. ArXiv, abs/2410.02052,"
-  },
-  {
     "ref_no": 2024,
-    "title": "",
-    "ids": {
-      "url": "https://api.semanticscholar.org/CorpusID:273098809"
-    },
-    "graph_id": "",
-    "raw_text": "URL https://api.semanticscholar.org/CorpusID:273098809."
-  },
-  {
-    "ref_no": 76,
     "title": "Generative verifiers: Reward modeling as next-token prediction",
     "ids": {
-      "arxiv": "2408.15240"
+      "arxiv": "2408.15240",
+      "url": "https://api.semanticscholar.org/CorpusID:273098809.[76]"
     },
     "graph_id": "10.48550_arxiv.2408.15240",
-    "raw_text": "Lunjun Zhang, Arian Hosseini, Hritik Bansal, Mehran Kazemi, Aviral Kumar, and Rishabh Agarwal. Generative verifiers: Reward modeling as next-token prediction. arXiv preprint arXiv:2408.15240,"
+    "raw_text": "URL https://api.semanticscholar.org/CorpusID:273098809.[76] Lunjun Zhang, Arian Hosseini, Hritik Bansal, Mehran Kazemi, Aviral Kumar, and Rishabh Agarwal. Generative verifiers: Reward modeling as next..."
   },
   {
     "ref_no": 77,
     "title": "Metaxas, and Tong Che",
     "ids": {
-      "url": "https://api.semanticscholar.org/CorpusID:277781795",
+      "url": "https://api.semanticscholar.org/CorpusID:277781795.[78]",
       "year": "2025"
     },
     "graph_id": "",
     "raw_text": "Can Jin, Hongwu Peng, Qixin Zhang, Yujin Tang, Dimitris N. Metaxas, and Tong Che. Two heads are better than one: Test-time scaling of multi-agent collaborative reasoning. 2025. URL https://api.semanti..."
   },
   {
-    "ref_no": 78,
-    "title": "",
-    "ids": {
-      "year": "2024"
-    },
-    "graph_id": "",
-    "raw_text": "Zhihong Shao, Peiyi Wang, Qihao Zhu, Runxin Xu, Jun-Mei Song, Mingchuan Zhang, Y. K. Li, Yu Wu, and Daya Guo. Deepseekmath: Pushing the limits of mathematical reasoning in open language models. ArXiv,..."
-  },
-  {
     "ref_no": 79,
     "title": "Pan, Wen Zhang, Huajun Chen, Fan Yang, Zenan Zhou, and Weipeng Chen",
     "ids": {
-      "url": "https://arxiv.org/abs/",
+      "url": "https://arxiv.org/abs/2503.19470.[80]",
       "year": "2025"
     },
     "graph_id": "",
     "raw_text": "Mingyang Chen, Tianpeng Li, Haoze Sun, Yijie Zhou, Chenzheng Zhu, Haofen Wang, Jeff Z. Pan, Wen Zhang, Huajun Chen, Fan Yang, Zenan Zhou, and Weipeng Chen. Research: Learning to reason with search for..."
-  },
-  {
-    "ref_no": 80,
-    "title": "Think twice, act once: A co-evolution framework of llm and rl for large-scale decision making, 2025",
-    "ids": {
-      "url": "https://arxiv.org/abs/",
-      "year": "2025"
-    },
-    "graph_id": "",
-    "raw_text": "Xu Wan, Wenyue Xu, Chao Yang, and Mingyang Sun. Think twice, act once: A co-evolution framework of llm and rl for large-scale decision making, 2025. URL https://arxiv.org/abs/ 2506.02522."
-  },
-  {
-    "ref_no": 81,
-    "title": "Inducing programmatic skills for agentic tasks",
-    "ids": {
-      "url": "https://api.semanticscholar.org/CorpusID:277634286",
-      "year": "2025"
-    },
-    "graph_id": "",
-    "raw_text": "Zora Zhiruo Wang, Apurva Gandhi, Graham Neubig, and Daniel Fried. Inducing programmatic skills for agentic tasks. 2025. URL https://api.semanticscholar.org/CorpusID:277634286."
-  },
-  {
-    "ref_no": 82,
-    "title": "Gemma 3 technical report",
-    "ids": {
-      "url": "https://api",
-      "year": "2025"
-    },
-    "graph_id": "",
-    "raw_text": "Gemma Team. Gemma 3 technical report. ArXiv, abs/2503.19786, 2025. URL https://api. semanticscholar.org/CorpusID:277313563."
-  },
-  {
-    "ref_no": 83,
-    "title": "Recursive introspection: Teaching language model agents how to self-improve",
-    "ids": {
-      "year": "2024"
-    },
-    "graph_id": "",
-    "raw_text": "Yuxiao Qu, Tianjun Zhang, Naman Garg, and Aviral Kumar. Recursive introspection: Teaching language model agents how to self-improve. Advances in Neural Information Processing Systems, 37:55249–55285, ..."
   },
   {
     "ref_no": 84,
@@ -869,110 +414,22 @@
     "ref_no": 87,
     "title": "Bayen, Sham M",
     "ids": {
-      "url": "https://api.semanticscholar",
+      "url": "https://api.semanticscholar.org/CorpusID:4043645.[88]",
       "year": "2018"
     },
     "graph_id": "",
     "raw_text": "Cathy Wu, Aravind Rajeswaran, Yan Duan, Vikash Kumar, Alexandre M. Bayen, Sham M. Kakade, Igor Mordatch, and P. Abbeel. Variance reduction for policy gradient with action-dependent factorized baseline..."
   },
   {
-    "ref_no": 88,
-    "title": "Analysis and improvement of policy gradient estimation",
-    "ids": {
-      "url": "https://api.semanticscholar.org/CorpusID:2274728",
-      "year": "2011"
-    },
-    "graph_id": "",
-    "raw_text": "Tingting Zhao, Hirotaka Hachiya, Gang Niu, and Masashi Sugiyama. Analysis and improvement of policy gradient estimation. Neural networks : the official journal of the International Neural Network Soci..."
-  },
-  {
-    "ref_no": 89,
-    "title": "Policy gradients with variance related risk criteria",
-    "ids": {
-      "url": "https://api.semanticscholar.org/CorpusID:3109162",
-      "year": "2012"
-    },
-    "graph_id": "",
-    "raw_text": "Dotan Di Castro, Aviv Tamar, and Shie Mannor. Policy gradients with variance related risk criteria. arXiv: Learning, 2012. URL https://api.semanticscholar.org/CorpusID:3109162."
-  },
-  {
-    "ref_no": 90,
-    "title": "Curriculum learning",
-    "ids": {
-      "url": "https://api.semanticscholar",
-      "year": "2009"
-    },
-    "graph_id": "",
-    "raw_text": "Yoshua Bengio, Jérôme Louradour, Ronan Collobert, and Jason Weston. Curriculum learning. In International Conference on Machine Learning, 2009. URL https://api.semanticscholar. org/CorpusID:873046."
-  },
-  {
-    "ref_no": 91,
-    "title": "Taylor, and Peter Stone",
-    "ids": {
-      "url": "https://api.semanticscholar.org/CorpusID:212657666",
-      "year": "2003"
-    },
-    "graph_id": "",
-    "raw_text": "Sanmit Narvekar, Bei Peng, Matteo Leonetti, Jivko Sinapov, Matthew E. Taylor, and Peter Stone. Curriculum learning for reinforcement learning domains: A framework and survey. ArXiv, abs/2003.04960, 20..."
-  },
-  {
-    "ref_no": 92,
-    "title": "A survey on curriculum learning",
-    "ids": {
-      "url": "https://api",
-      "year": "2021"
-    },
-    "graph_id": "",
-    "raw_text": "Xin Wang, Yudong Chen, and Wenwu Zhu. A survey on curriculum learning. IEEE Transactions on Pattern Analysis and Machine Intelligence, 44:4555–4576, 2021. URL https://api. semanticscholar.org/CorpusID..."
-  },
-  {
-    "ref_no": 93,
-    "title": "Teacher–student curriculum learning",
-    "ids": {
-      "url": "https://api.semanticscholar.org/CorpusID:8432394",
-      "year": "2017"
-    },
-    "graph_id": "",
-    "raw_text": "Tambet Matiisen, Avital Oliver, Taco Cohen, and John Schulman. Teacher–student curriculum learning. IEEE Transactions on Neural Networks and Learning Systems, 31:3732–3740, 2017. URL https://api.seman..."
-  },
-  {
-    "ref_no": 94,
-    "title": "Abbeel, and Wojciech Zaremba",
-    "ids": {
-      "url": "https://api.semanticscholar.org/CorpusID:3532908",
-      "year": "2017"
-    },
-    "graph_id": "",
-    "raw_text": "Marcin Andrychowicz, Dwight Crow, Alex Ray, Jonas Schneider, Rachel Fong, Peter Welinder, Bob McGrew, Joshua Tobin, P. Abbeel, and Wojciech Zaremba. Hindsight experience replay. In NeurIPS, 2017. URL ..."
-  },
-  {
-    "ref_no": 95,
-    "title": "Gonzalez, Hao Zhang, and Ion Stoica",
-    "ids": {
-      "year": "2023"
-    },
-    "graph_id": "",
-    "raw_text": "Woosuk Kwon, Zhuohan Li, Siyuan Zhuang, Ying Sheng, Lianmin Zheng, Cody Hao Yu, Joseph E. Gonzalez, Hao Zhang, and Ion Stoica. Efficient memory management for large language model serving with pagedat..."
-  },
-  {
     "ref_no": 96,
     "title": "Deepspeed: System optimizations enable training deep learning models with over 100 billion parameters",
     "ids": {
-      "url": "https://api.semanticscholar.org/CorpusID:221191193",
+      "arxiv": "2501.12326",
+      "url": "https://api.semanticscholar.org/CorpusID:221191193.[97]",
       "year": "2020"
     },
-    "graph_id": "",
-    "raw_text": "Jeff Rasley, Samyam Rajbhandari, Olatunji Ruwase, and Yuxiong He. Deepspeed: System optimizations enable training deep learning models with over 100 billion parameters. Proceedings of the 26th ACM SIG..."
-  },
-  {
-    "ref_no": 97,
-    "title": "Ui-tars: Pioneering automated gui interaction with native agents",
-    "ids": {
-      "arxiv": "2501.12326",
-      "year": "2025"
-    },
     "graph_id": "10.48550_arxiv.2501.12326",
-    "raw_text": "Yujia Qin, Yining Ye, Junjie Fang, Haoming Wang, Shihao Liang, Shizuo Tian, Junda Zhang, Jiahao Li, Yunxin Li, Shijue Huang, et al. Ui-tars: Pioneering automated gui interaction with native agents. ar..."
+    "raw_text": "Jeff Rasley, Samyam Rajbhandari, Olatunji Ruwase, and Yuxiong He. Deepspeed: System optimizations enable training deep learning models with over 100 billion parameters. Proceedings of the 26th ACM SIG..."
   },
   {
     "ref_no": 98,
@@ -988,62 +445,30 @@
     "ref_no": 99,
     "title": "",
     "ids": {
-      "url": "https://api.semanticscholar.org/CorpusID:276741915",
+      "url": "https://api.semanticscholar.org/CorpusID:276741915.[100]",
       "year": "2025"
     },
     "graph_id": "",
     "raw_text": "Kanishk Gandhi, Ayush Chakravarthy, Anikait Singh, nathan lile, and Noah D. Goodman. Cognitive behaviors that enable self-improving reasoners, or, four habits of highly effective stars. ArXiv, abs/250..."
   },
   {
-    "ref_no": 100,
-    "title": "Towards enterprise-ready computer using generalist agent",
-    "ids": {},
-    "graph_id": "",
-    "raw_text": "Sami Marreed, Alon Oved, Avi Yaeli, Segev Shlomov, Ido Levy, Aviad Sela, Asaf Adi, and Nir Mashkif. Towards enterprise-ready computer using generalist agent. ArXiv, abs/2503.01861,"
-  },
-  {
     "ref_no": 2025,
     "title": "",
     "ids": {
-      "url": "https://api.semanticscholar.org/CorpusID:276775684"
+      "url": "https://api.semanticscholar.org/CorpusID:276775684.[101]"
     },
     "graph_id": "",
-    "raw_text": "URL https://api.semanticscholar.org/CorpusID:276775684."
-  },
-  {
-    "ref_no": 101,
-    "title": "",
-    "ids": {},
-    "graph_id": "",
-    "raw_text": "JaceAI. Awa 1.5 achieves breakthrough performance on webarena benchmark,"
+    "raw_text": "URL https://api.semanticscholar.org/CorpusID:276775684.[101] JaceAI. Awa 1.5 achieves breakthrough performance on webarena benchmark,"
   },
   {
     "ref_no": 2024,
-    "title": "",
+    "title": "Dashboard",
     "ids": {
-      "url": "https://www.jace.ai/post/"
-    },
-    "graph_id": "",
-    "raw_text": "URL https://www.jace.ai/post/ awa-1-5-achieves-breakthrough-performance-on-webarena-benchmark."
-  },
-  {
-    "ref_no": 102,
-    "title": "",
-    "ids": {
-      "url": "https://api",
+      "url": "https://www.jace.ai/post/awa-1-5-achieves-breakthrough-performance-on-webarena-benchmark.[102]",
       "year": "2024"
     },
     "graph_id": "",
-    "raw_text": "Shikhar Murty, Dzmitry Bahdanau, and Christopher D. Manning. Nnetnav: Unsupervised learning of browser agents through environment interaction in the wild. 2024. URL https://api. semanticscholar.org/Co..."
-  },
-  {
-    "ref_no": 103,
-    "title": "Dashboard",
-    "ids": {
-      "year": "2017"
-    },
-    "graph_id": "",
-    "raw_text": "John Schulman, Filip Wolski, Prafulla Dhariwal, Alec Radford, and Oleg Klimov. Proximal policy optimization algorithms. CoRR, abs/1707.06347, 2017. Appendices A. Broader Impact This work contributes t..."
+    "raw_text": "URL https://www.jace.ai/post/awa-1-5-achieves-breakthrough-performance-on-webarena-benchmark.[102] Shikhar Murty, Dzmitry Bahdanau, and Christopher D. Manning. Nnetnav: Unsupervised learning of browse..."
   },
   {
     "ref_no": 1,

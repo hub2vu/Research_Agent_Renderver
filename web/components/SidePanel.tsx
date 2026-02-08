@@ -11,7 +11,7 @@
  */
 
 import React, { useMemo, useState } from 'react';
-import { GraphNode } from '../lib/mcp';
+import { GraphNode, deletePaper } from '../lib/mcp';
 import PaperCard from './PaperCard';
 import ReportViewer from './ReportViewer';
 import { useNavigate } from 'react-router-dom';
@@ -105,6 +105,9 @@ interface SidePanelProps {
   onNodeColorChange?: (nodeKey: string, color: string) => void;
   onNodeColorReset?: (nodeKey: string) => void;
 
+  // Delete callback
+  onDeletePaper?: (paperId: string) => void;
+
   // Extra content to render (for custom pages like NeurIPS)
   extraContent?: React.ReactNode;
 }
@@ -120,6 +123,7 @@ export default function SidePanel({
   nodeColor,
   onNodeColorChange,
   onNodeColorReset,
+  onDeletePaper,
   extraContent
 }: SidePanelProps) {
   if (!selectedNode) return null;
@@ -153,6 +157,26 @@ export default function SidePanel({
 
   const canEditColor = Boolean(onNodeColorChange || onNodeColorReset);
   const [showNodeColor, setShowNodeColor] = useState(true);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const handleDelete = async () => {
+    if (!selectedNode) return;
+    setIsDeleting(true);
+    setDeleteError(null);
+    try {
+      await deletePaper(selectedNode.id);
+      setShowDeleteConfirm(false);
+      if (onDeletePaper) {
+        onDeletePaper(selectedNode.id);
+      }
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : 'Failed to delete paper');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
   const emitColorChange = (color: string) => {
     if (!onNodeColorChange) return;
     if (!isHexColor(color)) return;
@@ -284,6 +308,82 @@ export default function SidePanel({
             >
               View on arXiv ↗
             </a>
+          )}
+
+          {/* -------- Delete Paper -------- */}
+          {!showDeleteConfirm ? (
+            <button
+              onClick={() => { setShowDeleteConfirm(true); setDeleteError(null); }}
+              style={{
+                padding: '10px 16px',
+                backgroundColor: '#fff5f5',
+                color: '#e53e3e',
+                border: '1px solid #feb2b2',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                marginTop: '4px'
+              }}
+            >
+              Delete Paper
+            </button>
+          ) : (
+            <div
+              style={{
+                padding: '12px',
+                backgroundColor: '#fff5f5',
+                border: '1px solid #feb2b2',
+                borderRadius: '6px',
+                marginTop: '4px'
+              }}
+            >
+              <p style={{ margin: '0 0 8px', fontSize: '13px', color: '#c53030', fontWeight: 600 }}>
+                정말 삭제하시겠습니까?
+              </p>
+              <p style={{ margin: '0 0 10px', fontSize: '12px', color: '#742a2a' }}>
+                PDF, 추출된 텍스트/이미지, 레퍼런스, 리포트, 그래프 등 모든 데이터가 삭제됩니다.
+              </p>
+              {deleteError && (
+                <p style={{ margin: '0 0 8px', fontSize: '12px', color: '#e53e3e' }}>
+                  {deleteError}
+                </p>
+              )}
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  style={{
+                    flex: 1,
+                    padding: '8px 12px',
+                    backgroundColor: isDeleting ? '#fc8181' : '#e53e3e',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: isDeleting ? 'not-allowed' : 'pointer',
+                    fontSize: '13px',
+                    fontWeight: 600
+                  }}
+                >
+                  {isDeleting ? 'Deleting...' : 'Confirm Delete'}
+                </button>
+                <button
+                  onClick={() => { setShowDeleteConfirm(false); setDeleteError(null); }}
+                  disabled={isDeleting}
+                  style={{
+                    flex: 1,
+                    padding: '8px 12px',
+                    backgroundColor: '#fff',
+                    color: '#4a5568',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '13px'
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
           )}
         </div>
         

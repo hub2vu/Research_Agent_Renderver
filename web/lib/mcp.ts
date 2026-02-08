@@ -125,6 +125,29 @@ export async function getOrCreateReport(
 }
 
 
+// ==================== Paper Delete API ====================
+
+/**
+ * Delete a paper and all associated data (extracted text, images, graphs, PDF, etc.)
+ */
+export async function deletePaper(paperId: string): Promise<{
+  success: boolean;
+  paper_id: string;
+  deleted: string[];
+  errors: string[];
+}> {
+  const response = await fetch(`${MCP_BASE_URL}/paper/${encodeURIComponent(paperId)}`, {
+    method: 'DELETE',
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: response.statusText }));
+    throw new Error(error.detail || 'Failed to delete paper');
+  }
+
+  return response.json();
+}
+
 // ==================== Graph B (Global) API ====================
 
 /**

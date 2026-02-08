@@ -886,6 +886,129 @@ async def execute_rank_filter_pipeline(request: ExecutePipelineRequest):
         raise HTTPException(status_code=500, detail=f"Pipeline execution failed: {str(e)}")
 
 
+# ============== Paper Delete API ==============
+
+PDF_DIR = Path(os.getenv("PDF_DIR", str(PROJECT_ROOT / "pdf")))
+GRAPH_DIR = OUTPUT_DIR / "graph"
+
+import shutil
+
+
+@app.delete("/paper/{paper_id:path}")
+async def delete_paper(paper_id: str):
+    """
+    Delete a paper and all associated data:
+    - output/{paper_id}/ folder (extracted text, images, references, reports, notes)
+    - PDF file from pdf/ directory
+    - Paper-specific graph cache from output/graph/paper/
+    - Node from global_graph.json
+    - Node color from node_colors.json
+    """
+    deleted = []
+    errors = []
+
+    # 1) Delete output/{paper_id}/ folder
+    paper_output_dir = OUTPUT_DIR / paper_id
+    if paper_output_dir.exists() and paper_output_dir.is_dir():
+        try:
+            shutil.rmtree(str(paper_output_dir))
+            deleted.append(f"output/{paper_id}/")
+            logger.info(f"[Delete] Removed output folder: {paper_output_dir}")
+        except Exception as e:
+            errors.append(f"Failed to delete output folder: {e}")
+            logger.error(f"[Delete] Failed to remove output folder: {e}")
+
+    # 2) Delete PDF file(s) matching the paper_id
+    if PDF_DIR.exists():
+        for pdf_file in PDF_DIR.iterdir():
+            if pdf_file.is_file() and paper_id in pdf_file.stem:
+                try:
+                    pdf_file.unlink()
+                    deleted.append(f"pdf/{pdf_file.name}")
+                    logger.info(f"[Delete] Removed PDF: {pdf_file}")
+                except Exception as e:
+                    errors.append(f"Failed to delete PDF {pdf_file.name}: {e}")
+
+    # 3) Delete paper-specific graph cache
+    paper_graph_file = GRAPH_DIR / "paper" / f"{paper_id}.json"
+    if paper_graph_file.exists():
+        try:
+            paper_graph_file.unlink()
+            deleted.append(f"graph/paper/{paper_id}.json")
+            logger.info(f"[Delete] Removed paper graph: {paper_graph_file}")
+        except Exception as e:
+            errors.append(f"Failed to delete paper graph: {e}")
+
+    # 4) Remove node from global_graph.json
+    global_graph_file = GRAPH_DIR / "global_graph.json"
+    if global_graph_file.exists():
+        try:
+            with open(global_graph_file, "r", encoding="utf-8") as f:
+                graph_data = json.load(f)
+
+            original_node_count = len(graph_data.get("nodes", []))
+            # Filter out nodes matching the paper_id
+            graph_data["nodes"] = [
+                n for n in graph_data.get("nodes", [])
+                if n.get("id") != paper_id
+            ]
+            # Filter out edges referencing the paper_id
+            graph_data["edges"] = [
+                e for e in graph_data.get("edges", [])
+                if e.get("source") != paper_id and e.get("target") != paper_id
+            ]
+
+            removed_nodes = original_node_count - len(graph_data["nodes"])
+            if removed_nodes > 0:
+                # Update meta
+                if "meta" in graph_data:
+                    graph_data["meta"]["total_papers"] = len(graph_data["nodes"])
+                    graph_data["meta"]["total_edges"] = len(graph_data["edges"])
+
+                with open(global_graph_file, "w", encoding="utf-8") as f:
+                    json.dump(graph_data, f, ensure_ascii=False, indent=2)
+                deleted.append("global_graph.json (node removed)")
+                logger.info(f"[Delete] Removed node from global graph: {paper_id}")
+        except Exception as e:
+            errors.append(f"Failed to update global graph: {e}")
+
+    # 5) Remove color from node_colors.json
+    node_colors_file = GRAPH_DIR / "node_colors.json"
+    if node_colors_file.exists():
+        try:
+            with open(node_colors_file, "r", encoding="utf-8") as f:
+                colors_data = json.load(f)
+
+            # Try multiple key formats
+            keys_to_remove = [
+                paper_id,
+                f"paper:{paper_id}",
+                f"paper:10.48550_arxiv.{paper_id}",
+            ]
+            removed_any = False
+            for key in keys_to_remove:
+                if key in colors_data:
+                    del colors_data[key]
+                    removed_any = True
+
+            if removed_any:
+                with open(node_colors_file, "w", encoding="utf-8") as f:
+                    json.dump(colors_data, f, ensure_ascii=False, indent=2)
+                deleted.append("node_colors.json (color removed)")
+        except Exception as e:
+            errors.append(f"Failed to update node colors: {e}")
+
+    if not deleted and not errors:
+        raise HTTPException(status_code=404, detail=f"No data found for paper: {paper_id}")
+
+    return {
+        "success": len(errors) == 0,
+        "paper_id": paper_id,
+        "deleted": deleted,
+        "errors": errors,
+    }
+
+
 # ============== Main (실행 코드는 파일 맨 끝에 딱 한 번만!) ==============
 
 
