@@ -318,7 +318,7 @@ class ExtractAllTool(MCPTool):
 
 
 class ProcessAllPDFsTool(MCPTool):
-    """Process all PDF files in the directory."""
+    """Process all PDF files in the directory, skipping already processed ones."""
 
     @property
     def name(self) -> str:
@@ -326,7 +326,7 @@ class ProcessAllPDFsTool(MCPTool):
 
     @property
     def description(self) -> str:
-        return "Process all PDF files in the directory, extracting text and images from each"
+        return "Process all PDF files in the directory, extracting text and images. Skips PDFs that already have extracted_text.txt and image_metadata.json."
 
     @property
     def category(self) -> str:
@@ -338,10 +338,30 @@ class ProcessAllPDFsTool(MCPTool):
 
         extract_tool = ExtractAllTool()
         results = []
+        skipped = 0
 
         for pdf_info in pdfs_info["files"]:
+            pdf_name = Path(pdf_info["filename"]).stem
+            text_file = OUTPUT_DIR / pdf_name / "extracted_text.txt"
+            json_file = OUTPUT_DIR / pdf_name / "extracted_text.json"
+            image_meta = OUTPUT_DIR / pdf_name / "image_metadata.json"
+
+            # Skip if already fully processed (text + images)
+            text_done = text_file.exists() or json_file.exists()
+            images_done = image_meta.exists()
+
+            if text_done and images_done:
+                skipped += 1
+                results.append({
+                    "filename": pdf_info["filename"],
+                    "status": "skipped",
+                    "reason": "Already processed (text and images exist)"
+                })
+                continue
+
             try:
-                result = await extract_tool.execute(filename=pdf_info["filename"])
+                # Use relative_path to handle PDFs in subdirectories
+                result = await extract_tool.execute(filename=pdf_info["relative_path"])
                 result["status"] = "success"
                 results.append(result)
             except Exception as e:
@@ -352,7 +372,8 @@ class ProcessAllPDFsTool(MCPTool):
                 })
 
         return {
-            "total_processed": len(results),
+            "total_processed": len([r for r in results if r.get("status") == "success"]),
+            "skipped": skipped,
             "successful": len([r for r in results if r.get("status") == "success"]),
             "failed": len([r for r in results if r.get("status") == "error"]),
             "results": results

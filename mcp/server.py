@@ -6,6 +6,7 @@ HTTP API server that exposes all registered MCP tools.
 Tools are automatically discovered via registry.py
 """
 
+import asyncio
 import logging
 import os
 from contextlib import asynccontextmanager
@@ -36,6 +37,75 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+async def auto_process_all_pdfs():
+    """
+    서버 시작 시 자동으로 미처리 PDF를 처리하는 백그라운드 태스크.
+
+    1단계: 텍스트 + 이미지 추출 (이미 처리된 PDF는 스킵)
+    2단계: 레퍼런스 추출 (이미 추출된 논문은 스킵)
+    3단계: 글로벌 그래프 빌드 (새로 처리된 논문이 있거나, 그래프가 없으면 실행)
+    """
+    try:
+        logger.info("[Auto-Process] PDF 자동 처리 시작...")
+
+        new_papers_processed = 0
+
+        # ── Step 1: 텍스트 + 이미지 추출 ──
+        logger.info("[Auto-Process] Step 1/3: 텍스트 및 이미지 추출 중...")
+        result = await execute_tool("process_all_pdfs")
+        if result["success"]:
+            data = result["result"]
+            new_papers_processed = data.get("successful", 0)
+            logger.info(
+                f"[Auto-Process] 텍스트/이미지 추출 완료 - "
+                f"성공: {data.get('successful', 0)}, "
+                f"스킵: {data.get('skipped', 0)}, "
+                f"실패: {data.get('failed', 0)}"
+            )
+        else:
+            logger.warning(f"[Auto-Process] 텍스트/이미지 추출 실패: {result.get('error')}")
+
+        # ── Step 2: 레퍼런스 추출 ──
+        logger.info("[Auto-Process] Step 2/3: 레퍼런스 추출 중...")
+        result = await execute_tool("extract_all_references", skip_existing=True)
+        if result["success"]:
+            data = result["result"]
+            refs_processed = data.get("processed", 0)
+            new_papers_processed += refs_processed
+            logger.info(
+                f"[Auto-Process] 레퍼런스 추출 완료 - "
+                f"처리: {refs_processed}, "
+                f"스킵: {data.get('skipped', 0)}, "
+                f"실패: {data.get('failed', 0)}"
+            )
+        else:
+            logger.warning(f"[Auto-Process] 레퍼런스 추출 실패: {result.get('error')}")
+
+        # ── Step 3: 글로벌 그래프 빌드 ──
+        graph_path = Path(os.getenv("OUTPUT_DIR", "/data/output")) / "graph" / "global_graph.json"
+        should_build_graph = new_papers_processed > 0 or not graph_path.exists()
+
+        if should_build_graph:
+            logger.info("[Auto-Process] Step 3/3: 글로벌 그래프 빌드 중...")
+            result = await execute_tool("build_global_graph")
+            if result["success"]:
+                meta = result["result"].get("meta", {})
+                logger.info(
+                    f"[Auto-Process] 글로벌 그래프 빌드 완료 - "
+                    f"논문 수: {meta.get('total_papers', 0)}, "
+                    f"엣지 수: {meta.get('total_edges', 0)}"
+                )
+            else:
+                logger.warning(f"[Auto-Process] 글로벌 그래프 빌드 실패: {result.get('error')}")
+        else:
+            logger.info("[Auto-Process] Step 3/3: 새로 처리된 논문 없음, 글로벌 그래프 빌드 스킵")
+
+        logger.info("[Auto-Process] PDF 자동 처리 완료!")
+
+    except Exception as e:
+        logger.error(f"[Auto-Process] 자동 처리 중 오류 발생: {str(e)}", exc_info=True)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan handler."""
@@ -44,8 +114,19 @@ async def lifespan(app: FastAPI):
     logger.info(f"MCP Server starting with {len(tools)} tools")
     for name in tools:
         logger.info(f"  - {name}")
+
+    # 서버 시작 후 백그라운드에서 미처리 PDF 자동 처리
+    task = asyncio.create_task(auto_process_all_pdfs())
+
     yield
-    # Shutdown
+
+    # Shutdown: 백그라운드 태스크 정리
+    if not task.done():
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            logger.info("[Auto-Process] 백그라운드 태스크 취소됨")
     logger.info("MCP Server shutting down")
 
 

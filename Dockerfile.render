@@ -1,0 +1,38 @@
+FROM python:3.11-slim
+
+# Install system deps + Node.js 20
+RUN apt-get update && apt-get install -y curl git \
+    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy source
+COPY . /app
+
+# Ensure runtime data dirs exist (matches your compose paths)
+RUN mkdir -p /data/pdf /data/output
+
+# Install Python deps (MCP + Agent)
+RUN pip install --no-cache-dir -r requirements/mcp.txt \
+    && pip install --no-cache-dir -r requirements/agent.txt
+
+# Install Web deps
+WORKDIR /app/web
+RUN npm install
+
+WORKDIR /app
+
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app
+
+# Default internal ports
+ENV MCP_PORT=8000
+ENV AGENT_PORT=8001
+
+# Unified start script (runs mcp + agent + web)
+COPY docker/render-start.sh /usr/local/bin/render-start
+RUN chmod +x /usr/local/bin/render-start
+
+CMD ["/usr/local/bin/render-start"]
