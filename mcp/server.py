@@ -18,6 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pathlib import Path
 import json
+import shutil
 import uuid
 from datetime import datetime
 
@@ -888,10 +889,9 @@ async def execute_rank_filter_pipeline(request: ExecutePipelineRequest):
 
 # ============== Paper Delete API ==============
 
-PDF_DIR = Path(os.getenv("PDF_DIR", str(PROJECT_ROOT / "pdf")))
+PDF_DIR = Path(os.getenv("PDF_DIR", "/data/pdf"))
 GRAPH_DIR = OUTPUT_DIR / "graph"
-
-import shutil
+PAPER_GRAPH_DIR = GRAPH_DIR / "paper"
 
 
 @app.delete("/paper/{paper_id:path}")
@@ -899,8 +899,8 @@ async def delete_paper(paper_id: str):
     """
     Delete a paper and all associated data:
     - output/{paper_id}/ folder (extracted text, images, references, reports, notes)
-    - PDF file from pdf/ directory
-    - Paper-specific graph cache from output/graph/paper/
+    - PDF file from pdf/ directory (including subdirectories)
+    - Paper-specific graph cache & refs cache from output/graph/paper/
     - Node from global_graph.json
     - Node color from node_colors.json
     """
@@ -918,26 +918,29 @@ async def delete_paper(paper_id: str):
             errors.append(f"Failed to delete output folder: {e}")
             logger.error(f"[Delete] Failed to remove output folder: {e}")
 
-    # 2) Delete PDF file(s) matching the paper_id
+    # 2) Delete PDF file(s) matching the paper_id (recursive search in subdirectories)
     if PDF_DIR.exists():
-        for pdf_file in PDF_DIR.iterdir():
-            if pdf_file.is_file() and paper_id in pdf_file.stem:
+        for pdf_file in PDF_DIR.rglob("*.pdf"):
+            if paper_id in pdf_file.stem:
                 try:
+                    rel_path = pdf_file.relative_to(PDF_DIR)
                     pdf_file.unlink()
-                    deleted.append(f"pdf/{pdf_file.name}")
+                    deleted.append(f"pdf/{rel_path}")
                     logger.info(f"[Delete] Removed PDF: {pdf_file}")
                 except Exception as e:
                     errors.append(f"Failed to delete PDF {pdf_file.name}: {e}")
 
-    # 3) Delete paper-specific graph cache
-    paper_graph_file = GRAPH_DIR / "paper" / f"{paper_id}.json"
-    if paper_graph_file.exists():
-        try:
-            paper_graph_file.unlink()
-            deleted.append(f"graph/paper/{paper_id}.json")
-            logger.info(f"[Delete] Removed paper graph: {paper_graph_file}")
-        except Exception as e:
-            errors.append(f"Failed to delete paper graph: {e}")
+    # 3) Delete paper-specific graph cache + refs cache
+    safe_id = paper_id.replace("/", "_")
+    if PAPER_GRAPH_DIR.exists():
+        for cache_file in PAPER_GRAPH_DIR.iterdir():
+            if cache_file.is_file() and safe_id in cache_file.stem:
+                try:
+                    cache_file.unlink()
+                    deleted.append(f"graph/paper/{cache_file.name}")
+                    logger.info(f"[Delete] Removed graph cache: {cache_file}")
+                except Exception as e:
+                    errors.append(f"Failed to delete graph cache {cache_file.name}: {e}")
 
     # 4) Remove node from global_graph.json
     global_graph_file = GRAPH_DIR / "global_graph.json"

@@ -1,0 +1,36 @@
+# Render Blueprint – https://render.com/docs/blueprint-spec
+#
+# Deploy:
+#   1. Push this repo to GitHub
+#   2. Go to https://dashboard.render.com/blueprints
+#   3. Connect the repo → Render reads this file
+#   4. Set the secret env vars (OPENAI_API_KEY, etc.) in the dashboard
+#
+# Or manually:
+#   1. New → Web Service → Docker
+#   2. Dockerfile Path: Dockerfile.render
+#   3. Set env vars in the dashboard
+
+services:
+  - type: web
+    name: research-agent
+    runtime: docker
+    dockerfilePath: ./Dockerfile.render
+    plan: free
+    envVars:
+      # Render sets PORT automatically
+      - key: OPENAI_API_KEY
+        sync: false          # must be set manually in dashboard
+      - key: TAVILY_API_KEY
+        sync: false
+      - key: NOTION_API_TOKEN
+        sync: false
+      - key: NOTION_PARENT_PAGE_ID
+        sync: false
+      # Internal defaults (override in dashboard if needed)
+      - key: PDF_DIR
+        value: /data/pdf
+      - key: OUTPUT_DIR
+        value: /data/output
+      - key: PYTHONUNBUFFERED
+        value: "1"

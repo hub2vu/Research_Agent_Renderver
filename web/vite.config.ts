@@ -15,6 +15,19 @@ const NEURIPS_EMBEDDINGS_PATH = '/app/data/embeddings_Neu/embeddings.npy';
 const ICLR_METADATA_PATH = '/app/data/embeddings_ICLR/ICLR2025_accepted_meta.csv';
 const ICLR_EMBEDDINGS_PATH = '/app/data/embeddings_ICLR/ICLR2025_accepted_bge_large_en_v1_5.npy';
 
+// --------- In-memory caches (critical for pagination + performance) ---------
+let neuripsPapersCache: Array<Record<string, string>> | null = null;
+let iclrPapersCache: Array<Record<string, string>> | null = null;
+
+function getPaginationParams(req: IncomingMessage) {
+  const url = new URL(req.url || '', `http://${req.headers.host}`);
+  const offset = Math.max(0, parseInt(url.searchParams.get('offset') || '0', 10) || 0);
+  const limitRaw = parseInt(url.searchParams.get('limit') || '0', 10) || 0;
+  // 0 or negative => no limit (return all)
+  const limit = limitRaw > 0 ? Math.min(500, limitRaw) : 0;
+  return { url, offset, limit };
+}
+
 // Parse CSV helper - supports multiline fields in quotes
 function parseCSV(content: string): Array<Record<string, string>> {
   const result: Array<Record<string, string>> = [];
@@ -158,6 +171,7 @@ export default defineConfig({
 
           try {
             if (req.method === 'GET') {
+              // Load colors from file
               if (fs.existsSync(NODE_COLORS_PATH)) {
                 const stat = fs.statSync(NODE_COLORS_PATH);
                 const data = fs.readFileSync(NODE_COLORS_PATH, 'utf-8');
@@ -167,9 +181,13 @@ export default defineConfig({
                 res.end(JSON.stringify({ colors: {}, timestamp: 0 }));
               }
             } else if (req.method === 'POST') {
+              // Save colors to file
               ensureGraphDir();
               const body = await readJsonBody(req);
-              const data = { colors: body.colors || {}, timestamp: Date.now() };
+              const data = {
+                colors: body.colors || {},
+                timestamp: Date.now()
+              };
               fs.writeFileSync(NODE_COLORS_PATH, JSON.stringify(data, null, 2));
               res.end(JSON.stringify({ success: true, timestamp: data.timestamp }));
             } else {
@@ -186,6 +204,7 @@ export default defineConfig({
         server.middlewares.use('/api/node-colors/check', (req: IncomingMessage, res: ServerResponse) => {
           res.setHeader('Access-Control-Allow-Origin', '*');
           res.setHeader('Content-Type', 'application/json');
+
           try {
             if (fs.existsSync(NODE_COLORS_PATH)) {
               const stat = fs.statSync(NODE_COLORS_PATH);
@@ -203,6 +222,7 @@ export default defineConfig({
     {
       name: 'neurips-api',
       configureServer(server) {
+        // API: GET /api/neurips/papers?offset=0&limit=50
         server.middlewares.use('/api/neurips/papers', (req: IncomingMessage, res: ServerResponse) => {
           if (req.method === 'OPTIONS') {
             res.setHeader('Access-Control-Allow-Origin', '*');
@@ -223,9 +243,30 @@ export default defineConfig({
               return;
             }
 
-            const content = fs.readFileSync(NEURIPS_METADATA_PATH, 'utf-8');
-            const papers = parseCSV(content);
-            res.end(JSON.stringify({ papers, count: papers.length }));
+            // Cache parse (critical: avoids re-parsing 7000 rows per request)
+            if (!neuripsPapersCache) {
+              const content = fs.readFileSync(NEURIPS_METADATA_PATH, 'utf-8');
+              neuripsPapersCache = parseCSV(content);
+            }
+
+            const { offset, limit } = getPaginationParams(req);
+            const total = neuripsPapersCache.length;
+            const papers = (limit > 0)
+              ? neuripsPapersCache.slice(offset, offset + limit)
+              : neuripsPapersCache;
+
+            const nextOffset = (limit > 0) ? Math.min(total, offset + limit) : total;
+            const hasMore = (limit > 0) ? nextOffset < total : false;
+
+            res.end(JSON.stringify({
+              papers,
+              count: papers.length,
+              total,
+              offset,
+              limit: limit > 0 ? limit : total,
+              nextOffset,
+              hasMore
+            }));
           } catch (err) {
             res.statusCode = 500;
             res.end(JSON.stringify({ error: String(err) }));
@@ -256,7 +297,9 @@ export default defineConfig({
             const body = await readJsonBody(req);
             const message = body.message || '';
 
+            // Agent server URL (in single-container Render mode, this should be localhost)
             const agentUrl = process.env.AGENT_SERVER_URL || 'http://127.0.0.1:8001';
+
             const chatRes = await fetch(`${agentUrl}/chat`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -267,13 +310,18 @@ export default defineConfig({
               const data = await chatRes.json();
               res.end(JSON.stringify(data));
             } else {
-              res.end(JSON.stringify({ response: `Agent server returned error: ${chatRes.statusText}` }));
+              res.end(JSON.stringify({
+                response: `Agent server returned error: ${chatRes.statusText}`
+              }));
             }
           } catch (err) {
-            res.end(JSON.stringify({ response: `Chat service unavailable. Error: ${String(err)}` }));
+            res.end(JSON.stringify({
+              response: `Chat service unavailable. Error: ${String(err)}`
+            }));
           }
         });
 
+        // API: GET /api/neurips/similarities - Get pre-computed similarities
         server.middlewares.use('/api/neurips/similarities', (req: IncomingMessage, res: ServerResponse) => {
           if (req.method === 'OPTIONS') {
             res.setHeader('Access-Control-Allow-Origin', '*');
@@ -299,6 +347,7 @@ export default defineConfig({
           }
         });
 
+        // API: GET /api/neurips/clusters?k=15 - Get KMeans clusters
         server.middlewares.use('/api/neurips/clusters', (req: IncomingMessage, res: ServerResponse) => {
           if (req.method === 'OPTIONS') {
             res.setHeader('Access-Control-Allow-Origin', '*');
@@ -333,6 +382,7 @@ export default defineConfig({
     {
       name: 'iclr-api',
       configureServer(server) {
+        // API: GET /api/iclr/papers?offset=0&limit=50
         server.middlewares.use('/api/iclr/papers', (req: IncomingMessage, res: ServerResponse) => {
           if (req.method === 'OPTIONS') {
             res.setHeader('Access-Control-Allow-Origin', '*');
@@ -353,16 +403,41 @@ export default defineConfig({
               return;
             }
 
-            let content = fs.readFileSync(ICLR_METADATA_PATH, 'utf-8');
-            if (content.charCodeAt(0) === 0xFEFF) content = content.slice(1);
-            const papers = parseCSV(content);
-            res.end(JSON.stringify({ papers, count: papers.length }));
+            // Cache parse
+            if (!iclrPapersCache) {
+              let content = fs.readFileSync(ICLR_METADATA_PATH, 'utf-8');
+              // Remove BOM if present
+              if (content.charCodeAt(0) === 0xFEFF) {
+                content = content.slice(1);
+              }
+              iclrPapersCache = parseCSV(content);
+            }
+
+            const { offset, limit } = getPaginationParams(req);
+            const total = iclrPapersCache.length;
+            const papers = (limit > 0)
+              ? iclrPapersCache.slice(offset, offset + limit)
+              : iclrPapersCache;
+
+            const nextOffset = (limit > 0) ? Math.min(total, offset + limit) : total;
+            const hasMore = (limit > 0) ? nextOffset < total : false;
+
+            res.end(JSON.stringify({
+              papers,
+              count: papers.length,
+              total,
+              offset,
+              limit: limit > 0 ? limit : total,
+              nextOffset,
+              hasMore
+            }));
           } catch (err) {
             res.statusCode = 500;
             res.end(JSON.stringify({ error: String(err) }));
           }
         });
 
+        // API: GET /api/iclr/similarities - Get pre-computed similarities
         server.middlewares.use('/api/iclr/similarities', (req: IncomingMessage, res: ServerResponse) => {
           if (req.method === 'OPTIONS') {
             res.setHeader('Access-Control-Allow-Origin', '*');
@@ -388,6 +463,7 @@ export default defineConfig({
           }
         });
 
+        // API: GET /api/iclr/clusters?k=15 - Get KMeans clusters
         server.middlewares.use('/api/iclr/clusters', (req: IncomingMessage, res: ServerResponse) => {
           if (req.method === 'OPTIONS') {
             res.setHeader('Access-Control-Allow-Origin', '*');

@@ -14,7 +14,7 @@ import SidePanel from '../components/SidePanel';
 import ICLRSearchSidebar from '../components/ICLRSearchSidebar';
 import ICLRRankedList from '../components/ICLRRankedList';
 import PaperListView from '../components/PaperListView';
-import { GraphNode, GraphEdge, executeICLRSearchAndRank, getUserProfile, executeTool } from '../lib/mcp';
+import { GraphNode, GraphEdge, executeICLRSearchAndRank, executeTool } from '../lib/mcp';
 import { ScoredPaper } from '../components/PaperResultCard';
 import { useNodeColors } from '../hooks/useNodeColors';
 
@@ -68,6 +68,8 @@ function generateClusterCenters(k: number): ClusterCenters {
   return centers;
 }
 
+const LIST_PAGE_SIZE = 80;
+
 export default function ICLR2025Page() {
   const [viewMode, setViewMode] = useState<'graph' | 'list'>('graph');
   const [graphState, setGraphState] = useState<ICLRGraphState>({
@@ -80,9 +82,11 @@ export default function ICLR2025Page() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
+
   // 토글
   const [showControls, setShowControls] = useState(true);
   const [showSearchUI, setShowSearchUI] = useState(true);
+
   // 유사도 기준(슬라이더)
   const [minSim, setMinSim] = useState<number>(0.75);
 
@@ -100,13 +104,19 @@ export default function ICLR2025Page() {
   const [focusNodeId, setFocusNodeId] = useState<string | undefined>(undefined);
   const [clusterMap, setClusterMap] = useState<Record<string, number>>({});
 
+  // ✅ List pagination state
+  const [listNodes, setListNodes] = useState<GraphNode[]>([]);
+  const [listOffset, setListOffset] = useState(0);
+  const [listHasMore, setListHasMore] = useState(true);
+  const [listLoadingMore, setListLoadingMore] = useState(false);
+
   const {
     nodeColorMap,
     setNodeColor: handleNodeColorChange,
     resetNodeColor: handleNodeColorReset
   } = useNodeColors();
 
-  // Load papers, similarities, and clusters
+  // Load papers, similarities, and clusters (Graph mode)
   const loadData = useCallback(async (k: number = 15) => {
     setIsLoading(true);
     setError(null);
@@ -140,7 +150,7 @@ export default function ICLR2025Page() {
       paperList.forEach(p => paperMap.set(p.paper_id, p));
       setPapers(paperMap);
 
-      // Create nodes with cluster info and paper name as title
+      // Create nodes with cluster info
       const nodes: GraphNode[] = paperList.map((p, idx) => {
         const clusterId = localClusterMap[p.paper_id] ?? 0;
         const center = centers[String(clusterId)];
@@ -148,22 +158,18 @@ export default function ICLR2025Page() {
         return {
           id: p.paper_id,
           label: p.title.length > 40 ? p.title.substring(0, 37) + '...' : p.title,
-          title: p.title,  // Full paper name for display
+          title: p.title,
           stableKey: iclrStableKey(p.paper_id),
           type: 'iclr_paper',
           cluster: clusterId,
-
-          // Add abstract and authors for PaperListView (like NeurIPS)
           abstract: p.abstract,
           authors: p.authors ? p.authors.split(',').map(s => s.trim()) : [],
-
-          // Initial position near cluster center
           x: center ? center.x + (Math.random() - 0.5) * 200 : (idx % 50) * 30,
           y: center ? center.y + (Math.random() - 0.5) * 200 : Math.floor(idx / 50) * 30,
         };
       });
 
-      // Load similarities (raw, no filtering here)
+      // Load similarities (raw)
       let simEdges: SimilarityEdge[] = [];
       try {
         const simRes = await fetch('/api/iclr/similarities');
@@ -175,10 +181,7 @@ export default function ICLR2025Page() {
         console.warn('Could not load similarities:', e);
       }
 
-      // raw edges 저장
       setRawSimEdges(simEdges);
-
-      // nodes만 graphState에 저장
       setGraphState({ nodes });
 
     } catch (err) {
@@ -188,12 +191,78 @@ export default function ICLR2025Page() {
     }
   }, []);
 
-  // Load data when numClusters changes
-  useEffect(() => {
-    loadData(numClusters);
-  }, [loadData, numClusters]);
+  // Load more for List mode
+  const loadMoreList = useCallback(async () => {
+    if (listLoadingMore || !listHasMore) return;
 
-  // minSim에 따라 edges를 "실시간"으로 재구성
+    setListLoadingMore(true);
+    try {
+      // Ensure clusters are loaded for grouping
+      if (Object.keys(clusterMap).length === 0) {
+        const clustersRes = await fetch(`/api/iclr/clusters?k=${numClusters}`);
+        if (clustersRes.ok) {
+          const clusterData: ClusterData = await clustersRes.json();
+          setClusterMap(clusterData.paper_id_to_cluster || {});
+        }
+      }
+
+      const res = await fetch(`/api/iclr/papers?offset=${listOffset}&limit=${LIST_PAGE_SIZE}`);
+      if (!res.ok) throw new Error(`Failed to load papers: ${res.status}`);
+
+      const data = await res.json();
+      const paperList: ICLRPaper[] = data.papers || [];
+
+      const newNodes: GraphNode[] = paperList.map((p, idx) => {
+        const clusterId = (clusterMap[p.paper_id] ?? 0);
+        return {
+          id: p.paper_id,
+          label: p.title.length > 40 ? p.title.substring(0, 37) + '...' : p.title,
+          title: p.title,
+          stableKey: iclrStableKey(p.paper_id),
+          type: 'iclr_paper',
+          cluster: clusterId,
+          abstract: p.abstract,
+          authors: p.authors ? p.authors.split(',').map(s => s.trim()) : [],
+          x: 0 + (idx % 20),
+          y: 0 + Math.floor(idx / 20),
+        };
+      });
+
+      setListNodes(prev => [...prev, ...newNodes]);
+      setListOffset(data.nextOffset ?? (listOffset + LIST_PAGE_SIZE));
+      setListHasMore(!!data.hasMore);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load data');
+    } finally {
+      setListLoadingMore(false);
+    }
+  }, [listOffset, listHasMore, listLoadingMore, numClusters, clusterMap]);
+
+  // Load when viewMode/numClusters changes
+  useEffect(() => {
+    if (viewMode === 'graph') {
+      loadData(numClusters);
+      return;
+    }
+
+    // list mode: reset
+    setIsLoading(false);
+    setError(null);
+    setSelectedNode(null);
+    setListNodes([]);
+    setListOffset(0);
+    setListHasMore(true);
+  }, [viewMode, numClusters, loadData]);
+
+  // First page auto-load when entering list mode
+  useEffect(() => {
+    if (viewMode !== 'list') return;
+    if (listNodes.length === 0 && listOffset === 0 && listHasMore && !listLoadingMore) {
+      loadMoreList();
+    }
+  }, [viewMode, listOffset, listNodes.length, listHasMore, listLoadingMore, loadMoreList]);
+
+  // minSim에 따라 edges 재구성
   const filteredEdges: GraphEdge[] = useMemo(() => {
     if (rawSimEdges.length === 0 || papers.size === 0) return [];
 
@@ -229,14 +298,12 @@ export default function ICLR2025Page() {
       const result = await executeICLRSearchAndRank(
         searchQuery.trim(),
         'users/profile.json',
-        10, // topK
-        numClusters // clusterK
+        10,
+        numClusters
       );
 
       if (result.success && result.ranked_papers) {
         setSearchResults(result.ranked_papers);
-
-        // Update highlighted paper IDs
         const highlightedSet = new Set(result.ranked_papers.map(p => p.paper_id));
         setHighlightedPaperIds(highlightedSet);
       } else {
@@ -249,19 +316,17 @@ export default function ICLR2025Page() {
     }
   }, [searchQuery, numClusters]);
 
-  // Handle paper click from list
+  // Handle paper click from ranked list
   const handlePaperClick = useCallback((paperId: string) => {
-    // Find the corresponding node
     const node = graphState.nodes.find(n => n.id === paperId);
     if (node) {
       setSelectedNode(node);
       setFocusNodeId(paperId);
-      // Clear focus after animation
       setTimeout(() => setFocusNodeId(undefined), 700);
     }
   }, [graphState.nodes]);
 
-  // Handle PDF download (using executeTool like NeurIPS)
+  // Handle PDF download
   const handleDownloadPdf = useCallback(async () => {
     if (!selectedNode) return;
     const paper = papers.get(selectedNode.id);
@@ -288,15 +353,12 @@ export default function ICLR2025Page() {
     }
   }, [selectedNode, papers]);
 
-  // Get selected paper details
   const selectedPaper = selectedNode ? papers.get(selectedNode.id) : null;
 
-  // Custom SidePanel content for ICLR papers
   const renderICLRDetails = () => {
     if (!selectedPaper) return null;
 
     const openReviewUrl = `https://openreview.net/forum?id=${selectedPaper.paper_id}`;
-    const pdfUrl = `https://openreview.net/pdf?id=${selectedPaper.paper_id}`;
 
     return (
       <div style={{ marginTop: '16px' }}>
@@ -346,7 +408,7 @@ export default function ICLR2025Page() {
     );
   };
 
-  if (isLoading) {
+  if (isLoading && viewMode === 'graph') {
     return (
       <div style={{
         display: 'flex',
@@ -376,6 +438,9 @@ export default function ICLR2025Page() {
     );
   }
 
+  const statsPapersCount = viewMode === 'list' ? listNodes.length : graphState.nodes.length;
+  const statsEdgesCount = viewMode === 'list' ? 0 : filteredEdges.length;
+
   return (
     <div style={{ display: 'flex', height: 'calc(100vh - 60px)' }}>
       <div style={{ flex: 1, position: 'relative' }}>
@@ -395,7 +460,6 @@ export default function ICLR2025Page() {
             width: '260px',
             boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
           }}>
-            {/* 헤더 + Hide 버튼 */}
             <div style={{
               display: 'flex',
               justifyContent: 'space-between',
@@ -419,7 +483,7 @@ export default function ICLR2025Page() {
               </button>
             </div>
 
-            {/* Node/List 토글 */}
+            {/* Node/List */}
             <div style={{ display: 'flex', gap: '6px', marginBottom: '12px' }}>
               <button
                 onClick={() => setViewMode('graph')}
@@ -451,7 +515,7 @@ export default function ICLR2025Page() {
               </button>
             </div>
 
-            {/* Cluster Count (k) Slider */}
+            {/* Cluster Count (k) */}
             <div style={{ marginBottom: '14px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                 <span>Clusters (k)</span>
@@ -471,7 +535,7 @@ export default function ICLR2025Page() {
               </div>
             </div>
 
-            {/* Cluster Strength Slider */}
+            {/* Cluster Strength */}
             <div style={{ marginBottom: '14px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                 <span>Cluster strength</span>
@@ -491,25 +555,27 @@ export default function ICLR2025Page() {
               </div>
             </div>
 
-            {/* Similarity Threshold Slider */}
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                <span>Min similarity</span>
-                <span style={{ color: '#e2e8f0' }}>{minSim.toFixed(2)}</span>
+            {/* Similarity Threshold (graph only) */}
+            {viewMode === 'graph' && (
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                  <span>Min similarity</span>
+                  <span style={{ color: '#e2e8f0' }}>{minSim.toFixed(2)}</span>
+                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={1}
+                  step={0.01}
+                  value={minSim}
+                  onChange={(e) => setMinSim(parseFloat(e.target.value))}
+                  style={{ width: '100%' }}
+                />
+                <div style={{ marginTop: '4px', color: '#718096', fontSize: '11px' }}>
+                  Increase to reduce links (stricter).
+                </div>
               </div>
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.01}
-                value={minSim}
-                onChange={(e) => setMinSim(parseFloat(e.target.value))}
-                style={{ width: '100%' }}
-              />
-              <div style={{ marginTop: '4px', color: '#718096', fontSize: '11px' }}>
-                Increase to reduce links (stricter).
-              </div>
-            </div>
+            )}
           </div>
         ) : (
           <button
@@ -532,7 +598,6 @@ export default function ICLR2025Page() {
             Show Controls
           </button>
         )}
-
 
         {/* Search Sidebar: toggle */}
         {showSearchUI ? (
@@ -634,26 +699,6 @@ export default function ICLR2025Page() {
           </div>
         ) : null)}
 
-        {/* Error Message */}
-        {error && (
-          <div style={{
-            position: 'absolute',
-            bottom: '80px',
-            right: '16px',
-            zIndex: 6,
-            backgroundColor: '#f56565',
-            padding: '12px 16px',
-            borderRadius: '8px',
-            width: '400px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-            color: '#fff',
-            fontSize: '13px',
-          }}>
-            <div style={{ fontWeight: 600, marginBottom: '4px' }}>Error</div>
-            <div>{error}</div>
-          </div>
-        )}
-
         {viewMode === 'graph' && (
           <GraphCanvas
             nodes={graphState.nodes}
@@ -672,14 +717,42 @@ export default function ICLR2025Page() {
         {viewMode === 'list' && (
           <div style={{ position: 'absolute', inset: 0, paddingTop: '60px' }}>
             <PaperListView
-              nodes={graphState.nodes as any}
-              edges={filteredEdges as any}
+              nodes={listNodes as any}
+              edges={[] as any}
               groupBy={(n) => (n.cluster ?? 0)}
               groupTitle={(k) => `Cluster ${k}`}
               onOpenPaper={(paperId) => window.location.href = `/paper/${encodeURIComponent(paperId)}`}
-              initialPrefetchCount={80}
+              initialPrefetchCount={30}
               conferenceType="iclr"
             />
+
+            <div style={{
+              position: 'sticky',
+              bottom: 0,
+              padding: '12px',
+              background: 'rgba(255,255,255,0.95)',
+              borderTop: '1px solid #e2e8f0',
+              textAlign: 'center'
+            }}>
+              {listHasMore ? (
+                <button
+                  onClick={loadMoreList}
+                  disabled={listLoadingMore}
+                  style={{
+                    padding: '10px 18px',
+                    borderRadius: '999px',
+                    border: '1px solid #cbd5e0',
+                    background: '#fff',
+                    cursor: listLoadingMore ? 'not-allowed' : 'pointer',
+                    fontWeight: 700
+                  }}
+                >
+                  {listLoadingMore ? 'Loading...' : `Load more (${LIST_PAGE_SIZE})`}
+                </button>
+              ) : (
+                <div style={{ color: '#718096', fontSize: '13px' }}>No more papers.</div>
+              )}
+            </div>
           </div>
         )}
 
@@ -694,29 +767,29 @@ export default function ICLR2025Page() {
           fontSize: '12px',
           color: '#a0aec0',
         }}>
-          {graphState.nodes.length} papers | {numClusters} clusters | {filteredEdges.length} edges
+          {statsPapersCount} papers | {numClusters} clusters | {statsEdgesCount} edges
         </div>
       </div>
 
       {viewMode === 'graph' && (
-      <SidePanel
-        selectedNode={selectedNode ? {
-          ...selectedNode,
-          label: selectedPaper?.title || selectedNode.label,
-        } : null}
-        onClose={() => setSelectedNode(null)}
-        onNodeColorChange={(key, color) => {
-          const k = selectedNode?.stableKey || key;
-          handleNodeColorChange(k, color);
-        }}
-        onNodeColorReset={(key) => {
-          const k = selectedNode?.stableKey || key;
-          handleNodeColorReset(k);
-        }}
-        nodeColor={selectedNode?.stableKey ? nodeColorMap[selectedNode.stableKey] : undefined}
-        extraContent={renderICLRDetails()}
-      />
-    )}
+        <SidePanel
+          selectedNode={selectedNode ? {
+            ...selectedNode,
+            label: selectedPaper?.title || selectedNode.label,
+          } : null}
+          onClose={() => setSelectedNode(null)}
+          onNodeColorChange={(key, color) => {
+            const k = selectedNode?.stableKey || key;
+            handleNodeColorChange(k, color);
+          }}
+          onNodeColorReset={(key) => {
+            const k = selectedNode?.stableKey || key;
+            handleNodeColorReset(k);
+          }}
+          nodeColor={selectedNode?.stableKey ? nodeColorMap[selectedNode.stableKey] : undefined}
+          extraContent={renderICLRDetails()}
+        />
+      )}
     </div>
   );
 }

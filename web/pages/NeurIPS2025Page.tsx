@@ -14,7 +14,7 @@ import SidePanel from '../components/SidePanel';
 import NeurIPSSearchSidebar from '../components/NeurIPSSearchSidebar';
 import NeurIPSRankedList from '../components/NeurIPSRankedList';
 import PaperListView from '../components/PaperListView';
-import { GraphNode, GraphEdge, executeNeurIPSSearchAndRank, getUserProfile, executeTool } from '../lib/mcp';
+import { GraphNode, GraphEdge, executeNeurIPSSearchAndRank, executeTool } from '../lib/mcp';
 import { ScoredPaper } from '../components/PaperResultCard';
 import { useNodeColors } from '../hooks/useNodeColors';
 
@@ -68,6 +68,8 @@ function generateClusterCenters(k: number): ClusterCenters {
   return centers;
 }
 
+const LIST_PAGE_SIZE = 80;
+
 export default function NeurIPS2025Page() {
   const [viewMode, setViewMode] = useState<'graph' | 'list'>('graph');
   const [graphState, setGraphState] = useState<NeurIPSGraphState>({
@@ -102,13 +104,19 @@ export default function NeurIPS2025Page() {
   const [focusNodeId, setFocusNodeId] = useState<string | undefined>(undefined);
   const [clusterMap, setClusterMap] = useState<Record<string, number>>({});
 
+  // ✅ List pagination state (Load more)
+  const [listNodes, setListNodes] = useState<GraphNode[]>([]);
+  const [listOffset, setListOffset] = useState(0);
+  const [listHasMore, setListHasMore] = useState(true);
+  const [listLoadingMore, setListLoadingMore] = useState(false);
+
   const {
     nodeColorMap,
     setNodeColor: handleNodeColorChange,
     resetNodeColor: handleNodeColorReset
   } = useNodeColors();
 
-  // Load papers, similarities, and clusters
+  // Load papers, similarities, and clusters (Graph mode)
   const loadData = useCallback(async (k: number = 15) => {
     setIsLoading(true);
     setError(null);
@@ -150,16 +158,12 @@ export default function NeurIPS2025Page() {
         return {
           id: p.paper_id,
           label: p.name.length > 40 ? p.name.substring(0, 37) + '...' : p.name,
-          title: p.name,  // Full paper name for display
+          title: p.name,
           stableKey: neuripsStableKey(p.paper_id),
           type: 'neurips_paper',
           cluster: clusterId,
-
-          // ✅ [핵심 수정] 리스트 뷰에 보여줄 Abstract와 Authors 정보를 여기서 꼭 넣어줘야 합니다!
           abstract: p.abstract,
           authors: p['speakers/authors'] ? p['speakers/authors'].split(',').map(s => s.trim()) : [],
-
-          // Initial position near cluster center
           x: center ? center.x + (Math.random() - 0.5) * 200 : (idx % 50) * 30,
           y: center ? center.y + (Math.random() - 0.5) * 200 : Math.floor(idx / 50) * 30,
         };
@@ -177,10 +181,7 @@ export default function NeurIPS2025Page() {
         console.warn('Could not load similarities:', e);
       }
 
-      // ✅ raw edges 저장
       setRawSimEdges(simEdges);
-
-      // ✅ nodes만 graphState에 저장
       setGraphState({ nodes });
 
     } catch (err) {
@@ -190,10 +191,84 @@ export default function NeurIPS2025Page() {
     }
   }, []);
 
-  // Load data when numClusters changes
+  // Load more for List mode
+  const loadMoreList = useCallback(async () => {
+    if (listLoadingMore || !listHasMore) return;
+
+    setListLoadingMore(true);
+    try {
+      // Ensure clusters are loaded (for grouping by cluster)
+      if (Object.keys(clusterMap).length === 0) {
+        const clustersRes = await fetch(`/api/neurips/clusters?k=${numClusters}`);
+        if (clustersRes.ok) {
+          const clusterData: ClusterData = await clustersRes.json();
+          setClusterMap(clusterData.paper_id_to_cluster || {});
+        }
+      }
+
+      const res = await fetch(`/api/neurips/papers?offset=${listOffset}&limit=${LIST_PAGE_SIZE}`);
+      if (!res.ok) throw new Error(`Failed to load papers: ${res.status}`);
+
+      const data = await res.json();
+      const paperList: NeurIPSPaper[] = data.papers || [];
+
+      const newNodes: GraphNode[] = paperList.map((p, idx) => {
+        const clusterId = (clusterMap[p.paper_id] ?? 0);
+        return {
+          id: p.paper_id,
+          label: p.name.length > 40 ? p.name.substring(0, 37) + '...' : p.name,
+          title: p.name,
+          stableKey: neuripsStableKey(p.paper_id),
+          type: 'neurips_paper',
+          cluster: clusterId,
+          abstract: p.abstract,
+          authors: p['speakers/authors'] ? p['speakers/authors'].split(',').map(s => s.trim()) : [],
+          // List mode doesn't need coordinates
+          x: 0 + (idx % 20),
+          y: 0 + Math.floor(idx / 20),
+        };
+      });
+
+      setListNodes(prev => [...prev, ...newNodes]);
+      setListOffset(data.nextOffset ?? (listOffset + LIST_PAGE_SIZE));
+      setListHasMore(!!data.hasMore);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load data');
+    } finally {
+      setListLoadingMore(false);
+    }
+  }, [listOffset, listHasMore, listLoadingMore, numClusters, clusterMap]);
+
+  // Load data when view mode or cluster count changes
   useEffect(() => {
-    loadData(numClusters);
-  }, [loadData, numClusters]);
+    if (viewMode === 'graph') {
+      loadData(numClusters);
+      return;
+    }
+
+    // list mode: reset and load first page
+    setIsLoading(false);
+    setError(null);
+    setSelectedNode(null);
+    setListNodes([]);
+    setListOffset(0);
+    setListHasMore(true);
+
+    // kick off first page
+    (async () => {
+      await Promise.resolve();
+      // ensure the latest offset is used
+      setListOffset(0);
+    })();
+  }, [viewMode, numClusters, loadData]);
+
+  // When listOffset resets to 0 in list mode, load first page
+  useEffect(() => {
+    if (viewMode !== 'list') return;
+    if (listNodes.length === 0 && listOffset === 0 && listHasMore && !listLoadingMore) {
+      loadMoreList();
+    }
+  }, [viewMode, listOffset, listNodes.length, listHasMore, listLoadingMore, loadMoreList]);
 
   // ✅ minSim에 따라 edges를 “실시간”으로 재구성
   const filteredEdges: GraphEdge[] = useMemo(() => {
@@ -249,7 +324,7 @@ export default function NeurIPS2025Page() {
     } finally {
       setIsSearching(false);
     }
-  }, [searchQuery, numClusters]); // numClusters 의존성 추가
+  }, [searchQuery, numClusters]);
 
   // Handle paper click from list
   const handlePaperClick = useCallback((paperId: string) => {
@@ -269,7 +344,7 @@ export default function NeurIPS2025Page() {
     const paper = papers.get(selectedNode.id);
     if (!paper) return;
 
-    setDownloadingPdf(true); // 로딩 표시 시작
+    setDownloadingPdf(true);
     try {
       const result = await executeTool('process_neurips_paper', {
         paper_id: paper.paper_id,
@@ -286,7 +361,7 @@ export default function NeurIPS2025Page() {
     } catch (err) {
       alert(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
-      setDownloadingPdf(false); // 로딩 표시 끝
+      setDownloadingPdf(false);
     }
   }, [selectedNode, papers]);
 
@@ -347,7 +422,7 @@ export default function NeurIPS2025Page() {
     );
   };
 
-  if (isLoading) {
+  if (isLoading && viewMode === 'graph') {
     return (
       <div style={{
         display: 'flex',
@@ -376,6 +451,9 @@ export default function NeurIPS2025Page() {
       </div>
     );
   }
+
+  const statsPapersCount = viewMode === 'list' ? listNodes.length : graphState.nodes.length;
+  const statsEdgesCount = viewMode === 'list' ? 0 : filteredEdges.length;
 
   return (
     <div style={{ display: 'flex', height: 'calc(100vh - 60px)' }}>
@@ -492,25 +570,27 @@ export default function NeurIPS2025Page() {
               </div>
             </div>
 
-            {/* Similarity Threshold Slider */}
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                <span>Min similarity</span>
-                <span style={{ color: '#e2e8f0' }}>{minSim.toFixed(2)}</span>
+            {/* Similarity Threshold Slider (graph only) */}
+            {viewMode === 'graph' && (
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                  <span>Min similarity</span>
+                  <span style={{ color: '#e2e8f0' }}>{minSim.toFixed(2)}</span>
+                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={1}
+                  step={0.01}
+                  value={minSim}
+                  onChange={(e) => setMinSim(parseFloat(e.target.value))}
+                  style={{ width: '100%' }}
+                />
+                <div style={{ marginTop: '4px', color: '#718096', fontSize: '11px' }}>
+                  Increase to reduce links (stricter).
+                </div>
               </div>
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.01}
-                value={minSim}
-                onChange={(e) => setMinSim(parseFloat(e.target.value))}
-                style={{ width: '100%' }}
-              />
-              <div style={{ marginTop: '4px', color: '#718096', fontSize: '11px' }}>
-                Increase to reduce links (stricter).
-              </div>
-            </div>
+            )}
           </div>
         ) : (
           <button
@@ -533,7 +613,6 @@ export default function NeurIPS2025Page() {
             Show Controls
           </button>
         )}
-
 
         {/* Search Sidebar: toggle */}
         {showSearchUI ? (
@@ -635,26 +714,6 @@ export default function NeurIPS2025Page() {
           </div>
         ) : null)}
 
-        {/* Error Message */}
-        {error && (
-          <div style={{
-            position: 'absolute',
-            bottom: '80px',
-            right: '16px',
-            zIndex: 6,
-            backgroundColor: '#f56565',
-            padding: '12px 16px',
-            borderRadius: '8px',
-            width: '400px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-            color: '#fff',
-            fontSize: '13px',
-          }}>
-            <div style={{ fontWeight: 600, marginBottom: '4px' }}>Error</div>
-            <div>{error}</div>
-          </div>
-        )}
-
         {viewMode === 'graph' && (
           <GraphCanvas
             nodes={graphState.nodes}
@@ -673,14 +732,41 @@ export default function NeurIPS2025Page() {
         {viewMode === 'list' && (
           <div style={{ position: 'absolute', inset: 0, paddingTop: '60px' }}>
             <PaperListView
-              nodes={graphState.nodes as any}
-              edges={filteredEdges as any}
+              nodes={listNodes as any}
+              edges={[] as any}
               groupBy={(n) => (n.cluster ?? 0)}
               groupTitle={(k) => `Cluster ${k}`}
-              // NeurIPS 리스트에서 제목 클릭 시: paper page로 이동(원하면 NeurIPS 전용 라우팅으로 변경 가능)
               onOpenPaper={(paperId) => window.location.href = `/paper/${encodeURIComponent(paperId)}`}
-              initialPrefetchCount={80}
+              initialPrefetchCount={30}
             />
+
+            <div style={{
+              position: 'sticky',
+              bottom: 0,
+              padding: '12px',
+              background: 'rgba(255,255,255,0.95)',
+              borderTop: '1px solid #e2e8f0',
+              textAlign: 'center'
+            }}>
+              {listHasMore ? (
+                <button
+                  onClick={loadMoreList}
+                  disabled={listLoadingMore}
+                  style={{
+                    padding: '10px 18px',
+                    borderRadius: '999px',
+                    border: '1px solid #cbd5e0',
+                    background: '#fff',
+                    cursor: listLoadingMore ? 'not-allowed' : 'pointer',
+                    fontWeight: 700
+                  }}
+                >
+                  {listLoadingMore ? 'Loading...' : `Load more (${LIST_PAGE_SIZE})`}
+                </button>
+              ) : (
+                <div style={{ color: '#718096', fontSize: '13px' }}>No more papers.</div>
+              )}
+            </div>
           </div>
         )}
 
@@ -695,7 +781,7 @@ export default function NeurIPS2025Page() {
           fontSize: '12px',
           color: '#a0aec0',
         }}>
-          {graphState.nodes.length} papers | {numClusters} clusters | {filteredEdges.length} edges
+          {statsPapersCount} papers | {numClusters} clusters | {statsEdgesCount} edges
         </div>
       </div>
 

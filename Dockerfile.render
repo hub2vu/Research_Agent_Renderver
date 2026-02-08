@@ -1,38 +1,62 @@
+# ============================================================
+#  Render Deployment Dockerfile
+#  Single container: render_app (MCP + Web) + Agent (background)
+# ============================================================
+
+# ---------- Stage 1: Build web frontend ----------
+FROM node:20-alpine AS web-builder
+
+WORKDIR /build
+COPY web/package*.json ./
+RUN npm ci --ignore-scripts || npm install
+
+COPY web/ ./
+# Skip TypeScript type-checking; just build with Vite
+RUN npx vite build
+
+
+# ---------- Stage 2: Python runtime ----------
 FROM python:3.11-slim
 
-# Install system deps + Node.js 20
-RUN apt-get update && apt-get install -y curl git \
-    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs \
+# System deps for PyMuPDF (PDF processing)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libmupdf-dev mupdf-tools \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copy source
-COPY . /app
+# Copy Python source
+COPY mcp/       /app/mcp/
+COPY agent/     /app/agent/
+COPY logs/      /app/logs/
+COPY render_app.py /app/render_app.py
 
-# Ensure runtime data dirs exist (matches your compose paths)
-RUN mkdir -p /data/pdf /data/output
+# Copy data directory (NeurIPS/ICLR embeddings etc., if present)
+COPY data/      /app/data/
+
+# Copy built web frontend from stage 1
+COPY --from=web-builder /build/dist /app/web/dist
 
 # Install Python deps (MCP + Agent)
-RUN pip install --no-cache-dir -r requirements/mcp.txt \
-    && pip install --no-cache-dir -r requirements/agent.txt
+COPY requirements/ /app/requirements/
+RUN pip install --no-cache-dir \
+    -r requirements/mcp.txt \
+    -r requirements/agent.txt
 
-# Install Web deps
-WORKDIR /app/web
-RUN npm install
+# Create runtime data dirs
+RUN mkdir -p /data/pdf /data/output/graph
 
-WORKDIR /app
-
+# Environment
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app
+ENV PDF_DIR=/data/pdf
+ENV OUTPUT_DIR=/data/output
+ENV DATA_DIR=/app/data
 
-# Default internal ports
-ENV MCP_PORT=8000
-ENV AGENT_PORT=8001
-
-# Unified start script (runs mcp + agent + web)
+# Startup script
 COPY docker/render-start.sh /usr/local/bin/render-start
 RUN chmod +x /usr/local/bin/render-start
+
+EXPOSE 10000
 
 CMD ["/usr/local/bin/render-start"]

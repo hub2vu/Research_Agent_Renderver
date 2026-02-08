@@ -1,44 +1,68 @@
 #!/bin/sh
 set -e
 
-# Render assigns PORT for the public web service
+# ──────────────────────────────────────────────────────────────
+#  Render Unified Startup Script
+#
+#  Process 1: render_app (MCP server + Web frontend + APIs)
+#             on $PORT (Render's public port, default 10000)
+#  Process 2: Agent server on localhost:8001 (internal only)
+# ──────────────────────────────────────────────────────────────
+
 : "${PORT:=10000}"
 
-# Force internal service URL to localhost (since we're in one container)
-export MCP_SERVER_URL="http://127.0.0.1:8000"
+# Agent connects to MCP via the render_app's /api mount
+export MCP_SERVER_URL="http://127.0.0.1:${PORT}/api"
 
-# Optional: map PDF/OUTPUT dirs if your code relies on these envs
+# Data directories
 : "${PDF_DIR:=/data/pdf}"
 : "${OUTPUT_DIR:=/data/output}"
 export PDF_DIR OUTPUT_DIR
 
-echo "[render-start] Starting MCP server on :8000"
-python -m uvicorn mcp.server:app --host 0.0.0.0 --port 8000 &
-MCP_PID=$!
+echo "============================================"
+echo "  Research Agent – Render Deployment"
+echo "  Public port : ${PORT}"
+echo "  MCP URL     : ${MCP_SERVER_URL}"
+echo "  PDF dir     : ${PDF_DIR}"
+echo "  Output dir  : ${OUTPUT_DIR}"
+echo "============================================"
 
-# Wait for MCP to be ready before starting Agent (prevents startup race)
-echo "[render-start] Waiting for MCP to be ready..."
-python - <<'PY'
-import socket, time, sys
-host, port = '127.0.0.1', 8000
-for i in range(60):
-    try:
-        s = socket.create_connection((host, port), timeout=1)
-        s.close()
-        print('[render-start] MCP is ready')
-        sys.exit(0)
-    except OSError:
-        time.sleep(0.5)
-print('[render-start] MCP did not become ready in time', file=sys.stderr)
-sys.exit(1)
-PY
+# ── 1. Start the unified server (render_app = MCP + Web) ──
+echo "[render] Starting unified server on :${PORT} ..."
+python -m uvicorn render_app:app \
+    --host 0.0.0.0 \
+    --port "${PORT}" \
+    --log-level info &
+MAIN_PID=$!
 
-echo "[render-start] Starting Agent server on :8001"
-python -m uvicorn agent.server:app --host 0.0.0.0 --port 8001 &
+# ── 2. Wait for the server to be ready ──
+echo "[render] Waiting for server to be ready ..."
+for i in $(seq 1 90); do
+    if python -c "
+import socket, sys
+try:
+    s = socket.create_connection(('127.0.0.1', ${PORT}), timeout=1)
+    s.close()
+    sys.exit(0)
+except OSError:
+    sys.exit(1)
+" 2>/dev/null; then
+        echo "[render] Server is ready (took ~${i}s)"
+        break
+    fi
+    sleep 1
+done
+
+# ── 3. Start Agent server (background, internal only) ──
+echo "[render] Starting Agent server on :8001 ..."
+python -m uvicorn agent.server:app \
+    --host 127.0.0.1 \
+    --port 8001 \
+    --log-level info &
 AGENT_PID=$!
 
-# Web: run Vite dev server bound to Render's PORT
-echo "[render-start] Starting Web UI on :$PORT"
-cd /app/web
+echo "[render] All processes started. Main PID=${MAIN_PID}, Agent PID=${AGENT_PID}"
 
-exec npm run dev -- --host 0.0.0.0 --port "$PORT"
+# ── 4. Keep running until the main process exits ──
+# If the main server dies, Render will restart the container.
+wait ${MAIN_PID}

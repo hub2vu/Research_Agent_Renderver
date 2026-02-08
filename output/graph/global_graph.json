@@ -29,8 +29,6 @@
     "similarity_threshold": 0.7,
     "used_embeddings": true,
     "titles": {
-      "10.48550_arxiv.2201.07207": "Language Models as Zero-Shot Planners: Extracting Actionable Knowledge for Embodied Agents",
-      "10.48550_arxiv.2210.03629": "REACT: SYNERGIZING REASONING AND ACTING IN LANGUAGE MODELS",
       "10.48550_arxiv.2506.07976": "Thinking vs. Doing: Agents that Reason by Scaling Test-Time Interaction",
       "115627_Alternating Gradient Flows_ A Theory of Feature Learning in Two-layer Neural Networks": "Alternating Gradient Flows: A Theory of Feature Learning in Two-layer Neural Networks Daniel Kunin†",
       "115929_The Price of Sparsity_ Sufficient Conditions for Sparse Recovery using Sparse and Sparsified Measurements": "The Price of Sparsity: Sufficient Conditions for Sparse Recovery using Sparse and Sparsified Measurements",
@@ -38,23 +36,11 @@
       "116466_Self-Evolving Pseudo-Rehearsal for Catastrophic Forgetting with Task Similarity in LLMs": "Self-Evolving Pseudo-Rehearsal for Catastrophic Forgetting with Task Similarity in LLMs Jun Wang1∗Liang Ding2∗Shuai Wang1",
       "117038_GoRA_ Gradient-driven Adaptive Low Rank Adaptation": "GoRA: Gradient-driven Adaptive Low Rank Adaptation Haonan He1,2,3∗,",
       "117231_Bernstein–von Mises for Adaptively Collected Data": "Bernstein–von Mises for Adaptively Collected Data",
-      "117609_Path Gradients after Flow Matching": "Path Gradients after Flow Matching",
       "118575_Inverse Methods for Missing Data Imputation": "Inverse Methods for Missing Data Imputation Hao Wang1∗Zhengnan Li1∗ Zhichao Chen2",
       "118823_How many measurements are enough_ Bayesian recovery in inverse problems with general distributions": "How many measurements are enough? Bayesian recovery in inverse problems with general distributions",
       "119698_The Rise of Parameter Specialization for Knowledge Storage in Large Language Models": "The Rise of Parameter Specialization for Knowledge Storage in Large Language Models Yihuai Hong1,2∗",
       "120272_metaTextGrad_ Automatically optimizing language model optimizers": "metaTextGrad: Automatically optimizing language model optimizers",
-      "1706.03762": "Provided proper attribution is provided, Google hereby grants permission to reproduce the tables and figures in this paper solely for use in journalistic or scholarly works.",
-      "1809.04281": "MUSIC TRANSFORMER: GENERATING MUSIC WITH LONG-TERM STRUCTURE Cheng-Zhi Anna Huang∗Ashish Vaswani",
-      "2506.07976": "Thinking vs. Doing: Agents that Reason by Scaling Test-Time Interaction",
-      "eghAocvqBk_Diffusion Bridge Implicit Models": "DIFFUSION BRIDGE IMPLICIT MODELS Kaiwen Zheng12∗, Guande He1∗,",
-      "FinCon_LLM_Agent_System": "FINCON: A Synthesized LLM Multi-Agent System with Conceptual Verbal Reinforcement for Enhanced",
-      "k03mB41vyM_Identifiable Exchangeable Mechanisms for Causal Structure and Representation Learning": "IDENTIFIABLE EXCHANGEABLE MECHANISMS FOR CAUSAL STRUCTURE AND REPRESENTATION LEARN- ING",
-      "LLM_Agents_in_Stock_Trading": "STOCKBENCH: CAN LLM AGENTS TRADE STOCKS PROFITABLY IN REAL-WORLD MARKETS?",
-      "Music_Transformer": "MUSIC TRANSFORMER: GENERATING MUSIC WITH LONG-TERM STRUCTURE Cheng-Zhi Anna Huang∗Ashish Vaswani",
-      "n5PrId7pk5_Linear combinations of latents in generative models_ subspaces and beyond": "LINEAR COMBINATIONS OF LATENTS IN GENERATIVE MODELS: SUBSPACES AND BEYOND Erik Bodin1",
-      "SpaceTimePilot": "SpaceTimePilot: Generative Rendering of Dynamic Scenes Across Space and Time Zhening Huang1,2",
-      "StockBench_LLM_Agents": "STOCKBENCH: CAN LLM AGENTS TRADE STOCKS PROFITABLY IN REAL-WORLD MARKETS?",
-      "tyEyYT267x_Block Diffusion_ Interpolating Between Autoregressive and Diffusion Language Models": "BLOCK DIFFUSION: INTERPOLATING BETWEEN AU- TOREGRESSIVE AND DIFFUSION LANGUAGE MODELS Marianne Arriola† ∗"
+      "2506.07976": "Thinking vs. Doing: Agents that Reason by Scaling Test-Time Interaction"
     }
   }
 }
