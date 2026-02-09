@@ -1,0 +1,33 @@
+# Render deployment – lightweight requirements
+# Excludes: sentence-transformers, PyTorch, scikit-learn, pandas
+# (saves ~500MB disk + ~250MB RAM)
+
+# Base
+python-dotenv>=1.0.0
+pydantic>=2.0.0
+
+# HTTP Server
+fastapi>=0.104.0
+uvicorn>=0.24.0
+
+# PDF Processing
+pymupdf>=1.24.0
+Pillow>=10.0.0
+
+# arXiv API
+arxiv>=2.0.0
+
+# Web Search (Tavily)
+tavily-python>=0.3.0
+
+# Graph Analysis (lightweight)
+networkx>=3.0
+
+# Embeddings array loading (lightweight, ~25MB)
+numpy>=1.24.0
+
+# OpenAI API
+openai>=1.0.0
+
+# HTTP Client (Agent)
+requests>=2.31.0

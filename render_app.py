@@ -164,16 +164,18 @@ async def neurips_papers(offset: int = 0, limit: int = 0):
 
 @app.get("/api/neurips/similarities")
 async def neurips_similarities():
-    return _read_json(
-        NEURIPS_SIM, {"edges": [], "message": "similarities.json not found"}
-    )
+    if NEURIPS_SIM.exists():
+        return FileResponse(NEURIPS_SIM, media_type="application/json")
+    return JSONResponse({"edges": [], "message": "similarities.json not found"})
 
 
 @app.get("/api/neurips/clusters")
 async def neurips_clusters(k: int = 15):
     valid_k = max(5, min(30, k))
     path = DATA_DIR / "embeddings_Neu" / f"neurips_clusters_k{valid_k}.json"
-    return _read_json(path, {"paper_id_to_cluster": {}, "k": 0})
+    if path.exists():
+        return FileResponse(path, media_type="application/json")
+    return JSONResponse({"paper_id_to_cluster": {}, "k": 0})
 
 
 # ─── ICLR API ──────────────────────────────────────────────────────────────
@@ -188,16 +190,18 @@ async def iclr_papers(offset: int = 0, limit: int = 0):
 
 @app.get("/api/iclr/similarities")
 async def iclr_similarities():
-    return _read_json(
-        ICLR_SIM, {"edges": [], "message": "similarities.json not found"}
-    )
+    if ICLR_SIM.exists():
+        return FileResponse(ICLR_SIM, media_type="application/json")
+    return JSONResponse({"edges": [], "message": "similarities.json not found"})
 
 
 @app.get("/api/iclr/clusters")
 async def iclr_clusters(k: int = 15):
     valid_k = max(5, min(30, k))
     path = DATA_DIR / "embeddings_ICLR" / f"iclr_clusters_k{valid_k}.json"
-    return _read_json(path, {"paper_id_to_cluster": {}, "k": 0})
+    if path.exists():
+        return FileResponse(path, media_type="application/json")
+    return JSONResponse({"paper_id_to_cluster": {}, "k": 0})
 
 
 # ─── Chat proxy  (→ Agent server on :8001) ─────────────────────────────────

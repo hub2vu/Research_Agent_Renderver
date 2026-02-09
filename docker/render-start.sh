@@ -19,12 +19,19 @@ export MCP_SERVER_URL="http://127.0.0.1:${PORT}/api"
 : "${OUTPUT_DIR:=/data/output}"
 export PDF_DIR OUTPUT_DIR
 
+# Memory-saving flags
+: "${SKIP_EMBEDDINGS:=true}"
+: "${SKIP_AUTO_PROCESS:=true}"
+export SKIP_EMBEDDINGS SKIP_AUTO_PROCESS
+
 echo "============================================"
 echo "  Research Agent – Render Deployment"
-echo "  Public port : ${PORT}"
-echo "  MCP URL     : ${MCP_SERVER_URL}"
-echo "  PDF dir     : ${PDF_DIR}"
-echo "  Output dir  : ${OUTPUT_DIR}"
+echo "  Public port      : ${PORT}"
+echo "  MCP URL          : ${MCP_SERVER_URL}"
+echo "  PDF dir          : ${PDF_DIR}"
+echo "  Output dir       : ${OUTPUT_DIR}"
+echo "  Skip embeddings  : ${SKIP_EMBEDDINGS}"
+echo "  Skip auto-process: ${SKIP_AUTO_PROCESS}"
 echo "============================================"
 
 # ── 1. Start the unified server (render_app = MCP + Web) ──

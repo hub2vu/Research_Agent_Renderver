@@ -36,3 +36,5 @@ services:
         value: "1"
       - key: SKIP_EMBEDDINGS
         value: "true"        # Save ~200MB RAM by not loading sentence-transformers/PyTorch
+      - key: SKIP_AUTO_PROCESS
+        value: "true"        # Skip PDF auto-processing on startup to save RAM

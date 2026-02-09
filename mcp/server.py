@@ -119,12 +119,18 @@ async def lifespan(app: FastAPI):
         logger.info(f"  - {name}")
 
     # 서버 시작 후 백그라운드에서 미처리 PDF 자동 처리
-    task = asyncio.create_task(auto_process_all_pdfs())
+    # SKIP_AUTO_PROCESS=true → Render 무료 티어 등 메모리 제한 환경에서 스킵
+    skip_auto = os.getenv("SKIP_AUTO_PROCESS", "").lower() in ("1", "true", "yes")
+    task = None
+    if skip_auto:
+        logger.info("[Auto-Process] SKIP_AUTO_PROCESS=true → PDF 자동 처리 건너뜀")
+    else:
+        task = asyncio.create_task(auto_process_all_pdfs())
 
     yield
 
     # Shutdown: 백그라운드 태스크 정리
-    if not task.done():
+    if task and not task.done():
         task.cancel()
         try:
             await task
