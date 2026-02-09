@@ -51,7 +51,18 @@ export default function ReportViewer({ paperId }: ReportViewerProps) {
             setReportContent(result.content);
         } catch (err: any) {
             console.error(err);
-            setError(err.message || "Error loading report");
+            const msg = err.message || "Error loading report";
+            // 다운받지 않은 논문 → 친절한 안내 메시지
+            if (
+                msg.includes("not found") ||
+                msg.includes("No text") ||
+                msg.includes("extract") ||
+                msg.includes("generation")
+            ) {
+                setError("해당 기능은 Download 된 PDF에서만 지원합니다.");
+            } else {
+                setError(msg);
+            }
         } finally {
             setIsLoading(false);
         }

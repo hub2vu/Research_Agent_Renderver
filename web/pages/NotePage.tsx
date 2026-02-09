@@ -111,19 +111,7 @@ async function resolveAndLoadPdf(paperIdRaw: string): Promise<PdfLoadResult> {
     }
   }
 
-  throw new Error(
-    [
-      'PDF를 불러올 수 없습니다.',
-      '',
-      '확인해보세요:',
-      '- /output/{paperId}/paper.pdf 또는 /pdf/{paperId}.pdf 존재 여부',
-      '- noteId(paperId)가 폴더명/파일명과 정확히 일치하는지 확인',
-      '',
-      `시도한 후보 URL: ${tried.join(' | ')}`,
-      errors.length ? '' : '',
-      errors.length ? `에러 로그:\n${errors.join('\n')}` : ''
-    ].join('\n')
-  );
+  throw new Error('해당 기능은 Download 된 PDF에서만 지원합니다.');
 }
 
 function generateId(): string {
@@ -1327,18 +1315,20 @@ const handleSaveToNotion = useCallback(async () => {
           {loading && <div style={{ color: '#718096', fontSize: 14, padding: '12px 0' }}>PDF를 불러오는 중…</div>}
 
           {error && (
-            <pre
+            <div
               style={{
-                background: '#fff',
-                border: '1px solid #fed7d7',
-                color: '#c53030',
-                padding: 12,
+                background: '#fffbeb',
+                border: '1px solid #fbbf24',
+                color: '#92400e',
+                padding: '16px 20px',
                 borderRadius: 8,
-                whiteSpace: 'pre-wrap'
+                fontSize: 14,
+                fontWeight: 500,
+                textAlign: 'center',
               }}
             >
               {error}
-            </pre>
+            </div>
           )}
 
           {!loading && !error && pageCount === 0 && (

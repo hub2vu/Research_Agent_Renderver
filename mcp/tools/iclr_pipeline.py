@@ -286,10 +286,11 @@ class ICLRPipelineTool(MCPTool):
         # ---------------------------------------------------------
         print(f"[ICLR Pipeline] 4. Building Global Graph (threshold={similarity_threshold})...")
 
+        skip_emb = os.getenv("SKIP_EMBEDDINGS", "").lower() in ("1", "true", "yes")
         global_graph_res = await execute_tool(
             "build_global_graph",
             similarity_threshold=similarity_threshold,
-            use_embeddings=True
+            use_embeddings=not skip_emb
         )
 
         if global_graph_res["success"]:
