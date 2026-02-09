@@ -10,7 +10,7 @@
  * - Reference node id also set to stable stableKey (ref:<hash>)
  */
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import GraphCanvas from '../components/GraphCanvas';
 import SidePanel from '../components/SidePanel';
@@ -244,6 +244,81 @@ export default function PaperGraphPage() {
   }, [navigate]);
   const handleOpenNote = () => navigate(`/note/${paperId}`);
 
+  /* --------- Extra content: arXiv / OpenReview search buttons for reference nodes --------- */
+
+  const referenceSearchContent = useMemo(() => {
+    if (!selectedNode) return undefined;
+    // 센터 노드(원래 논문)에는 표시하지 않음
+    if ((selectedNode as any).isCenter) return undefined;
+
+    const title = String((selectedNode as any).title || selectedNode.label || '').trim();
+    if (!title) return undefined;
+
+    const encoded = encodeURIComponent(title);
+    const arxivUrl = `https://arxiv.org/search/?query=${encoded}&searchtype=all`;
+    const openReviewUrl = `https://openreview.net/search?term=${encoded}&content=all`;
+    const scholarUrl = `https://scholar.google.com/scholar?q=${encoded}`;
+
+    const btnStyle: React.CSSProperties = {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      width: '100%',
+      padding: '10px 14px',
+      border: '1px solid #e2e8f0',
+      borderRadius: '6px',
+      cursor: 'pointer',
+      fontSize: '13px',
+      fontWeight: 500,
+      textDecoration: 'none',
+      transition: 'background 0.15s',
+    };
+
+    return (
+      <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div style={{ fontSize: '11px', color: '#6b7280', textTransform: 'uppercase', fontWeight: 600, marginBottom: '2px' }}>
+          논문 검색 / 다운로드
+        </div>
+
+        <a
+          href={arxivUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ ...btnStyle, backgroundColor: '#fef3c7', color: '#92400e', borderColor: '#fbbf24' }}
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#fde68a')}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#fef3c7')}
+        >
+          <span style={{ fontSize: '16px' }}>📄</span>
+          arXiv에서 검색
+        </a>
+
+        <a
+          href={openReviewUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ ...btnStyle, backgroundColor: '#ede9fe', color: '#5b21b6', borderColor: '#c4b5fd' }}
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#ddd6fe')}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#ede9fe')}
+        >
+          <span style={{ fontSize: '16px' }}>🔍</span>
+          OpenReview에서 검색
+        </a>
+
+        <a
+          href={scholarUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ ...btnStyle, backgroundColor: '#ecfdf5', color: '#065f46', borderColor: '#6ee7b7' }}
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#d1fae5')}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#ecfdf5')}
+        >
+          <span style={{ fontSize: '16px' }}>🎓</span>
+          Google Scholar에서 검색
+        </a>
+      </div>
+    );
+  }, [selectedNode]);
+
   /* ----------------------------- UI ----------------------------- */
 
   const selectedKey = selectedNode ? nodeKeyOf(selectedNode as any) : '';
@@ -351,7 +426,6 @@ export default function PaperGraphPage() {
             : undefined
         }
         onNodeColorChange={(keyOrId, color) => {
-          // SidePanel이 id를 주더라도, selectedNode가 있으면 stableKey로 저장되게 강제
           const key = selectedNode ? nodeKeyOf(selectedNode as any) : keyOrId;
           handleNodeColorChange(key, color);
         }}
@@ -359,6 +433,7 @@ export default function PaperGraphPage() {
           const key = selectedNode ? nodeKeyOf(selectedNode as any) : keyOrId;
           handleNodeColorReset(key);
         }}
+        extraContent={referenceSearchContent}
       />
     </div>
   );
