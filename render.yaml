@@ -34,3 +34,5 @@ services:
         value: /data/output
       - key: PYTHONUNBUFFERED
         value: "1"
+      - key: SKIP_EMBEDDINGS
+        value: "true"        # Save ~200MB RAM by not loading sentence-transformers/PyTorch

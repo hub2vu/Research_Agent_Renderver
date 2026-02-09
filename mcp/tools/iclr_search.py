@@ -13,17 +13,34 @@ from typing import Any, Dict, List, Optional
 
 import numpy as np
 
-try:
-    from sentence_transformers import SentenceTransformer
-    HAS_SENTENCE_TRANSFORMERS = True
-except ImportError:
-    HAS_SENTENCE_TRANSFORMERS = False
+# Lazy-load heavy ML libraries to save ~200MB+ RAM at startup
+SKIP_EMBEDDINGS = os.getenv("SKIP_EMBEDDINGS", "").lower() in ("1", "true", "yes")
+HAS_SENTENCE_TRANSFORMERS = False  # resolved lazily
+HAS_SKLEARN = False  # resolved lazily
 
-try:
-    from sklearn.metrics.pairwise import cosine_similarity
-    HAS_SKLEARN = True
-except ImportError:
-    HAS_SKLEARN = False
+_SentenceTransformer = None
+_cosine_similarity = None
+
+
+def _ensure_ml_imports():
+    """Import sentence-transformers & sklearn only when needed."""
+    global _SentenceTransformer, _cosine_similarity, HAS_SENTENCE_TRANSFORMERS, HAS_SKLEARN
+    if SKIP_EMBEDDINGS:
+        return
+    if _SentenceTransformer is None:
+        try:
+            from sentence_transformers import SentenceTransformer
+            _SentenceTransformer = SentenceTransformer
+            HAS_SENTENCE_TRANSFORMERS = True
+        except ImportError:
+            HAS_SENTENCE_TRANSFORMERS = False
+    if _cosine_similarity is None:
+        try:
+            from sklearn.metrics.pairwise import cosine_similarity
+            _cosine_similarity = cosine_similarity
+            HAS_SKLEARN = True
+        except ImportError:
+            HAS_SKLEARN = False
 
 from ..base import MCPTool, ToolParameter, ExecutionError
 from .rank_filter_utils import load_profile, PaperInput
@@ -156,6 +173,7 @@ def _get_iclr_embedding_model():
     if _iclr_embedding_model_cache is not None:
         return _iclr_embedding_model_cache
 
+    _ensure_ml_imports()
     if not HAS_SENTENCE_TRANSFORMERS:
         return None
 
@@ -164,7 +182,7 @@ def _get_iclr_embedding_model():
 
     try:
         logger.info(f"Loading ICLR embedding model: {model_name}")
-        _iclr_embedding_model_cache = SentenceTransformer(model_name)
+        _iclr_embedding_model_cache = _SentenceTransformer(model_name)
         return _iclr_embedding_model_cache
     except Exception as e:
         logger.error(f"Failed to load ICLR embedding model {model_name}: {e}")
@@ -538,6 +556,7 @@ class ICLRSearchTool(MCPTool):
         Returns:
             Dictionary mapping paper_id to semantic score (0.0-1.0)
         """
+        _ensure_ml_imports()
         if not HAS_SENTENCE_TRANSFORMERS or not HAS_SKLEARN:
             logger.warning(
                 "✗ SentenceTransformer or scikit-learn not available. "
@@ -607,7 +626,7 @@ class ICLRSearchTool(MCPTool):
             )
             # Calculate cosine similarity
             query_embedding_2d = query_embedding.reshape(1, -1)
-            similarities = cosine_similarity(query_embedding_2d, embeddings_array)[0]
+            similarities = _cosine_similarity(query_embedding_2d, embeddings_array)[0]
 
             logger.debug(
                 f"✓ Computed {len(similarities)} similarities. "
@@ -664,6 +683,7 @@ class ICLRSearchTool(MCPTool):
         Returns:
             Dictionary mapping paper_id to semantic score
         """
+        _ensure_ml_imports()
         if not HAS_SENTENCE_TRANSFORMERS or not HAS_SKLEARN:
             logger.warning(
                 "✗ SentenceTransformer or scikit-learn not available. "
@@ -703,7 +723,7 @@ class ICLRSearchTool(MCPTool):
 
             # Calculate cosine similarity
             query_embedding_2d = query_embedding.reshape(1, -1)
-            similarities = cosine_similarity(query_embedding_2d, paper_embeddings)[0]
+            similarities = _cosine_similarity(query_embedding_2d, paper_embeddings)[0]
 
             logger.debug(
                 f"✓ Computed similarities. "

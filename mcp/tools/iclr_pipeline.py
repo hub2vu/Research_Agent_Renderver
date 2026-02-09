@@ -8,7 +8,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-import pandas as pd
 import requests
 
 from ..base import MCPTool, ToolParameter, ExecutionError
@@ -96,6 +95,7 @@ class ICLRDownloadPdfTool(MCPTool):
 
         if mp.exists():
             try:
+                import pandas as pd  # lazy import – save ~50MB RAM at startup
                 df = pd.read_csv(mp)
                 row = df[df["paper_id"].astype(str) == paper_id]
                 if not row.empty:

@@ -52,6 +52,8 @@ ENV PYTHONPATH=/app
 ENV PDF_DIR=/data/pdf
 ENV OUTPUT_DIR=/data/output
 ENV DATA_DIR=/app/data
+# Skip sentence-transformers/PyTorch to save ~200MB RAM on free tier
+ENV SKIP_EMBEDDINGS=true
 
 # Startup script
 COPY docker/render-start.sh /usr/local/bin/render-start

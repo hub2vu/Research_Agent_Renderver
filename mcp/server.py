@@ -87,8 +87,10 @@ async def auto_process_all_pdfs():
         should_build_graph = new_papers_processed > 0 or not graph_path.exists()
 
         if should_build_graph:
-            logger.info("[Auto-Process] Step 3/3: 글로벌 그래프 빌드 중...")
-            result = await execute_tool("build_global_graph")
+            # SKIP_EMBEDDINGS=true → 임베딩 없이 빌드 (RAM 절약, Render 무료 티어 등)
+            skip_emb = os.getenv("SKIP_EMBEDDINGS", "").lower() in ("1", "true", "yes")
+            logger.info(f"[Auto-Process] Step 3/3: 글로벌 그래프 빌드 중... (embeddings={'off' if skip_emb else 'on'})")
+            result = await execute_tool("build_global_graph", use_embeddings=not skip_emb)
             if result["success"]:
                 meta = result["result"].get("meta", {})
                 logger.info(

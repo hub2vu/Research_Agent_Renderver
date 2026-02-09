@@ -33,11 +33,29 @@ GLOBAL_GRAPH_PATH = GRAPH_DIR / "global_graph.json"
 GRAPH_DIR.mkdir(parents=True, exist_ok=True)
 PAPER_GRAPH_DIR.mkdir(parents=True, exist_ok=True)
 
-try:
-    from sentence_transformers import SentenceTransformer
-    HAS_SENTENCE_TRANSFORMERS = True
-except ImportError:
-    HAS_SENTENCE_TRANSFORMERS = False
+# Lazy-load sentence-transformers to save ~200MB RAM at startup
+# (importing it eagerly pulls in PyTorch + transformers)
+HAS_SENTENCE_TRANSFORMERS = False  # resolved lazily
+SKIP_EMBEDDINGS = os.getenv("SKIP_EMBEDDINGS", "").lower() in ("1", "true", "yes")
+
+_SentenceTransformer = None  # cached class reference
+
+
+def _get_sentence_transformer_class():
+    """Import SentenceTransformer only when actually needed."""
+    global _SentenceTransformer, HAS_SENTENCE_TRANSFORMERS
+    if SKIP_EMBEDDINGS:
+        return None
+    if _SentenceTransformer is not None:
+        return _SentenceTransformer
+    try:
+        from sentence_transformers import SentenceTransformer
+        _SentenceTransformer = SentenceTransformer
+        HAS_SENTENCE_TRANSFORMERS = True
+        return SentenceTransformer
+    except ImportError:
+        HAS_SENTENCE_TRANSFORMERS = False
+        return None
 
 
 
@@ -534,9 +552,10 @@ class BuildGlobalGraphTool(MCPTool):
         edges = []
         # Similarity
         embeddings_used = False
-        if use_embeddings and HAS_SENTENCE_TRANSFORMERS and len(papers) > 1:
+        STClass = _get_sentence_transformer_class() if use_embeddings else None
+        if use_embeddings and STClass is not None and len(papers) > 1:
             try:
-                model = SentenceTransformer('all-MiniLM-L6-v2')
+                model = STClass('all-MiniLM-L6-v2')
                 vecs = model.encode([p["text"] for p in papers])
                 from sklearn.metrics.pairwise import cosine_similarity
                 sims = cosine_similarity(vecs)

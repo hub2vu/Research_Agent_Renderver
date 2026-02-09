@@ -8,7 +8,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-import pandas as pd
 import requests
 
 from ..base import MCPTool, ToolParameter, ExecutionError
@@ -199,6 +198,7 @@ class Neurips2025PdfTool(MCPTool):
         if not mp.exists():
             raise ExecutionError(f"metadata_path를 찾을 수 없습니다: {mp}")
 
+        import pandas as pd  # lazy import – save ~50MB RAM at startup
         df = pd.read_csv(mp)
         required_cols = {"paper_id", "name", "abstract", "speakers/authors", "virtualsite_url"}
         if not required_cols.issubset(set(df.columns)):

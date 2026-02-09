@@ -68,7 +68,7 @@ function generateClusterCenters(k: number): ClusterCenters {
   return centers;
 }
 
-const LIST_PAGE_SIZE = 80;
+const PAGE_SIZE = 20;
 
 export default function NeurIPS2025Page() {
   const [viewMode, setViewMode] = useState<'graph' | 'list'>('graph');
@@ -104,7 +104,13 @@ export default function NeurIPS2025Page() {
   const [focusNodeId, setFocusNodeId] = useState<string | undefined>(undefined);
   const [clusterMap, setClusterMap] = useState<Record<string, number>>({});
 
-  // ✅ List pagination state (Load more)
+  // ✅ Graph pagination state (Load more – 20개씩)
+  const [graphOffset, setGraphOffset] = useState(0);
+  const [graphHasMore, setGraphHasMore] = useState(true);
+  const [graphLoadingMore, setGraphLoadingMore] = useState(false);
+  const [totalPapers, setTotalPapers] = useState(0);
+
+  // ✅ List pagination state (Load more – 20개씩)
   const [listNodes, setListNodes] = useState<GraphNode[]>([]);
   const [listOffset, setListOffset] = useState(0);
   const [listHasMore, setListHasMore] = useState(true);
@@ -116,16 +122,40 @@ export default function NeurIPS2025Page() {
     resetNodeColor: handleNodeColorReset
   } = useNodeColors();
 
-  // Load papers, similarities, and clusters (Graph mode)
+  // Helper: create GraphNode from NeurIPSPaper
+  const makePaperNode = useCallback((p: NeurIPSPaper, localClusterMap: Record<string, number>, centers: ClusterCenters, idx: number): GraphNode => {
+    const clusterId = localClusterMap[p.paper_id] ?? 0;
+    const center = centers[String(clusterId)];
+    return {
+      id: p.paper_id,
+      label: p.name.length > 40 ? p.name.substring(0, 37) + '...' : p.name,
+      title: p.name,
+      stableKey: neuripsStableKey(p.paper_id),
+      type: 'neurips_paper',
+      cluster: clusterId,
+      abstract: p.abstract,
+      authors: p['speakers/authors'] ? p['speakers/authors'].split(',').map(s => s.trim()) : [],
+      x: center ? center.x + (Math.random() - 0.5) * 200 : (idx % 50) * 30,
+      y: center ? center.y + (Math.random() - 0.5) * 200 : Math.floor(idx / 50) * 30,
+    };
+  }, []);
+
+  // Load first PAGE_SIZE papers + clusters + similarities (Graph mode)
   const loadData = useCallback(async (k: number = 15) => {
     setIsLoading(true);
     setError(null);
+    // Reset graph pagination
+    setGraphOffset(0);
+    setGraphHasMore(true);
+    setPapers(new Map());
+    setGraphState({ nodes: [] });
 
     try {
-      // Load papers and clusters in parallel
-      const [papersRes, clustersRes] = await Promise.all([
-        fetch('/api/neurips/papers'),
-        fetch(`/api/neurips/clusters?k=${k}`)
+      // Load first page of papers, clusters, and similarities in parallel
+      const [papersRes, clustersRes, simRes] = await Promise.all([
+        fetch(`/api/neurips/papers?offset=0&limit=${PAGE_SIZE}`),
+        fetch(`/api/neurips/clusters?k=${k}`),
+        fetch('/api/neurips/similarities').catch(() => null),
       ]);
 
       if (!papersRes.ok) throw new Error(`Failed to load papers: ${papersRes.status}`);
@@ -150,46 +180,63 @@ export default function NeurIPS2025Page() {
       paperList.forEach(p => paperMap.set(p.paper_id, p));
       setPapers(paperMap);
 
-      // Create nodes with cluster info and paper name as title
-      const nodes: GraphNode[] = paperList.map((p, idx) => {
-        const clusterId = localClusterMap[p.paper_id] ?? 0;
-        const center = centers[String(clusterId)];
-
-        return {
-          id: p.paper_id,
-          label: p.name.length > 40 ? p.name.substring(0, 37) + '...' : p.name,
-          title: p.name,
-          stableKey: neuripsStableKey(p.paper_id),
-          type: 'neurips_paper',
-          cluster: clusterId,
-          abstract: p.abstract,
-          authors: p['speakers/authors'] ? p['speakers/authors'].split(',').map(s => s.trim()) : [],
-          x: center ? center.x + (Math.random() - 0.5) * 200 : (idx % 50) * 30,
-          y: center ? center.y + (Math.random() - 0.5) * 200 : Math.floor(idx / 50) * 30,
-        };
-      });
+      // Create nodes (only first PAGE_SIZE)
+      const nodes: GraphNode[] = paperList.map((p, idx) => makePaperNode(p, localClusterMap, centers, idx));
 
       // Load similarities (raw, no filtering here)
       let simEdges: SimilarityEdge[] = [];
-      try {
-        const simRes = await fetch('/api/neurips/similarities');
-        if (simRes.ok) {
+      if (simRes && simRes.ok) {
+        try {
           const simData = await simRes.json();
           simEdges = simData.edges || [];
+        } catch (e) {
+          console.warn('Could not parse similarities:', e);
         }
-      } catch (e) {
-        console.warn('Could not load similarities:', e);
       }
 
       setRawSimEdges(simEdges);
       setGraphState({ nodes });
+      setGraphOffset(papersData.nextOffset ?? PAGE_SIZE);
+      setGraphHasMore(!!papersData.hasMore);
+      setTotalPapers(papersData.total ?? paperList.length);
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load data');
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [makePaperNode]);
+
+  // Load more papers for Graph mode (20개씩 추가)
+  const loadMoreGraph = useCallback(async () => {
+    if (graphLoadingMore || !graphHasMore) return;
+
+    setGraphLoadingMore(true);
+    try {
+      const res = await fetch(`/api/neurips/papers?offset=${graphOffset}&limit=${PAGE_SIZE}`);
+      if (!res.ok) throw new Error(`Failed to load papers: ${res.status}`);
+      const data = await res.json();
+      const paperList: NeurIPSPaper[] = data.papers || [];
+
+      // Merge new papers into existing Map
+      setPapers(prev => {
+        const next = new Map(prev);
+        paperList.forEach(p => next.set(p.paper_id, p));
+        return next;
+      });
+
+      // Add new nodes to graph
+      const newNodes = paperList.map((p, idx) => makePaperNode(p, clusterMap, clusterCenters, graphState.nodes.length + idx));
+      setGraphState(prev => ({ nodes: [...prev.nodes, ...newNodes] }));
+
+      setGraphOffset(data.nextOffset ?? (graphOffset + PAGE_SIZE));
+      setGraphHasMore(!!data.hasMore);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Load more failed');
+    } finally {
+      setGraphLoadingMore(false);
+    }
+  }, [graphOffset, graphHasMore, graphLoadingMore, clusterMap, clusterCenters, graphState.nodes.length, makePaperNode]);
 
   // Load more for List mode
   const loadMoreList = useCallback(async () => {
@@ -206,7 +253,7 @@ export default function NeurIPS2025Page() {
         }
       }
 
-      const res = await fetch(`/api/neurips/papers?offset=${listOffset}&limit=${LIST_PAGE_SIZE}`);
+      const res = await fetch(`/api/neurips/papers?offset=${listOffset}&limit=${PAGE_SIZE}`);
       if (!res.ok) throw new Error(`Failed to load papers: ${res.status}`);
 
       const data = await res.json();
@@ -223,14 +270,13 @@ export default function NeurIPS2025Page() {
           cluster: clusterId,
           abstract: p.abstract,
           authors: p['speakers/authors'] ? p['speakers/authors'].split(',').map(s => s.trim()) : [],
-          // List mode doesn't need coordinates
           x: 0 + (idx % 20),
           y: 0 + Math.floor(idx / 20),
         };
       });
 
       setListNodes(prev => [...prev, ...newNodes]);
-      setListOffset(data.nextOffset ?? (listOffset + LIST_PAGE_SIZE));
+      setListOffset(data.nextOffset ?? (listOffset + PAGE_SIZE));
       setListHasMore(!!data.hasMore);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load data');
@@ -452,7 +498,7 @@ export default function NeurIPS2025Page() {
     );
   }
 
-  const statsPapersCount = viewMode === 'list' ? listNodes.length : graphState.nodes.length;
+  const loadedCount = viewMode === 'list' ? listNodes.length : graphState.nodes.length;
   const statsEdgesCount = viewMode === 'list' ? 0 : filteredEdges.length;
 
   return (
@@ -715,18 +761,49 @@ export default function NeurIPS2025Page() {
         ) : null)}
 
         {viewMode === 'graph' && (
-          <GraphCanvas
-            nodes={graphState.nodes}
-            edges={filteredEdges as any}
-            onNodeClick={handleNodeClick}
-            selectedNodeId={selectedNode?.id}
-            nodeColorMap={nodeColorMap}
-            clusterCenters={clusterCenters}
-            clusterStrength={clusterStrength}
-            highlightedNodeIds={Array.from(highlightedPaperIds)}
-            focusNodeId={focusNodeId}
-            mode="global"
-          />
+          <>
+            <GraphCanvas
+              nodes={graphState.nodes}
+              edges={filteredEdges as any}
+              onNodeClick={handleNodeClick}
+              selectedNodeId={selectedNode?.id}
+              nodeColorMap={nodeColorMap}
+              clusterCenters={clusterCenters}
+              clusterStrength={clusterStrength}
+              highlightedNodeIds={Array.from(highlightedPaperIds)}
+              focusNodeId={focusNodeId}
+              mode="global"
+            />
+
+            {/* Load More button for graph mode */}
+            {graphHasMore && (
+              <div style={{
+                position: 'absolute',
+                bottom: '50px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                zIndex: 5,
+              }}>
+                <button
+                  onClick={loadMoreGraph}
+                  disabled={graphLoadingMore}
+                  style={{
+                    padding: '10px 24px',
+                    borderRadius: '999px',
+                    border: '1px solid rgba(255,255,255,0.3)',
+                    background: 'rgba(26, 32, 44, 0.95)',
+                    color: '#e2e8f0',
+                    cursor: graphLoadingMore ? 'not-allowed' : 'pointer',
+                    fontWeight: 700,
+                    fontSize: '13px',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                  }}
+                >
+                  {graphLoadingMore ? 'Loading...' : `Load more (${PAGE_SIZE})`}
+                </button>
+              </div>
+            )}
+          </>
         )}
 
         {viewMode === 'list' && (
@@ -761,7 +838,7 @@ export default function NeurIPS2025Page() {
                     fontWeight: 700
                   }}
                 >
-                  {listLoadingMore ? 'Loading...' : `Load more (${LIST_PAGE_SIZE})`}
+                  {listLoadingMore ? 'Loading...' : `Load more (${PAGE_SIZE})`}
                 </button>
               ) : (
                 <div style={{ color: '#718096', fontSize: '13px' }}>No more papers.</div>
@@ -781,7 +858,7 @@ export default function NeurIPS2025Page() {
           fontSize: '12px',
           color: '#a0aec0',
         }}>
-          {statsPapersCount} papers | {numClusters} clusters | {statsEdgesCount} edges
+          {loadedCount}{totalPapers > 0 ? ` / ${totalPapers}` : ''} papers | {numClusters} clusters | {statsEdgesCount} edges
         </div>
       </div>
 
