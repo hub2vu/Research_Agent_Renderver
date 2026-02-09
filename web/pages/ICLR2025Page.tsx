@@ -14,6 +14,7 @@ import SidePanel from '../components/SidePanel';
 import ICLRSearchSidebar from '../components/ICLRSearchSidebar';
 import ICLRRankedList from '../components/ICLRRankedList';
 import PaperListView from '../components/PaperListView';
+import ConferenceInfoModal from '../components/ConferenceInfoModal';
 import { GraphNode, GraphEdge, executeICLRSearchAndRank, executeTool } from '../lib/mcp';
 import { ScoredPaper } from '../components/PaperResultCard';
 import { useNodeColors } from '../hooks/useNodeColors';
@@ -489,6 +490,7 @@ export default function ICLR2025Page() {
 
   return (
     <div style={{ display: 'flex', height: 'calc(100vh - 60px)' }}>
+      <ConferenceInfoModal />
       <div style={{ flex: 1, position: 'relative' }}>
 
         {/* Control Panel: toggle */}
